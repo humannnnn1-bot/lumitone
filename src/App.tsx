@@ -10,6 +10,7 @@ import { useFileDrop } from "./hooks/useFileDrop";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useExport } from "./hooks/useExport";
 import { useAppState } from "./hooks/useAppState";
+import { DrawingContextProvider } from "./contexts/DrawingContext";
 import { S_TAB_ACTIVE, S_TAB_INACTIVE } from "./styles";
 import { C, Z, SP, FS, FW } from "./tokens";
 import { Toast } from "./components/Toast";
@@ -41,9 +42,15 @@ const S_DROP_OVERLAY: React.CSSProperties = { position: "fixed", inset: 0, backg
 const S_DROP_TEXT: React.CSSProperties = { fontSize: FS.title, color: C.accentBright, fontWeight: FW.bold };
 const S_SR_ONLY: React.CSSProperties = { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" };
 
-export default function App() {
-  const { t } = useTranslation();
-  const app = useAppState(t);
+interface AppContentProps {
+  app: ReturnType<typeof useAppState>;
+  panZoom: ReturnType<typeof usePanZoom>;
+  announce: (msg: string) => void;
+  ariaLiveRef: React.MutableRefObject<HTMLDivElement | null>;
+  t: import("./i18n").TranslationFn;
+}
+
+function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps) {
   const {
     state, dispatch, cvs, cc, ccDispatch,
     brushLevel, setBrushLevel, brushSize, setBrushSize,
@@ -69,37 +76,22 @@ export default function App() {
   const srcWrapRef = useRef<HTMLDivElement | null>(null);
   const prvWrapRef = useRef<HTMLDivElement | null>(null);
   const glazeWrapRef = useRef<HTMLDivElement | null>(null);
-  const ariaLiveRef = useRef<HTMLDivElement | null>(null);
   const helpRef = useRef<HTMLDivElement | null>(null);
-
-  const announce = useCallback((msg: string) => {
-    if (ariaLiveRef.current) ariaLiveRef.current.textContent = msg;
-  }, []);
 
   const sharedSchedCursorRef = useRef<(() => void) | null>(null);
 
-  const panZoom = usePanZoom(cvs, displayW, sharedSchedCursorRef);
-
   const drawing = useCanvasDrawing({
-    cvs, displayW, displayH, dispatch, colorLUT, cc,
+    cvs, dispatch, colorLUT, cc,
     brushLevel, brushSize, tool,
-    zoom: panZoom.zoom, pan: panZoom.pan,
-    panningRef: panZoom.panningRef, spaceRef: panZoom.spaceRef,
-    zoomRef: panZoom.zoomRef, panRef: panZoom.panRef,
-    startPan: panZoom.startPan, movePan: panZoom.movePan, endPan: panZoom.endPan,
     prvRef,
-    setBrushLevel, announce, t,
+    setBrushLevel,
   });
 
   const glazeDrawing = useGlazeDrawing({
-    cvs, displayW, displayH, dispatch, colorLUT,
+    cvs, dispatch, colorLUT,
     hueAngle, setHueAngle, glazeTool, brushSize,
-    zoom: panZoom.zoom, pan: panZoom.pan,
-    panningRef: panZoom.panningRef, spaceRef: panZoom.spaceRef,
-    zoomRef: panZoom.zoomRef, panRef: panZoom.panRef,
-    startPan: panZoom.startPan, movePan: panZoom.movePan, endPan: panZoom.endPan,
     prvRef: glazePrvRef,
-    announce, t, directCandidates,
+    directCandidates,
   });
 
   // Bridge schedCursorRef from drawing hook to shared ref used by panZoom
@@ -373,5 +365,34 @@ export default function App() {
         </div>}
       </div>
     </div>
+  );
+}
+
+export default function App() {
+  const { t } = useTranslation();
+  const app = useAppState(t);
+  const { cvs, displayW, displayH } = app;
+
+  const ariaLiveRef = useRef<HTMLDivElement | null>(null);
+
+  const announce = useCallback((msg: string) => {
+    if (ariaLiveRef.current) ariaLiveRef.current.textContent = msg;
+  }, []);
+
+  const sharedSchedCursorRef = useRef<(() => void) | null>(null);
+
+  const panZoom = usePanZoom(cvs, displayW, sharedSchedCursorRef);
+
+  return (
+    <DrawingContextProvider
+      zoom={panZoom.zoom} pan={panZoom.pan}
+      panningRef={panZoom.panningRef} spaceRef={panZoom.spaceRef}
+      zoomRef={panZoom.zoomRef} panRef={panZoom.panRef}
+      startPan={panZoom.startPan} movePan={panZoom.movePan} endPan={panZoom.endPan}
+      displayW={displayW} displayH={displayH}
+      announce={announce} t={t}
+    >
+      <AppContent app={app} panZoom={panZoom} announce={announce} ariaLiveRef={ariaLiveRef} t={t} />
+    </DrawingContextProvider>
   );
 }

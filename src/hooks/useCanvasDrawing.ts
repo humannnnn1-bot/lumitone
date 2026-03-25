@@ -4,8 +4,8 @@ import type { ToolId } from "../constants";
 import { LEVEL_INFO, LEVEL_CANDIDATES } from "../color-engine";
 import { paintCircle, paintLine, SHAPE_PAINTERS } from "../paint";
 import { shapeBBox, unionBBox, brushBBox, restoreRect } from "../dirty-rect";
-import { floodFill } from "../flood-fill";
 import { computeDiff, buildDiffFromFill } from "../undo-diff";
+import { useFloodFillWorker } from "./useFloodFillWorker";
 import { renderBuf } from "../render-buf";
 import { hexStr } from "../utils";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
@@ -13,6 +13,7 @@ import { useCursorOverlay } from "./useCursorOverlay";
 import { trySetPointerCapture, cPosFromRefs, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
 import type { CanvasData, StrokeState, ImgCache, CanvasAction } from "../types";
+import { useDrawingContext } from "../contexts/DrawingContext";
 
 export interface CanvasDrawingResult {
   srcRef: React.MutableRefObject<HTMLCanvasElement | null>;
@@ -39,37 +40,25 @@ export interface CanvasDrawingResult {
 
 export interface CanvasDrawingOptions {
   cvs: CanvasData;
-  displayW: number;
-  displayH: number;
   dispatch: React.Dispatch<CanvasAction>;
   colorLUT: [number, number, number][];
   cc: number[];
   brushLevel: number;
   brushSize: number;
   tool: ToolId;
-  zoom: number;
-  pan: { x: number; y: number };
-  panningRef: React.MutableRefObject<boolean>;
-  spaceRef: React.MutableRefObject<boolean>;
-  zoomRef: React.MutableRefObject<number>;
-  panRef: React.MutableRefObject<{ x: number; y: number }>;
-  startPan: (e: React.PointerEvent) => void;
-  movePan: (e: React.PointerEvent) => void;
-  endPan: () => void;
   prvRef: React.MutableRefObject<HTMLCanvasElement | null>;
   setBrushLevel: (lv: number) => void;
-  announce: (msg: string) => void;
-  t: import("../i18n").TranslationFn;
 }
 
 export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResult {
   const {
-    cvs, displayW, displayH, dispatch, colorLUT, cc,
+    cvs, dispatch, colorLUT, cc,
     brushLevel, brushSize, tool,
-    panningRef, spaceRef, zoomRef, panRef,
-    startPan, movePan, endPan, prvRef,
-    setBrushLevel, announce, t,
+    prvRef,
+    setBrushLevel,
   } = opts;
+  const ctx = useDrawingContext();
+  const { displayW, displayH, panningRef, spaceRef, zoomRef, panRef, startPan, movePan, endPan, announce, t } = ctx;
   const srcRef = useRef<HTMLCanvasElement | null>(null);
   const statusRef = useRef<HTMLDivElement | null>(null);
   const imgCacheRef = useRef<ImgCache>({ src: null, prv: null, s32: null, p32: null });
@@ -80,6 +69,9 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
   const lastRef = useRef<{ x: number; y: number } | null>(null);
   const activeCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const paintRafRef = useRef<number | null>(null);
+  const fillPendingRef = useRef(false);
+  const pendingUpRef = useRef(false);
+  const floodFillWorker = useFloodFillWorker();
 
   // Refs needed by useCursorOverlay (individual for interface compatibility)
   const brushSizeRef = useSyncRef(brushSize);
@@ -165,11 +157,23 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     const W = cv.w, H = cv.h;
 
     if (curTool === "fill") {
-      const result = floodFill(buf, pos.x, pos.y, lv, W, H);
-      if (result) {
-        strokeRef.current.fillChanged = result.changed;
-        if (result.truncated) s.current.announce(s.current.t("toast_fill_truncated"));
-      }
+      fillPendingRef.current = true;
+      floodFillWorker.requestCanvasFill(buf, pos.x, pos.y, lv, W, H).then((res) => {
+        const st = strokeRef.current;
+        if (!st) { fillPendingRef.current = false; return; }
+        st.buf.set(res.data);
+        if (res.changed.length > 0) {
+          st.fillChanged = res.changed;
+          if (res.truncated) s.current.announce(s.current.t("toast_fill_truncated"));
+        }
+        renderBuf(st.buf, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current);
+        fillPendingRef.current = false;
+        if (pendingUpRef.current) {
+          pendingUpRef.current = false;
+          finishStroke();
+        }
+      });
+      return;
     } else if (isShapeTool(curTool)) {
       drawShapeAt(buf, curTool, pos.x, pos.y, pos.x, pos.y, r, lv, W, H);
       strokeRef.current.prevShapeBBox = shapeBBox(pos.x, pos.y, pos.x, pos.y, r, W, H);
@@ -244,8 +248,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     // eslint-disable-next-line react-hooks/exhaustive-deps -- doMove reads from sync refs, cursor.prvCurRef is stable
   }, [cursor.trackCursorPrv]);
 
-  const onUp = useCallback(() => {
-    if (panningRef.current) { s.current.endPan(); return; }
+  function finishStroke() {
     // Flush pending brush render
     if (paintRafRef.current !== null) {
       cancelAnimationFrame(paintRafRef.current);
@@ -264,6 +267,12 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     drawingRef.current = false; lastRef.current = null;
     strokeRef.current = null;
     activeCanvasRef.current = null;
+  }
+
+  const onUp = useCallback(() => {
+    if (panningRef.current) { s.current.endPan(); return; }
+    if (fillPendingRef.current) { pendingUpRef.current = true; return; }
+    finishStroke();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable, read via .current
   }, [dispatch]);
 

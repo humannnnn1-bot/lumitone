@@ -4,8 +4,8 @@ import type { GlazeToolId } from "../constants";
 import { LEVEL_CANDIDATES, findClosestCandidate, rgb2hue } from "../color-engine";
 import { buildGlazeLUT, buildMultiDirectLUT, paintGlazeCircle, paintGlazeLine, eraseGlazeCircle, eraseGlazeLine } from "../glaze-paint";
 import { brushBBox, dirtyFromChanged, shapeBBox, unionBBox, restoreRect } from "../dirty-rect";
-import { glazeFloodFill } from "../flood-fill";
 import { computeGlazeDiff, buildDiffFromGlazeFill } from "../undo-diff";
+import { useFloodFillWorker } from "./useFloodFillWorker";
 import { renderBuf } from "../render-buf";
 import { hexStr } from "../utils";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
@@ -13,29 +13,17 @@ import { useCursorOverlay } from "./useCursorOverlay";
 import { trySetPointerCapture, cPosFromRefs, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
 import type { CanvasData, ImgCache, CanvasAction, DirtyRect } from "../types";
+import { useDrawingContext } from "../contexts/DrawingContext";
 
 export interface GlazeDrawingOptions {
   cvs: CanvasData;
-  displayW: number;
-  displayH: number;
   dispatch: React.Dispatch<CanvasAction>;
   colorLUT: [number, number, number][];
   hueAngle: number;
   setHueAngle: React.Dispatch<React.SetStateAction<number>>;
   glazeTool: GlazeToolId;
   brushSize: number;
-  zoom: number;
-  pan: { x: number; y: number };
-  panningRef: React.MutableRefObject<boolean>;
-  spaceRef: React.MutableRefObject<boolean>;
-  zoomRef: React.MutableRefObject<number>;
-  panRef: React.MutableRefObject<{ x: number; y: number }>;
-  startPan: (e: React.PointerEvent) => void;
-  movePan: (e: React.PointerEvent) => void;
-  endPan: () => void;
   prvRef: React.MutableRefObject<HTMLCanvasElement | null>;
-  announce: (msg: string) => void;
-  t: import("../i18n").TranslationFn;
   directCandidates: Map<number, number>;
 }
 
@@ -67,12 +55,13 @@ interface GlazeStroke {
 
 export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   const {
-    cvs, displayW, displayH, dispatch, colorLUT,
+    cvs, dispatch, colorLUT,
     hueAngle, setHueAngle, glazeTool, brushSize,
-    panningRef, spaceRef, zoomRef, panRef,
-    startPan, movePan, endPan, prvRef,
-    announce, t, directCandidates,
+    prvRef,
+    directCandidates,
   } = opts;
+  const ctx = useDrawingContext();
+  const { displayW, displayH, panningRef, spaceRef, zoomRef, panRef, startPan, movePan, endPan, announce, t } = ctx;
 
   const srcRef = useRef<HTMLCanvasElement | null>(null);
   const statusRef = useRef<HTMLDivElement | null>(null);
@@ -83,6 +72,9 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   // Buffer pool: reuse cmPre/cmBuf allocations across strokes
   const cmPoolRef = useRef<{ cmPre: Uint8Array | null; cmBuf: Uint8Array | null; size: number }>({ cmPre: null, cmBuf: null, size: 0 });
   const paintRafRef = useRef<number | null>(null);
+  const fillPendingRef = useRef(false);
+  const pendingUpRef = useRef(false);
+  const floodFillWorker = useFloodFillWorker();
 
   // Refs needed by useCursorOverlay (individual for interface compatibility)
   const brushSizeRef = useSyncRef(brushSize);
@@ -162,19 +154,30 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
       // In direct mode, only fill if seed pixel's level is in the direct map
       if (isDirect && !dc.has(seedLv)) { drawingRef.current = false; strokeRef.current = null; return; }
       const newCmVal = isDirect ? (dc.get(seedLv)! + 1) : (findClosestCandidate(seedLv, curHue) + 1);
-      const result = glazeFloodFill(cv.data, cmBuf, pos.x, pos.y, newCmVal, W, H);
-      if (result) {
-        strokeRef.current.fillChanged = result.changed;
-        if (result.truncated) s.current.announce(s.current.t("toast_fill_truncated"));
-      }
+      fillPendingRef.current = true;
+      floodFillWorker.requestGlazeFill(cv.data, cmBuf, pos.x, pos.y, newCmVal, W, H).then((res) => {
+        const st = strokeRef.current;
+        if (!st) { fillPendingRef.current = false; return; }
+        st.cmBuf.set(res.colorMap);
+        if (res.changed.length > 0) {
+          st.fillChanged = res.changed;
+          if (res.truncated) s.current.announce(s.current.t("toast_fill_truncated"));
+        }
+        const dirtyBB = st.fillChanged ? dirtyFromChanged(st.fillChanged, W, H) : undefined;
+        renderBuf(cv.data, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB, st.cmBuf);
+        fillPendingRef.current = false;
+        if (pendingUpRef.current) {
+          pendingUpRef.current = false;
+          finishGlazeStroke();
+        }
+      });
+      return;
     } else if (curTool === "glaze_eraser") {
       eraseGlazeCircle(cmBuf, pos.x, pos.y, r, W, H);
     } else {
       paintGlazeCircle(cmBuf, cv.data, pos.x, pos.y, r, W, H, glazeLUT);
     }
-    const dirtyBB = curTool === "glaze_fill"
-      ? (strokeRef.current!.fillChanged ? dirtyFromChanged(strokeRef.current!.fillChanged, W, H) : undefined)
-      : brushBBox([[pos.x, pos.y]], r, W, H);
+    const dirtyBB = brushBBox([[pos.x, pos.y]], r, W, H);
     renderBuf(cv.data, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB, cmBuf);
   }
 
@@ -230,8 +233,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const onMove = useCallback((e: React.PointerEvent) => { doMove(e); }, [cursor.trackCursor]);
 
-  const onUp = useCallback(() => {
-    if (panningRef.current) { s.current.endPan(); return; }
+  function finishGlazeStroke() {
     // Flush pending glaze render
     if (paintRafRef.current !== null) {
       cancelAnimationFrame(paintRafRef.current);
@@ -250,6 +252,12 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     }
     drawingRef.current = false; lastRef.current = null;
     strokeRef.current = null;
+  }
+
+  const onUp = useCallback(() => {
+    if (panningRef.current) { s.current.endPan(); return; }
+    if (fillPendingRef.current) { pendingUpRef.current = true; return; }
+    finishGlazeStroke();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable, read via .current
   }, [dispatch]);
 
