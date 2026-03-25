@@ -7,5 +7,16 @@ export default defineConfig({
   plugins: [react()],
   test: {
     globals: true,
+    setupFiles: ["./src/__tests__/setup.ts"],
+    environmentMatchGlobs: [
+      ["**/*.test.tsx", "jsdom"],
+    ],
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: ["src/__tests__/**", "src/main.tsx"],
+      reporter: ["text", "html", "lcov"],
+      reportsDirectory: "./coverage",
+    },
   },
 });

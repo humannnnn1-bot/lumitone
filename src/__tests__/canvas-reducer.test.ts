@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { canvasReducer, initialState } from "../canvas-reducer";
 import { computeDiff } from "../undo-diff";
+import { MAX_UNDO } from "../constants";
 
 describe("canvasReducer", () => {
   describe("stroke_end", () => {
@@ -69,6 +70,19 @@ describe("canvasReducer", () => {
     });
   });
 
+  describe("undo stack limit", () => {
+    it("caps undo stack at MAX_UNDO", () => {
+      let state = canvasReducer(initialState, { type: "new_canvas", w: 4, h: 4 });
+      for (let i = 0; i < MAX_UNDO + 10; i++) {
+        const finalData = new Uint8Array(state.cvs.data);
+        finalData[0] = (i % 7) + 1;
+        const diff = computeDiff(state.cvs.data, finalData);
+        state = canvasReducer(state, { type: "stroke_end", finalData, diff });
+      }
+      expect(state.undoStack.length).toBe(MAX_UNDO);
+    });
+  });
+
   describe("clear", () => {
     it("clears canvas and pushes to undo", () => {
       const finalData = new Uint8Array(initialState.cvs.data.length);
@@ -98,6 +112,12 @@ describe("canvasReducer", () => {
       expect(next.redoStack.length).toBe(0);
       expect(next.hist[0]).toBe(64 * 48);
     });
+
+    it("rejects invalid dimensions", () => {
+      expect(canvasReducer(initialState, { type: "new_canvas", w: 0, h: 100 })).toBe(initialState);
+      expect(canvasReducer(initialState, { type: "new_canvas", w: 100, h: -1 })).toBe(initialState);
+      expect(canvasReducer(initialState, { type: "new_canvas", w: 2000, h: 100 })).toBe(initialState);
+    });
   });
 
   describe("load_image", () => {
@@ -112,5 +132,34 @@ describe("canvasReducer", () => {
       expect(next.hist[2]).toBe(1);
       expect(next.hist[5]).toBe(1);
     });
+
+    it("rejects mismatched data length", () => {
+      const data = new Uint8Array(10); // doesn't match 4x4
+      expect(canvasReducer(initialState, { type: "load_image", w: 4, h: 4, data })).toBe(initialState);
+    });
+  });
+});
+
+describe("edge cases", () => {
+  it("undo on empty stack returns same state", () => {
+    const state = { ...initialState };
+    const next = canvasReducer(state, { type: "undo" });
+    expect(next).toBe(state);
+  });
+
+  it("redo on empty stack returns same state", () => {
+    const state = { ...initialState };
+    const next = canvasReducer(state, { type: "redo" });
+    expect(next).toBe(state);
+  });
+
+  it("stroke_end with empty diff returns same state", () => {
+    const state = { ...initialState };
+    const next = canvasReducer(state, {
+      type: "stroke_end",
+      finalData: state.cvs.data,
+      diff: { idx: new Uint32Array(0), ov: new Uint8Array(0), nv: new Uint8Array(0) },
+    });
+    expect(next).toBe(state);
   });
 });

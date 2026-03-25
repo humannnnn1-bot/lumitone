@@ -26,7 +26,40 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - run: npx tsc --noEmit
+      - run: npm run lint
+      - run: npm run test:coverage
+      - uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+        if: always()
       - run: npm run build
+      - name: Report bundle size
+        run: |
+          echo "## Bundle Size Report" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          find dist/assets -type f \( -name '*.js' -o -name '*.css' \) -exec ls -lh {} \; | awk '{print $5, $9}' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Total dist size:** $(du -sh dist | cut -f1)" >> $GITHUB_STEP_SUMMARY
+      - name: Check JS chunk sizes
+        run: |
+          OVERSIZED=0
+          while IFS= read -r file; do
+            SIZE=$(stat --format=%s "$file")
+            NAME=$(basename "$file")
+            KB=$((SIZE / 1024))
+            if [ "$KB" -gt 200 ]; then
+              echo "::warning file=$file::JS chunk $NAME is ${KB}KB (exceeds 200KB limit)"
+              OVERSIZED=1
+            fi
+          done < <(find dist/assets -name '*.js' -type f)
+          if [ "$OVERSIZED" -eq 1 ]; then
+            echo "::warning::One or more JS chunks exceed the 200KB size limit"
+          else
+            echo "All JS chunks are within the 200KB limit"
+          fi
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:

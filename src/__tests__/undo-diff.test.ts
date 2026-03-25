@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeDiff, applyDiff } from "../undo-diff";
+import { computeDiff, applyDiff, buildDiffFromFill } from "../undo-diff";
 
 describe("computeDiff", () => {
   it("returns empty diff for identical data", () => {
@@ -60,5 +60,37 @@ describe("applyDiff", () => {
     const forward = applyDiff(a, diff, false);
     const back = applyDiff(forward, diff, true);
     expect(Array.from(back)).toEqual(Array.from(a));
+  });
+});
+
+describe("buildDiffFromFill", () => {
+  it("builds correct diff from changed indices", () => {
+    const pre = new Uint8Array([0, 0, 0, 0, 0]);
+    const buf = new Uint8Array([0, 3, 0, 3, 0]);
+    const changed = new Uint32Array([1, 3]);
+    const diff = buildDiffFromFill(pre, buf, changed);
+    expect(diff.idx.length).toBe(2);
+    expect(Array.from(diff.idx)).toEqual([1, 3]);
+    expect(Array.from(diff.ov)).toEqual([0, 0]);
+    expect(Array.from(diff.nv)).toEqual([3, 3]);
+  });
+
+  it("produces equivalent result to computeDiff for same changes", () => {
+    const pre = new Uint8Array([0, 1, 2, 3, 4]);
+    const buf = new Uint8Array([0, 5, 2, 7, 4]);
+    const changed = new Uint32Array([1, 3]);
+    const fillDiff = buildDiffFromFill(pre, buf, changed);
+    const fullDiff = computeDiff(pre, buf);
+    expect(Array.from(fillDiff.idx)).toEqual(Array.from(fullDiff.idx));
+    expect(Array.from(fillDiff.ov)).toEqual(Array.from(fullDiff.ov));
+    expect(Array.from(fillDiff.nv)).toEqual(Array.from(fullDiff.nv));
+  });
+
+  it("empty changed array produces empty diff", () => {
+    const pre = new Uint8Array([1, 2, 3]);
+    const buf = new Uint8Array([1, 2, 3]);
+    const changed = new Uint32Array(0);
+    const diff = buildDiffFromFill(pre, buf, changed);
+    expect(diff.idx.length).toBe(0);
   });
 });

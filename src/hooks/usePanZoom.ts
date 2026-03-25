@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import { ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from "../constants";
 import { useSyncRef } from "./useSyncRef";
 import type { CanvasData } from "../types";
@@ -8,7 +8,7 @@ export interface PanZoomResult {
   pan: { x: number; y: number };
   cursorMode: null | "grab" | "grabbing";
   setZoom: React.Dispatch<React.SetStateAction<number>>;
-  setPan: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
+  setPan: (v: React.SetStateAction<{ x: number; y: number }>) => void;
   setCursorMode: React.Dispatch<React.SetStateAction<null | "grab" | "grabbing">>;
   startPan: (e: React.PointerEvent) => void;
   movePan: (e: React.PointerEvent) => void;
@@ -28,7 +28,14 @@ export function usePanZoom(
   schedCursorRef: React.MutableRefObject<(() => void) | null>,
 ): PanZoomResult {
   const [zoom, setZoom] = useState(1);
-  const [pan, setPan] = useState({ x: 0, y: 0 });
+  // Wrap useState setPan with equality check to skip re-renders when values haven't changed
+  const [pan, _setPanRaw] = useState({ x: 0, y: 0 });
+  const setPan = useCallback((v: React.SetStateAction<{ x: number; y: number }>) => {
+    _setPanRaw(prev => {
+      const next = typeof v === "function" ? v(prev) : v;
+      return (next.x === prev.x && next.y === prev.y) ? prev : next;
+    });
+  }, []);
   const [cursorMode, setCursorMode] = useState<null | "grab" | "grabbing">(null);
 
   const panningRef = useRef(false);
@@ -39,6 +46,12 @@ export function usePanZoom(
   const zoomRef = useSyncRef(zoom);
   const panRef = useSyncRef(pan);
   const cvsRef = useSyncRef(cvs);
+
+  /** Clamp pan so canvas never drifts fully off-screen (max ±w or ±h). */
+  const clampPan = useCallback((p: { x: number; y: number }, cv: { w: number; h: number }) => ({
+    x: Math.max(-cv.w, Math.min(cv.w, p.x)),
+    y: Math.max(-cv.h, Math.min(cv.h, p.y)),
+  }), []);
 
   const endPan = useCallback(() => {
     panningRef.current = false;
@@ -59,9 +72,10 @@ export function usePanZoom(
     const dx = e.clientX - panStartRef.current.x, dy = e.clientY - panStartRef.current.y;
     const cv = cvsRef.current;
     const scale = displayW * zoomRef.current / cv.w;
-    setPan({ x: panOriginRef.current.x + dx / scale, y: panOriginRef.current.y + dy / scale });
+    const raw = { x: panOriginRef.current.x + dx / scale, y: panOriginRef.current.y + dy / scale };
+    setPan(clampPan(raw, cv));
     schedCursorRef.current?.();
-  }, [cvsRef, displayW, zoomRef, schedCursorRef]);
+  }, [cvsRef, displayW, zoomRef, schedCursorRef, clampPan, setPan]);
 
   const onWheel = useCallback((e: WheelEvent) => {
     e.preventDefault();
@@ -75,9 +89,9 @@ export function usePanZoom(
     const cy0 = (my2 - 0.5) / curZoom + 0.5 - curPan.y / cv.h;
     const newPanX = ((mx2 - 0.5) / newZoom + 0.5 - cx0) * cv.w;
     const newPanY = ((my2 - 0.5) / newZoom + 0.5 - cy0) * cv.h;
-    setZoom(newZoom); setPan({ x: newPanX, y: newPanY });
+    setZoom(newZoom); setPan(clampPan({ x: newPanX, y: newPanY }, cv));
     schedCursorRef.current?.();
-  }, [zoomRef, panRef, cvsRef, schedCursorRef]);
+  }, [zoomRef, panRef, cvsRef, schedCursorRef, clampPan, setPan]);
 
   return {
     zoom, pan, cursorMode,

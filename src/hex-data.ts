@@ -1,4 +1,4 @@
-import { hue2rgb, rgb2hue, LEVEL_CANDIDATES } from "./color-engine";
+import { hue2rgb, LEVEL_CANDIDATES } from "./color-engine";
 import { NUM_VERTICES } from "./constants";
 
 /* ═══════════════════════════════════════════
@@ -26,7 +26,7 @@ export interface HexEdge {
   lv: number[];
 }
 
-/* t:6 は t:0 と同義（% NUM_VERTICES で wrap）— 頂点5→頂点0 の辺を表現 */
+/* t:6 is equivalent to t:0 (wraps via % NUM_VERTICES) — represents the edge from vertex 5 to vertex 0 */
 export const HEX_EDGES: HexEdge[] = [
   { f: 0, t: 1, lv: [3,4,5] }, { f: 1, t: 2, lv: [5] }, { f: 2, t: 3, lv: [] },
   { f: 3, t: 4, lv: [4,3,2] }, { f: 4, t: 5, lv: [2] }, { f: 5, t: 6, lv: [] },
@@ -40,6 +40,10 @@ export interface EdgeColor {
 export const HEX_EDGE_COLORS: EdgeColor[][] = HEX_EDGES.map(e => {
   const hs = HEX_ANGLES[e.f], he = e.t >= NUM_VERTICES ? 360 : HEX_ANGLES[e.t];
   const ts = Math.abs(HEX_VERTICES[e.f].lv - HEX_VERTICES[e.t % NUM_VERTICES].lv);
+  if (ts === 0) return e.lv.map(() => {
+    const c = hue2rgb(hs);
+    return { hex: "#" + c.map(v => v.toString(16).padStart(2,"0")).join(""), hue: hs };
+  });
   return e.lv.map((_, i) => {
     const t = (i+1) / ts, h = hs + (he - hs) * t, c = hue2rgb(h);
     return { hex: "#" + c.map(v => v.toString(16).padStart(2,"0")).join(""), hue: h };

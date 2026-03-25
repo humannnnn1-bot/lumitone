@@ -3,7 +3,7 @@ import {
   lum, LUMA_R, LUMA_G, LUMA_B,
   hue2rgb, rgb2hue,
   GRAY_LUT, LEVEL_INFO, LEVEL_CANDIDATES,
-  buildColorLUT, DEFAULT_CC, EIGHT_LEVELS,
+  buildColorLUT, DEFAULT_CC,
 } from "../color-engine";
 
 describe("lum", () => {
@@ -106,7 +106,7 @@ describe("LEVEL_CANDIDATES", () => {
   });
 
   it("each level has at least 1 candidate", () => {
-    LEVEL_CANDIDATES.forEach((alts, i) => {
+    LEVEL_CANDIDATES.forEach((alts, _i) => {
       expect(alts.length).toBeGreaterThanOrEqual(1);
     });
   });

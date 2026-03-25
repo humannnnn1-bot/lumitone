@@ -1,0 +1,63 @@
+/* ═══════════════════════════════════════════
+   CHROMALUM — Global styles
+   ═══════════════════════════════════════════ */
+
+/* Focus indicators */
+button:focus-visible {
+  outline: 2px solid #6080ff;
+  outline-offset: 2px;
+}
+button:hover:not(:disabled) {
+  background: #1a1a3a;
+  border-color: #3a3a5a;
+}
+
+/* SVG interactive elements: custom focus handled by component */
+svg g[tabindex]:focus,
+svg g[tabindex]:focus-visible {
+  outline: none;
+}
+
+/* Checkbox — dark theme */
+input[type="checkbox"] {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #2a2a40;
+  border-radius: 3px;
+  background: #0a0a18;
+  cursor: pointer;
+  vertical-align: middle;
+  position: relative;
+}
+input[type="checkbox"]:checked {
+  background: #6080ff;
+  border-color: #6080ff;
+}
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 8px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+input[type="checkbox"]:focus-visible {
+  outline: 2px solid #6080ff;
+  outline-offset: 2px;
+}
+
+/* Toast animation */
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}

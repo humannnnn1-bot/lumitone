@@ -1,57 +1,74 @@
-import React, { useState, useRef, useEffect, useLayoutEffect, useCallback, useReducer, useMemo } from "react";
+import React, { useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 
-import { buildColorLUT, DEFAULT_CC } from "./color-engine";
-import { DISPLAY_MAX, MOBILE_BREAKPOINT, TOAST_DURATION, LEVEL_MASK, isShapeTool } from "./constants";
-import { timestamp } from "./utils";
-import type { ToolId } from "./constants";
+import { isShapeTool } from "./constants";
 import { renderBuf } from "./render-buf";
-import { canvasReducer, initialState } from "./canvas-reducer";
-import { colorReducer } from "./color-reducer";
-import { saveState, loadState } from "./utils/idb-persistence";
 import { useSyncRef } from "./hooks/useSyncRef";
 import { usePanZoom } from "./hooks/usePanZoom";
 import { useCanvasDrawing } from "./hooks/useCanvasDrawing";
+import { useGlazeDrawing } from "./hooks/useGlazeDrawing";
 import { useFileDrop } from "./hooks/useFileDrop";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
+import { useExport } from "./hooks/useExport";
+import { useAppState } from "./hooks/useAppState";
 import { S_TAB_ACTIVE, S_TAB_INACTIVE } from "./styles";
+import { C, Z, SP, FS, FW } from "./tokens";
 import { Toast } from "./components/Toast";
-import { HexDiag } from "./components/HexDiag";
 import { SourcePanel } from "./components/SourcePanel";
 import { ColorPanel } from "./components/ColorPanel";
+import { GlazePanel } from "./components/GlazePanel";
 import { HelpModal } from "./components/HelpModal";
 import { NewCanvasModal } from "./components/NewCanvasModal";
+import { PromptModal } from "./components/PromptModal";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
+import { StatsPanel } from "./components/StatsPanel";
+import { GalleryPanel } from "./components/GalleryPanel";
+import { HexTab } from "./components/HexTab";
 import { useTranslation } from "./i18n";
+
+/* ═══════════════════════════════════════════
+   LAYOUT STYLE CONSTANTS
+   ═══════════════════════════════════════════ */
+const TAB_KEYS = ["tab_source", "tab_color", "tab_hex", "tab_glaze", "tab_stats", "tab_gallery"] as const;
+
+const S_ROOT: React.CSSProperties = { minHeight: "100vh", background: C.bgRoot, color: C.textPrimary, fontFamily: "monospace", padding: SP["3xl"], paddingBottom: 80 };
+const S_HEADER: React.CSSProperties = { textAlign: "center", marginBottom: SP["2xl"] };
+const S_TITLE: React.CSSProperties = { fontSize: FS.title, fontWeight: FW.bold, margin: 0, background: C.titleGradient, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: SP.xs };
+const S_STATUS: React.CSSProperties = { fontSize: FS.sm, color: C.textFaint, marginTop: 2 };
+const S_HELP_LINK: React.CSSProperties = { cursor: "pointer", color: C.textDimmest, textDecoration: "underline" };
+const S_TABLIST: React.CSSProperties = { display: "flex", justifyContent: "center", gap: SP.xs, marginBottom: SP.xl, overflowX: "auto" };
+const S_TAB_CENTER: React.CSSProperties = { display: "flex", justifyContent: "center", width: "100%" };
+const S_DROP_OVERLAY: React.CSSProperties = { position: "fixed", inset: 0, background: C.bgDrop, border: `3px dashed ${C.accent}`, zIndex: Z.dropOverlay, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" };
+const S_DROP_TEXT: React.CSSProperties = { fontSize: FS.title, color: C.accentBright, fontWeight: FW.bold };
+const S_SR_ONLY: React.CSSProperties = { position: "absolute", width: 1, height: 1, overflow: "hidden", clipPath: "inset(50%)" };
 
 export default function App() {
   const { t } = useTranslation();
-  const [state, dispatch] = useReducer(canvasReducer, initialState);
-  const { cvs } = state;
-  const [cc, ccDispatch] = useReducer(colorReducer, [...DEFAULT_CC]);
+  const app = useAppState(t);
+  const {
+    state, dispatch, cvs, cc, ccDispatch,
+    brushLevel, setBrushLevel, brushSize, setBrushSize,
+    tool, setTool,
+    activeTab, setActiveTab,
+    showHelp, setShowHelp,
+    toast, showToast,
+    showNewCanvas, setShowNewCanvas,
+    locked,
+    mapMode, setMapMode,
+    hueAngle, setHueAngle, glazeTool, setGlazeTool, directCandidates, setDirectCandidates,
+    promptState,
+    colorLUT, displayW, displayH,
+    toggleLock, handleRandomize, handleUnlockAll, patternInfo,
+    requestFilename, handlePromptConfirm, handlePromptCancel,
+  } = app;
 
-  const [brushLevel, setBrushLevel] = useState(7);
-  const [brushSize, setBrushSize] = useState(12);
-  const [tool, setTool] = useState<ToolId>("brush");
-  const [saveScale, setSaveScale] = useState(1);
-  const [mobileTab, setMobileTab] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
-  const [showHelp, setShowHelp] = useState(false);
-  const [toast, setToast] = useState<{ message: string; type: "error" | "success" | "info" } | null>(null);
-  const [showNewCanvas, setShowNewCanvas] = useState(false);
-  const [loaded, setLoaded] = useState(false);
-
-  const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const showToast = useCallback((message: string, type: "error" | "success" | "info" = "info") => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-    setToast({ message, type });
-    toastTimerRef.current = setTimeout(() => { setToast(null); toastTimerRef.current = null; }, TOAST_DURATION);
-  }, []);
+  const hist = state.hist;
 
   const prvRef = useRef<HTMLCanvasElement | null>(null);
+  const glazePrvRef = useRef<HTMLCanvasElement | null>(null);
   const hexPrvRef = useRef<HTMLCanvasElement | null>(null);
   const srcWrapRef = useRef<HTMLDivElement | null>(null);
   const prvWrapRef = useRef<HTMLDivElement | null>(null);
+  const glazeWrapRef = useRef<HTMLDivElement | null>(null);
   const ariaLiveRef = useRef<HTMLDivElement | null>(null);
   const helpRef = useRef<HTMLDivElement | null>(null);
 
@@ -59,72 +76,42 @@ export default function App() {
     if (ariaLiveRef.current) ariaLiveRef.current.textContent = msg;
   }, []);
 
-  useEffect(() => {
-    const mq = window.matchMedia(`(max-width:${MOBILE_BREAKPOINT}px)`);
-    const h = (e: MediaQueryListEvent | MediaQueryList) => setIsMobile(e.matches);
-    h(mq); mq.addEventListener("change", h as (e: MediaQueryListEvent) => void);
-    return () => mq.removeEventListener("change", h as (e: MediaQueryListEvent) => void);
-  }, []);
-
-  // Restore state from IndexedDB on mount (showToast is stable via useCallback([]))
-  const loadedOnceRef = useRef(false);
-  useEffect(() => {
-    if (loadedOnceRef.current) return;
-    loadedOnceRef.current = true;
-    loadState().then(saved => {
-      if (saved) {
-        dispatch({ type: "load_image", w: saved.w, h: saved.h, data: saved.data });
-        for (let lv = 0; lv < 8; lv++) ccDispatch({ type: "set_color", lv, idx: saved.cc[lv] });
-      }
-    }).catch(() => showToast(t("toast_restore_failed"), "error")).finally(() => setLoaded(true));
-  }, [showToast, t]);
-
-  // Auto-save to IndexedDB on changes (debounced)
-  useEffect(() => {
-    if (!loaded) return;
-    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    saveTimerRef.current = setTimeout(() => {
-      saveState({ w: cvs.w, h: cvs.h, data: cvs.data, cc: [...cc], version: 1 }).catch(() => showToast(t("toast_autosave_failed"), "error"));
-    }, 1000);
-    return () => { if (saveTimerRef.current) clearTimeout(saveTimerRef.current); };
-  }, [cvs, cc, loaded, showToast, t]);
-
-  const hist = state.hist;
-  const colorLUT = useMemo(() => buildColorLUT(cc), [cc]);
-
-  const { displayW, displayH } = useMemo(() => {
-    const safeW = Math.max(1, cvs.w), safeH = Math.max(1, cvs.h);
-    const asp = safeW / safeH, mx = DISPLAY_MAX;
-    return {
-      displayW: asp >= 1 ? mx : Math.round(mx * asp),
-      displayH: asp >= 1 ? Math.round(mx / asp) : mx,
-    };
-  }, [cvs.w, cvs.h]);
-
   const sharedSchedCursorRef = useRef<(() => void) | null>(null);
 
   const panZoom = usePanZoom(cvs, displayW, sharedSchedCursorRef);
 
-  const drawing = useCanvasDrawing(
+  const drawing = useCanvasDrawing({
     cvs, displayW, displayH, dispatch, colorLUT, cc,
     brushLevel, brushSize, tool,
-    panZoom.zoom, panZoom.pan,
-    panZoom.panningRef, panZoom.spaceRef,
-    panZoom.zoomRef, panZoom.panRef,
-    panZoom.startPan, panZoom.movePan, panZoom.endPan,
+    zoom: panZoom.zoom, pan: panZoom.pan,
+    panningRef: panZoom.panningRef, spaceRef: panZoom.spaceRef,
+    zoomRef: panZoom.zoomRef, panRef: panZoom.panRef,
+    startPan: panZoom.startPan, movePan: panZoom.movePan, endPan: panZoom.endPan,
     prvRef,
-  );
+    setBrushLevel, announce, t,
+  });
+
+  const glazeDrawing = useGlazeDrawing({
+    cvs, displayW, displayH, dispatch, colorLUT,
+    hueAngle, setHueAngle, glazeTool, brushSize,
+    zoom: panZoom.zoom, pan: panZoom.pan,
+    panningRef: panZoom.panningRef, spaceRef: panZoom.spaceRef,
+    zoomRef: panZoom.zoomRef, panRef: panZoom.panRef,
+    startPan: panZoom.startPan, movePan: panZoom.movePan, endPan: panZoom.endPan,
+    prvRef: glazePrvRef,
+    announce, t, directCandidates,
+  });
 
   // Bridge schedCursorRef from drawing hook to shared ref used by panZoom
-  // Intentionally runs every render (no deps) to keep ref in sync
   useLayoutEffect(() => {
     sharedSchedCursorRef.current = drawing.schedCursorRef.current;
   });
 
-  // Cleanup on unmount
+  // Cleanup RAF on unmount
   useEffect(() => () => {
-    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     if (drawing.cursorRafRef.current) cancelAnimationFrame(drawing.cursorRafRef.current);
+    if (glazeDrawing.cursorRafRef.current) cancelAnimationFrame(glazeDrawing.cursorRafRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup-only effect, refs are stable
   }, []);
 
   const brushSizeRef = useSyncRef(brushSize);
@@ -133,34 +120,29 @@ export default function App() {
     dispatch, panZoom.setZoom, panZoom.setPan, showToast, announce, t,
   );
 
-  useKeyboardShortcuts(
-    setTool, setBrushLevel, setBrushSize,
-    dispatch, announce, panZoom.endPan, setShowHelp,
-    panZoom.setCursorMode, panZoom.spaceRef, panZoom.panningRef,
-    brushSizeRef, setShowNewCanvas, t,
-  );
-
   // Wheel listener (non-passive)
   useEffect(() => {
-    const s = srcWrapRef.current, p = prvWrapRef.current;
+    const s = srcWrapRef.current, p = prvWrapRef.current, g = glazeWrapRef.current;
     const opts: AddEventListenerOptions = { passive: false };
     if (s) s.addEventListener('wheel', panZoom.onWheel, opts);
     if (p) p.addEventListener('wheel', panZoom.onWheel, opts);
+    if (g) g.addEventListener('wheel', panZoom.onWheel, opts);
     return () => {
       if (s) s.removeEventListener('wheel', panZoom.onWheel, opts);
       if (p) p.removeEventListener('wheel', panZoom.onWheel, opts);
+      if (g) g.removeEventListener('wheel', panZoom.onWheel, opts);
     };
-  }, [panZoom.onWheel, isMobile, mobileTab]);
+  }, [panZoom.onWheel]);
 
   // Render buffer on state change
   useLayoutEffect(() => {
-    if (drawing.drawingRef.current) return;
+    if (drawing.drawingRef.current || glazeDrawing.drawingRef.current) return;
     const s = drawing.srcRef.current, p = prvRef.current, hp = hexPrvRef.current;
     if (!s && !p && !hp) return;
     let needReset = false;
     if (s && (s.width !== cvs.w || s.height !== cvs.h)) { s.width = cvs.w; s.height = cvs.h; needReset = true; }
     if (p && (p.width !== cvs.w || p.height !== cvs.h)) { p.width = cvs.w; p.height = cvs.h; needReset = true; }
-    if (needReset) drawing.imgCacheRef.current = { src: null, prv: null };
+    if (needReset) drawing.imgCacheRef.current = { src: null, prv: null, s32: null, p32: null };
     renderBuf(cvs.data, cvs.w, cvs.h, colorLUT, s, p || hp, drawing.imgCacheRef.current);
     if (hp) {
       if (hp.width !== cvs.w || hp.height !== cvs.h) { hp.width = cvs.w; hp.height = cvs.h; }
@@ -169,145 +151,52 @@ export default function App() {
         hctx.putImageData(drawing.imgCacheRef.current.prv, 0, 0);
       }
     }
-  }, [cvs, colorLUT, mobileTab]);
+    // Also render glaze tab canvas (may be null if tab not mounted yet)
+    renderGlazeCanvas();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable, renderGlazeCanvas captured via closure
+  }, [cvs, colorLUT, activeTab]);
 
-  const undo = useCallback(() => dispatch({ type: "undo" }), []);
-  const redo = useCallback(() => dispatch({ type: "redo" }), []);
+  const renderGlazeCanvas = useCallback(() => {
+    const gp = glazePrvRef.current;
+    if (!gp) return;
+    if (gp.width !== cvs.w || gp.height !== cvs.h) { gp.width = cvs.w; gp.height = cvs.h; glazeDrawing.imgCacheRef.current = { src: null, prv: null, s32: null, p32: null }; }
+    renderBuf(cvs.data, cvs.w, cvs.h, colorLUT, null, gp, glazeDrawing.imgCacheRef.current, undefined, cvs.colorMap);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- imgCacheRef is a stable ref
+  }, [cvs, colorLUT]);
 
-  const saveColor = useCallback((ref: React.RefObject<HTMLCanvasElement | null>, name: string) => {
-    const c = ref.current; if (!c) return;
-    if (saveScale === 1) {
-      const u = c.toDataURL("image/png");
-      if (!u || u === "data:,") { showToast(t("toast_image_gen_failed"), "error"); return; }
-      const a = document.createElement("a"); a.href = u; a.download = name; a.click();
-      return;
-    }
-    const outW = cvs.w * saveScale, outH = cvs.h * saveScale;
-    if (outW * outH > 16_000_000) {
-      showToast(t("toast_memory_warning", outW, outH), "info");
-    }
-    const sc = document.createElement("canvas"); sc.width = outW; sc.height = outH;
-    const ctx = sc.getContext("2d"); if (!ctx) return;
-    ctx.imageSmoothingEnabled = false; ctx.drawImage(c, 0, 0, sc.width, sc.height);
-    sc.toBlob(blob => {
-      if (!blob) { showToast(t("toast_image_gen_failed"), "error"); return; }
-      const u = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = u; a.download = name; a.click();
-      URL.revokeObjectURL(u);
-    }, "image/png");
-  }, [saveScale, cvs.w, cvs.h, showToast, t]);
+  useEffect(() => {
+    if (activeTab === 3) renderGlazeCanvas();
+  }, [activeTab, renderGlazeCanvas]);
 
-  const copyToClipboard = useCallback(() => {
-    const c = prvRef.current; if (!c) return;
-    c.toBlob(blob => {
-      if (!blob) return;
-      if (typeof ClipboardItem === "undefined") { showToast(t("toast_clipboard_unsupported"), "error"); return; }
-      navigator.clipboard.write([new ClipboardItem({ "image/png": blob })])
-        .then(() => showToast(t("toast_copied"), "success"))
-        .catch(() => showToast(t("toast_copy_failed"), "error"));
-    }, "image/png");
-  }, [showToast, t]);
+  const undo = useCallback(() => dispatch({ type: "undo" }), [dispatch]);
+  const redo = useCallback(() => dispatch({ type: "redo" }), [dispatch]);
 
-  const saveSVG = useCallback(() => {
-    const totalPx = cvs.w * cvs.h;
-    if (totalPx > 500_000) {
-      showToast(t("toast_svg_size_warning", cvs.w, cvs.h), "info");
-    }
-    const rects: { x: number; y: number; w: number; h: number; fill: string }[] = [];
-    for (let y = 0; y < cvs.h; y++) {
-      let x = 0;
-      while (x < cvs.w) {
-        const lv = cvs.data[y * cvs.w + x] & LEVEL_MASK; const rgb = colorLUT[lv];
-        let runLen = 1;
-        while (x + runLen < cvs.w) {
-          const nlv = cvs.data[y * cvs.w + x + runLen] & LEVEL_MASK; const nrgb = colorLUT[nlv];
-          if (nrgb[0] === rgb[0] && nrgb[1] === rgb[1] && nrgb[2] === rgb[2]) runLen++; else break;
-        }
-        rects.push({ x, y, w: runLen, h: 1, fill: `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` });
-        x += runLen;
-      }
-    }
-    rects.sort((a, b) => a.x - b.x || (a.fill < b.fill ? -1 : a.fill > b.fill ? 1 : 0) || a.y - b.y);
-    const merged: typeof rects = [];
-    for (let i = 0; i < rects.length; i++) {
-      const r = rects[i];
-      if (merged.length > 0) {
-        const prev = merged[merged.length - 1];
-        if (prev.x === r.x && prev.w === r.w && prev.fill === r.fill && r.y === prev.y + prev.h) {
-          prev.h += r.h;
-          continue;
-        }
-      }
-      merged.push({ ...r });
-    }
-    const BATCH = 1000;
-    const chunks: string[] = [];
-    chunks.push(`<svg xmlns="http://www.w3.org/2000/svg" width="${cvs.w}" height="${cvs.h}" shape-rendering="crispEdges">`);
-    for (let i = 0; i < merged.length; i += BATCH) {
-      let batch = "";
-      const end = Math.min(i + BATCH, merged.length);
-      for (let j = i; j < end; j++) {
-        const r = merged[j];
-        batch += `<rect x="${r.x}" y="${r.y}" width="${r.w}" height="${r.h}" fill="${r.fill}"/>`;
-      }
-      chunks.push(batch);
-    }
-    chunks.push("</svg>");
-    try {
-      const svgStr = chunks.join("");
-      const blob = new Blob([svgStr], { type: "image/svg+xml;charset=utf-8" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `chromalum_${timestamp()}.svg`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      showToast(t("toast_svg_gen_failed"), "error");
-    }
-  }, [cvs, colorLUT, showToast, t]);
+  const { saveColor, saveGlaze } = useExport(cvs, colorLUT, showToast, t);
 
-  const exportPalette = useCallback(() => {
-    const json = JSON.stringify({ cc: [...cc], version: 1 });
-    const blob = new Blob([json], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `chromalum_palette_${timestamp()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast(t("toast_palette_saved"), "success");
-  }, [cc, showToast, t]);
+  const handleKbSave = useCallback(() => {
+    saveColor(prvRef, `chromalum_color_${Date.now()}.png`);
+  }, [saveColor, prvRef]);
 
-  const importPalette = useCallback((file: File) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      try {
-        const obj = JSON.parse(reader.result as string);
-        // cc values are indices into LEVEL_CANDIDATES; buildColorLUT uses % alts.length so any non-negative integer is safe
-        if (!obj || obj.version !== 1 || !Array.isArray(obj.cc) || obj.cc.length !== 8
-          || !obj.cc.every((v: unknown) => typeof v === "number" && Number.isInteger(v) && v >= 0)) {
-          showToast(t("toast_palette_format_invalid"), "error");
-          return;
-        }
-        for (let lv = 0; lv < 8; lv++) {
-          ccDispatch({ type: "set_color", lv, idx: obj.cc[lv] });
-        }
-        showToast(t("toast_palette_loaded"), "success");
-      } catch {
-        showToast(t("toast_palette_load_failed"), "error");
-      }
-    };
-    reader.onerror = () => showToast(t("toast_palette_load_failed"), "error");
-    reader.readAsText(file);
-  }, [showToast, t, ccDispatch]);
+  const handleKbSaveAs = useCallback(() => {
+    requestFilename(`chromalum_color_${Date.now()}`).then(name => {
+      if (name) saveColor(prvRef, name.endsWith(".png") ? name : name + ".png");
+    });
+  }, [saveColor, prvRef, requestFilename]);
+
+  useKeyboardShortcuts(
+    setTool, setBrushLevel, setBrushSize,
+    dispatch, announce, panZoom.endPan, setShowHelp,
+    panZoom.setCursorMode, panZoom.spaceRef, panZoom.panningRef,
+    brushSizeRef, setShowNewCanvas, t,
+    panZoom.setZoom, handleKbSave, handleKbSaveAs,
+  );
 
   const handleClear = useCallback(() => {
     if (hist[0] !== cvs.w * cvs.h) {
       dispatch({ type: "clear" });
       showToast(t("toast_cleared"), "info");
     }
-  }, [hist, cvs.w, cvs.h, showToast, t]);
+  }, [hist, cvs.w, cvs.h, dispatch, showToast, t]);
 
   const canvasTransform = useMemo(() => ({
     imageRendering: "pixelated" as const,
@@ -324,9 +213,21 @@ export default function App() {
         if (typeof el.hasPointerCapture === 'function' && el.hasPointerCapture(e.pointerId)) {
           drawing.clearCursor(); return;
         }
-      } catch {}
+      } catch (err) { console.warn("CHROMALUM: pointerCapture check failed:", err); }
     }
     drawing.onUp(); drawing.clearCursor();
+  }, [drawing]);
+
+  const onPointerLeavePrv = useCallback((e: React.PointerEvent) => {
+    const el = prvRef.current;
+    if (el && drawing.drawingRef.current) {
+      try {
+        if (typeof el.hasPointerCapture === 'function' && el.hasPointerCapture(e.pointerId)) {
+          drawing.clearCursorPrv(); return;
+        }
+      } catch (err) { console.warn("CHROMALUM: pointerCapture check failed:", err); }
+    }
+    drawing.onUp(); drawing.clearCursorPrv();
   }, [drawing]);
 
   const schedCursorFn = useCallback(() => {
@@ -335,7 +236,7 @@ export default function App() {
 
   const toolState = useMemo(() => ({
     tool, setTool, brushLevel, setBrushLevel, brushSize, setBrushSize,
-  }), [tool, brushLevel, brushSize]);
+  }), [tool, setTool, brushLevel, setBrushLevel, brushSize, setBrushSize]);
 
   const viewState = useMemo(() => ({
     zoom: panZoom.zoom, setZoom: panZoom.setZoom, setPan: panZoom.setPan,
@@ -343,110 +244,134 @@ export default function App() {
   }), [panZoom.zoom, panZoom.setZoom, panZoom.setPan, displayW, displayH, canvasTransform, canvasCursor]);
 
   const saveActionsObj = useMemo(() => ({
-    saveColor, saveSVG, copyToClipboard, exportPalette, importPalette, saveScale, setSaveScale,
-  }), [saveColor, saveSVG, copyToClipboard, exportPalette, importPalette, saveScale]);
+    saveColor, saveGlaze,
+  }), [saveColor, saveGlaze]);
 
-  const handleNewCanvas = useCallback(() => setShowNewCanvas(true), []);
+  const handleNewCanvas = useCallback(() => setShowNewCanvas(true), [setShowNewCanvas]);
   const handleNewCanvasConfirm = useCallback((w: number, h: number) => {
+    if (state.undoStack.length > 0) {
+      showToast(t("toast_undo_history_cleared"), "info");
+    }
     dispatch({ type: "new_canvas", w, h });
     panZoom.setZoom(1);
     panZoom.setPan({ x: 0, y: 0 });
     setShowNewCanvas(false);
     showToast(t("toast_new_canvas_created", w, h), "success");
-  }, [panZoom.setZoom, panZoom.setPan, showToast, t]);
-  const handleNewCanvasCancel = useCallback(() => setShowNewCanvas(false), []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom setters are stable
+  }, [state.undoStack.length, panZoom.setZoom, panZoom.setPan, dispatch, setShowNewCanvas, showToast, t]);
+  const handleNewCanvasCancel = useCallback(() => setShowNewCanvas(false), [setShowNewCanvas]);
 
+  // Stable handler objects: use refs to avoid recreating on every render
+  const panZoomHandlersRef = useRef({
+    setZoom: panZoom.setZoom, setPan: panZoom.setPan, schedCursorRef: sharedSchedCursorRef,
+    spaceRef: panZoom.spaceRef, panningRef: panZoom.panningRef,
+    startPan: panZoom.startPan, movePan: panZoom.movePan, endPan: panZoom.endPan,
+  });
+  panZoomHandlersRef.current.startPan = panZoom.startPan;
+  panZoomHandlersRef.current.movePan = panZoom.movePan;
+  panZoomHandlersRef.current.endPan = panZoom.endPan;
+  const panZoomHandlers = panZoomHandlersRef.current;
 
-  const hexPanel = (
-    <div style={{ textAlign: "center" }}>
-      <div style={{ fontSize: 10, color: "#6a6a8a" }}>{t("label_colorized")}</div>
-      <div style={{ border: "1px solid #2a2a40", borderRadius: 4, overflow: "hidden", display: "inline-block", width: displayW, height: displayH }}>
-        <canvas ref={hexPrvRef}
-          style={{ width: displayW, height: displayH, display: "block", imageRendering: "pixelated" }} />
-      </div>
-      <div style={{ fontSize: 10, color: "#4a4a6a", marginTop: 8 }}>{t("hex_title")}</div>
-      <HexDiag cc={cc} dispatch={ccDispatch} hist={hist} total={cvs.w * cvs.h} />
-    </div>
-  );
+  const drawingHandlersRef = useRef({
+    onDownPrv: drawing.onDownPrv, onMovePrv: drawing.onMovePrv, onUp: drawing.onUp,
+    onPointerLeavePrv, trackCursorPrv: drawing.trackCursorPrv, clearCursorPrv: drawing.clearCursorPrv,
+  });
+  drawingHandlersRef.current.onDownPrv = drawing.onDownPrv;
+  drawingHandlersRef.current.onMovePrv = drawing.onMovePrv;
+  drawingHandlersRef.current.onUp = drawing.onUp;
+  drawingHandlersRef.current.onPointerLeavePrv = onPointerLeavePrv;
+  drawingHandlersRef.current.trackCursorPrv = drawing.trackCursorPrv;
+  drawingHandlersRef.current.clearCursorPrv = drawing.clearCursorPrv;
+  const drawingHandlers = drawingHandlersRef.current;
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a12", color: "#c8c8d8", fontFamily: "monospace", padding: 16 }}
+    <div style={S_ROOT}
       onDragEnter={fileDrop.onDragEnter} onDragOver={fileDrop.onDragOver} onDragLeave={fileDrop.onDragLeave} onDrop={fileDrop.onDrop}>
-      <style>{`
-        button:focus-visible{outline:2px solid #6080ff;outline-offset:2px;}
-        @keyframes toast-in{from{opacity:0;transform:translateX(-50%) translateY(10px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
-      `}</style>
-
-      <div ref={ariaLiveRef} aria-live="polite" aria-atomic="true"
-        style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }} />
+      <div ref={ariaLiveRef} role="status" aria-live="polite" aria-atomic="true" style={S_SR_ONLY} />
 
       {toast && <Toast message={toast.message} type={toast.type} />}
 
       <NewCanvasModal open={showNewCanvas} onConfirm={handleNewCanvasConfirm} onCancel={handleNewCanvasCancel} />
+      <PromptModal open={!!promptState} title={t("prompt_custom_filename")} defaultValue={promptState?.defaultValue ?? ""} onConfirm={handlePromptConfirm} onCancel={handlePromptCancel} />
 
-      {fileDrop.dragging && <div style={{ position: "fixed", inset: 0, background: "rgba(64,128,255,.15)", border: "3px dashed #6080ff", zIndex: 999, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" }}>
-        <div style={{ fontSize: 20, color: "#80a0ff", fontWeight: 700 }}>{t("drop_image")}</div>
+      {fileDrop.dragging && <div style={S_DROP_OVERLAY}>
+        <div style={S_DROP_TEXT}>{t("drop_image")}</div>
       </div>}
 
       <HelpModal showHelp={showHelp} setShowHelp={setShowHelp} helpRef={helpRef} />
 
-      <div style={{ textAlign: "center", marginBottom: 12 }}>
-        <h1 style={{ fontSize: 20, fontWeight: 700, margin: 0, background: "linear-gradient(90deg,#ff4060,#ff8040,#ffe040,#40ff60,#40e0ff,#8040ff)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: 2 }}>CHROMALUM</h1>
-        <div style={{ fontSize: 9, color: "#3a3a5a", marginTop: 2 }}>
+      <div style={S_HEADER}>
+        <h1 style={S_TITLE}>CHROMALUM</h1>
+        <div style={S_STATUS}>
           {cvs.w}&times;{cvs.h} | {Math.round(panZoom.zoom * 100)}% |{" "}
-          <span style={{ cursor: "pointer", color: "#5a5a8a", textDecoration: "underline" }} onClick={() => setShowHelp(true)}>?{t("help_link")}</span>
+          <span style={S_HELP_LINK} onClick={() => setShowHelp(true)}>?{t("help_link")}</span>
           {" | "}<LanguageSwitcher />
         </div>
       </div>
 
-      {isMobile && <div style={{ display: "flex", justifyContent: "center", gap: 2, marginBottom: 8 }}>
-        {["Source", "Color", "Hex"].map((tab, i) =>
-          <button key={tab} onClick={() => setMobileTab(i)} style={mobileTab === i ? S_TAB_ACTIVE : S_TAB_INACTIVE}>{tab}</button>)}
-      </div>}
+      <div role="tablist" aria-label={t("tablist_label")} style={S_TABLIST}>
+        {TAB_KEYS.map((key, i) =>
+          <button key={key} role="tab" aria-selected={activeTab === i} aria-controls={`tabpanel-${i}`}
+            onClick={() => setActiveTab(i)} style={activeTab === i ? S_TAB_ACTIVE : S_TAB_INACTIVE}>{t(key)}</button>)}
+      </div>
 
-      {isMobile ? (
-        <div style={{ display: "flex", justifyContent: "center" }}>
-          {mobileTab === 0 && <SourcePanel
+      <div style={S_TAB_CENTER}>
+        {activeTab === 0 && <div id="tabpanel-0" role="tabpanel">
+          <SourcePanel
             srcRef={drawing.srcRef} curRef={drawing.curRef} srcWrapRef={srcWrapRef} statusRef={drawing.statusRef}
             toolState={toolState} viewState={viewState} saveActions={saveActionsObj}
             colorLUT={colorLUT} state={state}
             onDown={drawing.onDown} onMove={drawing.onMove} onUp={drawing.onUp} onPointerLeave={onPointerLeave}
             undo={undo} redo={redo} handleClear={handleClear} loadImg={fileDrop.loadImg}
             announce={announce} schedCursor={schedCursorFn} prvRef={prvRef}
-            onNewCanvas={() => setShowNewCanvas(true)}
-          />}
-          {mobileTab === 1 && <ColorPanel
-            prvRef={prvRef} prvWrapRef={prvWrapRef} displayW={displayW} displayH={displayH}
-            canvasTransform={canvasTransform} cc={cc} ccDispatch={ccDispatch} brushLevel={brushLevel}
-            setZoom={panZoom.setZoom} setPan={panZoom.setPan} schedCursorRef={sharedSchedCursorRef}
-            spaceRef={panZoom.spaceRef} panningRef={panZoom.panningRef}
-            startPan={panZoom.startPan} movePan={panZoom.movePan} endPan={panZoom.endPan}
-          />}
-          {mobileTab === 2 && hexPanel}
-        </div>
-      ) : (
-        <>
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", flexWrap: "wrap" }}>
-            <SourcePanel
-              srcRef={drawing.srcRef} curRef={drawing.curRef} srcWrapRef={srcWrapRef} statusRef={drawing.statusRef}
-              toolState={toolState} viewState={viewState} saveActions={saveActionsObj}
-              colorLUT={colorLUT} state={state}
-              onDown={drawing.onDown} onMove={drawing.onMove} onUp={drawing.onUp} onPointerLeave={onPointerLeave}
-              undo={undo} redo={redo} handleClear={handleClear} loadImg={fileDrop.loadImg}
-              announce={announce} schedCursor={schedCursorFn} prvRef={prvRef}
-              onNewCanvas={() => setShowNewCanvas(true)}
-            />
-            <ColorPanel
-              prvRef={prvRef} prvWrapRef={prvWrapRef} displayW={displayW} displayH={displayH}
-              canvasTransform={canvasTransform} cc={cc} ccDispatch={ccDispatch} brushLevel={brushLevel}
-              setZoom={panZoom.setZoom} setPan={panZoom.setPan} schedCursorRef={sharedSchedCursorRef}
-              spaceRef={panZoom.spaceRef} panningRef={panZoom.panningRef}
-              startPan={panZoom.startPan} movePan={panZoom.movePan} endPan={panZoom.endPan}
-            />
-          </div>
-          <div style={{ marginTop: 16 }}>{hexPanel}</div>
-        </>
-      )}
+            onNewCanvas={handleNewCanvas}
+            requestFilename={requestFilename}
+          />
+        </div>}
+        {activeTab === 1 && <div id="tabpanel-1" role="tabpanel">
+          <ColorPanel
+            prvRef={prvRef} prvCurRef={drawing.prvCurRef} prvWrapRef={prvWrapRef}
+            displayW={displayW} displayH={displayH}
+            canvasTransform={canvasTransform} canvasCursor={canvasCursor}
+            cc={cc} ccDispatch={ccDispatch} brushLevel={brushLevel} setBrushLevel={setBrushLevel} tool={tool}
+            panZoom={panZoomHandlers} drawing={drawingHandlers}
+          />
+        </div>}
+        {activeTab === 2 && <div id="tabpanel-2" role="tabpanel">
+          <HexTab
+            hexPrvRef={hexPrvRef} displayW={displayW} displayH={displayH}
+            cc={cc} ccDispatch={ccDispatch} hist={hist} total={cvs.w * cvs.h}
+            locked={locked} toggleLock={toggleLock}
+            handleRandomize={handleRandomize} handleUnlockAll={handleUnlockAll}
+            patternInfo={patternInfo} t={t}
+          />
+        </div>}
+        {activeTab === 3 && <div id="tabpanel-3" role="tabpanel">
+          <GlazePanel
+            prvRef={glazePrvRef} prvWrapRef={glazeWrapRef}
+            displayW={displayW} displayH={displayH}
+            canvasTransform={canvasTransform} canvasCursor={panZoom.cursorMode === "grabbing" ? "grabbing" : panZoom.cursorMode === "grab" ? "grab" : glazeTool === "glaze_fill" ? "crosshair" : "none"}
+            cvs={cvs} dispatch={dispatch}
+            panZoom={panZoomHandlers} glazeDrawing={glazeDrawing}
+            hueAngle={hueAngle} setHueAngle={setHueAngle}
+            glazeTool={glazeTool} setGlazeTool={setGlazeTool}
+            brushSize={brushSize} setBrushSize={setBrushSize}
+            announce={announce} showToast={showToast}
+            undo={undo} redo={redo} zoom={panZoom.zoom}
+            directCandidates={directCandidates} setDirectCandidates={setDirectCandidates}
+          />
+        </div>}
+        {activeTab === 4 && <div id="tabpanel-4" role="tabpanel">
+          <StatsPanel hist={hist} total={cvs.w * cvs.h} colorLUT={colorLUT}
+            brushLevel={brushLevel} setBrushLevel={setBrushLevel} cvs={cvs}
+            displayW={displayW} displayH={displayH}
+            mapMode={mapMode} setMapMode={setMapMode} />
+        </div>}
+        {activeTab === 5 && <div id="tabpanel-5" role="tabpanel" style={{ width: "100%" }}>
+          <GalleryPanel cvs={cvs} cc={cc} ccDispatch={ccDispatch}
+            locked={locked} hist={hist} showToast={showToast} />
+        </div>}
+      </div>
     </div>
   );
 }

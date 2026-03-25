@@ -17,7 +17,7 @@ export function useFileDrop(
   setPan: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>,
   showToast: (message: string, type: "error" | "success" | "info") => void,
   announce: (msg: string) => void,
-  t: (key: string, ...params: (string | number)[]) => string,
+  t: import("../i18n").TranslationFn,
 ): FileDropResult {
   const [dragging, setDragging] = useState(false);
   const dragCountRef = useRef(0);
@@ -60,6 +60,9 @@ export function useFileDrop(
 
   useEffect(() => {
     const f = (e: ClipboardEvent) => {
+      // Skip paste when focus is inside an input, textarea, or contenteditable
+      const active = document.activeElement;
+      if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as HTMLElement).isContentEditable)) return;
       const it = e.clipboardData ? e.clipboardData.items : null; if (!it) return;
       for (let i = 0; i < it.length; i++) {
         if (it[i].type.startsWith("image/")) { const f = it[i].getAsFile(); if (f) { e.preventDefault(); loadImg(f); } break; }

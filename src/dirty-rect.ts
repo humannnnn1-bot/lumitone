@@ -20,9 +20,9 @@ export function shapeBBox(x0: number, y0: number, x1: number, y1: number, r: num
 export function unionBBox(a: DirtyRect | null, b: DirtyRect | null): DirtyRect | null {
   if (!a) return b; if (!b) return a;
   const x = Math.min(a.x, b.x), y = Math.min(a.y, b.y);
-  return { x, y,
-    w: Math.max(a.x + a.w, b.x + b.w) - x,
-    h: Math.max(a.y + a.h, b.y + b.h) - y };
+  const r = Math.max(a.x + a.w, b.x + b.w);
+  const bot = Math.max(a.y + a.h, b.y + b.h);
+  return { x, y, w: r - x, h: bot - y };
 }
 
 /** ブラシ/消しゴムストロークの dirty rect */
@@ -35,6 +35,21 @@ export function brushBBox(pts: [number, number][], r: number, w: number, h: numb
   minX = Math.max(0, minX); minY = Math.max(0, minY);
   maxX = Math.min(w - 1, maxX); maxY = Math.min(h - 1, maxY);
   if (maxX < minX || maxY < minY) return null;
+  return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
+}
+
+/** Compute dirty rect from an array of changed pixel indices. */
+export function dirtyFromChanged(changed: Uint32Array, w: number, h: number): DirtyRect | null {
+  if (changed.length === 0) return null;
+  let minX = w, minY = h, maxX = 0, maxY = 0;
+  for (let i = 0; i < changed.length; i++) {
+    const idx = changed[i];
+    const x = idx % w, y = (idx / w) | 0;
+    if (x < minX) minX = x;
+    if (x > maxX) maxX = x;
+    if (y < minY) minY = y;
+    if (y > maxY) maxY = y;
+  }
   return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
 }
 

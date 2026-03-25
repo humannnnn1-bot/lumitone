@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react";
 import { ja } from "./ja";
 import { en } from "./en";
-import type { Language, Translations } from "./types";
+import type { Language, Translations, TranslationKey, TranslationFn } from "./types";
 
 const dictionaries: Record<Language, Translations> = { ja, en };
 const STORAGE_KEY = "chromalum_lang";
@@ -15,10 +15,10 @@ function getInitialLang(): Language {
 interface LanguageContextValue {
   lang: Language;
   setLang: (lang: Language) => void;
-  t: (key: string, ...params: (string | number)[]) => string;
+  t: TranslationFn;
 }
 
-const LanguageContext = createContext<LanguageContextValue>(null!);
+const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Language>(getInitialLang);
@@ -31,9 +31,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = lang;
-  }, []);
+  }, [lang]);
 
-  const t = useCallback((key: string, ...params: (string | number)[]): string => {
+  const t = useCallback((key: TranslationKey | (string & {}), ...params: (string | number)[]): string => {
     let str = dictionaries[lang][key] ?? key;
     for (let i = 0; i < params.length; i++) {
       str = str.replace(`{${i}}`, String(params[i]));
@@ -48,6 +48,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 }
 
-export function useTranslation() {
-  return useContext(LanguageContext);
+export function useTranslation(): LanguageContextValue {
+  const ctx = useContext(LanguageContext);
+  if (!ctx) throw new Error("useTranslation must be used within a LanguageProvider");
+  return ctx;
 }

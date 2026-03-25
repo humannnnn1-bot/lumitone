@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════
    COLOR ENGINE
-   BT.601 輝度係数による8レベル純色マッピング
+   8-level pure-color mapping using BT.601 luminance coefficients
    ═══════════════════════════════════════════ */
 export const LUMA_R = 0.299, LUMA_G = 0.587, LUMA_B = 0.114;
 export const lum = (r: number, g: number, b: number): number => LUMA_R * r + LUMA_G * g + LUMA_B * b;
@@ -25,6 +25,13 @@ export function hue2rgb(h: number): [number, number, number] {
   ] as [number, number, number][])[s];
 }
 
+/**
+ * Convert a pure RGB color to its hue angle (0–360).
+ * PRECONDITION: the color must be "pure" — exactly one channel is 255
+ * and exactly one channel is 0. For non-pure colors (e.g. grays or
+ * desaturated values) the result is 0, which is intentional since
+ * this function is only used via findPure() / LEVEL_CANDIDATES.
+ */
 export function rgb2hue(r: number, g: number, b: number): number {
   if (r===255 && b===0) return (g/255)*60;
   if (g===255 && b===0) return 120 - (r/255)*60;
@@ -35,6 +42,12 @@ export function rgb2hue(r: number, g: number, b: number): number {
   return 0;
 }
 
+/**
+ * Minimum RGB Manhattan distance (|Δr|+|Δg|+|Δb|) to treat two
+ * candidates as distinct colors. Rounding in solve() can produce
+ * nearly-identical colors from different formulas; 8 filters those
+ * out while keeping perceptually different hues.
+ */
 const PURE_DUPL_THRESHOLD = 8;
 
 export interface ColorCandidate {
@@ -66,16 +79,19 @@ function findPure(target: number): ColorCandidate[] {
   return results.sort((a, b) => a.angle - b.angle);
 }
 
+const CANONICAL_COLORS: [number, number, number][] = [[0,0,0],[0,0,255],[255,0,0],[255,0,255],[0,255,0],[0,255,255],[255,255,0],[255,255,255]];
+
 export const LEVEL_CANDIDATES: ColorCandidate[][] = LEVEL_INFO.map((_, i) => {
   if (i === 0) return [{ angle: -1, rgb: [0,0,0] as [number, number, number], hueLabel: "—" }];
   if (i === 7) return [{ angle: -1, rgb: [255,255,255] as [number, number, number], hueLabel: "—" }];
   const a = findPure(EIGHT_LEVELS[i]);
-  if (a.length) return a;
-  console.warn(`CHROMALUM: Level ${i} に純色候補が見つかりません`);
-  return [{ angle: -1, rgb: [128,128,128] as [number, number, number], hueLabel: "?" }];
+  if (!a.length) {
+    // Fallback for levels with no pure-color solution (should not occur with BT.601 coefficients)
+    return [{ angle: -1, rgb: [128,128,128] as [number, number, number], hueLabel: "?" }];
+  }
+  // Sort by hue angle ascending (0°→360°)
+  return a.sort((x, y) => x.angle - y.angle);
 });
-
-const CANONICAL_COLORS: [number, number, number][] = [[0,0,0],[0,0,255],[255,0,0],[255,0,255],[0,255,0],[0,255,255],[255,255,0],[255,255,255]];
 
 export const DEFAULT_CC: number[] = LEVEL_CANDIDATES.map((alts, i) => {
   let best = 0, bestDist = Infinity;
@@ -104,4 +120,18 @@ export function buildColorLUT(cc: number[]): [number, number, number][] {
     const ci = alts.length > 0 ? ((raw % alts.length) + alts.length) % alts.length : 0;
     return alts[ci]?.rgb ?? [128, 128, 128];
   });
+}
+
+/** Find the candidate index in LEVEL_CANDIDATES[level] closest to the given hue angle. */
+export function findClosestCandidate(level: number, hueAngle: number): number {
+  const candidates = LEVEL_CANDIDATES[level];
+  if (candidates.length <= 1) return 0;
+  if (candidates[0].angle < 0) return 0; // achromatic (black/white)
+  let best = 0, bestDist = Infinity;
+  for (let i = 0; i < candidates.length; i++) {
+    const diff = Math.abs(candidates[i].angle - hueAngle);
+    const d = Math.min(diff, 360 - diff);
+    if (d < bestDist) { bestDist = d; best = i; }
+  }
+  return best;
 }
