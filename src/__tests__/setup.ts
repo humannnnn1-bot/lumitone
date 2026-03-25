@@ -61,6 +61,7 @@ if (typeof globalThis.PointerEvent === "undefined" && typeof globalThis.MouseEve
 }
 
 /* HTMLCanvasElement.prototype.getContext mock */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- checking custom __mocked flag on prototype
 if (typeof HTMLCanvasElement !== "undefined" && !(HTMLCanvasElement.prototype.getContext as any).__mocked) {
   const origGetContext = HTMLCanvasElement.prototype.getContext;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- mock override

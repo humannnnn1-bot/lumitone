@@ -129,7 +129,6 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode): PixelMaps {
     setMaps(computePixelMapsSync(cvs, mode));
     return;
 
-    // eslint-disable-next-line no-unreachable -- Worker path kept for future use with large canvases
     // Lightweight modes: compute synchronously (no worker overhead needed)
     if (mode === "luminance" || mode === "colorlum") {
       setMaps(computePixelMapsSync(cvs, mode));

@@ -106,7 +106,6 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
         worker.postMessage(req, [dataCopy.buffer as ArrayBuffer]);
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- getWorker reads from refs
     [],
   );
 
@@ -163,7 +162,6 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
         worker.postMessage(req, [dataCopy.buffer as ArrayBuffer, cmCopy.buffer as ArrayBuffer]);
       });
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- getWorker reads from refs
     [],
   );
 
