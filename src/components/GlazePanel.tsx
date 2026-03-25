@@ -6,7 +6,7 @@ import { S_BTN, S_BTN_ACTIVE } from "../styles";
 import type { PanZoomHandlers, CanvasAction, CanvasData } from "../types";
 import type { GlazeDrawingResult } from "../hooks/useGlazeDrawing";
 import { useTranslation } from "../i18n";
-import { C, Z, SP, FS, R, SHADOW } from "../tokens";
+import { C, Z, SP, FS, R, SHADOW, HUE_GRADIENT } from "../tokens";
 
 interface GlazePanelProps {
   prvRef: React.RefObject<HTMLCanvasElement | null>;
@@ -37,7 +37,7 @@ interface GlazePanelProps {
 const S_HUE_WRAP: React.CSSProperties = { position: "relative", width: "100%", paddingTop: SP.xl };
 const S_HUE_TRACK: React.CSSProperties = {
   width: "100%", height: 16, borderRadius: R.lg,
-  background: "linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)",
+  background: HUE_GRADIENT,
   cursor: "pointer", border: `1px solid ${C.border}`,
 };
 const S_HUE_INPUT: React.CSSProperties = { position: "absolute", top: 8, left: 0, width: "100%", height: 16, opacity: 0, cursor: "pointer" };

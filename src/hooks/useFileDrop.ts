@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { MAX_IMAGE_SIZE } from "../constants";
 import { LUMA_R, LUMA_G, LUMA_B, GRAY_LUT } from "../color-engine";
+import { useSyncRef } from "./useSyncRef";
 
 export interface FileDropResult {
   dragging: boolean;
@@ -58,6 +59,8 @@ export function useFileDrop(
     img.src = url;
   }, [showToast, dispatch, setZoom, setPan, t]);
 
+  const loadImgRef = useSyncRef(loadImg);
+
   useEffect(() => {
     const f = (e: ClipboardEvent) => {
       // Skip paste when focus is inside an input, textarea, or contenteditable
@@ -65,12 +68,12 @@ export function useFileDrop(
       if (active && (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || (active as HTMLElement).isContentEditable)) return;
       const it = e.clipboardData ? e.clipboardData.items : null; if (!it) return;
       for (let i = 0; i < it.length; i++) {
-        if (it[i].type.startsWith("image/")) { const f = it[i].getAsFile(); if (f) { e.preventDefault(); loadImg(f); } break; }
+        if (it[i].type.startsWith("image/")) { const f = it[i].getAsFile(); if (f) { e.preventDefault(); loadImgRef.current(f); } break; }
       }
     };
     window.addEventListener("paste", f);
     return () => window.removeEventListener("paste", f);
-  }, [loadImg]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const onDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault(); dragCountRef.current++; setDragging(true); announce(t("drop_announce"));

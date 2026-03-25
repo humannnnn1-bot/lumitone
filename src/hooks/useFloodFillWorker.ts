@@ -12,6 +12,10 @@ import type { FloodFillWorkerRequest, FloodFillWorkerResponse } from "../workers
 // @ts-ignore — Vite worker import
 import FloodFillWorker from "../workers/flood-fill.worker?worker";
 
+const FILL_TIMEOUT_MS = 10_000;
+/** Below this pixel count, use sync fill to avoid Worker overhead */
+const SYNC_THRESHOLD = 10_000;
+
 export interface CanvasFillResult {
   data: Uint8Array;
   changed: Uint32Array;
@@ -55,9 +59,9 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
 
   const requestCanvasFill = useCallback(
     (buf: Uint8Array, sx: number, sy: number, newVal: number, w: number, h: number): Promise<CanvasFillResult> => {
-      const worker = getWorker();
+      // Use sync fallback for small canvases or when Worker unavailable
+      const worker = w * h < SYNC_THRESHOLD ? null : getWorker();
       if (!worker) {
-        // Synchronous fallback
         const result = floodFill(buf, sx, sy, newVal, w, h);
         return Promise.resolve({
           data: buf,
@@ -70,17 +74,35 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
       const dataCopy = new Uint8Array(buf);
       const req: FloodFillWorkerRequest = { id, kind: "canvas", data: dataCopy, sx, sy, newVal, w, h };
 
-      return new Promise<CanvasFillResult>((resolve) => {
+      return new Promise<CanvasFillResult>((resolve, reject) => {
+        const cleanup = () => {
+          clearTimeout(timeout);
+          worker.removeEventListener("message", handler);
+          worker.removeEventListener("error", errHandler);
+        };
+
+        const timeout = setTimeout(() => {
+          cleanup();
+          reject(new Error("Flood fill timed out"));
+        }, FILL_TIMEOUT_MS);
+
+        const errHandler = (ev: ErrorEvent) => {
+          cleanup();
+          reject(new Error(ev.message || "Worker error"));
+        };
+
         const handler = (e: MessageEvent<FloodFillWorkerResponse>) => {
           if (e.data.id !== id) return;
-          worker.removeEventListener("message", handler);
+          cleanup();
           resolve({
             data: e.data.data,
             changed: e.data.changed,
             truncated: e.data.truncated,
           });
         };
+
         worker.addEventListener("message", handler);
+        worker.addEventListener("error", errHandler);
         worker.postMessage(req, [dataCopy.buffer as ArrayBuffer]);
       });
     },
@@ -90,9 +112,9 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
 
   const requestGlazeFill = useCallback(
     (data: Uint8Array, colorMap: Uint8Array, sx: number, sy: number, newCmVal: number, w: number, h: number): Promise<GlazeFillResult> => {
-      const worker = getWorker();
+      // Use sync fallback for small canvases or when Worker unavailable
+      const worker = w * h < SYNC_THRESHOLD ? null : getWorker();
       if (!worker) {
-        // Synchronous fallback
         const result = glazeFloodFill(data, colorMap, sx, sy, newCmVal, w, h);
         return Promise.resolve({
           colorMap,
@@ -109,17 +131,35 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
         newVal: 0, w, h, colorMap: cmCopy, newCmVal,
       };
 
-      return new Promise<GlazeFillResult>((resolve) => {
+      return new Promise<GlazeFillResult>((resolve, reject) => {
+        const cleanup = () => {
+          clearTimeout(timeout);
+          worker.removeEventListener("message", handler);
+          worker.removeEventListener("error", errHandler);
+        };
+
+        const timeout = setTimeout(() => {
+          cleanup();
+          reject(new Error("Glaze fill timed out"));
+        }, FILL_TIMEOUT_MS);
+
+        const errHandler = (ev: ErrorEvent) => {
+          cleanup();
+          reject(new Error(ev.message || "Worker error"));
+        };
+
         const handler = (e: MessageEvent<FloodFillWorkerResponse>) => {
           if (e.data.id !== id) return;
-          worker.removeEventListener("message", handler);
+          cleanup();
           resolve({
             colorMap: e.data.colorMap!,
             changed: e.data.changed,
             truncated: e.data.truncated,
           });
         };
+
         worker.addEventListener("message", handler);
+        worker.addEventListener("error", errHandler);
         worker.postMessage(req, [dataCopy.buffer as ArrayBuffer, cmCopy.buffer as ArrayBuffer]);
       });
     },

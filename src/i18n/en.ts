@@ -133,6 +133,7 @@ export const en = {
   btn_unlock_all: "\uD83D\uDD13Unlock all",
   prompt_custom_filename: "Enter filename:",
   toast_fill_truncated: "Fill was truncated due to memory limits",
+  toast_fill_error: "Fill operation failed",
   toast_cleared: "Cleared (Ctrl+Z to undo)",
   toast_new_canvas_created: "Created new {0}×{1} canvas",
   toast_undo_history_cleared: "Undo history cleared",
@@ -150,14 +151,21 @@ export const en = {
   // Tablist
   tablist_label: "Main navigation",
 
-  // Mobile tabs
+  // Tabs
   tab_source: "Source",
   tab_color: "Color",
   tab_hex: "Diagram",
-
-  // Mobile tabs
-  tab_stats: "Analyze",
+  tab_glaze: "Glaze",
+  tab_stats: "Analytics",
   tab_gallery: "Gallery",
+
+  // Short tab labels (mobile)
+  tab_source_short: "Source",
+  tab_color_short: "Color",
+  tab_hex_short: "Diagram",
+  tab_glaze_short: "Glaze",
+  tab_stats_short: "Analytics",
+  tab_gallery_short: "Gallery",
 
   // Stats panel
   stats_title: "ANALYZE",
@@ -165,7 +173,7 @@ export const en = {
   stats_unused: "Unused",
   stats_used_levels: "Used: {0}/8 levels",
   stats_total_pixels: "Total: {0} pixels",
-  stats_composition: "Composition",
+  stats_composition: "Composition Distribution",
   stats_contrast: "Contrast Matrix",
   stats_spatial: "Spatial Complexity",
   stats_entropy: "Entropy",
@@ -224,7 +232,6 @@ export const en = {
   gallery_patterns_filtered: "{0} / {1} patterns",
 
   // Glaze tab
-  tab_glaze: "Glaze",
   label_glaze: "GLAZE",
   glaze_hue_angle: "Hue Angle",
   aria_hue_slider: "Hue angle (0-360 degrees)",

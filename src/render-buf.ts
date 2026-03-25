@@ -1,3 +1,10 @@
+/*
+ * renderBuf — CPU-side pixel buffer renderer using putImageData.
+ * NOTE: Migrating to WebGL would eliminate the putImageData bottleneck
+ * by rendering directly to a GPU texture, avoiding the per-frame
+ * CPU-to-canvas copy. Deferred until profiling shows this is the
+ * dominant cost.
+ */
 import { LEVEL_INFO, LEVEL_CANDIDATES } from "./color-engine";
 import { LEVEL_MASK } from "./constants";
 import type { DirtyRect, ImgCache } from "./types";

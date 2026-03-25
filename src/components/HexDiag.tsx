@@ -58,9 +58,10 @@ export const HexDiag = memo(function HexDiag({ cc, dispatch, hist, total, locked
 
   return (
     <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center" }}>
-      <svg viewBox="0 0 400 440" style={{ width: "100%", maxWidth: 400 }} role="img" aria-label={t("hex_diagram_label")}
+      <svg viewBox="0 0 400 460" style={{ width: "100%", maxWidth: 400 }} role="img" aria-label={t("hex_diagram_label")}
         onMouseOver={onSvgMouseOver} onMouseOut={onSvgMouseOut}>
-        <rect width={400} height={440} fill={C.bgPanel} rx={6} />
+        <rect width={400} height={460} fill={C.bgPanel} rx={6} />
+        <g transform="translate(0, 26)">
         {HEX_VERTICES.map((_, i) => {
           const j = (i + 1) % NUM_VERTICES;
           return <line key={"e" + i} x1={vp[i].x} y1={vp[i].y} x2={vp[j].x} y2={vp[j].y} stroke={C.borderAlt} strokeWidth={1.5} />;
@@ -81,7 +82,7 @@ export const HexDiag = memo(function HexDiag({ cc, dispatch, hist, total, locked
                 onContextMenu={(e) => { e.preventDefault(); onToggleLock(lv); }}
                 style={{ cursor: "pointer" }}
                 tabIndex={0} onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); sel(lv, ai); } }}
-                role="button" aria-label={t("hex_edge_label", lv, dc)}>
+                role="button" aria-pressed={act} aria-label={t("hex_edge_label", lv, dc)}>
                 {focusedLv === lv && <circle cx={x} cy={y} r={r + 8} fill="none" stroke={C.accent} strokeWidth={2} />}
                 {act && <circle cx={x} cy={y} r={r + 5} fill="none" stroke={C.textWhite} strokeWidth={1.5} strokeDasharray="3,2" opacity={O.soft} />}
                 {hov && !act && <circle cx={x} cy={y} r={r + 4} fill="none" stroke={C.svgStrokeHover} strokeWidth={1} />}
@@ -103,7 +104,7 @@ export const HexDiag = memo(function HexDiag({ cc, dispatch, hist, total, locked
               onContextMenu={(e) => { e.preventDefault(); onToggleLock(v.lv); }}
               style={{ cursor: "pointer" }}
               tabIndex={0} onKeyDown={ev => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); sel(v.lv, ai); } }}
-              role="button" aria-label={t("hex_vertex_label", v.c, v.lv)}>
+              role="button" aria-pressed={act} aria-label={t("hex_vertex_label", v.c, v.lv)}>
               {focusedLv === v.lv && <circle cx={p.x} cy={p.y} r={r + 8} fill="none" stroke={C.accent} strokeWidth={2} />}
               {act && <circle cx={p.x} cy={p.y} r={r + 5} fill="none" stroke={C.textWhite} strokeWidth={1.5} strokeDasharray="4,3" opacity={O.soft} />}
               {hov && !act && <circle cx={p.x} cy={p.y} r={r + 4} fill="none" stroke={C.svgStrokeHover} strokeWidth={1} />}
@@ -114,6 +115,7 @@ export const HexDiag = memo(function HexDiag({ cc, dispatch, hist, total, locked
             </g>);
         })}
         <text x={200} y={420} textAnchor="middle" fontSize={FS.md} fontFamily="monospace" fill={C.textDimmer}>{t("hex_luminance_seq")}</text>
+        </g>
       </svg>
     </div>
   );

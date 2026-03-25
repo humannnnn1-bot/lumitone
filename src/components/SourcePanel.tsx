@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { TOOLS, BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX, MIN_TAP_SIZE } from "../constants";
+import { TOOLS, BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX } from "../constants";
 import { LEVEL_INFO } from "../color-engine";
 import { S_BTN, S_BTN_ACTIVE } from "../styles";
 import { rgbStr, timestamp } from "../utils";
@@ -98,14 +98,22 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
       </div>
       <div ref={statusRef} aria-live="polite" aria-atomic="true" style={{ fontSize: FS.sm, color: C.textDimmest, fontFamily: "monospace", minHeight: 14, textAlign: "center" }}>{"\u2014"}</div>
 
-      <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }} role="radiogroup" aria-label={t("aria_drawing_tools")}>
-        {TOOLS.map(tl =>
-          <button key={tl.id} onClick={() => { setTool(tl.id); announce(t("announce_" + tl.id)); }} role="radio" aria-checked={tool === tl.id}
-            style={tool === tl.id ? S_BTN_ACTIVE : S_BTN}>
-            {t("tool_" + tl.id)}({tl.key})</button>)}
+      <div role="radiogroup" aria-label={t("aria_drawing_tools")} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xs }}>
+        <div style={{ display: "flex", gap: SP.sm, justifyContent: "center" }}>
+          {TOOLS.slice(0, 3).map(tl =>
+            <button key={tl.id} onClick={() => { setTool(tl.id); announce(t("announce_" + tl.id)); }} role="radio" aria-checked={tool === tl.id}
+              style={tool === tl.id ? S_BTN_ACTIVE : S_BTN}>
+              {t("tool_" + tl.id)}({tl.key})</button>)}
+        </div>
+        <div style={{ display: "flex", gap: SP.sm, justifyContent: "center" }}>
+          {TOOLS.slice(3).map(tl =>
+            <button key={tl.id} onClick={() => { setTool(tl.id); announce(t("announce_" + tl.id)); }} role="radio" aria-checked={tool === tl.id}
+              style={tool === tl.id ? S_BTN_ACTIVE : S_BTN}>
+              {t("tool_" + tl.id)}({tl.key})</button>)}
+        </div>
       </div>
 
-      <div style={{ display: "flex", gap: SP.md }}>
+      <div style={{ display: "flex", gap: SP.md, flexWrap: "wrap", justifyContent: "center" }}>
         <button onClick={undo} disabled={!state.undoStack.length}
           style={{ ...S_BTN, opacity: state.undoStack.length ? 1 : O.disabled }} title={t("title_undo")}>{t("btn_undo")}</button>
         <button onClick={redo} disabled={!state.redoStack.length}
@@ -114,17 +122,17 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
           title={`${t("title_zoom_reset")} (${t("title_zoom_pixel")})`} aria-label={t("aria_zoom_reset", Math.round(zoom * 100))}>{"\u229B"}{Math.round(zoom * 100)}%</button>
       </div>
 
-      <div style={{ display: "flex", alignItems: "center", gap: SP.lg, fontSize: 11, marginTop: SP.md, marginBottom: SP.md }}>
+      <div style={{ display: "flex", alignItems: "center", gap: SP.lg, fontSize: 11, marginTop: SP.md, marginBottom: SP.md, width: "100%" }}>
         <span style={{ color: C.textDimmer }}>{t("label_size")}</span>
         <button onClick={handleSizeDown}
           aria-label={t("aria_brush_size_decrease")}
-          style={{ ...S_BTN, padding: "2px 8px", fontSize: 13, fontWeight: FW.bold, minWidth: MIN_TAP_SIZE, minHeight: MIN_TAP_SIZE, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{"\u2212"}</button>
+          style={{ ...S_BTN, padding: "2px 6px", fontSize: 13, fontWeight: FW.bold }}>{"\u2212"}</button>
         <input type="range" min={BRUSH_MIN} max={BRUSH_MAX} step={1} value={brushSize}
           aria-label={t("aria_brush_size")}
-          onChange={handleSizeChange} style={{ flex: 1, maxWidth: 160, minWidth: 60 }} />
+          onChange={handleSizeChange} style={{ flex: 1, minWidth: 60 }} />
         <button onClick={handleSizeUp}
           aria-label={t("aria_brush_size_increase")}
-          style={{ ...S_BTN, padding: "2px 8px", fontSize: 13, fontWeight: FW.bold, minWidth: MIN_TAP_SIZE, minHeight: MIN_TAP_SIZE, display: "inline-flex", alignItems: "center", justifyContent: "center" }}>+</button>
+          style={{ ...S_BTN, padding: "2px 6px", fontSize: 13, fontWeight: FW.bold }}>+</button>
         <span style={{ color: C.textSecondary, minWidth: 20 }}>{brushSize}</span>
       </div>
 
@@ -137,25 +145,25 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
         <span style={{ fontSize: FS.sm, color: C.textDim }}>L{brushLevel} {LEVEL_INFO[brushLevel].name}</span>
       </div>
 
-      <div style={{ display: "flex", gap: SP.sm }}>
+      <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center", maxWidth: "100%" }}>
         {LEVEL_INFO.map((info, i) =>
           <button key={i} onClick={() => { setBrushLevel(i); announce(t("announce_level", i, info.name)); }}
             onDoubleClick={() => { setBrushLevel(i); setTool(i === 0 ? "eraser" : "brush"); announce(t("announce_level", i, info.name)); }}
             aria-label={t("announce_level", i, info.name)}
             title={t("title_level_btn", i, info.name)}
-            style={{ width: 30, height: 30, border: `2px solid ${brushLevel === i ? C.accent : C.border}`, borderRadius: R.lg, cursor: "pointer",
+            style={{ width: 36, height: 36, border: `2px solid ${brushLevel === i ? C.accent : C.border}`, borderRadius: R.lg, cursor: "pointer",
               background: `rgb(${info.gray},${info.gray},${info.gray})`, position: "relative" }}>
             <span style={{ position: "absolute", bottom: 1, right: 2, fontSize: FS.xs, color: info.gray > 128 ? "#000" : "#fff", fontWeight: FW.bold }}>{i}</span>
           </button>)}
       </div>
 
-      <div style={{ display: "flex", gap: SP.lg, marginTop: SP.md, marginBottom: SP.md }}>
+      <div style={{ display: "flex", gap: SP.lg, marginTop: SP.md, marginBottom: SP.md, flexWrap: "wrap", justifyContent: "center" }}>
         <button onClick={onNewCanvas} style={S_BTN} title={t("title_new_canvas")}>{t("btn_new")}</button>
-        <label style={{ ...S_BTN, border: `1px solid ${C.accentDim}`, color: C.loadBtn }}>{t("btn_load")}<input type="file" accept="image/*" aria-label={t("aria_open_image")} onChange={handleFileChange} style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }} /></label>
+        <label style={{ ...S_BTN, border: `1px solid ${C.accentDim}`, color: C.loadBtn, position: "relative", display: "inline-flex", alignItems: "center", justifyContent: "center" }}>{t("btn_load")}<input type="file" accept="image/*" aria-label={t("aria_open_image")} onChange={handleFileChange} style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }} /></label>
         <button onClick={handleClear} style={S_BTN} title={t("title_clear")}>{t("btn_clear")}</button>
       </div>
 
-      <div style={{ display: "flex", gap: SP.md, justifyContent: "center" }}>
+      <div style={{ display: "flex", gap: SP.md, justifyContent: "center", flexWrap: "wrap" }}>
         <button onClick={handleSaveGray} onContextMenu={handleSaveGrayCustom} style={S_BTN} title={t("title_save_gray")}>{t("btn_save_gray")}</button>
         <button onClick={handleSaveColor} onContextMenu={handleSaveColorCustom} style={{ ...S_BTN, color: C.saveColor }} title={t("title_save_color")}>{t("btn_save_color")}</button>
         <button onClick={handleSaveGlaze} onContextMenu={handleSaveGlazeCustom} style={{ ...S_BTN, color: C.saveGlaze }} title={t("title_save_glaze")}>{t("btn_save_glaze")}</button>

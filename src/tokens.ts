@@ -36,7 +36,7 @@ export const C = {
   textMuted: "#7a7aaa",
   textDim: "#6a6a8a",
   textDimmer: "#5a5a7a",
-  textDimmest: "#50508a",
+  textDimmest: "#7070a0",
   textSubtle: "#4a4a6a",
   textFaint: "#555580",
   textNavArrow: "#5a5a9a",
@@ -76,6 +76,9 @@ export const C = {
   svgStrokeLight: "rgba(255,255,255,.3)",
   svgStrokeHover: "rgba(255,255,255,.4)",
 } as const;
+
+/* ── Hue rainbow gradient ── */
+export const HUE_GRADIENT = "linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)";
 
 /* ── Spacing (2px base) ── */
 export const SP = {

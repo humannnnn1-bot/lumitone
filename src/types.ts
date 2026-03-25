@@ -14,6 +14,15 @@ export interface Diff {
   cmNv?: Uint8Array;
 }
 
+export interface CompressedDiff {
+  /** RLE-encoded index runs: [start0, len0, start1, len1, ...] */
+  runs: Uint32Array;
+  ov: Uint8Array;
+  nv: Uint8Array;
+  cmOv?: Uint8Array;
+  cmNv?: Uint8Array;
+}
+
 export interface CanvasData {
   w: number;
   h: number;
@@ -24,8 +33,8 @@ export interface CanvasData {
 
 export interface AppState {
   cvs: CanvasData;
-  undoStack: RingBuffer<Diff>;
-  redoStack: RingBuffer<Diff>;
+  undoStack: RingBuffer<CompressedDiff>;
+  redoStack: RingBuffer<CompressedDiff>;
   hist: number[];
 }
 

@@ -21,9 +21,9 @@ interface HexTabProps {
   t: TranslationFn;
 }
 
-const S_FLEX_COL_CENTER: React.CSSProperties = { display: "flex", flexDirection: "column", alignItems: "center" };
-const S_LABEL: React.CSSProperties = { fontSize: FS.md, color: C.textDim, minHeight: 16 };
-const S_SUBLABEL: React.CSSProperties = { fontSize: FS.md, color: C.textSubtle, marginTop: SP.xl };
+const S_FLEX_COL_CENTER: React.CSSProperties = { display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg };
+const S_LABEL: React.CSSProperties = { fontSize: FS.md, color: C.textDim, minHeight: SP["3xl"] };
+const S_SUBLABEL: React.CSSProperties = { fontSize: FS.md, color: C.textSubtle, marginTop: SP["2xl"], marginBottom: SP.md };
 const S_HEX_ACTIONS: React.CSSProperties = { marginTop: 10, marginBottom: SP.md, display: "flex", alignItems: "center", justifyContent: "center", gap: SP.xl, flexWrap: "wrap" };
 const S_PATTERN_TEXT: React.CSSProperties = { fontSize: FS.md, color: C.textDimmer };
 

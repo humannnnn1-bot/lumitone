@@ -21,7 +21,7 @@ export const ColorMappingList = memo(function ColorMappingList({ cc, dispatch, b
         const alts = LEVEL_CANDIDATES[i], ci = cc[i] % alts.length, cur = alts[ci], has = alts.length > 1;
         const isActive = brushLevel === i;
         return (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: SP.md, padding: `${SP.md}px ${SP.lg}px`,
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: SP.md, padding: `${SP.md}px ${SP.lg}px`, flexWrap: "wrap",
             background: isActive ? C.bgSurface : C.bgPanelAlt, borderRadius: R.lg,
             border: isActive ? `1px solid ${C.borderAccent}` : "1px solid transparent", transition: `border-color ${DUR.normal}` }}>
             <div style={{ width: 18, height: 18, borderRadius: R.md,
@@ -43,7 +43,7 @@ export const ColorMappingList = memo(function ColorMappingList({ cc, dispatch, b
                   onClick={() => dispatch({ type: "set_color", lv: i, idx: j })}
                   title={`${hexStr(a.rgb)} ${a.hueLabel}`}
                   aria-label={t("aria_color_candidate", i, hexStr(a.rgb), a.hueLabel)}
-                  style={{ ...S_SWATCH, width: 16, height: 16, borderRadius: R.md, background: rgbStr(a.rgb),
+                  style={{ ...S_SWATCH, width: 24, height: 24, borderRadius: R.md, background: rgbStr(a.rgb),
                     border: j === ci ? `2px solid ${C.textWhite}` : `1px solid ${C.border}`,
                     opacity: 1 }} />)}
             </div>}

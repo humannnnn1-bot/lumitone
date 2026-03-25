@@ -1,6 +1,8 @@
 const DB_NAME = "chromalum";
 const STORE_NAME = "state";
 const KEY = "current";
+/** Increment when schema changes; add migration logic in onupgradeneeded. */
+const DB_VERSION = 2;
 
 export interface SavedState {
   w: number;
@@ -17,12 +19,18 @@ const _db = { conn: null as IDBDatabase | null };
 function openDB(): Promise<IDBDatabase> {
   if (_db.conn) return Promise.resolve(_db.conn);
   return new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, 1);
-    req.onupgradeneeded = () => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onupgradeneeded = (e) => {
       const db = req.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME);
+      const oldVersion = e.oldVersion;
+      // v0→v1: create state store
+      if (oldVersion < 1) {
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME);
+        }
       }
+      // v1→v2: no schema changes, version bump for migration framework
+      // Future migrations go here: if (oldVersion < 3) { ... }
     };
     req.onsuccess = () => {
       _db.conn = req.result;

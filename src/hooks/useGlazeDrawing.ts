@@ -139,7 +139,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     pool.cmBuf.set(cv.colorMap);
     const cmPre: Uint8Array = pool.cmPre;
     const cmBuf: Uint8Array = pool.cmBuf;
-    const dc = s.current.directCandidates;
+    const dc = new Map(s.current.directCandidates);
     const isDirect = dc.size > 0;
     const curHue = s.current.hueAngle;
     const glazeLUT = isDirect ? buildMultiDirectLUT(dc) : buildGlazeLUT(curHue);
@@ -170,6 +170,13 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
           pendingUpRef.current = false;
           finishGlazeStroke();
         }
+      }).catch((err) => {
+        fillPendingRef.current = false;
+        pendingUpRef.current = false;
+        strokeRef.current = null;
+        drawingRef.current = false;
+        s.current.announce(s.current.t("toast_fill_error"));
+        console.error("CHROMALUM: glaze flood fill failed:", err);
       });
       return;
     } else if (curTool === "glaze_eraser") {

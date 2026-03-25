@@ -33,16 +33,25 @@ export interface WorkerResponse {
 self.onmessage = (e: MessageEvent<WorkerRequest>) => {
   const { id, mode, data, colorMap, w, h } = e.data;
   const n = w * h;
+
+  const needsNoise = mode === "noise";
+  const needsDepth = mode === "depth";
+  const needsGrad = mode === "gradient";
+  const needsRegion = mode === "region";
+  const needsEdge = mode === "depth" || mode === "region";
+  const needsLevelNorm = mode === "luminance" || mode === "noise" || mode === "gradient";
+  const needsDiversity = mode === "entropy";
+
   const result: WorkerResponse = {
     id,
-    noise: new Float32Array(n),
-    depth: new Float32Array(n),
-    gradAngle: new Float32Array(n),
-    gradMag: new Float32Array(n),
-    regionId: new Int32Array(n),
-    isEdge: new Uint8Array(n),
-    levelNorm: new Float32Array(n),
-    localDiversity: new Float32Array(n),
+    noise: new Float32Array(needsNoise ? n : 0),
+    depth: new Float32Array(needsDepth ? n : 0),
+    gradAngle: new Float32Array(needsGrad ? n : 0),
+    gradMag: new Float32Array(needsGrad ? n : 0),
+    regionId: new Int32Array(needsRegion ? n : 0),
+    isEdge: new Uint8Array(needsEdge ? n : 0),
+    levelNorm: new Float32Array(needsLevelNorm ? n : 0),
+    localDiversity: new Float32Array(needsDiversity ? n : 0),
     w, h,
   };
 
@@ -75,12 +84,12 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
       break;
   }
 
-  // Transfer typed arrays for zero-copy
-  const transfer: Transferable[] = [
-    result.noise.buffer as ArrayBuffer, result.depth.buffer as ArrayBuffer,
-    result.gradAngle.buffer as ArrayBuffer, result.gradMag.buffer as ArrayBuffer,
-    result.regionId.buffer as ArrayBuffer, result.isEdge.buffer as ArrayBuffer,
-    result.levelNorm.buffer as ArrayBuffer, result.localDiversity.buffer as ArrayBuffer,
-  ];
+  // Transfer typed arrays for zero-copy (only non-empty buffers)
+  const transfer: Transferable[] = [];
+  const arrays = [result.noise, result.depth, result.gradAngle, result.gradMag,
+                  result.regionId, result.isEdge, result.levelNorm, result.localDiversity];
+  for (const arr of arrays) {
+    if (arr.byteLength > 0) transfer.push(arr.buffer as ArrayBuffer);
+  }
   (self as unknown as Worker).postMessage(result, transfer);
 };
