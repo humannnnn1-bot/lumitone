@@ -1,7 +1,13 @@
+/*
+ * Canvas reducer — owns both pixel data AND colorMap mutations.
+ * colorMap is managed here (not in color-reducer) so that undo/redo
+ * operations are atomic: a single undo step can revert both the pixel
+ * level change and any associated colorMap change together.
+ */
 import { MAX_UNDO, LEVEL_MASK, MAX_IMAGE_SIZE } from "./constants";
-import { computeDiff, applyDiff, applyDiffToColorMap } from "./undo-diff";
+import { computeDiff, applyDiff, applyDiffToColorMap, compressDiff, decompressDiff } from "./undo-diff";
 import { RingBuffer } from "./ring-buffer";
-import type { AppState, CanvasAction, Diff } from "./types";
+import type { AppState, CanvasAction, CompressedDiff } from "./types";
 import { W0, H0 } from "./constants";
 
 /** Build a merged diff that clears both pixel data and colorMap to zero. */
@@ -50,8 +56,8 @@ function applyHistDelta(hist: number[], diff: { idx: Uint32Array; ov: Uint8Array
 const initData = new Uint8Array(W0 * H0);
 export const initialState: AppState = {
   cvs: { w: W0, h: H0, data: initData, colorMap: new Uint8Array(W0 * H0) },
-  undoStack: new RingBuffer<Diff>(MAX_UNDO),
-  redoStack: new RingBuffer<Diff>(MAX_UNDO),
+  undoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
+  redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
   hist: computeHist(initData),
 };
 
@@ -63,18 +69,19 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
       const newCvs = { ...state.cvs, data: finalData };
       if (finalColorMap) newCvs.colorMap = finalColorMap;
       const newUndo = state.undoStack.clone();
-      newUndo.push(diff);
+      newUndo.push(compressDiff(diff));
       return { ...state, cvs: newCvs,
-        undoStack: newUndo, redoStack: new RingBuffer<Diff>(MAX_UNDO),
+        undoStack: newUndo, redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
         hist: applyHistDelta(state.hist, diff, false) };
     }
     case "undo": {
       if (!state.undoStack.length) return state;
-      const diff = state.undoStack.peekLast()!;
+      const cdiff = state.undoStack.peekLast()!;
+      const diff = decompressDiff(cdiff);
       const newUndo = state.undoStack.clone();
       newUndo.pop();
       const newRedo = state.redoStack.clone();
-      newRedo.unshift(diff);
+      newRedo.unshift(cdiff);
       return { ...state,
         cvs: { ...state.cvs, data: applyDiff(state.cvs.data, diff, true), colorMap: applyDiffToColorMap(state.cvs.colorMap, diff, true) },
         undoStack: newUndo, redoStack: newRedo,
@@ -82,11 +89,12 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
     }
     case "redo": {
       if (!state.redoStack.length) return state;
-      const diff = state.redoStack.at(0)!;
+      const cdiff = state.redoStack.at(0)!;
+      const diff = decompressDiff(cdiff);
       const newRedo = state.redoStack.clone();
       newRedo.shift();
       const newUndo = state.undoStack.clone();
-      newUndo.push(diff);
+      newUndo.push(cdiff);
       return { ...state,
         cvs: { ...state.cvs, data: applyDiff(state.cvs.data, diff, false), colorMap: applyDiffToColorMap(state.cvs.colorMap, diff, false) },
         undoStack: newUndo, redoStack: newRedo,
@@ -98,7 +106,7 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
       if (data.length !== w * h) return state;
       const colorMap = action.colorMap && action.colorMap.length === w * h ? action.colorMap : new Uint8Array(w * h);
       return { ...state, cvs: { w, h, data, colorMap },
-        undoStack: new RingBuffer<Diff>(MAX_UNDO), redoStack: new RingBuffer<Diff>(MAX_UNDO),
+        undoStack: new RingBuffer<CompressedDiff>(MAX_UNDO), redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
         hist: computeHist(data) };
     }
     case "clear": {
@@ -111,10 +119,10 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
       const mergedDiff = buildMergedClearDiff(state.cvs.data, state.cvs.colorMap, dataDiff);
       if (mergedDiff.idx.length === 0) return state;
       const newUndo = state.undoStack.clone();
-      newUndo.push(mergedDiff);
+      newUndo.push(compressDiff(mergedDiff));
       return { ...state, cvs: { ...state.cvs, data: blank, colorMap: new Uint8Array(n) },
         undoStack: newUndo,
-        redoStack: new RingBuffer<Diff>(MAX_UNDO), hist: clearHist };
+        redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO), hist: clearHist };
     }
     case "new_canvas": {
       const { w, h } = action;
@@ -123,7 +131,7 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
       const hist = new Array(8).fill(0);
       hist[0] = w * h;
       return { cvs: { w, h, data, colorMap: new Uint8Array(w * h) },
-        undoStack: new RingBuffer<Diff>(MAX_UNDO), redoStack: new RingBuffer<Diff>(MAX_UNDO), hist };
+        undoStack: new RingBuffer<CompressedDiff>(MAX_UNDO), redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO), hist };
     }
     case "glaze_clear": {
       const oldCm = state.cvs.colorMap;
@@ -142,10 +150,10 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
         }
       }
       const newUndo = state.undoStack.clone();
-      newUndo.push({ idx, ov, nv, cmOv, cmNv });
+      newUndo.push(compressDiff({ idx, ov, nv, cmOv, cmNv }));
       return { ...state, cvs: { ...state.cvs, colorMap: new Uint8Array(n) },
         undoStack: newUndo,
-        redoStack: new RingBuffer<Diff>(MAX_UNDO) };
+        redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO) };
     }
     default: return state;
   }

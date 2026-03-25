@@ -60,20 +60,16 @@ export function useAppState(t: import("../i18n").TranslationFn) {
     if (typeof window === "undefined") return 640;
     const w = window.innerWidth;
     const h = window.innerHeight;
-    const UI_OVERHEAD = 280;
-    const fromW = Math.floor(w - 32);
+    const UI_OVERHEAD = 140;
+    const fromW = Math.floor(w - 16);
     const fromH = Math.floor(h - UI_OVERHEAD);
     return Math.max(DISPLAY_MIN, Math.min(DISPLAY_MAX_LIMIT, fromW, fromH));
   };
   const [displayMax, setDisplayMax] = useState(computeDisplayMax);
   useEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | null = null;
-    const onResize = () => {
-      if (timer) clearTimeout(timer);
-      timer = setTimeout(() => setDisplayMax(computeDisplayMax()), 200);
-    };
+    const onResize = () => setDisplayMax(computeDisplayMax());
     window.addEventListener("resize", onResize);
-    return () => { window.removeEventListener("resize", onResize); if (timer) clearTimeout(timer); };
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
   const { displayW, displayH } = useMemo(() => {

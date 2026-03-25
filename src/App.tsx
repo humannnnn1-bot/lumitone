@@ -6,6 +6,7 @@ import { useSyncRef } from "./hooks/useSyncRef";
 import { usePanZoom } from "./hooks/usePanZoom";
 import { useCanvasDrawing } from "./hooks/useCanvasDrawing";
 import { useGlazeDrawing } from "./hooks/useGlazeDrawing";
+import { useStablePanZoomHandlers, useStableDrawingHandlers } from "./hooks/useStableHandlers";
 import { useFileDrop } from "./hooks/useFileDrop";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useExport } from "./hooks/useExport";
@@ -21,7 +22,7 @@ import { HelpModal } from "./components/HelpModal";
 import { NewCanvasModal } from "./components/NewCanvasModal";
 import { PromptModal } from "./components/PromptModal";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
-import { StatsPanel } from "./components/StatsPanel";
+import { AnalyzePanel } from "./components/AnalyzePanel";
 import { GalleryPanel } from "./components/GalleryPanel";
 import { HexTab } from "./components/HexTab";
 import { useTranslation } from "./i18n";
@@ -31,12 +32,12 @@ import { useTranslation } from "./i18n";
    ═══════════════════════════════════════════ */
 const TAB_KEYS = ["tab_source", "tab_color", "tab_hex", "tab_glaze", "tab_stats", "tab_gallery"] as const;
 
-const S_ROOT: React.CSSProperties = { minHeight: "100vh", background: C.bgRoot, color: C.textPrimary, fontFamily: "monospace", padding: SP["3xl"], paddingBottom: 80 };
+const S_ROOT: React.CSSProperties = { minHeight: "100vh", background: C.bgRoot, color: C.textPrimary, fontFamily: "monospace", padding: SP["3xl"], paddingTop: SP.xl, paddingBottom: 80 };
 const S_HEADER: React.CSSProperties = { textAlign: "center", marginBottom: SP["2xl"] };
-const S_TITLE: React.CSSProperties = { fontSize: FS.title, fontWeight: FW.bold, margin: 0, background: C.titleGradient, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: SP.xs };
+const S_TITLE: React.CSSProperties = { fontSize: 24, fontWeight: FW.bold, margin: `0 0 ${SP["2xl"]}px`, background: C.titleGradient, WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", letterSpacing: SP.xs };
 const S_STATUS: React.CSSProperties = { fontSize: FS.sm, color: C.textFaint, marginTop: 2 };
 const S_HELP_LINK: React.CSSProperties = { cursor: "pointer", color: C.textDimmest, textDecoration: "underline" };
-const S_TABLIST: React.CSSProperties = { display: "flex", justifyContent: "center", gap: SP.xs, marginBottom: SP.xl, overflowX: "auto" };
+const S_TABLIST: React.CSSProperties = { display: "flex", justifyContent: "center", gap: 1, marginBottom: SP["2xl"], maxWidth: "100%" };
 const S_TAB_CENTER: React.CSSProperties = { display: "flex", justifyContent: "center", width: "100%" };
 const S_DROP_OVERLAY: React.CSSProperties = { position: "fixed", inset: 0, background: C.bgDrop, border: `3px dashed ${C.accent}`, zIndex: Z.dropOverlay, display: "flex", alignItems: "center", justifyContent: "center", pointerEvents: "none" };
 const S_DROP_TEXT: React.CSSProperties = { fontSize: FS.title, color: C.accentBright, fontWeight: FW.bold };
@@ -254,26 +255,17 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   const handleNewCanvasCancel = useCallback(() => setShowNewCanvas(false), [setShowNewCanvas]);
 
   // Stable handler objects: use refs to avoid recreating on every render
-  const panZoomHandlersRef = useRef({
+  const panZoomHandlersRef = useStablePanZoomHandlers({
     setZoom: panZoom.setZoom, setPan: panZoom.setPan, schedCursorRef: sharedSchedCursorRef,
     spaceRef: panZoom.spaceRef, panningRef: panZoom.panningRef,
     startPan: panZoom.startPan, movePan: panZoom.movePan, endPan: panZoom.endPan,
   });
-  panZoomHandlersRef.current.startPan = panZoom.startPan;
-  panZoomHandlersRef.current.movePan = panZoom.movePan;
-  panZoomHandlersRef.current.endPan = panZoom.endPan;
   const panZoomHandlers = panZoomHandlersRef.current;
 
-  const drawingHandlersRef = useRef({
+  const drawingHandlersRef = useStableDrawingHandlers({
     onDownPrv: drawing.onDownPrv, onMovePrv: drawing.onMovePrv, onUp: drawing.onUp,
     onPointerLeavePrv, trackCursorPrv: drawing.trackCursorPrv, clearCursorPrv: drawing.clearCursorPrv,
   });
-  drawingHandlersRef.current.onDownPrv = drawing.onDownPrv;
-  drawingHandlersRef.current.onMovePrv = drawing.onMovePrv;
-  drawingHandlersRef.current.onUp = drawing.onUp;
-  drawingHandlersRef.current.onPointerLeavePrv = onPointerLeavePrv;
-  drawingHandlersRef.current.trackCursorPrv = drawing.trackCursorPrv;
-  drawingHandlersRef.current.clearCursorPrv = drawing.clearCursorPrv;
   const drawingHandlers = drawingHandlersRef.current;
 
   return (
@@ -353,16 +345,16 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             directCandidates={directCandidates} setDirectCandidates={setDirectCandidates}
           />
         </div>}
-        {activeTab === 4 && <div id="tabpanel-4" role="tabpanel">
-          <StatsPanel hist={hist} total={cvs.w * cvs.h} colorLUT={colorLUT}
+        <div id="tabpanel-4" role="tabpanel" style={{ display: activeTab === 4 ? undefined : "none" }}>
+          <AnalyzePanel hist={hist} total={cvs.w * cvs.h} colorLUT={colorLUT} cc={cc}
             brushLevel={brushLevel} setBrushLevel={setBrushLevel} cvs={cvs}
             displayW={displayW} displayH={displayH}
             mapMode={mapMode} setMapMode={setMapMode} />
-        </div>}
-        {activeTab === 5 && <div id="tabpanel-5" role="tabpanel" style={{ width: "100%" }}>
+        </div>
+        <div id="tabpanel-5" role="tabpanel" style={{ width: "100%", display: activeTab === 5 ? undefined : "none" }}>
           <GalleryPanel cvs={cvs} cc={cc} ccDispatch={ccDispatch}
             locked={locked} hist={hist} showToast={showToast} />
-        </div>}
+        </div>
       </div>
     </div>
   );

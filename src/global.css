@@ -2,14 +2,34 @@
    CHROMALUM — Global styles
    ═══════════════════════════════════════════ */
 
+/* ── Theme tokens (CSS Custom Properties) ── */
+:root {
+  --c-bg-root: #0a0a12;
+  --c-bg-panel: #0f0f1a;
+  --c-bg-surface: #1a1a30;
+  --c-bg-surface-alt: #1a1a3a;
+  --c-bg-input: #0a0a18;
+  --c-accent: #6080ff;
+  --c-accent-bright: #80a0ff;
+  --c-text-primary: #c8c8d8;
+  --c-text-secondary: #8a8aaa;
+  --c-border: #2a2a40;
+  --c-border-hover: #3a3a5a;
+}
+
+/* ── Mobile overflow prevention ── */
+body {
+  overflow-x: hidden;
+}
+
 /* Focus indicators */
 button:focus-visible {
-  outline: 2px solid #6080ff;
+  outline: 2px solid var(--c-accent, #6080ff);
   outline-offset: 2px;
 }
 button:hover:not(:disabled) {
-  background: #1a1a3a;
-  border-color: #3a3a5a;
+  background: var(--c-bg-surface-alt, #1a1a3a);
+  border-color: var(--c-border-hover, #3a3a5a);
 }
 
 /* SVG interactive elements: custom focus handled by component */
@@ -23,16 +43,16 @@ input[type="checkbox"] {
   appearance: none;
   width: 14px;
   height: 14px;
-  border: 1px solid #2a2a40;
+  border: 1px solid var(--c-border, #2a2a40);
   border-radius: 3px;
-  background: #0a0a18;
+  background: var(--c-bg-input, #0a0a18);
   cursor: pointer;
   vertical-align: middle;
   position: relative;
 }
 input[type="checkbox"]:checked {
-  background: #6080ff;
-  border-color: #6080ff;
+  background: var(--c-accent, #6080ff);
+  border-color: var(--c-accent, #6080ff);
 }
 input[type="checkbox"]:checked::after {
   content: "";
@@ -46,7 +66,7 @@ input[type="checkbox"]:checked::after {
   transform: rotate(45deg);
 }
 input[type="checkbox"]:focus-visible {
-  outline: 2px solid #6080ff;
+  outline: 2px solid var(--c-accent, #6080ff);
   outline-offset: 2px;
 }
 

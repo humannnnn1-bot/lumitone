@@ -1,4 +1,4 @@
-import type { Diff } from "./types";
+import type { Diff, CompressedDiff } from "./types";
 
 /* ═══════════════════════════════════════════
    UNDO DIFF
@@ -99,4 +99,47 @@ export function buildDiffFromGlazeFill(cmPre: Uint8Array, cmBuf: Uint8Array, dat
     }
   }
   return { idx, ov, nv, cmOv, cmNv };
+}
+
+/** Compress a Diff by RLE-encoding the idx array (consecutive indices become runs). */
+export function compressDiff(diff: Diff): CompressedDiff {
+  const { idx, ov, nv, cmOv, cmNv } = diff;
+  if (idx.length === 0) {
+    return { runs: new Uint32Array(0), ov, nv, ...(cmOv !== undefined ? { cmOv } : {}), ...(cmNv !== undefined ? { cmNv } : {}) };
+  }
+  // Count runs
+  let runCount = 1;
+  for (let i = 1; i < idx.length; i++) {
+    if (idx[i] !== idx[i - 1] + 1) runCount++;
+  }
+  const runs = new Uint32Array(runCount * 2);
+  let ri = 0, runStart = idx[0], runLen = 1;
+  for (let i = 1; i < idx.length; i++) {
+    if (idx[i] === idx[i - 1] + 1) {
+      runLen++;
+    } else {
+      runs[ri++] = runStart;
+      runs[ri++] = runLen;
+      runStart = idx[i];
+      runLen = 1;
+    }
+  }
+  runs[ri++] = runStart;
+  runs[ri++] = runLen;
+  return { runs, ov, nv, ...(cmOv !== undefined ? { cmOv } : {}), ...(cmNv !== undefined ? { cmNv } : {}) };
+}
+
+/** Decompress a CompressedDiff back to a Diff. */
+export function decompressDiff(cd: CompressedDiff): Diff {
+  const { runs, ov, nv, cmOv, cmNv } = cd;
+  // Calculate total count
+  let total = 0;
+  for (let i = 1; i < runs.length; i += 2) total += runs[i];
+  const idx = new Uint32Array(total);
+  let j = 0;
+  for (let i = 0; i < runs.length; i += 2) {
+    const start = runs[i], len = runs[i + 1];
+    for (let k = 0; k < len; k++) idx[j++] = start + k;
+  }
+  return { idx, ov, nv, ...(cmOv !== undefined ? { cmOv } : {}), ...(cmNv !== undefined ? { cmNv } : {}) };
 }

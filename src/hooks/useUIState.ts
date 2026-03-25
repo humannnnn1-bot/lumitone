@@ -1,7 +1,8 @@
 import { useState, useRef, useCallback } from "react";
 import { TOAST_DURATION } from "../constants";
-import type { MapMode } from "../components/StatsPanel";
+import type { MapMode } from "../components/AnalyzePanel";
 import type { TranslationFn } from "../i18n";
+import { useSyncRef } from "./useSyncRef";
 
 export function useUIState(_t: TranslationFn) {
   const [activeTab, setActiveTab] = useState(0);
@@ -25,15 +26,17 @@ export function useUIState(_t: TranslationFn) {
     return new Promise(resolve => { setPromptState({ defaultValue, resolve }); });
   }, []);
 
+  const promptRef = useSyncRef(promptState);
+
   const handlePromptConfirm = useCallback((value: string) => {
-    promptState?.resolve(value);
+    promptRef.current?.resolve(value);
     setPromptState(null);
-  }, [promptState]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handlePromptCancel = useCallback(() => {
-    promptState?.resolve(null);
+    promptRef.current?.resolve(null);
     setPromptState(null);
-  }, [promptState]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
     activeTab, setActiveTab,

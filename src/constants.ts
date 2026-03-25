@@ -5,12 +5,12 @@ export const W0 = 320, H0 = 320;
 export const MAX_UNDO = 40;
 export const DISPLAY_MAX = 320;  // legacy default, used as fallback
 export const DISPLAY_MIN = 280;
-export const DISPLAY_MAX_LIMIT = 960;
+export const DISPLAY_MAX_LIMIT = 1600;
 export const ZOOM_MIN = 0.25, ZOOM_MAX = 16, ZOOM_STEP = 1.15;
-export const BRUSH_MIN = 1, BRUSH_MAX = 60, BRUSH_STEP = 2;
+export const BRUSH_MIN = 1, BRUSH_MAX = 100, BRUSH_STEP = 1;
 export const MAX_IMAGE_SIZE = 1024;
 export const GRID_ZOOM_THRESHOLD = 4;
-export const MIN_TAP_SIZE = 28;
+export const MIN_TAP_SIZE = 44;
 export const TOAST_DURATION = 2500;
 
 /* ═══════════════════════════════════════════

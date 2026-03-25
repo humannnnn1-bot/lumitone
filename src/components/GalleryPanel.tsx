@@ -7,7 +7,7 @@ import type { GalleryItem } from "../hooks/useGallery";
 import type { CanvasData } from "../types";
 import type { ColorAction } from "../color-reducer";
 import { useTranslation } from "../i18n";
-import { C, SP, FS, R, DUR } from "../tokens";
+import { C, SP, FS, R, DUR, HUE_GRADIENT } from "../tokens";
 
 interface GalleryPanelProps {
   cvs: CanvasData;
@@ -100,7 +100,7 @@ function ccDistance(a: number[], b: number[]): number {
 
 const S_HUE_FILTER_TRACK: React.CSSProperties = {
   width: 80, height: 14, borderRadius: R.md,
-  background: "linear-gradient(to right, #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%)",
+  background: HUE_GRADIENT,
   position: "relative", display: "inline-block",
 };
 const S_HUE_FILTER_INPUT: React.CSSProperties = {
@@ -335,6 +335,13 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                 onContextMenu={(e) => { e.preventDefault(); toggleBookmark(item.cc); }}
                 onMouseEnter={() => setHoverDebounced(item)}
                 onMouseLeave={() => setHoverDebounced(null)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") { e.preventDefault(); applyScheme(item.cc); }
+                  else if (e.key === "b" || e.key === "B") { e.preventDefault(); toggleBookmark(item.cc); }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={t("gallery_apply") + ` (${i + 1})`}
                 title={t("gallery_apply")}>
                 <ThumbCanvas imageData={item.imageData} w={thumbDisplaySize} h={Math.round(thumbDisplaySize * cvs.h / cvs.w)} />
               </div>
@@ -350,7 +357,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                 })}
               </div>
               <button onClick={(e) => { e.stopPropagation(); toggleBookmark(item.cc); }}
-                style={{ background: "none", border: "none", cursor: "pointer", fontSize: FS.md, padding: 0, lineHeight: 1,
+                style={{ background: "none", border: "none", cursor: "pointer", fontSize: FS.lg, padding: 2, lineHeight: 1,
                   color: starred ? C.warning : C.textFaint }}
                 title={starred ? t("gallery_unbookmark") : t("gallery_bookmark")}>
                 {starred ? "\u2605" : "\u2606"}

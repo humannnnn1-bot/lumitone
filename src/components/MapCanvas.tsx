@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { LEVEL_INFO, LUMA_R, LUMA_G, LUMA_B } from "../color-engine";
 import { LEVEL_MASK } from "../constants";
 import type { CanvasData } from "../types";
-import type { MapMode } from "./StatsPanel";
+import type { MapMode } from "./AnalyzePanel";
 import {
   computeNoiseLevelNorm, computeDiversity, computeEdgeDepth,
   computeGradient, computeRegion,
@@ -124,6 +124,12 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode): PixelMaps {
 
   useEffect(() => {
     const { data, w, h } = cvs;
+    // Compute all modes synchronously — avoids Worker ArrayBuffer transfer complexity
+    // and is fast enough for typical canvas sizes (up to 1024x1024)
+    setMaps(computePixelMapsSync(cvs, mode));
+    return;
+
+    // eslint-disable-next-line no-unreachable -- Worker path kept for future use with large canvases
     // Lightweight modes: compute synchronously (no worker overhead needed)
     if (mode === "luminance" || mode === "colorlum") {
       setMaps(computePixelMapsSync(cvs, mode));
@@ -186,26 +192,29 @@ export function MapCanvas({ mode, pixelMaps, colorLUT, cvs, displayW, displayH }
     const d32 = new Uint32Array(img.data.buffer);
     const n = cw * ch;
 
-    if (mode === "entropy") {
+    // Skip rendering if pixelMaps dimensions don't match canvas (stale worker response)
+    if (pixelMaps.w !== cw || pixelMaps.h !== ch) { ctx.putImageData(img, 0, 0); return; }
+
+    if (mode === "entropy" && pixelMaps.localDiversity.length >= n) {
       const pm = pixelMaps;
       for (let i = 0; i < n; i++) {
         const [r, g, b] = applyLUT(VIRIDIS, pm.localDiversity[i]);
         d32[i] = 0xFF000000 | (b << 16) | (g << 8) | r;
       }
-    } else if (mode === "noise") {
+    } else if (mode === "noise" && pixelMaps.noise.length >= n) {
       const pm = pixelMaps;
       for (let i = 0; i < n; i++) {
         const v = pm.noise[i];
         const [r, g, b] = applyLUT(INFERNO, v * v);
         d32[i] = 0xFF000000 | (b << 16) | (g << 8) | r;
       }
-    } else if (mode === "depth") {
+    } else if (mode === "depth" && pixelMaps.depth.length >= n) {
       const pm = pixelMaps;
       for (let i = 0; i < n; i++) {
         const [r, g, b] = applyLUT(TURBO, 1 - pm.depth[i]);
         d32[i] = 0xFF000000 | (b << 16) | (g << 8) | r;
       }
-    } else if (mode === "luminance") {
+    } else if (mode === "luminance" && pixelMaps.levelNorm.length >= n) {
       const pm = pixelMaps;
       for (let i = 0; i < n; i++) {
         const [r, g, b] = applyLUT(MAGMA, pm.levelNorm[i]);
@@ -219,7 +228,7 @@ export function MapCanvas({ mode, pixelMaps, colorLUT, cvs, displayW, displayH }
         const [r, g, b] = applyLUT(PLASMA, lumVal);
         d32[i] = 0xFF000000 | (b << 16) | (g << 8) | r;
       }
-    } else if (mode === "gradient") {
+    } else if (mode === "gradient" && pixelMaps.gradMag.length >= n && pixelMaps.levelNorm.length >= n) {
       const pm = pixelMaps;
       for (let i = 0; i < n; i++) {
         const mag = pm.gradMag[i];
@@ -242,7 +251,7 @@ export function MapCanvas({ mode, pixelMaps, colorLUT, cvs, displayW, displayH }
         else { r1 = c2; b1 = x; }
         d32[i] = 0xFF000000 | (((b1 + m) * 255) << 16) | (((g1 + m) * 255) << 8) | ((r1 + m) * 255);
       }
-    } else if (mode === "region") {
+    } else if (mode === "region" && pixelMaps.regionId.length >= n && pixelMaps.isEdge.length >= n) {
       const pm = pixelMaps;
       const PHI = 0.618033988749895;
       const regionSize = new Map<number, number>();

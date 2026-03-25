@@ -29,9 +29,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     document.documentElement.lang = l;
   }, []);
 
-  useEffect(() => {
-    document.documentElement.lang = lang;
-  }, [lang]);
+  // Initial lang attribute set (setLang handles subsequent changes).
+  // RTL support: add document.documentElement.dir = "rtl" here when adding RTL languages.
+  useEffect(() => { document.documentElement.lang = lang; }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const t = useCallback((key: TranslationKey | (string & {}), ...params: (string | number)[]): string => {
     let str = dictionaries[lang][key] ?? key;

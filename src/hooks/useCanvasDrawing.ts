@@ -114,7 +114,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
   function doDown(e: React.PointerEvent, refEl: HTMLCanvasElement | null) {
     if (e.button !== 0 && e.button !== 1 && e.button !== 2) return;
     e.preventDefault();
-    if (drawingRef.current) return;
+    if (drawingRef.current || fillPendingRef.current) return;
     activeCanvasRef.current = refEl;
     if (e.button === 2 || (e.button === 0 && e.altKey)) {
       const pos = cPos(e, refEl);
@@ -172,6 +172,13 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
           pendingUpRef.current = false;
           finishStroke();
         }
+      }).catch((err) => {
+        fillPendingRef.current = false;
+        pendingUpRef.current = false;
+        strokeRef.current = null;
+        drawingRef.current = false;
+        s.current.announce(s.current.t("toast_fill_error"));
+        console.error("CHROMALUM: canvas flood fill failed:", err);
       });
       return;
     } else if (isShapeTool(curTool)) {

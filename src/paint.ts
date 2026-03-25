@@ -32,13 +32,25 @@ export function paintLine(data: Uint8Array, x0: number, y0: number, x1: number, 
   const ax = Math.abs(x1-x0), ay = Math.abs(y1-y0);
   const sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
   let e = ax - ay;
+  // Sparse optimization: skip paintCircle when within r/2 of last painted point
+  const skipDist = Math.max(1, Math.floor(r / 2));
+  const skipDist2 = skipDist * skipDist;
+  let lastPX = x0, lastPY = y0;
+  paintCircle(data, x0, y0, r, lv, w, h);
   for (;;) {
-    paintCircle(data, x0, y0, r, lv, w, h);
     if (x0 === x1 && y0 === y1) break;
     const e2 = 2*e;
     if (e2 > -ay) { e -= ay; x0 += sx; }
     if (e2 < ax) { e += ax; y0 += sy; }
+    // Only paint if distance from last paint point exceeds threshold
+    const dx = x0 - lastPX, dy = y0 - lastPY;
+    if (dx * dx + dy * dy >= skipDist2) {
+      paintCircle(data, x0, y0, r, lv, w, h);
+      lastPX = x0; lastPY = y0;
+    }
   }
+  // Always paint final point
+  paintCircle(data, x1, y1, r, lv, w, h);
 }
 
 /** Rectangle tool — draws four edges */
