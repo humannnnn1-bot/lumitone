@@ -131,7 +131,7 @@ export const HexDiag = memo(
               const j = (i + 1) % NUM_VERTICES;
               return <line key={"e" + i} x1={vp[i].x} y1={vp[i].y} x2={vp[j].x} y2={vp[j].y} stroke={C.borderAlt} strokeWidth={1.5} />;
             })}
-            {cp && <path d={cp} fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.5)" strokeWidth={2.5} strokeDasharray="6,4" />}
+            {cp && <path d={cp} fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.5)" strokeWidth={1.5} strokeDasharray="4,3" />}
             {/* Collect all circles (edges + vertices), sort by radius descending so smaller circles render on top */}
             {(() => {
               type CircleItem = {
@@ -213,6 +213,7 @@ export const HexDiag = memo(
                       aria-pressed={act}
                       aria-label={t("hex_vertex_label", v.c, lv)}
                     >
+                      {r < 24 && <circle cx={x} cy={y} r={24} fill="transparent" />}
                       {focusedLv === lv && <circle cx={x} cy={y} r={r + 8} fill="none" stroke={C.accent} strokeWidth={2} />}
                       {act && (
                         <circle
