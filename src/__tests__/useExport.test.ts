@@ -39,13 +39,14 @@ describe("useExport", () => {
   /* ---------- saveColor ---------- */
 
   describe("saveColor", () => {
-    it("returns early if canvas ref is null", () => {
+    it("falls back to renderBuf when canvas ref is null", () => {
       const { result } = setup();
       const ref = { current: null } as React.RefObject<HTMLCanvasElement | null>;
-      // Should not throw and should not interact with document
-      const spyCreate = vi.spyOn(document, "createElement");
+      // Should not throw; falls back to off-screen render via renderBuf
+      vi.spyOn(document.body, "appendChild").mockReturnValue(null as unknown as Node);
+      vi.spyOn(document.body, "removeChild").mockReturnValue(null as unknown as Node);
       result.current.saveColor(ref, "test.png");
-      expect(spyCreate).not.toHaveBeenCalled();
+      expect(mockRenderBuf).toHaveBeenCalledTimes(1);
     });
 
     it("calls canvas.toDataURL with image/png", () => {

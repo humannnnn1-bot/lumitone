@@ -243,7 +243,8 @@ export const CompositionDonut = React.memo(function CompositionDonut({ cvs, hist
       {/* Info text */}
       <div
         style={{
-          minHeight: 56,
+          height: 56,
+          overflow: "hidden",
           marginTop: SP.xl,
           padding: `${SP.lg}px ${SP.xl}px`,
           fontSize: FS.sm,

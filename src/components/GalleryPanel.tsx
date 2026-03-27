@@ -278,7 +278,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
 
   return (
     <div ref={panelRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg, width: "100%" }}>
-      <div style={{ fontSize: FS.md, color: C.textDim, minHeight: 16 }}>{t("gallery_title")}</div>
+      <div style={{ fontSize: FS.md, color: C.textDim, textAlign: "center", lineHeight: "14px" }}>{t("gallery_title")}</div>
 
       <div style={{ fontSize: FS.sm, color: C.textDimmer, textAlign: "center", width: "100%", minHeight: 16 }}>
         {generating && progress.total > 0 ? (

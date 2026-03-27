@@ -84,7 +84,8 @@ export function useAppState(t: import("../i18n").TranslationFn) {
     const h = window.innerHeight;
     // On wide screens (>=1024px), reserve space for sidebar panel
     const isWide = w >= 1024;
-    const UI_OVERHEAD = isWide ? 100 : Math.round(h * 0.3);
+    // Header ~50 + tabs ~40 + label ~20 + status ~15 + padding ~55 = ~180
+    const UI_OVERHEAD = isWide ? 180 : Math.round(h * 0.3);
     const sidebarReserve = isWide ? 340 : 32;
     const fromW = Math.floor(w - sidebarReserve);
     const fromH = Math.floor(h - UI_OVERHEAD);

@@ -161,24 +161,6 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps) {
         },
       },
       {
-        key: "+",
-        action: () => {
-          setZoom((z) => Math.min(ZOOM_MAX, z * ZOOM_STEP));
-        },
-      },
-      {
-        key: "=",
-        action: () => {
-          setZoom((z) => Math.min(ZOOM_MAX, z * ZOOM_STEP));
-        },
-      },
-      {
-        key: "-",
-        action: () => {
-          setZoom((z) => Math.max(ZOOM_MIN, z / ZOOM_STEP));
-        },
-      },
-      {
         key: "?",
         action: () => {
           setShowHelp((v) => !v);
