@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { LEVEL_CANDIDATES, LEVEL_INFO, buildColorLUT } from "../color-engine";
-import { S_BTN, S_BTN_ACTIVE } from "../styles";
+import { S_BTN, S_BTN_ACTIVE, S_BTN_SM, S_BTN_SM_ACTIVE } from "../styles";
 import { rgbStr } from "../utils";
 import { useGallery, renderThumbnail } from "../hooks/useGallery";
 import type { GalleryItem } from "../hooks/useGallery";
@@ -192,24 +192,19 @@ export const GalleryPanel = React.memo(function GalleryPanel({
 
   const isBookmarked = useCallback((itemCc: number[]) => bookmarks.some((b) => ccEqual(b, itemCc)), [bookmarks]);
 
-  const toggleBookmark = useCallback(
-    (itemCc: number[]) => {
-      setBookmarks((prev) => {
-        const idx = prev.findIndex((b) => ccEqual(b, itemCc));
-        let next: number[][];
-        if (idx >= 0) {
-          next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
-          showToast(t("toast_unbookmark"), "info");
-        } else {
-          next = [...prev, [...itemCc]];
-          showToast(t("toast_bookmark"), "success");
-        }
-        saveBookmarks(next);
-        return next;
-      });
-    },
-    [showToast, t],
-  );
+  const toggleBookmark = useCallback((itemCc: number[]) => {
+    setBookmarks((prev) => {
+      const idx = prev.findIndex((b) => ccEqual(b, itemCc));
+      let next: number[][];
+      if (idx >= 0) {
+        next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
+      } else {
+        next = [...prev, [...itemCc]];
+      }
+      saveBookmarks(next);
+      return next;
+    });
+  }, []);
 
   const applyScheme = useCallback(
     (itemCc: number[]) => {
@@ -222,8 +217,8 @@ export const GalleryPanel = React.memo(function GalleryPanel({
   // Bookmark thumbnails
   const bookmarkItems = useMemo(() => {
     if (bookmarks.length === 0) return [];
-    const tw = Math.max(1, Math.min(128, cvs.w));
-    const th = Math.max(1, Math.min(128, cvs.h));
+    const tw = Math.max(1, Math.min(260, cvs.w));
+    const th = Math.max(1, Math.min(260, cvs.h));
     return bookmarks.map((bcc) => {
       const lut = buildColorLUT(bcc);
       const imageData = renderThumbnail(cvs.data, cvs.w, cvs.h, lut, tw, th);
@@ -257,16 +252,23 @@ export const GalleryPanel = React.memo(function GalleryPanel({
     return list;
   }, [filter, items, bookmarkItems, sortMode, filterLevel, filterHue, filterRange, cc]);
 
-  const thumbDisplaySize = 120;
-  const expandedDisplaySize = 300;
+  type ThumbSize = "S" | "M" | "L";
+  const THUMB_SIZES: Record<ThumbSize, number> = { S: 120, M: 180, L: 260 };
+  const [thumbSize, setThumbSize] = useState<ThumbSize>("M");
+  const thumbDisplaySize = THUMB_SIZES[thumbSize];
+  const expandedDisplaySize =
+    typeof window !== "undefined" ? Math.min(600, Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.7)) : 300;
 
-  // High-res thumbnail for expanded item
+  // High-res thumbnail for expanded item (render at 2x for sharp display on high-DPI screens)
+  const expandedRenderScale = typeof window !== "undefined" ? Math.min(2, window.devicePixelRatio || 1) : 1;
+  const expandedRenderW = Math.min(cvs.w, Math.round(expandedDisplaySize * expandedRenderScale));
+  const expandedRenderH = Math.min(cvs.h, Math.round(((expandedDisplaySize * cvs.h) / cvs.w) * expandedRenderScale));
   const expandedImageData = useMemo(() => {
     if (expandedIndex === null || expandedIndex >= displayItems.length) return null;
     const item = displayItems[expandedIndex];
     const lut = buildColorLUT(item.cc);
-    return renderThumbnail(cvs.data, cvs.w, cvs.h, lut, expandedDisplaySize, Math.round((expandedDisplaySize * cvs.h) / cvs.w));
-  }, [expandedIndex, displayItems, cvs]);
+    return renderThumbnail(cvs.data, cvs.w, cvs.h, lut, expandedRenderW, expandedRenderH);
+  }, [expandedIndex, displayItems, cvs, expandedRenderW, expandedRenderH]);
 
   // Filter levels that have multiple candidates
   const filterableLevels = useMemo(
@@ -278,32 +280,30 @@ export const GalleryPanel = React.memo(function GalleryPanel({
     <div ref={panelRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg, width: "100%" }}>
       <div style={{ fontSize: FS.md, color: C.textDim, minHeight: 16 }}>{t("gallery_title")}</div>
 
-      <div style={{ fontSize: FS.sm, color: C.textDimmer, textAlign: "center" }}>
-        {generating
-          ? t("gallery_generating")
-          : displayItems.length < items.length
-            ? t("gallery_patterns_filtered", displayItems.length, patternCount)
-            : t("gallery_patterns", patternCount)}
-      </div>
-
-      {generating && progress.total > 0 && (
-        <div style={{ width: "100%", display: "flex", alignItems: "center", gap: SP.md }}>
-          <div style={{ flex: 1, height: 4, background: C.bgSurface, borderRadius: R.sm, overflow: "hidden" }}>
-            <div
-              style={{
-                width: `${(progress.current / progress.total) * 100}%`,
-                height: "100%",
-                background: C.accent,
-                borderRadius: R.sm,
-                transition: `width ${DUR.fast}`,
-              }}
-            />
+      <div style={{ fontSize: FS.sm, color: C.textDimmer, textAlign: "center", width: "100%", minHeight: 16 }}>
+        {generating && progress.total > 0 ? (
+          <div style={{ display: "flex", alignItems: "center", gap: SP.md }}>
+            <div style={{ flex: 1, height: 4, background: C.bgSurface, borderRadius: R.sm, overflow: "hidden" }}>
+              <div
+                style={{
+                  width: `${(progress.current / progress.total) * 100}%`,
+                  height: "100%",
+                  background: C.accent,
+                  borderRadius: R.sm,
+                  transition: `width ${DUR.fast}`,
+                }}
+              />
+            </div>
+            <span style={{ fontSize: FS.xs, color: C.textDimmer, fontFamily: "monospace" }}>
+              {progress.current}/{progress.total}
+            </span>
           </div>
-          <span style={{ fontSize: FS.xs, color: C.textDimmer, fontFamily: "monospace" }}>
-            {progress.current}/{progress.total}
-          </span>
-        </div>
-      )}
+        ) : displayItems.length < items.length ? (
+          t("gallery_patterns_filtered", displayItems.length, patternCount)
+        ) : (
+          t("gallery_patterns", patternCount)
+        )}
+      </div>
 
       {/* Filter + Sort + Hue filter — single row */}
       <div style={{ display: "flex", gap: SP.xs, justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
@@ -349,6 +349,16 @@ export const GalleryPanel = React.memo(function GalleryPanel({
             </option>
           ))}
         </select>
+        {(["S", "M", "L"] as ThumbSize[]).map((sz) => (
+          <button
+            key={sz}
+            onClick={() => setThumbSize(sz)}
+            style={thumbSize === sz ? S_BTN_SM_ACTIVE : S_BTN_SM}
+            aria-label={`Thumbnail size ${sz}`}
+          >
+            {sz}
+          </button>
+        ))}
       </div>
 
       {/* Hue filter sliders — shown only when a level is selected */}
@@ -434,7 +444,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
       )}
 
       {/* Expanded preview modal */}
-      {expandedImageData && (
+      {expandedImageData && expandedIndex !== null && expandedIndex < displayItems.length && (
         <div
           onClick={() => setExpandedIndex(null)}
           style={{
@@ -450,9 +460,25 @@ export const GalleryPanel = React.memo(function GalleryPanel({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ border: `2px solid ${C.accent}`, borderRadius: R.lg, overflow: "hidden", cursor: "default" }}
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xl, cursor: "default" }}
           >
-            <ThumbCanvas imageData={expandedImageData} w={expandedDisplaySize} h={Math.round((expandedDisplaySize * cvs.h) / cvs.w)} />
+            <div style={{ border: `2px solid ${C.accent}`, borderRadius: R.lg, overflow: "hidden" }}>
+              <ThumbCanvas imageData={expandedImageData} w={expandedDisplaySize} h={Math.round((expandedDisplaySize * cvs.h) / cvs.w)} />
+            </div>
+            <div style={{ display: "flex", gap: SP.xl }}>
+              <button
+                onClick={() => {
+                  applyScheme(displayItems[expandedIndex].cc);
+                  setExpandedIndex(null);
+                }}
+                style={S_BTN}
+              >
+                {t("gallery_apply_btn")}
+              </button>
+              <button onClick={() => toggleBookmark(displayItems[expandedIndex].cc)} style={S_BTN}>
+                {isBookmarked(displayItems[expandedIndex].cc) ? t("gallery_unbookmark") : t("gallery_bookmark")}
+              </button>
+            </div>
           </div>
         </div>
       )}

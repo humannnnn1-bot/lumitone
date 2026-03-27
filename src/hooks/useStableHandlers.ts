@@ -1,19 +1,18 @@
-import { useRef, useLayoutEffect } from "react";
+import { useState, useLayoutEffect } from "react";
 import type { PanZoomHandlers, DrawingHandlers } from "../types";
 
-export function useStablePanZoomHandlers(handlers: PanZoomHandlers): React.RefObject<PanZoomHandlers> {
-  const ref = useRef(handlers);
-  // Update ref properties after render (stable reference, fresh values)
+export function useStablePanZoomHandlers(handlers: PanZoomHandlers): PanZoomHandlers {
+  const [stable] = useState(() => ({ ...handlers }));
   useLayoutEffect(() => {
-    Object.assign(ref.current, handlers);
+    Object.assign(stable, handlers);
   });
-  return ref;
+  return stable;
 }
 
-export function useStableDrawingHandlers(handlers: DrawingHandlers): React.RefObject<DrawingHandlers> {
-  const ref = useRef(handlers);
+export function useStableDrawingHandlers(handlers: DrawingHandlers): DrawingHandlers {
+  const [stable] = useState(() => ({ ...handlers }));
   useLayoutEffect(() => {
-    Object.assign(ref.current, handlers);
+    Object.assign(stable, handlers);
   });
-  return ref;
+  return stable;
 }

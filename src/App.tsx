@@ -34,7 +34,7 @@ import { useTranslation } from "./i18n";
 const TAB_KEYS = ["tab_source", "tab_color", "tab_hex", "tab_glaze", "tab_stats", "tab_gallery"] as const;
 
 const S_ROOT: React.CSSProperties = { minHeight: "100vh", background: C.bgRoot, color: C.textPrimary, fontFamily: "monospace" };
-const S_HEADER: React.CSSProperties = { textAlign: "center", marginBottom: SP.lg };
+const S_HEADER: React.CSSProperties = { textAlign: "center", marginBottom: "var(--sp-header-mb)" };
 const S_TITLE: React.CSSProperties = {
   fontSize: 24,
   fontWeight: FW.bold,
@@ -46,7 +46,13 @@ const S_TITLE: React.CSSProperties = {
 };
 const S_STATUS: React.CSSProperties = { fontSize: FS.sm, color: C.textFaint, marginTop: 2 };
 const S_HELP_LINK: React.CSSProperties = { cursor: "pointer", color: C.textDimmest, textDecoration: "underline" };
-const S_TABLIST: React.CSSProperties = { display: "flex", justifyContent: "center", gap: 1, marginBottom: SP.lg, maxWidth: "100%" };
+const S_TABLIST: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "center",
+  gap: 1,
+  marginBottom: "var(--sp-tablist-mb)",
+  maxWidth: "100%",
+};
 const S_TAB_CENTER: React.CSSProperties = { display: "flex", justifyContent: "center", width: "100%" };
 const S_DROP_OVERLAY: React.CSSProperties = {
   position: "fixed",
@@ -204,9 +210,8 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   const handleClear = useCallback(() => {
     if (hist[0] !== cvs.w * cvs.h) {
       dispatch({ type: "clear" });
-      showToast(t("toast_cleared"), "info");
     }
-  }, [hist, cvs.w, cvs.h, dispatch, showToast, t]);
+  }, [hist, cvs.w, cvs.h, dispatch]);
 
   const canvasTransform = useMemo(
     () => ({
@@ -306,22 +311,18 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   const handleNewCanvas = useCallback(() => setShowNewCanvas(true), [setShowNewCanvas]);
   const handleNewCanvasConfirm = useCallback(
     (w: number, h: number) => {
-      if (state.undoStack.length > 0) {
-        showToast(t("toast_undo_history_cleared"), "info");
-      }
       dispatch({ type: "new_canvas", w, h });
       panZoom.setZoom(1);
       panZoom.setPan({ x: 0, y: 0 });
       setShowNewCanvas(false);
       showToast(t("toast_new_canvas_created", w, h), "success");
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- panZoom setters are stable
     },
     [state.undoStack.length, panZoom.setZoom, panZoom.setPan, dispatch, setShowNewCanvas, showToast, t],
   );
   const handleNewCanvasCancel = useCallback(() => setShowNewCanvas(false), [setShowNewCanvas]);
 
   // Stable handler objects: use refs to avoid recreating on every render
-  const panZoomHandlersRef = useStablePanZoomHandlers({
+  const panZoomHandlers = useStablePanZoomHandlers({
     setZoom: panZoom.setZoom,
     setPan: panZoom.setPan,
     schedCursorRef: sharedSchedCursorRef,
@@ -331,9 +332,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     movePan: panZoom.movePan,
     endPan: panZoom.endPan,
   });
-  const panZoomHandlers = panZoomHandlersRef.current;
-
-  const drawingHandlersRef = useStableDrawingHandlers({
+  const drawingHandlers = useStableDrawingHandlers({
     onDownPrv: drawing.onDownPrv,
     onMovePrv: drawing.onMovePrv,
     onUp: drawing.onUp,
@@ -341,7 +340,6 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     trackCursorPrv: drawing.trackCursorPrv,
     clearCursorPrv: drawing.clearCursorPrv,
   });
-  const drawingHandlers = drawingHandlersRef.current;
 
   return (
     <div

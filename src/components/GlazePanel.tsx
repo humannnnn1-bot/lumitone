@@ -65,7 +65,6 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
     panZoom,
     glazeDrawing,
     announce,
-    showToast,
     undo,
     redo,
     zoom,
@@ -199,8 +198,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
 
   const handleGlazeClear = useCallback(() => {
     dispatch({ type: "glaze_clear" });
-    showToast(t("toast_glaze_cleared"), "info");
-  }, [dispatch, showToast, t]);
+  }, [dispatch]);
 
   const handleZoomReset = useCallback(() => {
     panZoom.setZoom(1);

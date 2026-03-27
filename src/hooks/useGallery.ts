@@ -8,7 +8,7 @@ export interface GalleryItem {
   imageData: ImageData | null;
 }
 
-const THUMB_MAX = 240;
+const THUMB_MAX = 260;
 const CHUNK_SIZE = 8;
 
 const MAX_VARIANTS = 10_000;
