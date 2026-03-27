@@ -75,9 +75,9 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
     },
     [loadImg],
   );
-  const handleSaveColor = useCallback(() => saveColor(prvRef, `chromalum_color_${timestamp()}.png`), [saveColor, prvRef]);
-  const handleSaveGray = useCallback(() => saveColor(srcRef, `chromalum_gray_${timestamp()}.png`), [saveColor, srcRef]);
-  const handleSaveGlaze = useCallback(() => saveGlaze(`chromalum_glaze_${timestamp()}.png`), [saveGlaze]);
+  const handleSaveColor = useCallback(() => saveColor(prvRef, `lumitone_color_${timestamp()}.png`), [saveColor, prvRef]);
+  const handleSaveGray = useCallback(() => saveColor(srcRef, `lumitone_gray_${timestamp()}.png`), [saveColor, srcRef]);
+  const handleSaveGlaze = useCallback(() => saveGlaze(`lumitone_glaze_${timestamp()}.png`), [saveGlaze]);
 
   const handleZoomPixelPerfect = useCallback(
     (e: React.MouseEvent) => {
@@ -96,7 +96,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
   const handleSaveColorCustom = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      requestFilename(`chromalum_color_${timestamp()}`).then((name) => {
+      requestFilename(`lumitone_color_${timestamp()}`).then((name) => {
         if (name) saveColor(prvRef, name.endsWith(".png") ? name : name + ".png");
       });
     },
@@ -106,7 +106,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
   const handleSaveGrayCustom = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      requestFilename(`chromalum_gray_${timestamp()}`).then((name) => {
+      requestFilename(`lumitone_gray_${timestamp()}`).then((name) => {
         if (name) saveColor(srcRef, name.endsWith(".png") ? name : name + ".png");
       });
     },
@@ -116,7 +116,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
   const handleSaveGlazeCustom = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      requestFilename(`chromalum_glaze_${timestamp()}`).then((name) => {
+      requestFilename(`lumitone_glaze_${timestamp()}`).then((name) => {
         if (name) saveGlaze(name.endsWith(".png") ? name : name + ".png");
       });
     },

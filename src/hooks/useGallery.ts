@@ -28,7 +28,7 @@ export function generateAllVariants(cc: number[], locked: boolean[], hist: numbe
   }
   // Safety: cap variant count to avoid memory explosion
   if (total > MAX_VARIANTS) {
-    console.warn(`CHROMALUM: Variant count ${total} exceeds limit ${MAX_VARIANTS}, sampling randomly`);
+    console.warn(`Lumitone: Variant count ${total} exceeds limit ${MAX_VARIANTS}, sampling randomly`);
     const results: number[][] = [];
     for (let i = 0; i < MAX_VARIANTS; i++) {
       results.push(options.map((opts) => opts[(Math.random() * opts.length) | 0]));

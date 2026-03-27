@@ -1,5 +1,5 @@
 /**
- * Unified error handler utility for CHROMALUM.
+ * Unified error handler utility for Lumitone.
  *
  * Usage:
  *   const handle = createErrorHandler("AutoSave");
@@ -12,13 +12,10 @@
 
 export type AnnounceCallback = (message: string) => void;
 
-export function createErrorHandler(
-  context: string,
-  onError?: AnnounceCallback,
-) {
+export function createErrorHandler(context: string, onError?: AnnounceCallback) {
   return (err: unknown): void => {
     const message = err instanceof Error ? err.message : String(err);
-    console.error(`CHROMALUM [${context}]: ${message}`);
+    console.error(`Lumitone [${context}]: ${message}`);
     if (onError) onError(message);
   };
 }

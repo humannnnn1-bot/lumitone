@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 
-test.describe("CHROMALUM basic functionality", () => {
+test.describe("Lumitone basic functionality", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
     // Wait for canvas to render
@@ -11,7 +11,7 @@ test.describe("CHROMALUM basic functionality", () => {
     const canvas = page.locator("canvas").first();
     await expect(canvas).toBeVisible();
     // Title should be visible
-    await expect(page).toHaveTitle("CHROMALUM");
+    await expect(page).toHaveTitle("Lumitone");
   });
 
   test("tab switching works", async ({ page }) => {
