@@ -34,7 +34,9 @@ function openDB(): Promise<IDBDatabase> {
     };
     req.onsuccess = () => {
       _db.conn = req.result;
-      _db.conn.onclose = () => { _db.conn = null; };
+      _db.conn.onclose = () => {
+        _db.conn = null;
+      };
       resolve(_db.conn);
     };
     req.onerror = () => reject(req.error);
@@ -61,7 +63,7 @@ export async function saveState(state: SavedState): Promise<void> {
 
 /** Check approximate storage usage (returns null if API unavailable). */
 export async function checkStorageQuota(): Promise<{ used: number; quota: number } | null> {
-  if (navigator.storage && navigator.storage.estimate) {
+  if (typeof navigator !== "undefined" && navigator.storage && navigator.storage.estimate) {
     const est = await navigator.storage.estimate();
     return { used: est.usage ?? 0, quota: est.quota ?? 0 };
   }
@@ -75,11 +77,20 @@ export async function loadState(): Promise<SavedState | null> {
     const req = tx.objectStore(STORE_NAME).get(KEY);
     req.onsuccess = () => {
       const val = req.result;
-      if (!val || typeof val.w !== "number" || typeof val.h !== "number"
-        || typeof val.version !== "number"
-        || !(val.data instanceof Uint8Array) || !Array.isArray(val.cc) || val.cc.length !== 8
-        || val.data.length !== val.w * val.h
-        || val.w <= 0 || val.h <= 0 || val.w > 1024 || val.h > 1024) {
+      if (
+        !val ||
+        typeof val.w !== "number" ||
+        typeof val.h !== "number" ||
+        typeof val.version !== "number" ||
+        !(val.data instanceof Uint8Array) ||
+        !Array.isArray(val.cc) ||
+        val.cc.length !== 8 ||
+        val.data.length !== val.w * val.h ||
+        val.w <= 0 ||
+        val.h <= 0 ||
+        val.w > 1024 ||
+        val.h > 1024
+      ) {
         resolve(null);
         return;
       }
