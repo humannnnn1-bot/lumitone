@@ -4,7 +4,7 @@ import { en } from "./en";
 import type { Language, Translations, TranslationKey, TranslationFn } from "./types";
 
 const dictionaries: Record<Language, Translations> = { ja, en };
-const STORAGE_KEY = "chromalum_lang";
+const STORAGE_KEY = "lumitone_lang";
 
 function getInitialLang(): Language {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -31,21 +31,22 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   // Initial lang attribute set (setLang handles subsequent changes).
   // RTL support: add document.documentElement.dir = "rtl" here when adding RTL languages.
-  useEffect(() => { document.documentElement.lang = lang; }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const t = useCallback((key: TranslationKey | (string & {}), ...params: (string | number)[]): string => {
-    let str = dictionaries[lang][key] ?? key;
-    for (let i = 0; i < params.length; i++) {
-      str = str.replace(`{${i}}`, String(params[i]));
-    }
-    return str;
-  }, [lang]);
-
-  return (
-    <LanguageContext value={{ lang, setLang, t }}>
-      {children}
-    </LanguageContext>
+  const t = useCallback(
+    (key: TranslationKey | (string & {}), ...params: (string | number)[]): string => {
+      let str = dictionaries[lang][key] ?? key;
+      for (let i = 0; i < params.length; i++) {
+        str = str.replace(`{${i}}`, String(params[i]));
+      }
+      return str;
+    },
+    [lang],
   );
+
+  return <LanguageContext value={{ lang, setLang, t }}>{children}</LanguageContext>;
 }
 
 export function useTranslation(): LanguageContextValue {

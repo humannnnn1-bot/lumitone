@@ -54,12 +54,7 @@ interface GlazeStroke {
 }
 
 export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
-  const {
-    cvs, dispatch, colorLUT,
-    hueAngle, setHueAngle, glazeTool, brushSize,
-    prvRef,
-    directCandidates,
-  } = opts;
+  const { cvs, dispatch, colorLUT, hueAngle, setHueAngle, glazeTool, brushSize, prvRef, directCandidates } = opts;
   const ctx = useDrawingContext();
   const { displayW, displayH, panningRef, spaceRef, zoomRef, panRef, startPan, movePan, endPan, announce, t } = ctx;
 
@@ -81,15 +76,14 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   const cvsRef = useSyncRef(cvs);
   const displayWRef = useSyncRef(displayW);
   const displayHRef = useSyncRef(displayH);
-  const toolRef = useSyncRef(glazeTool === "glaze_brush" ? "brush" as const : glazeTool === "glaze_eraser" ? "eraser" as const : "fill" as const);
+  const toolRef = useSyncRef(
+    glazeTool === "glaze_brush" ? ("brush" as const) : glazeTool === "glaze_eraser" ? ("eraser" as const) : ("fill" as const),
+  );
 
   // Batch-sync remaining values used in imperative callbacks
   const s = useSyncRefs({ colorLUT, hueAngle, setHueAngle, glazeTool, startPan, movePan, endPan, announce, t, directCandidates });
 
-  const cursor = useCursorOverlay(
-    { zoomRef, panRef, cvsRef, displayWRef, displayHRef, panningRef, brushSizeRef, toolRef },
-    statusRef,
-  );
+  const cursor = useCursorOverlay({ zoomRef, panRef, cvsRef, displayWRef, displayHRef, panningRef, brushSizeRef, toolRef }, statusRef);
 
   const drawRefs: DrawingRefs = { zoomRef, panRef, cvsRef };
 
@@ -98,25 +92,24 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   }
 
   function updateStatus(e: React.PointerEvent) {
-    updateStatusBase(
-      e, statusRef.current, cursor.curRef.current, drawRefs, cvsRef.current.data,
-      (pos, lv, info, idx) => {
-        const cm = drawingRef.current && strokeRef.current ? strokeRef.current.cmBuf[idx] : cvsRef.current.colorMap[idx];
-        const cmLabel = cm > 0 ? `Glaze:${cm}` : "Default";
-        const alts = LEVEL_CANDIDATES[lv];
-        const ci = cm > 0 ? (cm - 1) % alts.length : -1;
-        const colorHex = ci >= 0 ? hexStr(alts[ci].rgb) : "";
-        return `(${pos.x}, ${pos.y})  L${lv} ${info.name}  ${cmLabel} ${colorHex}`;
-      },
-    );
+    updateStatusBase(e, statusRef.current, cursor.curRef.current, drawRefs, cvsRef.current.data, (pos, lv, info, idx) => {
+      const cm = drawingRef.current && strokeRef.current ? strokeRef.current.cmBuf[idx] : cvsRef.current.colorMap[idx];
+      const cmLabel = cm > 0 ? `Glaze:${cm}` : "Default";
+      const alts = LEVEL_CANDIDATES[lv];
+      const ci = cm > 0 ? (cm - 1) % alts.length : -1;
+      const colorHex = ci >= 0 ? hexStr(alts[ci].rgb) : "";
+      return `(${pos.x}, ${pos.y})  L${lv} ${info.name}  ${cmLabel} ${colorHex}`;
+    });
   }
-
 
   function doDown(e: React.PointerEvent) {
     if (e.button !== 0 && e.button !== 1) return;
     e.preventDefault();
     if (drawingRef.current) return;
-    if (e.button === 1 || spaceRef.current) { s.current.startPan(e); return; }
+    if (e.button === 1 || spaceRef.current) {
+      s.current.startPan(e);
+      return;
+    }
     trySetPointerCapture(e);
     drawingRef.current = true;
     const pos = cPos(e);
@@ -125,7 +118,8 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     // Ensure preview canvas dimensions match
     const pc = prvRef.current;
     if (pc && (pc.width !== cv.w || pc.height !== cv.h)) {
-      pc.width = cv.w; pc.height = cv.h;
+      pc.width = cv.w;
+      pc.height = cv.h;
       imgCacheRef.current = { src: null, prv: null, s32: null, p32: null };
     }
     const n = cv.colorMap.length;
@@ -146,38 +140,49 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     strokeRef.current = { cmBuf, cmPre, fillChanged: null, glazeLUT, shapeStart: pos, prevShapeBBox: null };
     const curTool = s.current.glazeTool;
     const r = Math.floor(brushSizeRef.current / 2);
-    const W = cv.w, H = cv.h;
+    const W = cv.w,
+      H = cv.h;
 
     if (curTool === "glaze_fill") {
       const seedIdx = pos.y * W + pos.x;
       const seedLv = cv.data[seedIdx] & LEVEL_MASK;
       // In direct mode, only fill if seed pixel's level is in the direct map
-      if (isDirect && !dc.has(seedLv)) { drawingRef.current = false; strokeRef.current = null; return; }
-      const newCmVal = isDirect ? (dc.get(seedLv)! + 1) : (findClosestCandidate(seedLv, curHue) + 1);
-      fillPendingRef.current = true;
-      floodFillWorker.requestGlazeFill(cv.data, cmBuf, pos.x, pos.y, newCmVal, W, H).then((res) => {
-        const st = strokeRef.current;
-        if (!st) { fillPendingRef.current = false; return; }
-        st.cmBuf.set(res.colorMap);
-        if (res.changed.length > 0) {
-          st.fillChanged = res.changed;
-          if (res.truncated) s.current.announce(s.current.t("toast_fill_truncated"));
-        }
-        const dirtyBB = st.fillChanged ? dirtyFromChanged(st.fillChanged, W, H) : undefined;
-        renderBuf(cv.data, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB, st.cmBuf);
-        fillPendingRef.current = false;
-        if (pendingUpRef.current) {
-          pendingUpRef.current = false;
-          finishGlazeStroke();
-        }
-      }).catch((err) => {
-        fillPendingRef.current = false;
-        pendingUpRef.current = false;
-        strokeRef.current = null;
+      if (isDirect && !dc.has(seedLv)) {
         drawingRef.current = false;
-        s.current.announce(s.current.t("toast_fill_error"));
-        console.error("CHROMALUM: glaze flood fill failed:", err);
-      });
+        strokeRef.current = null;
+        return;
+      }
+      const newCmVal = isDirect ? dc.get(seedLv)! + 1 : findClosestCandidate(seedLv, curHue) + 1;
+      fillPendingRef.current = true;
+      floodFillWorker
+        .requestGlazeFill(cv.data, cmBuf, pos.x, pos.y, newCmVal, W, H)
+        .then((res) => {
+          const st = strokeRef.current;
+          if (!st) {
+            fillPendingRef.current = false;
+            return;
+          }
+          st.cmBuf.set(res.colorMap);
+          if (res.changed.length > 0) {
+            st.fillChanged = res.changed;
+            if (res.truncated) s.current.announce(s.current.t("toast_fill_truncated"));
+          }
+          const dirtyBB = st.fillChanged ? dirtyFromChanged(st.fillChanged, W, H) : undefined;
+          renderBuf(cv.data, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB, st.cmBuf);
+          fillPendingRef.current = false;
+          if (pendingUpRef.current) {
+            pendingUpRef.current = false;
+            finishGlazeStroke();
+          }
+        })
+        .catch((err) => {
+          fillPendingRef.current = false;
+          pendingUpRef.current = false;
+          strokeRef.current = null;
+          drawingRef.current = false;
+          s.current.announce(s.current.t("toast_fill_error"));
+          console.error("Lumitone: glaze flood fill failed:", err);
+        });
       return;
     } else if (curTool === "glaze_eraser") {
       eraseGlazeCircle(cmBuf, pos.x, pos.y, r, W, H);
@@ -189,17 +194,23 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   }
 
   function doMove(e: React.PointerEvent) {
-    cursor.trackCursor(e); updateStatus(e);
-    if (panningRef.current) { s.current.movePan(e); return; }
+    cursor.trackCursor(e);
+    updateStatus(e);
+    if (panningRef.current) {
+      s.current.movePan(e);
+      return;
+    }
     if (!drawingRef.current) return;
     const st = strokeRef.current;
     if (!st || s.current.glazeTool === "glaze_fill") return;
     e.preventDefault();
-    const pos = cPos(e), last = lastRef.current || pos;
+    const pos = cPos(e),
+      last = lastRef.current || pos;
     const cmBuf = st.cmBuf;
     const cv = cvsRef.current;
     const r = Math.floor(brushSizeRef.current / 2);
-    const W = cv.w, H = cv.h;
+    const W = cv.w,
+      H = cv.h;
     const curTool = s.current.glazeTool;
 
     // Shape tools: restore only the dirty region from cmPre, then redraw shape
@@ -222,12 +233,18 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     } else {
       paintGlazeLine(cmBuf, cv.data, last.x, last.y, pos.x, pos.y, r, W, H, st.glazeLUT);
     }
-    const allPts: [number, number][] = [[last.x, last.y], [pos.x, pos.y]];
+    const allPts: [number, number][] = [
+      [last.x, last.y],
+      [pos.x, pos.y],
+    ];
     const dirtyBB = brushBBox(allPts, r, W, H);
     lastRef.current = pos;
     // Throttle rendering to animation frame rate
     if (paintRafRef.current !== null) cancelAnimationFrame(paintRafRef.current);
-    const lutSnap = s.current.colorLUT, srcSnap = srcRef.current, prvSnap = prvRef.current, cacheSnap = imgCacheRef.current;
+    const lutSnap = s.current.colorLUT,
+      srcSnap = srcRef.current,
+      prvSnap = prvRef.current,
+      cacheSnap = imgCacheRef.current;
     const dataSnap = cv.data;
     paintRafRef.current = requestAnimationFrame(() => {
       paintRafRef.current = null;
@@ -236,9 +253,16 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps -- doDown/doMove read from sync refs
-  const onDown = useCallback((e: React.PointerEvent) => { doDown(e); }, []);
+  const onDown = useCallback((e: React.PointerEvent) => {
+    doDown(e);
+  }, []);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const onMove = useCallback((e: React.PointerEvent) => { doMove(e); }, [cursor.trackCursor]);
+  const onMove = useCallback(
+    (e: React.PointerEvent) => {
+      doMove(e);
+    },
+    [cursor.trackCursor],
+  );
 
   function finishGlazeStroke() {
     // Flush pending glaze render
@@ -247,7 +271,8 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
       paintRafRef.current = null;
       const cv = cvsRef.current;
       const st2 = strokeRef.current;
-      if (st2) renderBuf(cv.data, cv.w, cv.h, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, undefined, st2.cmBuf);
+      if (st2)
+        renderBuf(cv.data, cv.w, cv.h, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, undefined, st2.cmBuf);
     }
     const st = strokeRef.current;
     if (drawingRef.current && st) {
@@ -257,13 +282,20 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
         : computeGlazeDiff(st.cmPre, st.cmBuf, cv.data);
       dispatch({ type: "stroke_end", finalData: cv.data, finalColorMap: new Uint8Array(st.cmBuf), diff });
     }
-    drawingRef.current = false; lastRef.current = null;
+    drawingRef.current = false;
+    lastRef.current = null;
     strokeRef.current = null;
   }
 
   const onUp = useCallback(() => {
-    if (panningRef.current) { s.current.endPan(); return; }
-    if (fillPendingRef.current) { pendingUpRef.current = true; return; }
+    if (panningRef.current) {
+      s.current.endPan();
+      return;
+    }
+    if (fillPendingRef.current) {
+      pendingUpRef.current = true;
+      return;
+    }
     finishGlazeStroke();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable, read via .current
   }, [dispatch]);
@@ -298,10 +330,19 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   }, []);
 
   return {
-    srcRef, curRef: cursor.curRef, statusRef, imgCacheRef,
-    drawingRef, cursorRafRef: cursor.cursorRafRef,
-    schedCursorRef: cursor.schedCursorRef, cursorPosRef: cursor.cursorPosRef,
-    onDown, onMove, onUp, pickHue,
-    trackCursor: cursor.trackCursor, clearCursor: cursor.clearCursor,
+    srcRef,
+    curRef: cursor.curRef,
+    statusRef,
+    imgCacheRef,
+    drawingRef,
+    cursorRafRef: cursor.cursorRafRef,
+    schedCursorRef: cursor.schedCursorRef,
+    cursorPosRef: cursor.cursorPosRef,
+    onDown,
+    onMove,
+    onUp,
+    pickHue,
+    trackCursor: cursor.trackCursor,
+    clearCursor: cursor.clearCursor,
   };
 }

@@ -169,7 +169,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
           strokeRef.current = null;
           drawingRef.current = false;
           s.current.announce(s.current.t("toast_fill_error"));
-          console.error("CHROMALUM: canvas flood fill failed:", err);
+          console.error("Lumitone: canvas flood fill failed:", err);
         });
       return;
     } else if (isShapeTool(curTool)) {
@@ -245,7 +245,6 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
   const onMove = useCallback(
     (e: React.PointerEvent) => {
       doMove(e, cursor.curRef.current, cursor.trackCursor);
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- doMove reads from sync refs, cursor.curRef is stable
     },
     [cursor.trackCursor],
   );
@@ -258,7 +257,6 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
   const onMovePrv = useCallback(
     (e: React.PointerEvent) => {
       doMove(e, cursor.prvCurRef.current, cursor.trackCursorPrv);
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- doMove reads from sync refs, cursor.prvCurRef is stable
     },
     [cursor.trackCursorPrv],
   );
