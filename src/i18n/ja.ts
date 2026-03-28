@@ -294,6 +294,14 @@ export const ja: Record<TranslationKey, string> = {
   aria_gallery_filter_hue: "フィルタ色相角度",
   aria_gallery_filter_range: "フィルタ色相範囲",
 
+  // LinkedViz
+  linkedviz_mode_l0: "L0=原点",
+  linkedviz_mode_l7: "L7=原点",
+  linkedviz_legend_l0: "L0(黒)",
+  linkedviz_legend_l7: "L7(白)",
+  linkedviz_in_phase: "同相",
+  linkedviz_anti_phase: "逆相",
+
   // Language switcher
   lang_switch: "EN",
 } as const satisfies Translations;

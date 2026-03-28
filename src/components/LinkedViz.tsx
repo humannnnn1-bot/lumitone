@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useMemo } from "react";
 import { LEVEL_INFO, LEVEL_CANDIDATES, findClosestCandidate, hue2rgb } from "../color-engine";
 import { SP, C, R } from "../tokens";
+import { useTranslation } from "../i18n";
 
 interface LinkedVizProps {
   hueAngle: number;
@@ -9,34 +10,34 @@ interface LinkedVizProps {
 }
 
 /* ── Layout constants ── */
-const WR = 62;
-const WO = 10;
-const WCX = 80;
-const WCY = 80;
-const GAP = 12;
-const WD = 160;
+const WR = 58;
+const WO = 18; // left/top margin for axis labels
+const WCX = 68;
+const WCY = 68;
+const RING_R = 70; // hue ring outer edge + margin
+const GRAPH_GAP = 2; // minimal gap between ring and graph
 
 // Single wheel center
-const CX = WO + WCX; // 90
-const CY = WO + WCY; // 90
+const CX = WO + WCX; // 86
+const CY = WO + WCY; // 86
 
-// Right graph (sine: Y-projection)
-const RX = WO + WD + GAP; // 182
-const RW = 200;
+// Right graph (sine: Y-projection) — flush with wheel
+const RX = CX + RING_R + GRAPH_GAP; // 158
+const RW = 170;
 const RYtop = CY - WR - 4; // 24
-const RYbot = CY + WR + 4; // 156
-const RH = RYbot - RYtop; // 132
+const RYbot = CY + WR + 4; // 148
+const RH = RYbot - RYtop; // 124
 
-// Bottom graph (cosine: X-projection)
-const BY = WO + WD + GAP; // 182
+// Bottom graph (cosine: X-projection) — flush with wheel
+const BY = CY + RING_R + GRAPH_GAP; // 158
 const BXleft = CX - WR - 4; // 24
-const BXright = CX + WR + 4; // 156
-const BW = BXright - BXleft; // 132
-const BH = 160;
+const BXright = CX + WR + 4; // 148
+const BW = BXright - BXleft; // 124
+const BH = 170;
 
 // Total SVG
-const TW = RX + RW + 4; // 386
-const TH = BY + BH + 16; // 358
+const TW = RX + RW + 4; // 332
+const TH = BY + BH + 16; // 344
 
 // Active levels (skip black=0, white=7)
 const ACTIVE_LEVELS = [1, 2, 3, 4, 5, 6];
@@ -44,6 +45,9 @@ const HUE_LABELS = [0, 60, 120, 180, 240, 300];
 
 // Level display colors
 const LV_COLORS = ["", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", ""];
+
+// C2 symmetry pairs: level a + level b = 7
+const C2_PAIR: Record<number, number> = { 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1 };
 
 const lumR0 = (lv: number) => (LEVEL_INFO[lv].gray / 255) * WR;
 const lumR7 = (lv: number) => (1 - LEVEL_INFO[lv].gray / 255) * WR;
@@ -58,7 +62,19 @@ interface Dot {
 }
 
 /* ── Wheel rendering ── */
-function renderWheel(cx: number, cy: number, alpha: number, radiusFn: (lv: number) => number, dots: Dot[], hueAngle: number) {
+interface WheelOpts {
+  cx: number;
+  cy: number;
+  alpha: number;
+  radiusFn: (lv: number) => number;
+  dots: Dot[];
+  hueAngle: number;
+  hoveredDot: { lv: number; ci: number } | null;
+  onHoverDot: (d: { lv: number; ci: number } | null) => void;
+  mode: 0 | 7;
+}
+
+function renderWheel({ cx, cy, alpha, radiusFn, dots, hueAngle, hoveredDot, onHoverDot, mode }: WheelOpts) {
   const wP = (a: number, lv: number) => {
     const rad = ((a - alpha - 90) * Math.PI) / 180;
     const r = radiusFn(lv);
@@ -75,10 +91,10 @@ function renderWheel(cx: number, cy: number, alpha: number, radiusFn: (lv: numbe
         return (
           <line
             key={`h${d}`}
-            x1={cx + 68 * Math.cos(r)}
-            y1={cy + 68 * Math.sin(r)}
-            x2={cx + 75 * Math.cos(r)}
-            y2={cy + 75 * Math.sin(r)}
+            x1={cx + 64 * Math.cos(r)}
+            y1={cy + 64 * Math.sin(r)}
+            x2={cx + 69 * Math.cos(r)}
+            y2={cy + 69 * Math.sin(r)}
             stroke={`rgb(${cr},${cg},${cb})`}
             strokeWidth={1.5}
           />
@@ -89,17 +105,17 @@ function renderWheel(cx: number, cy: number, alpha: number, radiusFn: (lv: numbe
         const r = radiusFn(lv);
         return r > 1 ? <circle key={`g${lv}`} cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={0.5} /> : null;
       })}
-      <circle cx={cx} cy={cy} r={3} fill="#000" stroke="rgba(255,255,255,0.3)" strokeWidth={0.5} />
-      <circle cx={cx} cy={cy} r={WR} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={0.5} strokeDasharray="2,2" />
-      {/* Sweep line */}
-      <line
-        x1={cx}
-        y1={cy}
-        x2={cx + 65 * Math.cos(sweepRad)}
-        y2={cy + 65 * Math.sin(sweepRad)}
-        stroke="rgba(255,255,255,0.15)"
-        strokeWidth={0.5}
+      {/* Center dot: fixed origin level (achromatic, no angle) */}
+      <circle
+        cx={cx}
+        cy={cy}
+        r={4}
+        fill={mode === 0 ? "#000" : "#fff"}
+        stroke={mode === 0 ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)"}
+        strokeWidth={0.8}
       />
+      <circle cx={cx} cy={cy} r={WR} fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth={0.5} strokeDasharray="2,2" />
+      {/* C2 symmetry lines */}
       {/* C2 symmetry */}
       {(
         [
@@ -122,41 +138,66 @@ function renderWheel(cx: number, cy: number, alpha: number, radiusFn: (lv: numbe
               y1={pA.y}
               x2={pB.x}
               y2={pB.y}
-              stroke="rgba(255,255,255,0.15)"
+              stroke={C.accent}
               strokeWidth={0.5}
               strokeDasharray="3,2"
+              opacity={0.2}
             />
           );
         }),
       )}
-      {/* Active connections */}
+      {/* Active connections (Catmull-Rom spline) */}
       {(() => {
         const p = dots.filter((d) => d.act).map((d) => wP(d.a, d.lv));
-        return p.map((pt, i) =>
-          i > 0 ? (
-            <line key={`wc${i}`} x1={p[i - 1].x} y1={p[i - 1].y} x2={pt.x} y2={pt.y} stroke="rgba(255,255,255,0.2)" strokeWidth={0.5} />
-          ) : null,
-        );
+        if (p.length < 2) return null;
+        const t = 0.5; // tension
+        let d = `M${p[0].x},${p[0].y}`;
+        for (let i = 0; i < p.length - 1; i++) {
+          const p0 = p[Math.max(0, i - 1)];
+          const p1 = p[i];
+          const p2 = p[i + 1];
+          const p3 = p[Math.min(p.length - 1, i + 2)];
+          const cp1x = p1.x + (p2.x - p0.x) / (6 / t);
+          const cp1y = p1.y + (p2.y - p0.y) / (6 / t);
+          const cp2x = p2.x - (p3.x - p1.x) / (6 / t);
+          const cp2y = p2.y - (p3.y - p1.y) / (6 / t);
+          d += ` C${cp1x},${cp1y} ${cp2x},${cp2y} ${p2.x},${p2.y}`;
+        }
+        return <path d={d} fill="none" stroke="rgba(255,255,255,0.35)" strokeWidth={0.8} />;
       })()}
       {/* Dots */}
       {dots.map((d) => {
         const p = wP(d.a, d.lv);
+        const hov = d.act && hoveredDot !== null && hoveredDot.lv === d.lv && hoveredDot.ci === d.ci;
+        const dimmed = d.act && hoveredDot !== null && !hov;
         return (
           <circle
             key={`w${d.lv}${d.ci}`}
             cx={p.x}
             cy={p.y}
-            r={d.act ? 5 : 2.5}
-            fill={d.act ? `rgb(${d.rgb.join(",")})` : "#555"}
-            stroke={d.act ? "#fff" : "none"}
-            strokeWidth={d.act ? 1 : 0}
+            r={d.act ? (hov ? 5.5 : 4) : 2}
+            fill={d.act ? `rgb(${d.rgb.join(",")})` : `rgb(${d.rgb.join(",")})`}
+            stroke={d.act ? "#fff" : "rgba(255,255,255,0.15)"}
+            strokeWidth={d.act ? (hov ? 1.2 : 1) : 0.5}
+            opacity={d.act ? (dimmed ? 0.25 : 1) : 0.45}
+            filter={hov ? "url(#dot-glow)" : undefined}
+            style={d.act ? { cursor: "pointer" } : undefined}
+            onPointerEnter={
+              d.act
+                ? (e) => {
+                    e.stopPropagation();
+                    onHoverDot({ lv: d.lv, ci: d.ci });
+                  }
+                : undefined
+            }
+            onPointerLeave={d.act ? () => onHoverDot(null) : undefined}
           />
         );
       })}
       {/* Angle marker */}
       {(() => {
-        const x = cx + 75 * Math.cos(sweepRad),
-          y = cy + 75 * Math.sin(sweepRad);
+        const x = cx + 69 * Math.cos(sweepRad),
+          y = cy + 69 * Math.sin(sweepRad);
         return (
           <polygon
             points={`${x},${y} ${x + 4 * Math.cos(sweepRad + 2.5)},${y + 4 * Math.sin(sweepRad + 2.5)} ${x + 4 * Math.cos(sweepRad - 2.5)},${y + 4 * Math.sin(sweepRad - 2.5)}`}
@@ -172,6 +213,7 @@ function renderWheel(cx: number, cy: number, alpha: number, radiusFn: (lv: numbe
 const S_TOGGLE: React.CSSProperties = {
   padding: "3px 10px",
   fontSize: 11,
+  lineHeight: "14px",
   borderRadius: R.md,
   border: `1px solid ${C.border}`,
   cursor: "pointer",
@@ -182,6 +224,7 @@ const S_TOGGLE: React.CSSProperties = {
 const S_TOGGLE_ACTIVE: React.CSSProperties = {
   padding: "3px 10px",
   fontSize: 11,
+  lineHeight: "14px",
   borderRadius: R.md,
   border: `1px solid ${C.accent}`,
   cursor: "pointer",
@@ -191,6 +234,7 @@ const S_TOGGLE_ACTIVE: React.CSSProperties = {
 };
 
 export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, onHueAngleChange }: LinkedVizProps) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<0 | 7>(0);
   const [alpha0, setAlpha0] = useState(0);
   const [alpha7, setAlpha7] = useState(0);
@@ -318,6 +362,8 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
     style: { cursor: "pointer" as const },
   });
   const dotOpacity = (d: Dot) => (hoveredDot === null ? 1 : isHovered(d) ? 1 : 0.25);
+  const legendL0 = t("linkedviz_legend_l0");
+  const legendL7 = t("linkedviz_legend_l7");
 
   // Main visualization content
   const vizContent = useMemo(() => {
@@ -325,35 +371,152 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
 
     return (
       <>
-        {/* ═══ GUIDE LINES — hover only ═══ */}
-        {hoveredDot &&
-          activeDots
-            .filter((d) => d.lv === hoveredDot.lv && d.ci === hoveredDot.ci)
-            .map((d) => {
-              const w = wP(d.a, d.lv);
-              const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
-              const ry = CY + activeRadiusFn(d.lv) * Math.sin(rad);
-              const bx = CX + activeRadiusFn(d.lv) * Math.cos(rad);
-              const col = `rgb(${d.rgb.join(",")})`;
-              return (
-                <g key={`gl-${d.lv}-${d.ci}`} opacity={0.4}>
-                  {/* Wheel → right graph (horizontal, constant Y) */}
-                  <line x1={w.x} y1={w.y} x2={rPx(d.a)} y2={ry} stroke={col} strokeWidth={0.8} strokeDasharray="3,2" />
-                  {/* Wheel → bottom graph (vertical, constant X) */}
-                  <line x1={w.x} y1={w.y} x2={bx} y2={bPy(d.a)} stroke={col} strokeWidth={0.8} strokeDasharray="3,2" />
-                  {/* Right graph dot → bottom graph dot (diagonal) */}
-                  <line x1={rPx(d.a)} y1={ry} x2={rPx(d.a)} y2={RYbot + 2} stroke={col} strokeWidth={0.4} strokeDasharray="2,2" />
-                  <line x1={BXleft - 2} y1={bPy(d.a)} x2={bx} y2={bPy(d.a)} stroke={col} strokeWidth={0.4} strokeDasharray="2,2" />
-                </g>
-              );
-            })}
+        {/* ═══ GUIDE LINES — inactive dots (thin) ═══ */}
+        {dots
+          .filter((d) => !d.act)
+          .map((d) => {
+            const w = wP(d.a, d.lv);
+            const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
+            const ry = CY + activeRadiusFn(d.lv) * Math.sin(rad);
+            const bx = CX + activeRadiusFn(d.lv) * Math.cos(rad);
+            const col = `rgb(${d.rgb.join(",")})`;
+            return (
+              <g key={`gli-${d.lv}-${d.ci}`} opacity={0.2}>
+                <line x1={w.x} y1={w.y} x2={rPx(d.a)} y2={ry} stroke={col} strokeWidth={0.4} strokeDasharray="2,3" />
+                <line x1={w.x} y1={w.y} x2={bx} y2={bPy(d.a)} stroke={col} strokeWidth={0.4} strokeDasharray="2,3" />
+              </g>
+            );
+          })}
+        {/* ═══ GUIDE LINES — active dots (prominent) ═══ */}
+        {activeDots.map((d) => {
+          const w = wP(d.a, d.lv);
+          const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
+          const ry = CY + activeRadiusFn(d.lv) * Math.sin(rad);
+          const bx = CX + activeRadiusFn(d.lv) * Math.cos(rad);
+          const col = `rgb(${d.rgb.join(",")})`;
+          const hov = hoveredDot !== null && hoveredDot.lv === d.lv && hoveredDot.ci === d.ci;
+          return (
+            <g key={`gl-${d.lv}-${d.ci}`} opacity={hov ? 0.7 : 0.4}>
+              <line x1={w.x} y1={w.y} x2={rPx(d.a)} y2={ry} stroke={col} strokeWidth={hov ? 0.8 : 0.6} strokeDasharray="3,2" />
+              <line x1={w.x} y1={w.y} x2={bx} y2={bPy(d.a)} stroke={col} strokeWidth={hov ? 0.8 : 0.6} strokeDasharray="3,2" />
+            </g>
+          );
+        })}
 
         {/* ═══ RIGHT GRAPH: Sine (Y-projection) ═══ */}
         <g>
-          <rect x={RX} y={RYtop} width={RW} height={RH} fill="rgba(255,255,255,0.02)" rx={4} />
-          <line x1={RX} y1={CY} x2={RX + RW} y2={CY} stroke="rgba(255,255,255,0.06)" strokeWidth={0.5} />
+          <rect x={RX} y={RYtop} width={RW} height={RH} fill="rgba(255,255,255,0.01)" rx={4} />
+          {/* Grid lines */}
           {HUE_LABELS.map((a) => (
-            <text key={`ra${a}`} x={rPx(a)} y={RYbot + 10} fontSize={4} fill="#555" textAnchor="middle">
+            <line key={`rg${a}`} x1={rPx(a)} y1={RYtop} x2={rPx(a)} y2={RYbot} stroke="rgba(255,255,255,0.04)" strokeWidth={0.3} />
+          ))}
+          <line x1={RX} y1={CY} x2={RX + RW} y2={CY} stroke="rgba(255,255,255,0.06)" strokeWidth={0.5} />
+          {/* Origin level center line: r=0 → projection always at CY */}
+          <line
+            x1={RX}
+            y1={CY}
+            x2={RX + RW}
+            y2={CY}
+            stroke={mode === 0 ? "#222" : "#fff"}
+            strokeWidth={mode === 0 ? 1.4 : 0.6}
+            opacity={mode === 0 ? 0.4 : 0.12}
+          />
+          <line
+            x1={RX}
+            y1={CY}
+            x2={RX + RW}
+            y2={CY}
+            stroke={mode === 7 ? "#fff" : "#222"}
+            strokeWidth={mode === 7 ? 1.4 : 0.6}
+            opacity={mode === 7 ? 0.4 : 0.12}
+            strokeDasharray="6,3"
+          />
+          {/* L7(white) boundary curve in L0 system — full amplitude WR */}
+          <path
+            d={sinePath(7, lumR0, alpha0)}
+            fill="none"
+            stroke="#fff"
+            strokeWidth={mode === 0 ? 1.4 : 0.6}
+            opacity={mode === 0 ? 0.5 : 0.12}
+          />
+          {/* L0(black) boundary curve in L7 system — full amplitude WR */}
+          <path
+            d={sinePath(0, lumR7, alpha7)}
+            fill="none"
+            stroke="rgba(255,255,255,0.6)"
+            strokeWidth={mode === 7 ? 1.4 : 0.6}
+            opacity={mode === 7 ? 0.5 : 0.12}
+            strokeDasharray="6,3"
+          />
+          {/* Boundary dots — outer (oscillating) and center (fixed) */}
+          {(() => {
+            const yellowDot = activeDots.find((d) => d.lv === 6);
+            const blueDot = activeDots.find((d) => d.lv === 1);
+            return (
+              <>
+                {/* L0=origin: White oscillates near Yellow (outer), Black fixed near Blue (center) */}
+                {yellowDot &&
+                  (() => {
+                    const rad = ((yellowDot.a - alpha0 - 90) * Math.PI) / 180;
+                    return (
+                      <circle
+                        cx={rPx(yellowDot.a)}
+                        cy={CY + WR * Math.sin(rad)}
+                        r={4}
+                        fill="#fff"
+                        stroke="rgba(0,0,0,0.5)"
+                        strokeWidth={0.8}
+                        opacity={mode === 0 ? 0.8 : 0.15}
+                      />
+                    );
+                  })()}
+                {blueDot && (
+                  <circle
+                    cx={rPx(blueDot.a)}
+                    cy={CY}
+                    r={4}
+                    fill="#222"
+                    stroke="rgba(255,255,255,0.6)"
+                    strokeWidth={0.8}
+                    opacity={mode === 0 ? 0.8 : 0.15}
+                  />
+                )}
+                {/* L7=origin: Black oscillates near Blue (outer), White fixed near Yellow (center) */}
+                {blueDot &&
+                  (() => {
+                    const rad = ((blueDot.a - alpha7 - 90) * Math.PI) / 180;
+                    return (
+                      <circle
+                        cx={rPx(blueDot.a)}
+                        cy={CY + WR * Math.sin(rad)}
+                        r={4}
+                        fill="#222"
+                        stroke="rgba(255,255,255,0.6)"
+                        strokeWidth={0.8}
+                        opacity={mode === 7 ? 0.8 : 0.15}
+                      />
+                    );
+                  })()}
+                {yellowDot && (
+                  <circle
+                    cx={rPx(yellowDot.a)}
+                    cy={CY}
+                    r={4}
+                    fill="#fff"
+                    stroke="rgba(0,0,0,0.5)"
+                    strokeWidth={0.8}
+                    opacity={mode === 7 ? 0.8 : 0.15}
+                  />
+                )}
+              </>
+            );
+          })()}
+          {/* Axis label */}
+          <text x={RX + RW / 2} y={RYtop - 4} fontSize={9} fill={C.textDimmer} textAnchor="middle">
+            Y projection
+          </text>
+          {HUE_LABELS.map((a) => (
+            <text key={`ra${a}`} x={rPx(a)} y={RYbot + 12} fontSize={7} fill={C.textDimmer} textAnchor="middle">
               {a}°
             </text>
           ))}
@@ -365,8 +528,8 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               d={sinePath(lv, lumR0, alpha0)}
               fill="none"
               stroke={LV_COLORS[lv]}
-              strokeWidth={mode === 0 ? 1.2 : 0.6}
-              opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.7 : 0.1) : mode === 0 ? 0.5 : 0.2}
+              strokeWidth={mode === 0 ? 1.8 : 0.8}
+              opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
             />
           ))}
           {/* L7 continuous sine curves (dashed) */}
@@ -376,25 +539,44 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               d={sinePath(lv, lumR7, alpha7)}
               fill="none"
               stroke={LV_COLORS[lv]}
-              strokeWidth={mode === 7 ? 1.2 : 0.6}
-              opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.7 : 0.1) : mode === 7 ? 0.5 : 0.2}
-              strokeDasharray="4,3"
+              strokeWidth={mode === 7 ? 1.8 : 0.8}
+              opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
+              strokeDasharray="6,3"
             />
           ))}
 
           {/* Hue angle line (draggable) */}
-          <line x1={rPx(hueAngle)} y1={RYtop} x2={rPx(hueAngle)} y2={RYbot} stroke="rgba(255,255,255,0.35)" strokeWidth={1} />
-          {/* Drag handle area for hue line */}
+          <line x1={rPx(hueAngle)} y1={RYtop} x2={rPx(hueAngle)} y2={RYbot} stroke={C.accent} strokeWidth={1} opacity={0.5} />
+          {/* Narrow drag handle strip (12px wide) centered on hue line */}
           <rect
-            x={RX}
-            y={RYtop}
-            width={RW}
-            height={RH}
+            x={rPx(hueAngle) - 6}
+            y={RYtop - 5}
+            width={12}
+            height={RH + 10}
             fill="transparent"
             style={{ cursor: "ew-resize" }}
             onPointerDown={onHuePointerDown}
           />
 
+          {/* Inactive dots on current mode's curves (small, no guide lines) */}
+          {dots
+            .filter((d) => !d.act)
+            .map((d) => {
+              const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
+              const y = CY + activeRadiusFn(d.lv) * Math.sin(rad);
+              return (
+                <circle
+                  key={`ri-${d.lv}-${d.ci}`}
+                  cx={rPx(d.a)}
+                  cy={y}
+                  r={2}
+                  fill={`rgb(${d.rgb.join(",")})`}
+                  stroke="rgba(255,255,255,0.15)"
+                  strokeWidth={0.5}
+                  opacity={0.45}
+                />
+              );
+            })}
           {/* Active dots on current mode's curves */}
           {activeDots.map((d) => {
             const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
@@ -405,11 +587,12 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
                 key={`rd-${d.lv}-${d.ci}`}
                 cx={rPx(d.a)}
                 cy={y}
-                r={hov ? 6 : 4}
+                r={hov ? 5.5 : 4}
                 fill={`rgb(${d.rgb.join(",")})`}
                 stroke="#fff"
                 strokeWidth={hov ? 1.2 : 0.8}
                 opacity={dotOpacity(d)}
+                filter={hov ? "url(#dot-glow)" : undefined}
                 {...dotHandlers(d)}
               />
             );
@@ -418,14 +601,122 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
 
         {/* ═══ BOTTOM GRAPH: Cosine (X-projection) ═══ */}
         <g>
-          <rect x={BXleft} y={BY} width={BW} height={BH} fill="rgba(255,255,255,0.02)" rx={4} />
-          <line x1={CX} y1={BY} x2={CX} y2={BY + BH} stroke="rgba(255,255,255,0.06)" strokeWidth={0.5} />
+          <rect x={BXleft} y={BY} width={BW} height={BH} fill="rgba(255,255,255,0.01)" rx={4} />
+          {/* Grid lines */}
           {HUE_LABELS.map((a) => (
-            <text key={`ba${a}`} x={BXleft - 6} y={bPy(a)} fontSize={4} fill="#555" textAnchor="end" dominantBaseline="middle">
+            <line key={`bg${a}`} x1={BXleft} y1={bPy(a)} x2={BXright} y2={bPy(a)} stroke="rgba(255,255,255,0.04)" strokeWidth={0.3} />
+          ))}
+          <line x1={CX} y1={BY} x2={CX} y2={BY + BH} stroke="rgba(255,255,255,0.06)" strokeWidth={0.5} />
+          {/* Origin level center line: r=0 → projection always at CX */}
+          <line
+            x1={CX}
+            y1={BY}
+            x2={CX}
+            y2={BY + BH}
+            stroke={mode === 0 ? "#222" : "#fff"}
+            strokeWidth={mode === 0 ? 1.4 : 0.6}
+            opacity={mode === 0 ? 0.4 : 0.12}
+          />
+          <line
+            x1={CX}
+            y1={BY}
+            x2={CX}
+            y2={BY + BH}
+            stroke={mode === 7 ? "#fff" : "#222"}
+            strokeWidth={mode === 7 ? 1.4 : 0.6}
+            opacity={mode === 7 ? 0.4 : 0.12}
+            strokeDasharray="6,3"
+          />
+          {/* L7(white) boundary curve in L0 system — full amplitude WR */}
+          <path
+            d={cosinePath(7, lumR0, alpha0)}
+            fill="none"
+            stroke="#fff"
+            strokeWidth={mode === 0 ? 1.4 : 0.6}
+            opacity={mode === 0 ? 0.5 : 0.12}
+          />
+          {/* L0(black) boundary curve in L7 system — full amplitude WR */}
+          <path
+            d={cosinePath(0, lumR7, alpha7)}
+            fill="none"
+            stroke="rgba(255,255,255,0.6)"
+            strokeWidth={mode === 7 ? 1.4 : 0.6}
+            opacity={mode === 7 ? 0.5 : 0.12}
+            strokeDasharray="6,3"
+          />
+          {/* Boundary dots — outer (oscillating) and center (fixed) */}
+          {(() => {
+            const yellowDot = activeDots.find((d) => d.lv === 6);
+            const blueDot = activeDots.find((d) => d.lv === 1);
+            return (
+              <>
+                {/* L0=origin: White oscillates near Yellow, Black fixed near Blue */}
+                {yellowDot &&
+                  (() => {
+                    const rad = ((yellowDot.a - alpha0 - 90) * Math.PI) / 180;
+                    return (
+                      <circle
+                        cx={CX + WR * Math.cos(rad)}
+                        cy={bPy(yellowDot.a)}
+                        r={4}
+                        fill="#fff"
+                        stroke="rgba(0,0,0,0.5)"
+                        strokeWidth={0.8}
+                        opacity={mode === 0 ? 0.8 : 0.15}
+                      />
+                    );
+                  })()}
+                {blueDot && (
+                  <circle
+                    cx={CX}
+                    cy={bPy(blueDot.a)}
+                    r={4}
+                    fill="#222"
+                    stroke="rgba(255,255,255,0.6)"
+                    strokeWidth={0.8}
+                    opacity={mode === 0 ? 0.8 : 0.15}
+                  />
+                )}
+                {/* L7=origin: Black oscillates near Blue, White fixed near Yellow */}
+                {blueDot &&
+                  (() => {
+                    const rad = ((blueDot.a - alpha7 - 90) * Math.PI) / 180;
+                    return (
+                      <circle
+                        cx={CX + WR * Math.cos(rad)}
+                        cy={bPy(blueDot.a)}
+                        r={4}
+                        fill="#222"
+                        stroke="rgba(255,255,255,0.6)"
+                        strokeWidth={0.8}
+                        opacity={mode === 7 ? 0.8 : 0.15}
+                      />
+                    );
+                  })()}
+                {yellowDot && (
+                  <circle
+                    cx={CX}
+                    cy={bPy(yellowDot.a)}
+                    r={4}
+                    fill="#fff"
+                    stroke="rgba(0,0,0,0.5)"
+                    strokeWidth={0.8}
+                    opacity={mode === 7 ? 0.8 : 0.15}
+                  />
+                )}
+              </>
+            );
+          })()}
+          {/* Axis label */}
+          <text x={CX} y={BY + BH + 12} fontSize={8} fill={C.textDimmer} textAnchor="middle">
+            X projection
+          </text>
+          {HUE_LABELS.map((a) => (
+            <text key={`ba${a}`} x={BXleft - 4} y={bPy(a)} fontSize={6} fill={C.textDimmer} textAnchor="end" dominantBaseline="middle">
               {a}°
             </text>
           ))}
-          <line x1={BXleft} y1={bPy(hueAngle)} x2={BXright} y2={bPy(hueAngle)} stroke="rgba(255,255,255,0.35)" strokeWidth={1} />
+          <line x1={BXleft} y1={bPy(hueAngle)} x2={BXright} y2={bPy(hueAngle)} stroke={C.accent} strokeWidth={1} opacity={0.5} />
 
           {/* L0 continuous cosine curves */}
           {ACTIVE_LEVELS.map((lv) => (
@@ -434,8 +725,8 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               d={cosinePath(lv, lumR0, alpha0)}
               fill="none"
               stroke={LV_COLORS[lv]}
-              strokeWidth={mode === 0 ? 1.2 : 0.6}
-              opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.7 : 0.1) : mode === 0 ? 0.5 : 0.2}
+              strokeWidth={mode === 0 ? 1.8 : 0.8}
+              opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
             />
           ))}
           {/* L7 continuous cosine curves (dashed) */}
@@ -445,12 +736,31 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               d={cosinePath(lv, lumR7, alpha7)}
               fill="none"
               stroke={LV_COLORS[lv]}
-              strokeWidth={mode === 7 ? 1.2 : 0.6}
-              opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.7 : 0.1) : mode === 7 ? 0.5 : 0.2}
-              strokeDasharray="4,3"
+              strokeWidth={mode === 7 ? 1.8 : 0.8}
+              opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
+              strokeDasharray="6,3"
             />
           ))}
 
+          {/* Inactive dots on current mode's curves (small, no guide lines) */}
+          {dots
+            .filter((d) => !d.act)
+            .map((d) => {
+              const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
+              const x = CX + activeRadiusFn(d.lv) * Math.cos(rad);
+              return (
+                <circle
+                  key={`bi-${d.lv}-${d.ci}`}
+                  cx={x}
+                  cy={bPy(d.a)}
+                  r={2}
+                  fill={`rgb(${d.rgb.join(",")})`}
+                  stroke="rgba(255,255,255,0.15)"
+                  strokeWidth={0.5}
+                  opacity={0.45}
+                />
+              );
+            })}
           {/* Active dots on current mode's curves */}
           {activeDots.map((d) => {
             const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
@@ -461,47 +771,141 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
                 key={`bd-${d.lv}-${d.ci}`}
                 cx={x}
                 cy={bPy(d.a)}
-                r={hov ? 6 : 4}
+                r={hov ? 5.5 : 4}
                 fill={`rgb(${d.rgb.join(",")})`}
                 stroke="#fff"
                 strokeWidth={hov ? 1.2 : 0.8}
                 opacity={dotOpacity(d)}
+                filter={hov ? "url(#dot-glow)" : undefined}
                 {...dotHandlers(d)}
               />
             );
           })}
         </g>
 
-        {/* ═══ BOTTOM-RIGHT: Active color info ═══ */}
+        {/* ═══ BOTTOM-RIGHT: Legend + Active color info ═══ */}
         <g>
-          {activeDots.map((d, i) => {
-            const col = `rgb(${d.rgb.join(",")})`;
-            const y = BY + 8 + i * 14;
-            const hov = isHovered(d);
+          {/* Active color info with L0 legend above, L7 legend below */}
+          {(() => {
+            const hovIdx = hoveredDot ? activeDots.findIndex((d) => d.lv === hoveredDot.lv && d.ci === hoveredDot.ci) : -1;
+            const ix = BXright + 12;
+            const ROW_H = 20; // fixed row height with room for detail line
+            let yOffset = BY + 8;
+
+            // L0 legend at top
+            const l0y = yOffset;
+            yOffset += 20; // extra gap after L0
+            const dotElements = activeDots.map((d, i) => {
+              const col = `rgb(${d.rgb.join(",")})`;
+              const y = yOffset;
+              const hov = hovIdx === i;
+              yOffset += ROW_H; // always same increment
+              return (
+                <g key={`info-${d.lv}-${d.ci}`} opacity={hov ? 1 : hovIdx >= 0 ? 0.3 : 0.8} {...dotHandlers(d)}>
+                  <rect x={ix} y={y} width={8} height={8} rx={1.5} fill={col} stroke={hov ? "#fff" : "none"} strokeWidth={hov ? 0.5 : 0} />
+                  <text
+                    x={ix + 12}
+                    y={y + 7}
+                    fontSize={hov ? 8 : 7}
+                    fill={hov ? C.textWhite : C.textDimmer}
+                    fontWeight={hov ? "bold" : "normal"}
+                  >
+                    L{d.lv} {Math.round(d.a)}°
+                  </text>
+                  {/* Detail always visible below label */}
+                  {(() => {
+                    const gray = LEVEL_INFO[d.lv].gray;
+                    const r0 = lumR0(d.lv);
+                    const r7 = lumR7(d.lv);
+                    const pairLv = C2_PAIR[d.lv];
+                    return (
+                      <text x={ix + 12} y={y + 16} fontSize={6} fill={C.textDimmer}>
+                        ({d.rgb.join(",")}) g{gray} C2:L{pairLv}
+                      </text>
+                    );
+                  })()}
+                </g>
+              );
+            });
+
+            // L7 legend below L6
+            const l7y = yOffset + 10; // extra gap before L7
+
             return (
-              <g key={`info-${d.lv}-${d.ci}`} opacity={hoveredDot ? (hov ? 1 : 0.3) : 0.8} {...dotHandlers(d)}>
-                <rect x={BXright + 12} y={y} width={10} height={10} rx={2} fill={col} stroke={hov ? "#fff" : "none"} strokeWidth={0.5} />
-                <text x={BXright + 26} y={y + 8} fontSize={5} fill={hov ? "#fff" : "#888"}>
-                  {LEVEL_INFO[d.lv].name} {d.a}°
-                </text>
-              </g>
+              <>
+                {/* L0 legend: black square + solid line */}
+                <g key="legend-l0">
+                  <rect x={ix} y={l0y + 1} width={8} height={8} rx={1.5} fill="#222" stroke="rgba(255,255,255,0.5)" strokeWidth={0.6} />
+                  <line x1={ix + 12} y1={l0y + 5} x2={ix + 22} y2={l0y + 5} stroke={C.textDimmer} strokeWidth={1.2} />
+                  <text x={ix + 26} y={l0y + 7} fontSize={8} fill={C.textDimmer}>
+                    {legendL0}
+                  </text>
+                </g>
+                {dotElements}
+                {/* L7 legend: white square + dashed line */}
+                <g key="legend-l7">
+                  <rect x={ix} y={l7y + 1} width={8} height={8} rx={1.5} fill="#fff" stroke="rgba(0,0,0,0.5)" strokeWidth={0.6} />
+                  <line x1={ix + 12} y1={l7y + 5} x2={ix + 22} y2={l7y + 5} stroke={C.textDimmer} strokeWidth={1.2} strokeDasharray="4,3" />
+                  <text x={ix + 26} y={l7y + 7} fontSize={8} fill={C.textDimmer}>
+                    {legendL7}
+                  </text>
+                </g>
+              </>
             );
-          })}
+          })()}
         </g>
       </>
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hoveredDot is intentionally reactive
-  }, [dots, wP, hueAngle, alpha0, alpha7, mode, activeAlpha, activeRadiusFn, sinePath, cosinePath, hoveredDot, onHuePointerDown]);
+  }, [
+    dots,
+    wP,
+    hueAngle,
+    alpha0,
+    alpha7,
+    mode,
+    activeAlpha,
+    activeRadiusFn,
+    sinePath,
+    cosinePath,
+    hoveredDot,
+    onHuePointerDown,
+    legendL0,
+    legendL7,
+  ]);
+
+  const deltaAlpha = Math.round((((alpha0 - alpha7) % 360) + 360) % 360);
+  const isInverted = deltaAlpha === 180;
 
   return (
     <div style={{ marginTop: SP.xl, textAlign: "center" }}>
-      {/* L0/L7 Toggle */}
-      <div style={{ marginBottom: SP.md, display: "flex", gap: SP.sm, justifyContent: "center" }}>
+      {/* L0/L7 Toggle + Δα controls */}
+      <div style={{ marginBottom: SP.md, display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center" }}>
         <button type="button" style={mode === 0 ? S_TOGGLE_ACTIVE : S_TOGGLE} onClick={() => setMode(0)}>
-          L0 (black=center)
+          {t("linkedviz_mode_l0")}
         </button>
         <button type="button" style={mode === 7 ? S_TOGGLE_ACTIVE : S_TOGGLE} onClick={() => setMode(7)}>
-          L7 (white=center)
+          {t("linkedviz_mode_l7")}
+        </button>
+        <span
+          style={{
+            color: isInverted ? C.accent : C.textDim,
+            fontSize: 11,
+            width: 62,
+            textAlign: "right",
+            display: "inline-block",
+            flexShrink: 0,
+            fontVariantNumeric: "tabular-nums",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {"\u0394\u03b1:\u00a0" + deltaAlpha + "\u00b0"}
+        </span>
+        <button type="button" style={deltaAlpha === 0 ? S_TOGGLE_ACTIVE : S_TOGGLE} onClick={() => setAlpha7(alpha0)}>
+          {t("linkedviz_in_phase")}
+        </button>
+        <button type="button" style={isInverted ? S_TOGGLE_ACTIVE : S_TOGGLE} onClick={() => setAlpha7((alpha0 + 180) % 360)}>
+          {t("linkedviz_anti_phase")}
         </button>
       </div>
 
@@ -509,22 +913,41 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
         ref={svgRef}
         viewBox={`0 0 ${TW} ${TH}`}
         width="100%"
-        style={{ maxWidth: TW }}
+        style={{ maxWidth: "min(340px, calc(100vw - 24px))" }}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
       >
+        <defs>
+          <filter id="dot-glow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
         {vizContent}
 
         {/* ═══ WHEEL (single, toggleable) ═══ */}
         <g style={{ cursor: "grab" }} onPointerDown={onWheelPointerDown}>
           <circle cx={CX} cy={CY} r={WR + 14} fill="transparent" />
-          {renderWheel(CX, CY, activeAlpha, activeRadiusFn, dots, hueAngle)}
+          {renderWheel({
+            cx: CX,
+            cy: CY,
+            alpha: activeAlpha,
+            radiusFn: activeRadiusFn,
+            dots,
+            hueAngle,
+            hoveredDot,
+            onHoverDot: setHoveredDot,
+            mode,
+          })}
         </g>
 
-        {/* Label */}
-        <text x={CX} y={WO - 2} fontSize={5} fill="#666" textAnchor="middle">
-          {mode === 0 ? "L0 = center (black)" : "L7 = center (white)"}
+        {/* Label with rotation angle */}
+        <text x={CX} y={WO - 2} fontSize={8} fill={C.textDimmer} textAnchor="middle">
+          {mode === 0 ? `\u03b1\u2080: ${Math.round(alpha0)}\u00b0` : `\u03b1\u2087: ${Math.round(alpha7)}\u00b0`}
         </text>
       </svg>
     </div>

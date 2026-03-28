@@ -294,6 +294,14 @@ export const en = {
   aria_gallery_filter_hue: "Filter hue angle",
   aria_gallery_filter_range: "Filter hue range",
 
+  // LinkedViz
+  linkedviz_mode_l0: "L0=origin",
+  linkedviz_mode_l7: "L7=origin",
+  linkedviz_legend_l0: "L0(Black)",
+  linkedviz_legend_l7: "L7(White)",
+  linkedviz_in_phase: "In-phase",
+  linkedviz_anti_phase: "Anti-phase",
+
   // Language switcher
   lang_switch: "JA",
 } as const satisfies Translations;
