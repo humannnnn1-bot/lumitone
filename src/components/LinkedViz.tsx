@@ -815,8 +815,6 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
                   {/* Detail always visible below label */}
                   {(() => {
                     const gray = LEVEL_INFO[d.lv].gray;
-                    const r0 = lumR0(d.lv);
-                    const r7 = lumR7(d.lv);
                     const pairLv = C2_PAIR[d.lv];
                     return (
                       <text x={ix + 12} y={y + 16} fontSize={6} fill={C.textDimmer}>
