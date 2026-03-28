@@ -96,7 +96,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    console.error("Lumitone ErrorBoundary:", error, info.componentStack);
+    console.error("CHROMALUM ErrorBoundary:", error, info.componentStack);
     this.setState({ componentStack: info.componentStack ?? null });
   }
 

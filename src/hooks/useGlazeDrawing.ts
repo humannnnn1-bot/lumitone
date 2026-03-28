@@ -181,7 +181,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
           strokeRef.current = null;
           drawingRef.current = false;
           s.current.announce(s.current.t("toast_fill_error"));
-          console.error("Lumitone: glaze flood fill failed:", err);
+          console.error("CHROMALUM: glaze flood fill failed:", err);
         });
       return;
     } else if (curTool === "glaze_eraser") {
@@ -252,11 +252,10 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     });
   }
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- doDown/doMove read from sync refs
   const onDown = useCallback((e: React.PointerEvent) => {
     doDown(e);
   }, []);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   const onMove = useCallback(
     (e: React.PointerEvent) => {
       doMove(e);

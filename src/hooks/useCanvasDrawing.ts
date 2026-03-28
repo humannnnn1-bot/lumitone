@@ -169,7 +169,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
           strokeRef.current = null;
           drawingRef.current = false;
           s.current.announce(s.current.t("toast_fill_error"));
-          console.error("Lumitone: canvas flood fill failed:", err);
+          console.error("CHROMALUM: canvas flood fill failed:", err);
         });
       return;
     } else if (isShapeTool(curTool)) {

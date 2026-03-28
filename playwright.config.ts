@@ -5,7 +5,7 @@ export default defineConfig({
   timeout: 30_000,
   retries: 0,
   use: {
-    baseURL: "http://localhost:5173/lumitone/",
+    baseURL: "http://localhost:5173/chromalum/",
     headless: true,
     viewport: { width: 1280, height: 800 },
     screenshot: "only-on-failure",

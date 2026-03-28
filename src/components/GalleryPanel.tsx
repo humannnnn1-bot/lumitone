@@ -21,7 +21,7 @@ interface GalleryPanelProps {
   onScrollDone?: () => void;
 }
 
-const BM_KEY = "lumitone_bookmarks";
+const BM_KEY = "chromalum_bookmarks";
 const _genCache = { key: "" };
 
 function loadBookmarks(): number[][] {

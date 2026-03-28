@@ -36,19 +36,12 @@ const TAB_KEYS = ["tab_source", "tab_color", "tab_hex", "tab_glaze", "tab_stats"
 const S_ROOT: React.CSSProperties = { minHeight: "100vh", background: C.bgRoot, color: C.textPrimary, fontFamily: "monospace" };
 const S_HEADER: React.CSSProperties = { textAlign: "center", marginBottom: "var(--sp-header-mb)" };
 const S_TITLE: React.CSSProperties = {
+  fontFamily: "'Inter', system-ui, sans-serif",
   fontSize: 22,
   fontWeight: FW.normal,
   margin: `0 0 ${SP.lg}px`,
   color: C.textPrimary,
-  letterSpacing: 6,
-  display: "inline-flex",
-  alignItems: "center",
-  gap: 8,
-};
-const S_TITLE_ICON: React.CSSProperties = {
-  width: 18,
-  height: 18,
-  opacity: O.soft,
+  letterSpacing: 10,
 };
 const S_STATUS: React.CSSProperties = { fontSize: FS.sm, color: C.textFaint, marginTop: 2 };
 const S_HELP_LINK: React.CSSProperties = { cursor: "pointer", color: C.textDimmest, textDecoration: "underline" };
@@ -185,11 +178,11 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   const { saveColor, saveGlaze } = useExport(cvs, colorLUT, showToast, t);
 
   const handleKbSave = useCallback(() => {
-    saveColor(prvRef, `lumitone_color_${Date.now()}.png`);
+    saveColor(prvRef, `chromalum_color_${Date.now()}.png`);
   }, [saveColor, prvRef]);
 
   const handleKbSaveAs = useCallback(() => {
-    requestFilename(`lumitone_color_${Date.now()}`).then((name) => {
+    requestFilename(`chromalum_color_${Date.now()}`).then((name) => {
       if (name) saveColor(prvRef, name.endsWith(".png") ? name : name + ".png");
     });
   }, [saveColor, prvRef, requestFilename]);
@@ -249,7 +242,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             return;
           }
         } catch (err) {
-          console.warn("Lumitone: pointerCapture check failed:", err);
+          console.warn("CHROMALUM: pointerCapture check failed:", err);
         }
       }
       drawing.onUp();
@@ -268,7 +261,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             return;
           }
         } catch (err) {
-          console.warn("Lumitone: pointerCapture check failed:", err);
+          console.warn("CHROMALUM: pointerCapture check failed:", err);
         }
       }
       drawing.onUp();
@@ -377,13 +370,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
       <HelpModal showHelp={showHelp} setShowHelp={setShowHelp} helpRef={helpRef} />
 
       <div style={S_HEADER}>
-        <h1 style={S_TITLE}>
-          <svg style={S_TITLE_ICON} viewBox="0 0 24 24" fill="none">
-            <path d="M12 2 L22 12 L12 22 L2 12 Z" stroke={C.accent} strokeWidth="1.5" fill="none" />
-            <path d="M12 7 L17 12 L12 17 L7 12 Z" fill={C.accent} opacity="0.3" />
-          </svg>
-          Lumitone
-        </h1>
+        <h1 style={S_TITLE}>CHROMALUM</h1>
         <div style={S_STATUS}>
           {cvs.w}&times;{cvs.h} |{" "}
           <span style={S_HELP_LINK} onClick={() => setShowHelp(true)}>

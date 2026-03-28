@@ -4,7 +4,7 @@ import { en } from "./en";
 import type { Language, Translations, TranslationKey, TranslationFn } from "./types";
 
 const dictionaries: Record<Language, Translations> = { ja, en };
-const STORAGE_KEY = "lumitone_lang";
+const STORAGE_KEY = "chromalum_lang";
 
 function getInitialLang(): Language {
   const stored = localStorage.getItem(STORAGE_KEY);

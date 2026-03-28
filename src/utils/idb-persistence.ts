@@ -1,4 +1,4 @@
-const DB_NAME = "lumitone";
+const DB_NAME = "chromalum";
 const STORE_NAME = "state";
 const KEY = "current";
 /** Increment when schema changes; add migration logic in onupgradeneeded. */
