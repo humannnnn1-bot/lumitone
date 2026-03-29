@@ -297,10 +297,14 @@ export const ja: Record<TranslationKey, string> = {
   // LinkedViz
   linkedviz_mode_l0: "L0=原点",
   linkedviz_mode_l7: "L7=原点",
-  linkedviz_legend_l0: "L0(黒)",
-  linkedviz_legend_l7: "L7(白)",
+  linkedviz_legend_l0_origin: "L0 r=0",
+  linkedviz_legend_l0_boundary: "L0 r=max",
+  linkedviz_legend_l7_origin: "L7 r=0",
+  linkedviz_legend_l7_boundary: "L7 r=max",
   linkedviz_in_phase: "同相",
   linkedviz_anti_phase: "逆相",
+  linkedviz_axis_sin: "sin(θ−α)",
+  linkedviz_axis_cos: "cos(θ−α)",
 
   // Language switcher
   lang_switch: "EN",
