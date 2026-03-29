@@ -53,7 +53,7 @@ export const HexTab = React.memo(function HexTab(props: HexTabProps) {
     <div style={S_FLEX_COL_CENTER}>
       <div className="panel-layout">
         <div className="panel-canvas" style={{ "--display-max": displayW + "px" } as React.CSSProperties}>
-          <div style={S_LABEL}>{t("label_colorized")}</div>
+          <div style={S_LABEL}>{t("label_diagram")}</div>
           <div
             style={{
               border: `1px solid ${C.border}`,
@@ -67,7 +67,7 @@ export const HexTab = React.memo(function HexTab(props: HexTabProps) {
             <canvas
               ref={hexPrvRef}
               role="img"
-              aria-label={t("label_colorized")}
+              aria-label={t("label_diagram")}
               style={{ width: displayW, height: displayH, display: "block", imageRendering: "pixelated" }}
             />
           </div>

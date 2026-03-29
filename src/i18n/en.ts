@@ -20,12 +20,13 @@ export const en = {
   announce_size: "Size {0}",
 
   // SourcePanel
-  label_source: "CANVAS",
+  label_source: "GRAYSCALE CANVAS",
   label_input: "Input",
   label_output: "Output",
   aria_drawing_canvas: "Drawing canvas (grayscale)",
   aria_drawing_canvas_desc: "pixel art drawing canvas",
   aria_drawing_tools: "Drawing tools",
+  btn_pan_mode: "🔎Pan",
   btn_undo: "↩Undo(Z)",
   btn_redo: "↪Redo(Y)",
   title_undo: "Undo (Ctrl+Z)",
@@ -53,7 +54,8 @@ export const en = {
   announce_level_btn: "Level {0} {1}",
 
   // ColorPanel
-  label_colorized: "COLOR PREVIEW",
+  label_colorized: "COLOR MAPPING PREVIEW",
+  label_diagram: "CHROMATIC DIAGRAM",
   label_color_mapping: "COLOR MAPPING",
   aria_color_preview: "Color preview (keyboard: +/- to zoom, arrow keys to pan)",
   aria_color_preview_canvas: "Color preview canvas",
@@ -172,7 +174,7 @@ export const en = {
   tab_gallery_short: "Gallery",
 
   // Stats panel
-  stats_title: "ANALYZE",
+  stats_title: "PIXEL MAP ANALYSIS",
   stats_level: "L{0} {1}",
   stats_unused: "Unused",
   stats_used_levels: "Used: {0}/8 levels",
@@ -220,7 +222,7 @@ export const en = {
   stats_contrast_low: "<2:1 Low",
 
   // Gallery panel
-  gallery_title: "GALLERY",
+  gallery_title: "COLOR PATTERN GALLERY",
   gallery_generate: "Generate All",
   gallery_generating: "Generating...",
   gallery_patterns: "{0} patterns",
@@ -247,7 +249,7 @@ export const en = {
   gallery_patterns_filtered: "{0} / {1} patterns",
 
   // Glaze tab
-  label_glaze: "GLAZE",
+  label_glaze: "HUE GLAZE OVERLAY",
   glaze_hue_angle: "Hue Angle",
   aria_hue_slider: "Hue angle (0-360 degrees)",
   glaze_preview: "COLOR MAPPING",
