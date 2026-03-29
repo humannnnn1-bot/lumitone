@@ -77,6 +77,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
     useGlazeContext();
   const { t } = useTranslation();
   const [showHighlight, setShowHighlight] = useState(false);
+  const [hoveredCandidate, setHoveredCandidate] = useState<{ lv: number; ci: number } | null>(null);
 
   // Keyboard shortcuts for zoom/pan + tool switching
   const handleKeyDown = useCallback(
@@ -528,30 +529,38 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
               const makeSwatch = (ci: number, size: number, _isCurrent: boolean) => {
                 const cand = cands[ci];
                 const isSelected = directCandidates.get(lp.lv) === ci;
+                const isSwatchHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === ci;
+                const isDimmed = hoveredCandidate !== null && !isSwatchHovered;
                 return (
                   <div
                     key={ci}
                     role="button"
                     tabIndex={0}
                     onClick={() => {
+                      const deselecting = directCandidates.get(lp.lv) === ci;
                       setDirectCandidates((prev) => {
                         const next = new Map(prev);
-                        if (next.get(lp.lv) === ci) next.delete(lp.lv);
+                        if (deselecting) next.delete(lp.lv);
                         else next.set(lp.lv, ci);
                         return next;
                       });
+                      setHoveredCandidate({ lv: lp.lv, ci: deselecting ? autoIdx : ci });
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
+                        const deselecting = directCandidates.get(lp.lv) === ci;
                         setDirectCandidates((prev) => {
                           const next = new Map(prev);
-                          if (next.get(lp.lv) === ci) next.delete(lp.lv);
+                          if (deselecting) next.delete(lp.lv);
                           else next.set(lp.lv, ci);
                           return next;
                         });
+                        setHoveredCandidate({ lv: lp.lv, ci: deselecting ? autoIdx : ci });
                       }
                     }}
+                    onPointerEnter={() => setHoveredCandidate({ lv: lp.lv, ci })}
+                    onPointerLeave={() => setHoveredCandidate(null)}
                     title={`#${cand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")} ${Math.round(cand.angle)}°`}
                     style={{
                       width: size,
@@ -559,22 +568,25 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                       borderRadius: R.md,
                       cursor: "pointer",
                       background: `rgb(${cand.rgb.join(",")})`,
-                      border: `2px solid ${isSelected ? C.accent : C.border}`,
+                      border: `2px solid ${isSwatchHovered || isSelected ? C.accent : C.border}`,
                       boxSizing: "border-box" as const,
-                      boxShadow: isSelected ? SHADOW.glow(C.accent) : "none",
-                      opacity: 1,
+                      boxShadow: isSwatchHovered || isSelected ? SHADOW.glow(C.accent) : "none",
+                      opacity: isDimmed ? 0.35 : 1,
+                      transition: "opacity 0.15s, box-shadow 0.15s, border-color 0.15s",
                     }}
                   />
                 );
               };
 
               const cycleCand = (dir: number) => {
+                const cur = directCandidates.has(lp.lv) ? directCandidates.get(lp.lv)! : autoIdx;
+                const newIdx = (((cur + dir) % cands.length) + cands.length) % cands.length;
                 setDirectCandidates((prev) => {
                   const next = new Map(prev);
-                  const cur = next.has(lp.lv) ? next.get(lp.lv)! : autoIdx;
-                  next.set(lp.lv, (((cur + dir) % cands.length) + cands.length) % cands.length);
+                  next.set(lp.lv, newIdx);
                   return next;
                 });
+                setHoveredCandidate({ lv: lp.lv, ci: newIdx });
               };
 
               const handleWheel = hasCands
@@ -616,45 +628,57 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                   {/* Upper candidate */}
                   {hasCands ? makeSwatch(prevIdx, 20, false) : <div style={{ height: 20 }} />}
                   {/* Current / main swatch — click to reset to auto */}
-                  <div
-                    role={isDirect ? "button" : undefined}
-                    tabIndex={isDirect ? 0 : undefined}
-                    onClick={
-                      isDirect
-                        ? () => {
-                            setDirectCandidates((prev) => {
-                              const next = new Map(prev);
-                              next.delete(lp.lv);
-                              return next;
-                            });
-                          }
-                        : undefined
-                    }
-                    onKeyDown={
-                      isDirect
-                        ? (e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              setDirectCandidates((prev) => {
-                                const next = new Map(prev);
-                                next.delete(lp.lv);
-                                return next;
-                              });
-                            }
-                          }
-                        : undefined
-                    }
-                    title={isDirect ? t("title_reset_auto") : undefined}
-                    style={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: R.md,
-                      background: isDirect ? `rgb(${cands[directIdx!]?.rgb.join(",")})` : lp.hex,
-                      border: `2px solid ${isDirect ? C.accent : C.border}`,
-                      boxSizing: "border-box" as const,
-                      cursor: isDirect ? "pointer" : "default",
-                    }}
-                  />
+                  {(() => {
+                    const mainCi = currentIdx;
+                    const isMainHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === mainCi;
+                    const isMainDimmed = hoveredCandidate !== null && !isMainHovered;
+                    return (
+                      <div
+                        role={isDirect ? "button" : undefined}
+                        tabIndex={isDirect ? 0 : undefined}
+                        onClick={
+                          isDirect
+                            ? () => {
+                                setDirectCandidates((prev) => {
+                                  const next = new Map(prev);
+                                  next.delete(lp.lv);
+                                  return next;
+                                });
+                              }
+                            : undefined
+                        }
+                        onKeyDown={
+                          isDirect
+                            ? (e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  setDirectCandidates((prev) => {
+                                    const next = new Map(prev);
+                                    next.delete(lp.lv);
+                                    return next;
+                                  });
+                                }
+                              }
+                            : undefined
+                        }
+                        onPointerEnter={() => setHoveredCandidate({ lv: lp.lv, ci: mainCi })}
+                        onPointerLeave={() => setHoveredCandidate(null)}
+                        title={isDirect ? t("title_reset_auto") : undefined}
+                        style={{
+                          width: 28,
+                          height: 28,
+                          borderRadius: R.md,
+                          background: isDirect ? `rgb(${cands[directIdx!]?.rgb.join(",")})` : lp.hex,
+                          border: `2px solid ${isMainHovered || isDirect ? C.accent : C.border}`,
+                          boxSizing: "border-box" as const,
+                          cursor: isDirect ? "pointer" : "default",
+                          boxShadow: isMainHovered ? SHADOW.glow(C.accent) : "none",
+                          opacity: isMainDimmed ? 0.35 : 1,
+                          transition: "opacity 0.15s, box-shadow 0.15s, border-color 0.15s",
+                        }}
+                      />
+                    );
+                  })()}
                   {/* Lower candidate */}
                   {hasCands ? makeSwatch(nextIdx, 20, false) : <div style={{ height: 20 }} />}
                 </div>
@@ -663,7 +687,14 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
           </div>
 
           {/* ── Linked 4-View Visualization ── */}
-          <LinkedViz hueAngle={hueAngle} brushLevel={brushLevel} onHueAngleChange={setHueAngle} />
+          <LinkedViz
+            hueAngle={hueAngle}
+            brushLevel={brushLevel}
+            onHueAngleChange={setHueAngle}
+            hoveredCandidate={hoveredCandidate}
+            onHoverCandidate={setHoveredCandidate}
+            directCandidates={directCandidates}
+          />
         </div>
         {/* panel-sidebar */}
       </div>

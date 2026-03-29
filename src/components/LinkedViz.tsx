@@ -7,6 +7,9 @@ interface LinkedVizProps {
   hueAngle: number;
   brushLevel: number;
   onHueAngleChange?: (angle: number) => void;
+  hoveredCandidate?: { lv: number; ci: number } | null;
+  onHoverCandidate?: (d: { lv: number; ci: number } | null) => void;
+  directCandidates?: Map<number, number>;
 }
 
 /* ── Layout constants ── */
@@ -15,21 +18,21 @@ const WO = 18; // left/top margin for axis labels
 const WCX = 68;
 const WCY = 68;
 const RING_R = 70; // hue ring outer edge + margin
-const GRAPH_GAP = 2; // minimal gap between ring and graph
+const GRAPH_GAP = 8; // visual separation between ring and graph
 
 // Single wheel center
 const CX = WO + WCX; // 86
 const CY = WO + WCY; // 86
 
-// Right graph (sine: Y-projection) — flush with wheel
-const RX = CX + RING_R + GRAPH_GAP; // 158
+// Right graph (sine: Y-projection)
+const RX = CX + RING_R + GRAPH_GAP; // 164
 const RW = 170;
 const RYtop = CY - WR - 4; // 24
 const RYbot = CY + WR + 4; // 148
 const RH = RYbot - RYtop; // 124
 
-// Bottom graph (cosine: X-projection) — flush with wheel
-const BY = CY + RING_R + GRAPH_GAP; // 158
+// Bottom graph (cosine: X-projection)
+const BY = CY + RING_R + GRAPH_GAP; // 164
 const BXleft = CX - WR - 4; // 24
 const BXright = CX + WR + 4; // 148
 const BW = BXright - BXleft; // 124
@@ -105,6 +108,42 @@ function renderWheel({ cx, cy, alpha, radiusFn, dots, hueAngle, hoveredDot, onHo
         const r = radiusFn(lv);
         return r > 1 ? <circle key={`g${lv}`} cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={0.5} /> : null;
       })}
+      {/* Coordinate axes — thin crosshair through center */}
+      <line x1={cx - WR - 2} y1={cy} x2={cx + WR + 2} y2={cy} stroke="rgba(255,255,255,0.12)" strokeWidth={0.5} />
+      <line x1={cx} y1={cy - WR - 2} x2={cx} y2={cy + WR + 2} stroke="rgba(255,255,255,0.12)" strokeWidth={0.5} />
+      {/* Axis tick marks — sin(y-axis) and cos(x-axis) projections of active dots */}
+      {dots
+        .filter((d) => d.act)
+        .map((d) => {
+          const p = wP(d.a, d.lv);
+          const col = `rgb(${d.rgb.join(",")})`;
+          const hov = hoveredDot !== null && hoveredDot.lv === d.lv && hoveredDot.ci === d.ci;
+          const tickLen = hov ? 5 : 3;
+          return (
+            <g key={`axt-${d.lv}-${d.ci}`}>
+              {/* Y-axis tick: horizontal mark at sin projection */}
+              <line
+                x1={cx - tickLen}
+                y1={p.y}
+                x2={cx + tickLen}
+                y2={p.y}
+                stroke={col}
+                strokeWidth={hov ? 1.6 : 1.0}
+                opacity={hov ? 1 : 0.6}
+              />
+              {/* X-axis tick: vertical mark at cos projection */}
+              <line
+                x1={p.x}
+                y1={cy - tickLen}
+                x2={p.x}
+                y2={cy + tickLen}
+                stroke={col}
+                strokeWidth={hov ? 1.6 : 1.0}
+                opacity={hov ? 1 : 0.6}
+              />
+            </g>
+          );
+        })}
       {/* Center dot: fixed origin level (achromatic, no angle) */}
       <circle
         cx={cx}
@@ -175,13 +214,13 @@ function renderWheel({ cx, cy, alpha, radiusFn, dots, hueAngle, hoveredDot, onHo
             key={`w${d.lv}${d.ci}`}
             cx={p.x}
             cy={p.y}
-            r={d.act ? (hov ? 5.5 : 4) : 1.8}
-            fill={d.act ? `rgb(${d.rgb.join(",")})` : `rgb(${d.rgb.join(",")})`}
-            stroke={d.act ? "#fff" : "rgba(255,255,255,0.15)"}
-            strokeWidth={d.act ? (hov ? 1.4 : 1.0) : 0.5}
-            opacity={d.act ? (dimmed ? 0.25 : 1) : 0.3}
+            r={d.act ? (hov ? 5.5 : 4) : hov ? 4 : 1.8}
+            fill={`rgb(${d.rgb.join(",")})`}
+            stroke={d.act ? "#fff" : hov ? "#fff" : "rgba(255,255,255,0.15)"}
+            strokeWidth={d.act ? (hov ? 1.4 : 1.0) : hov ? 1.0 : 0.5}
+            opacity={d.act ? (dimmed ? 0.25 : 1) : hov ? 0.9 : 0.3}
             filter={hov ? "url(#dot-glow)" : undefined}
-            style={d.act ? { cursor: "pointer" } : undefined}
+            style={d.act || hov ? { cursor: "pointer" } : undefined}
             onPointerEnter={
               d.act
                 ? (e) => {
@@ -233,12 +272,21 @@ const S_TOGGLE_ACTIVE: React.CSSProperties = {
   transition: "all 0.15s",
 };
 
-export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, onHueAngleChange }: LinkedVizProps) {
+export const LinkedViz = React.memo(function LinkedViz({
+  hueAngle,
+  brushLevel,
+  onHueAngleChange,
+  hoveredCandidate,
+  onHoverCandidate,
+  directCandidates,
+}: LinkedVizProps) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<0 | 7>(0);
   const [alpha0, setAlpha0] = useState(0);
   const [alpha7, setAlpha7] = useState(0);
-  const [hoveredDot, setHoveredDot] = useState<{ lv: number; ci: number } | null>(null);
+  const [localHoveredDot, setLocalHoveredDot] = useState<{ lv: number; ci: number } | null>(null);
+  const hoveredDot = onHoverCandidate ? (hoveredCandidate ?? null) : localHoveredDot;
+  const setHoveredDot = onHoverCandidate ?? setLocalHoveredDot;
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{ type: "wheel"; startAngle: number; startAlpha: number } | { type: "hue" } | { type: "hue-bottom" } | null>(null);
 
@@ -252,11 +300,12 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
       for (let ci = 0; ci < LEVEL_CANDIDATES[lv].length; ci++) {
         const c = LEVEL_CANDIDATES[lv][ci];
         if (c.angle < 0) continue;
-        result.push({ lv, ci, a: c.angle, rgb: c.rgb, act: findClosestCandidate(lv, hueAngle) === ci });
+        const activeCI = directCandidates?.has(lv) ? directCandidates.get(lv)! : findClosestCandidate(lv, hueAngle);
+        result.push({ lv, ci, a: c.angle, rgb: c.rgb, act: activeCI === ci });
       }
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- brushLevel triggers re-render for active dot updates
-  }, [hueAngle, brushLevel]);
+  }, [hueAngle, brushLevel, directCandidates]);
 
   // Wheel dot position (for guide lines)
   const wP = useCallback(
@@ -385,13 +434,18 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
   const vizContent = useMemo(() => {
     const activeDots = dots.filter((d) => d.act);
     const lvColor = (lv: number) => {
+      // Use hovered dot's color if hovering a specific candidate for this level
+      if (hoveredDot && hoveredDot.lv === lv) {
+        const hd = dots.find((dd) => dd.lv === lv && dd.ci === hoveredDot.ci);
+        if (hd) return `rgb(${hd.rgb.join(",")})`;
+      }
       const d = activeDots.find((ad) => ad.lv === lv);
       return d ? `rgb(${d.rgb.join(",")})` : LV_COLORS[lv];
     };
 
     return (
       <>
-        {/* ═══ GUIDE LINES — inactive dots (thin) ═══ */}
+        {/* ═══ GUIDE LINES — inactive dots (thin, highlight on hover) ═══ */}
         {dots
           .filter((d) => !d.act)
           .map((d) => {
@@ -400,10 +454,11 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
             const ry = CY + activeRadiusFn(d.lv) * Math.sin(rad);
             const bx = CX + activeRadiusFn(d.lv) * Math.cos(rad);
             const col = `rgb(${d.rgb.join(",")})`;
+            const hov = hoveredDot !== null && hoveredDot.lv === d.lv && hoveredDot.ci === d.ci;
             return (
-              <g key={`gli-${d.lv}-${d.ci}`} opacity={0.2}>
-                <line x1={w.x} y1={w.y} x2={rPx(d.a)} y2={ry} stroke={col} strokeWidth={0.4} strokeDasharray="2,3" />
-                <line x1={w.x} y1={w.y} x2={bx} y2={bPy(d.a)} stroke={col} strokeWidth={0.4} strokeDasharray="2,3" />
+              <g key={`gli-${d.lv}-${d.ci}`} opacity={hov ? 0.6 : 0.2}>
+                <line x1={w.x} y1={w.y} x2={rPx(d.a)} y2={ry} stroke={col} strokeWidth={hov ? 0.7 : 0.4} strokeDasharray="2,3" />
+                <line x1={w.x} y1={w.y} x2={bx} y2={bPy(d.a)} stroke={col} strokeWidth={hov ? 0.7 : 0.4} strokeDasharray="2,3" />
               </g>
             );
           })}
@@ -423,6 +478,25 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
           );
         })}
 
+        {/* ═══ C2 GHOST DOT — show C2 pair's position in other system on hover ═══ */}
+        {hoveredDot &&
+          hoveredDot.lv >= 1 &&
+          hoveredDot.lv <= 6 &&
+          (() => {
+            const pairLv = C2_PAIR[hoveredDot.lv];
+            const pairDot = activeDots.find((d) => d.lv === pairLv);
+            if (!pairDot) return null;
+            // Show the C2 pair's position in the OTHER system (lumR0(L) = lumR7(7-L))
+            const otherRadiusFn = mode === 0 ? lumR7 : lumR0;
+            const otherAlpha = mode === 0 ? alpha7 : alpha0;
+            const rad = ((pairDot.a - otherAlpha - 90) * Math.PI) / 180;
+            const r = otherRadiusFn(pairLv);
+            const gx = CX + r * Math.cos(rad);
+            const gy = CY + r * Math.sin(rad);
+            const col = `rgb(${pairDot.rgb.join(",")})`;
+            return <circle cx={gx} cy={gy} r={4} fill="none" stroke={col} strokeWidth={1.2} opacity={0.5} strokeDasharray="2,2" />;
+          })()}
+
         {/* ═══ RIGHT GRAPH: Sine (Y-projection) ═══ */}
         <g>
           <rect
@@ -440,25 +514,25 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
             <line key={`rg${a}`} x1={rPx(a)} y1={RYtop} x2={rPx(a)} y2={RYbot} stroke="rgba(255,255,255,0.07)" strokeWidth={0.4} />
           ))}
           <line x1={RX} y1={CY} x2={RX + RW} y2={CY} stroke="rgba(255,255,255,0.10)" strokeWidth={0.5} />
-          {/* Origin level center line: r=0 → projection always at CY */}
+          {/* L0 center line: r=0 in L0-system → always at CY */}
           <line
             x1={RX}
             y1={CY}
             x2={RX + RW}
             y2={CY}
-            stroke={mode === 0 ? "#222" : "#fff"}
-            strokeWidth={mode === 0 ? 1.4 : 0.6}
-            opacity={mode === 0 ? 0.4 : 0.12}
+            stroke="rgba(255,255,255,0.6)"
+            strokeWidth={hoveredDot?.lv === 0 ? 1.4 : mode === 0 && !hoveredDot ? 1.4 : 0.6}
+            opacity={hoveredDot?.lv === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.4 : 0.12}
           />
+          {/* L7 center line: r=0 in L7-system → always at CY */}
           <line
             x1={RX}
             y1={CY}
             x2={RX + RW}
             y2={CY}
-            stroke={mode === 7 ? "#fff" : "#222"}
-            strokeWidth={mode === 7 ? 1.4 : 0.6}
-            opacity={mode === 7 ? 0.4 : 0.12}
-            strokeDasharray="6,3"
+            stroke="#fff"
+            strokeWidth={hoveredDot?.lv === 7 ? 1.4 : mode === 7 && !hoveredDot ? 1.4 : 0.6}
+            opacity={hoveredDot?.lv === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.4 : 0.12}
           />
           {/* L7(white) boundary curve in L0 system — full amplitude WR */}
           <path
@@ -466,7 +540,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
             fill="none"
             stroke="#fff"
             strokeWidth={mode === 0 ? 1.4 : 0.6}
-            opacity={mode === 0 ? 0.5 : 0.12}
+            opacity={hoveredDot?.lv === 7 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.5 : 0.12}
           />
           {/* L0(black) boundary curve in L7 system — full amplitude WR */}
           <path
@@ -474,8 +548,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
             fill="none"
             stroke="rgba(255,255,255,0.6)"
             strokeWidth={mode === 7 ? 1.4 : 0.6}
-            opacity={mode === 7 ? 0.5 : 0.12}
-            strokeDasharray="6,3"
+            opacity={hoveredDot?.lv === 0 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.5 : 0.12}
           />
           {/* Boundary dots — outer (oscillating) and center (fixed) */}
           {(() => {
@@ -486,57 +559,67 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
                 {/* L0=origin: White oscillates near Yellow (outer), Black fixed near Blue (center) */}
                 {yellowDot &&
                   (() => {
+                    const hovL7m0 = hoveredDot?.lv === 7 && mode === 0;
                     const rad = ((yellowDot.a - alpha0 - 90) * Math.PI) / 180;
                     return (
                       <circle
                         cx={rPx(yellowDot.a)}
                         cy={CY + WR * Math.sin(rad)}
-                        r={4}
+                        r={hovL7m0 ? 5.5 : 4}
                         fill="#fff"
-                        stroke="rgba(0,0,0,0.5)"
-                        strokeWidth={0.8}
-                        opacity={mode === 0 ? 0.8 : 0.15}
+                        stroke={hovL7m0 ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.5)"}
+                        strokeWidth={hovL7m0 ? 1.2 : 0.8}
+                        opacity={hovL7m0 ? 1 : hoveredDot ? 0.15 : mode === 0 ? 0.8 : 0.15}
                       />
                     );
                   })()}
-                {blueDot && (
-                  <circle
-                    cx={rPx(blueDot.a)}
-                    cy={CY}
-                    r={4}
-                    fill="#222"
-                    stroke="rgba(255,255,255,0.6)"
-                    strokeWidth={0.8}
-                    opacity={mode === 0 ? 0.8 : 0.15}
-                  />
-                )}
+                {blueDot &&
+                  (() => {
+                    const hovL0m0 = hoveredDot?.lv === 0 && mode === 0;
+                    return (
+                      <circle
+                        cx={rPx(blueDot.a)}
+                        cy={CY}
+                        r={hovL0m0 ? 5.5 : 4}
+                        fill="#222"
+                        stroke={hovL0m0 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)"}
+                        strokeWidth={hovL0m0 ? 1.2 : 0.8}
+                        opacity={hovL0m0 ? 1 : hoveredDot ? 0.15 : mode === 0 ? 0.8 : 0.15}
+                      />
+                    );
+                  })()}
                 {/* L7=origin: Black oscillates near Blue (outer), White fixed near Yellow (center) */}
                 {blueDot &&
                   (() => {
+                    const hovL0m7 = hoveredDot?.lv === 0 && mode === 7;
                     const rad = ((blueDot.a - alpha7 - 90) * Math.PI) / 180;
                     return (
                       <circle
                         cx={rPx(blueDot.a)}
                         cy={CY + WR * Math.sin(rad)}
-                        r={4}
+                        r={hovL0m7 ? 5.5 : 4}
                         fill="#222"
-                        stroke="rgba(255,255,255,0.6)"
-                        strokeWidth={0.8}
-                        opacity={mode === 7 ? 0.8 : 0.15}
+                        stroke={hovL0m7 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)"}
+                        strokeWidth={hovL0m7 ? 1.2 : 0.8}
+                        opacity={hovL0m7 ? 1 : hoveredDot ? 0.15 : mode === 7 ? 0.8 : 0.15}
                       />
                     );
                   })()}
-                {yellowDot && (
-                  <circle
-                    cx={rPx(yellowDot.a)}
-                    cy={CY}
-                    r={4}
-                    fill="#fff"
-                    stroke="rgba(0,0,0,0.5)"
-                    strokeWidth={0.8}
-                    opacity={mode === 7 ? 0.8 : 0.15}
-                  />
-                )}
+                {yellowDot &&
+                  (() => {
+                    const hovL7m7 = hoveredDot?.lv === 7 && mode === 7;
+                    return (
+                      <circle
+                        cx={rPx(yellowDot.a)}
+                        cy={CY}
+                        r={hovL7m7 ? 5.5 : 4}
+                        fill="#fff"
+                        stroke={hovL7m7 ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.5)"}
+                        strokeWidth={hovL7m7 ? 1.2 : 0.8}
+                        opacity={hovL7m7 ? 1 : hoveredDot ? 0.15 : mode === 7 ? 0.8 : 0.15}
+                      />
+                    );
+                  })()}
               </>
             );
           })()}
@@ -558,10 +641,10 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               fill="none"
               stroke={lvColor(lv)}
               strokeWidth={mode === 0 ? 1.8 : 0.8}
-              opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
+              opacity={hoveredDot && mode === 0 ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
             />
           ))}
-          {/* L7 continuous sine curves (dashed) */}
+          {/* L7 continuous sine curves */}
           {ACTIVE_LEVELS.map((lv) => (
             <path
               key={`rs7-${lv}`}
@@ -569,10 +652,46 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               fill="none"
               stroke={lvColor(lv)}
               strokeWidth={mode === 7 ? 1.8 : 0.8}
-              opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
-              strokeDasharray="6,3"
+              opacity={hoveredDot && mode === 7 ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
             />
           ))}
+
+          {/* C2 pair composite sine curves — shows cancellation/reinforcement */}
+          {(
+            [
+              [1, 6],
+              [2, 5],
+              [3, 4],
+            ] as const
+          ).map(([a, b]) => {
+            const rA = lumR0(a);
+            if (rA < 1) return null;
+            const avgAlpha = (alpha0 + alpha7) / 2;
+            const deltaAlpha = alpha7 - alpha0;
+            const amp = 2 * rA * Math.cos(((deltaAlpha / 2) * Math.PI) / 180);
+            const colA = activeDots.find((d) => d.lv === a);
+            const colB = activeDots.find((d) => d.lv === b);
+            const col =
+              colA && colB
+                ? `rgb(${Math.round((colA.rgb[0] + colB.rgb[0]) / 2)},${Math.round((colA.rgb[1] + colB.rgb[1]) / 2)},${Math.round((colA.rgb[2] + colB.rgb[2]) / 2)})`
+                : "rgba(255,255,255,0.5)";
+            const pts: string[] = [];
+            for (let h = 0; h <= 360; h += 2) {
+              const y = CY + amp * Math.sin(((h - avgAlpha - 90) * Math.PI) / 180);
+              pts.push(`${h === 0 ? "M" : "L"}${rPx(h).toFixed(1)},${y.toFixed(1)}`);
+            }
+            return (
+              <path
+                key={`comp-s-${a}-${b}`}
+                d={pts.join(" ")}
+                fill="none"
+                stroke={col}
+                strokeWidth={1.2}
+                opacity={0.5}
+                strokeDasharray="4,3"
+              />
+            );
+          })}
 
           {/* Hue angle line (draggable) */}
           <line x1={rPx(hueAngle)} y1={RYtop} x2={rPx(hueAngle)} y2={RYbot} stroke={C.accent} strokeWidth={1} opacity={0.5} />
@@ -587,22 +706,24 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
             onPointerDown={onHuePointerDown}
           />
 
-          {/* Inactive dots on current mode's curves (small, no guide lines) */}
+          {/* Inactive dots on current mode's curves */}
           {dots
             .filter((d) => !d.act)
             .map((d) => {
               const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
               const y = CY + activeRadiusFn(d.lv) * Math.sin(rad);
+              const hov = hoveredDot !== null && hoveredDot.lv === d.lv && hoveredDot.ci === d.ci;
               return (
                 <circle
                   key={`ri-${d.lv}-${d.ci}`}
                   cx={rPx(d.a)}
                   cy={y}
-                  r={1.8}
+                  r={hov ? 4 : 1.8}
                   fill={`rgb(${d.rgb.join(",")})`}
-                  stroke="rgba(255,255,255,0.15)"
-                  strokeWidth={0.5}
-                  opacity={0.3}
+                  stroke={hov ? "#fff" : "rgba(255,255,255,0.15)"}
+                  strokeWidth={hov ? 1.0 : 0.5}
+                  opacity={hov ? 0.9 : 0.3}
+                  filter={hov ? "url(#dot-glow)" : undefined}
                 />
               );
             })}
@@ -645,25 +766,25 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
             <line key={`bg${a}`} x1={BXleft} y1={bPy(a)} x2={BXright} y2={bPy(a)} stroke="rgba(255,255,255,0.07)" strokeWidth={0.4} />
           ))}
           <line x1={CX} y1={BY} x2={CX} y2={BY + BH} stroke="rgba(255,255,255,0.10)" strokeWidth={0.5} />
-          {/* Origin level center line: r=0 → projection always at CX */}
+          {/* L0 center line: r=0 in L0-system → always at CX */}
           <line
             x1={CX}
             y1={BY}
             x2={CX}
             y2={BY + BH}
-            stroke={mode === 0 ? "#222" : "#fff"}
-            strokeWidth={mode === 0 ? 1.4 : 0.6}
-            opacity={mode === 0 ? 0.4 : 0.12}
+            stroke="rgba(255,255,255,0.6)"
+            strokeWidth={hoveredDot?.lv === 0 ? 1.4 : mode === 0 && !hoveredDot ? 1.4 : 0.6}
+            opacity={hoveredDot?.lv === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.4 : 0.12}
           />
+          {/* L7 center line: r=0 in L7-system → always at CX */}
           <line
             x1={CX}
             y1={BY}
             x2={CX}
             y2={BY + BH}
-            stroke={mode === 7 ? "#fff" : "#222"}
-            strokeWidth={mode === 7 ? 1.4 : 0.6}
-            opacity={mode === 7 ? 0.4 : 0.12}
-            strokeDasharray="6,3"
+            stroke="#fff"
+            strokeWidth={hoveredDot?.lv === 7 ? 1.4 : mode === 7 && !hoveredDot ? 1.4 : 0.6}
+            opacity={hoveredDot?.lv === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.4 : 0.12}
           />
           {/* L7(white) boundary curve in L0 system — full amplitude WR */}
           <path
@@ -671,7 +792,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
             fill="none"
             stroke="#fff"
             strokeWidth={mode === 0 ? 1.4 : 0.6}
-            opacity={mode === 0 ? 0.5 : 0.12}
+            opacity={hoveredDot?.lv === 7 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.5 : 0.12}
           />
           {/* L0(black) boundary curve in L7 system — full amplitude WR */}
           <path
@@ -679,8 +800,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
             fill="none"
             stroke="rgba(255,255,255,0.6)"
             strokeWidth={mode === 7 ? 1.4 : 0.6}
-            opacity={mode === 7 ? 0.5 : 0.12}
-            strokeDasharray="6,3"
+            opacity={hoveredDot?.lv === 0 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.5 : 0.12}
           />
           {/* Boundary dots — outer (oscillating) and center (fixed) */}
           {(() => {
@@ -691,57 +811,67 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
                 {/* L0=origin: White oscillates near Yellow, Black fixed near Blue */}
                 {yellowDot &&
                   (() => {
+                    const hovL7m0 = hoveredDot?.lv === 7 && mode === 0;
                     const rad = ((yellowDot.a - alpha0 - 90) * Math.PI) / 180;
                     return (
                       <circle
                         cx={CX + WR * Math.cos(rad)}
                         cy={bPy(yellowDot.a)}
-                        r={4}
+                        r={hovL7m0 ? 5.5 : 4}
                         fill="#fff"
-                        stroke="rgba(0,0,0,0.5)"
-                        strokeWidth={0.8}
-                        opacity={mode === 0 ? 0.8 : 0.15}
+                        stroke={hovL7m0 ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.5)"}
+                        strokeWidth={hovL7m0 ? 1.2 : 0.8}
+                        opacity={hovL7m0 ? 1 : hoveredDot ? 0.15 : mode === 0 ? 0.8 : 0.15}
                       />
                     );
                   })()}
-                {blueDot && (
-                  <circle
-                    cx={CX}
-                    cy={bPy(blueDot.a)}
-                    r={4}
-                    fill="#222"
-                    stroke="rgba(255,255,255,0.6)"
-                    strokeWidth={0.8}
-                    opacity={mode === 0 ? 0.8 : 0.15}
-                  />
-                )}
+                {blueDot &&
+                  (() => {
+                    const hovL0m0 = hoveredDot?.lv === 0 && mode === 0;
+                    return (
+                      <circle
+                        cx={CX}
+                        cy={bPy(blueDot.a)}
+                        r={hovL0m0 ? 5.5 : 4}
+                        fill="#222"
+                        stroke={hovL0m0 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)"}
+                        strokeWidth={hovL0m0 ? 1.2 : 0.8}
+                        opacity={hovL0m0 ? 1 : hoveredDot ? 0.15 : mode === 0 ? 0.8 : 0.15}
+                      />
+                    );
+                  })()}
                 {/* L7=origin: Black oscillates near Blue, White fixed near Yellow */}
                 {blueDot &&
                   (() => {
+                    const hovL0m7 = hoveredDot?.lv === 0 && mode === 7;
                     const rad = ((blueDot.a - alpha7 - 90) * Math.PI) / 180;
                     return (
                       <circle
                         cx={CX + WR * Math.cos(rad)}
                         cy={bPy(blueDot.a)}
-                        r={4}
+                        r={hovL0m7 ? 5.5 : 4}
                         fill="#222"
-                        stroke="rgba(255,255,255,0.6)"
-                        strokeWidth={0.8}
-                        opacity={mode === 7 ? 0.8 : 0.15}
+                        stroke={hovL0m7 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)"}
+                        strokeWidth={hovL0m7 ? 1.2 : 0.8}
+                        opacity={hovL0m7 ? 1 : hoveredDot ? 0.15 : mode === 7 ? 0.8 : 0.15}
                       />
                     );
                   })()}
-                {yellowDot && (
-                  <circle
-                    cx={CX}
-                    cy={bPy(yellowDot.a)}
-                    r={4}
-                    fill="#fff"
-                    stroke="rgba(0,0,0,0.5)"
-                    strokeWidth={0.8}
-                    opacity={mode === 7 ? 0.8 : 0.15}
-                  />
-                )}
+                {yellowDot &&
+                  (() => {
+                    const hovL7m7 = hoveredDot?.lv === 7 && mode === 7;
+                    return (
+                      <circle
+                        cx={CX}
+                        cy={bPy(yellowDot.a)}
+                        r={hovL7m7 ? 5.5 : 4}
+                        fill="#fff"
+                        stroke={hovL7m7 ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.5)"}
+                        strokeWidth={hovL7m7 ? 1.2 : 0.8}
+                        opacity={hovL7m7 ? 1 : hoveredDot ? 0.15 : mode === 7 ? 0.8 : 0.15}
+                      />
+                    );
+                  })()}
               </>
             );
           })()}
@@ -774,7 +904,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               fill="none"
               stroke={lvColor(lv)}
               strokeWidth={mode === 0 ? 1.8 : 0.8}
-              opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
+              opacity={hoveredDot && mode === 0 ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
             />
           ))}
           {/* L7 continuous cosine curves (dashed) */}
@@ -785,27 +915,65 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               fill="none"
               stroke={lvColor(lv)}
               strokeWidth={mode === 7 ? 1.8 : 0.8}
-              opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
-              strokeDasharray="6,3"
+              opacity={hoveredDot && mode === 7 ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
             />
           ))}
 
-          {/* Inactive dots on current mode's curves (small, no guide lines) */}
+          {/* C2 pair composite cosine curves */}
+          {(
+            [
+              [1, 6],
+              [2, 5],
+              [3, 4],
+            ] as const
+          ).map(([a, b]) => {
+            const rA = lumR0(a);
+            if (rA < 1) return null;
+            const avgAlpha = (alpha0 + alpha7) / 2;
+            const deltaAlpha = alpha7 - alpha0;
+            const amp = 2 * rA * Math.cos(((deltaAlpha / 2) * Math.PI) / 180);
+            const colA = activeDots.find((d) => d.lv === a);
+            const colB = activeDots.find((d) => d.lv === b);
+            const col =
+              colA && colB
+                ? `rgb(${Math.round((colA.rgb[0] + colB.rgb[0]) / 2)},${Math.round((colA.rgb[1] + colB.rgb[1]) / 2)},${Math.round((colA.rgb[2] + colB.rgb[2]) / 2)})`
+                : "rgba(255,255,255,0.5)";
+            const pts: string[] = [];
+            for (let h = 0; h <= 360; h += 2) {
+              const x = CX + amp * Math.cos(((h - avgAlpha - 90) * Math.PI) / 180);
+              pts.push(`${h === 0 ? "M" : "L"}${x.toFixed(1)},${bPy(h).toFixed(1)}`);
+            }
+            return (
+              <path
+                key={`comp-c-${a}-${b}`}
+                d={pts.join(" ")}
+                fill="none"
+                stroke={col}
+                strokeWidth={1.2}
+                opacity={0.5}
+                strokeDasharray="4,3"
+              />
+            );
+          })}
+
+          {/* Inactive dots on current mode's curves */}
           {dots
             .filter((d) => !d.act)
             .map((d) => {
               const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
               const x = CX + activeRadiusFn(d.lv) * Math.cos(rad);
+              const hov = hoveredDot !== null && hoveredDot.lv === d.lv && hoveredDot.ci === d.ci;
               return (
                 <circle
                   key={`bi-${d.lv}-${d.ci}`}
                   cx={x}
                   cy={bPy(d.a)}
-                  r={1.8}
+                  r={hov ? 4 : 1.8}
                   fill={`rgb(${d.rgb.join(",")})`}
-                  stroke="rgba(255,255,255,0.15)"
-                  strokeWidth={0.5}
-                  opacity={0.3}
+                  stroke={hov ? "#fff" : "rgba(255,255,255,0.15)"}
+                  strokeWidth={hov ? 1.0 : 0.5}
+                  opacity={hov ? 0.9 : 0.3}
+                  filter={hov ? "url(#dot-glow)" : undefined}
                 />
               );
             })}
@@ -851,7 +1019,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               const hov = hovIdx === i;
               yOffset += ROW_H; // always same increment
               return (
-                <g key={`info-${d.lv}-${d.ci}`} opacity={hov ? 1 : hovIdx >= 0 ? 0.3 : 0.8} {...dotHandlers(d)}>
+                <g key={`info-${d.lv}-${d.ci}`} opacity={hov ? 1 : hoveredDot !== null ? 0.3 : 0.8} {...dotHandlers(d)}>
                   <rect x={ix} y={y} width={11} height={11} rx={2} fill={col} stroke={hov ? "#fff" : "none"} strokeWidth={hov ? 0.5 : 0} />
                   <text
                     x={ix + 15}
@@ -865,9 +1033,22 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
                   <text x={ixRgb} y={y + 9} fontSize={10} fill={C.textDimmer}>
                     ({d.rgb.join(",")})
                   </text>
-                  <text x={ixC2} y={y + 9} fontSize={10} fill={C.textDimmer}>
-                    C2:L{C2_PAIR[d.lv]}
-                  </text>
+                  {(() => {
+                    const pairLv = C2_PAIR[d.lv];
+                    const pairDot = activeDots.find((ad) => ad.lv === pairLv);
+                    const pairCol = pairDot ? `rgb(${pairDot.rgb.join(",")})` : LV_COLORS[pairLv];
+                    return (
+                      <>
+                        <text x={ixC2} y={y + 9} fontSize={10} fill={C.textDimmer}>
+                          ↔
+                        </text>
+                        <rect x={ixC2 + 12} y={y + 1} width={9} height={9} rx={2} fill={pairCol} opacity={0.8} />
+                        <text x={ixC2 + 24} y={y + 9} fontSize={10} fill={C.textDimmer}>
+                          L{pairLv}
+                        </text>
+                      </>
+                    );
+                  })()}
                 </g>
               );
             });
@@ -878,32 +1059,102 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
             return (
               <>
                 {/* L0 legend */}
-                <g key="legend-l0" opacity={hovIdx >= 0 ? 0.3 : 0.8}>
-                  <rect x={ix} y={l0y + 1} width={11} height={11} rx={2} fill="#222" stroke="rgba(255,255,255,0.5)" strokeWidth={0.6} />
-                  <text x={ix + 15} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
-                    {legendL0}
-                  </text>
-                  <text x={ixRgb} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
-                    (0,0,0)
-                  </text>
-                  <text x={ixC2} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
-                    C2:L7
-                  </text>
-                </g>
+                {(() => {
+                  const hovL0 = hoveredDot !== null && hoveredDot.lv === 0;
+                  return (
+                    <g
+                      key="legend-l0"
+                      opacity={hovL0 ? 1 : hoveredDot !== null ? 0.3 : 0.8}
+                      onPointerEnter={() => setHoveredDot({ lv: 0, ci: -1 })}
+                      onPointerLeave={() => setHoveredDot(null)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <rect
+                        x={ix}
+                        y={l0y + 1}
+                        width={11}
+                        height={11}
+                        rx={2}
+                        fill="#222"
+                        stroke={hovL0 ? "#fff" : "rgba(255,255,255,0.5)"}
+                        strokeWidth={hovL0 ? 0.8 : 0.6}
+                      />
+                      <text
+                        x={ix + 15}
+                        y={l0y + 9}
+                        fontSize={hovL0 ? 11 : 10}
+                        fill={hovL0 ? C.textWhite : C.textDimmer}
+                        fontWeight={hovL0 ? "bold" : "normal"}
+                      >
+                        {legendL0}
+                      </text>
+                      <text x={ixRgb} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
+                        (0,0,0)
+                      </text>
+                      <text x={ixC2} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
+                        ↔
+                      </text>
+                      <rect x={ixC2 + 12} y={l0y + 1} width={9} height={9} rx={2} fill="#fff" opacity={0.8} />
+                      <text x={ixC2 + 24} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
+                        L7
+                      </text>
+                    </g>
+                  );
+                })()}
                 {dotElements}
                 {/* L7 legend */}
-                <g key="legend-l7" opacity={hovIdx >= 0 ? 0.3 : 0.8}>
-                  <rect x={ix} y={l7y + 1} width={11} height={11} rx={2} fill="#fff" stroke="rgba(0,0,0,0.5)" strokeWidth={0.6} />
-                  <text x={ix + 15} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
-                    {legendL7}
-                  </text>
-                  <text x={ixRgb} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
-                    (255,255,255)
-                  </text>
-                  <text x={ixC2} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
-                    C2:L0
-                  </text>
-                </g>
+                {(() => {
+                  const hovL7 = hoveredDot !== null && hoveredDot.lv === 7;
+                  return (
+                    <g
+                      key="legend-l7"
+                      opacity={hovL7 ? 1 : hoveredDot !== null ? 0.3 : 0.8}
+                      onPointerEnter={() => setHoveredDot({ lv: 7, ci: -1 })}
+                      onPointerLeave={() => setHoveredDot(null)}
+                      style={{ cursor: "pointer" }}
+                    >
+                      <rect
+                        x={ix}
+                        y={l7y + 1}
+                        width={11}
+                        height={11}
+                        rx={2}
+                        fill="#fff"
+                        stroke={hovL7 ? "#000" : "rgba(0,0,0,0.5)"}
+                        strokeWidth={hovL7 ? 0.8 : 0.6}
+                      />
+                      <text
+                        x={ix + 15}
+                        y={l7y + 9}
+                        fontSize={hovL7 ? 11 : 10}
+                        fill={hovL7 ? C.textWhite : C.textDimmer}
+                        fontWeight={hovL7 ? "bold" : "normal"}
+                      >
+                        {legendL7}
+                      </text>
+                      <text x={ixRgb} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
+                        (255,255,255)
+                      </text>
+                      <text x={ixC2} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
+                        ↔
+                      </text>
+                      <rect
+                        x={ixC2 + 12}
+                        y={l7y + 1}
+                        width={9}
+                        height={9}
+                        rx={2}
+                        fill="#222"
+                        stroke="rgba(255,255,255,0.5)"
+                        strokeWidth={0.4}
+                        opacity={0.8}
+                      />
+                      <text x={ixC2 + 24} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
+                        L0
+                      </text>
+                    </g>
+                  );
+                })()}
               </>
             );
           })()}
