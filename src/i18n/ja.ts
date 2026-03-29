@@ -20,12 +20,13 @@ export const ja: Record<TranslationKey, string> = {
   announce_size: "サイズ {0}",
 
   // SourcePanel
-  label_source: "CANVAS",
+  label_source: "GRAYSCALE CANVAS",
   label_input: "入力",
   label_output: "出力",
   aria_drawing_canvas: "描画キャンバス（グレースケール）",
   aria_drawing_canvas_desc: "ピクセルアート描画キャンバス",
   aria_drawing_tools: "描画ツール",
+  btn_pan_mode: "🔎移動",
   btn_undo: "↩戻す(Z)",
   btn_redo: "↪やり直し(Y)",
   title_undo: "元に戻す (Ctrl+Z)",
@@ -53,7 +54,8 @@ export const ja: Record<TranslationKey, string> = {
   announce_level_btn: "レベル{0} {1}",
 
   // ColorPanel
-  label_colorized: "COLOR PREVIEW",
+  label_colorized: "COLOR MAPPING PREVIEW",
+  label_diagram: "CHROMATIC DIAGRAM",
   label_color_mapping: "COLOR MAPPING",
   aria_color_preview: "カラープレビュー（キーボード: +/-でズーム、矢印キーでパン）",
   aria_color_preview_canvas: "カラープレビューキャンバス",
@@ -172,7 +174,7 @@ export const ja: Record<TranslationKey, string> = {
   tab_gallery_short: "Gallery",
 
   // Stats panel
-  stats_title: "ANALYZE",
+  stats_title: "PIXEL MAP ANALYSIS",
   stats_level: "L{0} {1}",
   stats_unused: "未使用",
   stats_used_levels: "使用中: {0}/8 レベル",
@@ -220,7 +222,7 @@ export const ja: Record<TranslationKey, string> = {
   stats_contrast_low: "<2:1 低",
 
   // Gallery panel
-  gallery_title: "GALLERY",
+  gallery_title: "COLOR PATTERN GALLERY",
   gallery_generate: "全生成",
   gallery_generating: "生成中...",
   gallery_patterns: "{0} パターン",
@@ -247,7 +249,7 @@ export const ja: Record<TranslationKey, string> = {
   gallery_patterns_filtered: "{0} / {1} パターン",
 
   // Glaze tab
-  label_glaze: "GLAZE",
+  label_glaze: "HUE GLAZE OVERLAY",
   glaze_hue_angle: "色相角度",
   aria_hue_slider: "色相角度 (0-360度)",
   glaze_preview: "カラーマッピング",

@@ -259,6 +259,7 @@ const S_TOGGLE: React.CSSProperties = {
   background: "transparent",
   color: C.textSecondary,
   transition: "all 0.15s",
+  whiteSpace: "nowrap",
 };
 const S_TOGGLE_ACTIVE: React.CSSProperties = {
   padding: "3px 10px",
@@ -270,6 +271,7 @@ const S_TOGGLE_ACTIVE: React.CSSProperties = {
   background: C.accent,
   color: "#fff",
   transition: "all 0.15s",
+  whiteSpace: "nowrap",
 };
 
 export const LinkedViz = React.memo(function LinkedViz({

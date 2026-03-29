@@ -18,8 +18,9 @@
 
   /* Responsive header spacing — mobile defaults */
   --sp-root-top: 6px;
-  --sp-header-mb: 4px;
+  --sp-header-mb: 7px;
   --sp-tablist-mb: 6px;
+  --sp-title-mb: 2px;
 }
 
 /* ── Base reset ── */
@@ -111,9 +112,10 @@ input[type="checkbox"]:focus-visible {
 
 @media (min-width: 1024px) {
   :root {
-    --sp-root-top: 12px;
+    --sp-root-top: 16px;
     --sp-header-mb: 10px;
     --sp-tablist-mb: 8px;
+    --sp-title-mb: 6px;
   }
   .hex-title-standalone {
     display: block;
@@ -126,7 +128,7 @@ input[type="checkbox"]:focus-visible {
   }
   .panel-layout {
     flex-direction: row;
-    align-items: center;
+    align-items: flex-start;
     justify-content: center;
     gap: 32px;
   }
@@ -136,11 +138,13 @@ input[type="checkbox"]:focus-visible {
     display: flex;
     flex-direction: column;
     align-items: center;
+    touch-action: none;
   }
   .panel-layout > .panel-sidebar {
     display: flex;
     flex-direction: column;
     align-items: center;
+    align-self: center;
     gap: 12px;
     width: 350px;
     flex-shrink: 0;

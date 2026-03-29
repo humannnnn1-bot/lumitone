@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { TOOLS, BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX } from "../constants";
 import { LEVEL_INFO } from "../color-engine";
-import { S_BTN, S_BTN_ACTIVE } from "../styles";
+import { S_BTN, S_BTN_ACTIVE, S_CHECKERBOARD } from "../styles";
 import { rgbStr, timestamp } from "../utils";
 import type { AppState, ToolState, ViewState, SaveActions } from "../types";
 import { useTranslation } from "../i18n";
@@ -89,6 +89,29 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
   const handleSaveGray = useCallback(() => saveColor(srcRef, `chromalum_gray_${timestamp()}.png`), [saveColor, srcRef]);
   const handleSaveGlaze = useCallback(() => saveGlaze(`chromalum_glaze_${timestamp()}.png`), [saveGlaze]);
 
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      if (e.key === "ArrowLeft") {
+        e.preventDefault();
+        setPan((p) => ({ ...p, x: p.x + 10 }));
+        schedCursor();
+      } else if (e.key === "ArrowRight") {
+        e.preventDefault();
+        setPan((p) => ({ ...p, x: p.x - 10 }));
+        schedCursor();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setPan((p) => ({ ...p, y: p.y + 10 }));
+        schedCursor();
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setPan((p) => ({ ...p, y: p.y - 10 }));
+        schedCursor();
+      }
+    },
+    [setPan, schedCursor],
+  );
+
   const handleZoomPixelPerfect = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
@@ -140,6 +163,8 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
           <div style={{ fontSize: FS.md, color: C.textDim, textAlign: "center", lineHeight: "14px" }}>{t("label_source")}</div>
           <div
             ref={srcWrapRef}
+            tabIndex={0}
+            onKeyDown={handleKeyDown}
             style={{
               border: panZoomMode ? `2px solid ${C.accentBright}` : `1px solid ${C.border}`,
               borderRadius: R.lg,
@@ -147,6 +172,8 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
               position: "relative",
               width: displayW,
               height: displayH,
+              outline: "none",
+              ...S_CHECKERBOARD,
             }}
           >
             <canvas
@@ -258,8 +285,11 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
               title={`${t("title_zoom_reset")} (${t("title_zoom_pixel")})`}
               aria-label={t("aria_zoom_reset", Math.round(zoom * 100))}
             >
-              <span>{"\u229B"}</span>
+              <span>{"\u25CE"}</span>
               <span>{Math.round(zoom * 100)}%</span>
+            </button>
+            <button onClick={() => setPanZoomMode((prev) => !prev)} style={panZoomMode ? S_BTN_ACTIVE : S_BTN}>
+              {t("btn_pan_mode")}
             </button>
           </div>
 

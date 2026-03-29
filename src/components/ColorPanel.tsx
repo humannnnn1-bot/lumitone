@@ -5,6 +5,7 @@ import { ColorMappingList } from "./ColorMappingList";
 import type { ColorAction } from "../color-reducer";
 import type { PanZoomHandlers, DrawingHandlers } from "../types";
 import { useTranslation } from "../i18n";
+import { S_CHECKERBOARD } from "../styles";
 import { C, Z, SP, FS, R } from "../tokens";
 
 interface ColorPanelProps {
@@ -132,6 +133,7 @@ export const ColorPanel = React.memo(function ColorPanel(props: ColorPanelProps)
               position: "relative",
               width: displayW,
               height: displayH,
+              ...S_CHECKERBOARD,
             }}
           >
             <canvas

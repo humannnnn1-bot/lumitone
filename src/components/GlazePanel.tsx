@@ -3,7 +3,7 @@ import { LEVEL_INFO, LEVEL_CANDIDATES, findClosestCandidate } from "../color-eng
 import { LinkedViz } from "./LinkedViz";
 import { BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from "../constants";
 import type { GlazeToolId } from "../constants";
-import { S_BTN, S_BTN_ACTIVE } from "../styles";
+import { S_BTN, S_BTN_ACTIVE, S_CHECKERBOARD } from "../styles";
 import type { PanZoomHandlers, CanvasAction, CanvasData } from "../types";
 import type { GlazeDrawingResult } from "../hooks/useGlazeDrawing";
 import { useTranslation } from "../i18n";
@@ -27,6 +27,11 @@ interface GlazePanelProps {
   redo: () => void;
   zoom: number;
   brushLevel: number;
+  panZoomMode: boolean;
+  setPanZoomMode: React.Dispatch<React.SetStateAction<boolean>>;
+  onPinchDown: (e: React.PointerEvent) => void;
+  onPinchMove: (e: React.PointerEvent) => void;
+  onPinchUp: (e: React.PointerEvent) => void;
 }
 
 const S_HUE_WRAP: React.CSSProperties = { position: "relative", width: "100%", paddingTop: SP.xl };
@@ -71,6 +76,11 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
     redo,
     zoom,
     brushLevel,
+    panZoomMode,
+    setPanZoomMode,
+    onPinchDown,
+    onPinchMove,
+    onPinchUp,
   } = props;
   const { statusRef: glazeStatusRef, curRef: glazeCurRef } = glazeDrawing;
   const { hueAngle, setHueAngle, glazeTool, setGlazeTool, brushSize, setBrushSize, directCandidates, setDirectCandidates } =
@@ -150,6 +160,10 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
+      if (panZoomMode) {
+        onPinchDown(e);
+        return;
+      }
       if (e.button === 1 || panZoom.spaceRef.current) {
         e.preventDefault();
         panZoom.startPan(e);
@@ -163,32 +177,50 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
       }
       glazeDrawing.onDown(e);
     },
-    [panZoom, glazeDrawing],
+    [panZoom, glazeDrawing, panZoomMode, onPinchDown],
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
+      if (panZoomMode) {
+        onPinchMove(e);
+        return;
+      }
       if (panZoom.panningRef.current) {
         panZoom.movePan(e);
         return;
       }
       glazeDrawing.onMove(e);
     },
-    [panZoom, glazeDrawing],
+    [panZoom, glazeDrawing, panZoomMode, onPinchMove],
   );
 
-  const handlePointerUp = useCallback(() => {
-    if (panZoom.panningRef.current) {
-      panZoom.endPan();
-      return;
-    }
-    glazeDrawing.onUp();
-  }, [panZoom, glazeDrawing]);
+  const handlePointerUp = useCallback(
+    (e: React.PointerEvent) => {
+      if (panZoomMode) {
+        onPinchUp(e);
+        return;
+      }
+      if (panZoom.panningRef.current) {
+        panZoom.endPan();
+        return;
+      }
+      glazeDrawing.onUp();
+    },
+    [panZoom, glazeDrawing, panZoomMode, onPinchUp],
+  );
 
-  const handlePointerLeave = useCallback(() => {
-    glazeDrawing.onUp();
-    glazeDrawing.clearCursor();
-  }, [glazeDrawing]);
+  const handlePointerLeave = useCallback(
+    (e: React.PointerEvent) => {
+      if (panZoomMode) {
+        onPinchUp(e);
+        return;
+      }
+      glazeDrawing.onUp();
+      glazeDrawing.clearCursor();
+    },
+    [glazeDrawing, panZoomMode, onPinchUp],
+  );
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => e.preventDefault(), []);
 
@@ -280,7 +312,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
   }, [showHighlight, cvs.colorMap, cvs.w, cvs.h]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xl }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg }}>
       <div className="panel-layout">
         <div className="panel-canvas" style={{ "--display-max": displayW + "px" } as React.CSSProperties}>
           <div style={{ fontSize: FS.md, color: C.textDim, textAlign: "center", lineHeight: "14px" }}>{t("label_glaze")}</div>
@@ -289,13 +321,14 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
             tabIndex={0}
             onKeyDown={handleKeyDown}
             style={{
-              border: `1px solid ${C.border}`,
+              border: panZoomMode ? `2px solid ${C.accentBright}` : `1px solid ${C.border}`,
               borderRadius: R.lg,
               overflow: "hidden",
               position: "relative",
               width: displayW,
               height: displayH,
               outline: "none",
+              ...S_CHECKERBOARD,
             }}
           >
             <canvas
@@ -360,6 +393,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                 aria-checked={glazeTool === gt.id}
                 onClick={() => {
                   setGlazeTool(gt.id);
+                  if (panZoomMode) setPanZoomMode(false);
                   announce(t("announce_" + gt.id));
                 }}
                 style={glazeTool === gt.id ? S_BTN_ACTIVE : S_BTN}
@@ -383,8 +417,11 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
               title={t("title_zoom_reset")}
               aria-label={t("aria_zoom_reset", Math.round(zoom * 100))}
             >
-              {"\u2299"}
+              {"\u25CE"}
               {Math.round(zoom * 100)}%
+            </button>
+            <button onClick={() => setPanZoomMode((prev) => !prev)} style={panZoomMode ? S_BTN_ACTIVE : S_BTN}>
+              {t("btn_pan_mode")}
             </button>
           </div>
 
@@ -432,7 +469,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
           )}
 
           {/* Options + Clear */}
-          <div style={{ display: "flex", alignItems: "center", gap: SP.lg, flexWrap: "wrap", justifyContent: "center", marginTop: SP.lg }}>
+          <div style={{ display: "flex", alignItems: "center", gap: SP.lg, flexWrap: "wrap", justifyContent: "center" }}>
             <label style={{ fontSize: FS.sm, color: C.textDim, cursor: "pointer", display: "flex", alignItems: "center", gap: SP.sm }}>
               <input type="checkbox" checked={showHighlight} onChange={(e) => setShowHighlight(e.target.checked)} />
               {t("glaze_show_highlight")}
@@ -444,7 +481,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
           </div>
 
           {/* Hue angle slider with marker */}
-          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: SP.md, marginTop: SP.lg }}>
+          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: SP.md }}>
             <div style={{ fontSize: FS.lg, color: C.textPrimary, textAlign: "center", fontFamily: "monospace" }}>
               {t("glaze_hue_angle")}: {Math.round(hueAngle % 360)}°
             </div>
@@ -510,10 +547,8 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
           </div>
 
           {/* Level preview — 2D candidate grid */}
-          <div style={{ fontSize: FS.sm, color: C.textDim, textAlign: "center", marginTop: SP.xl, marginBottom: SP.xs }}>
-            {t("glaze_preview")}
-          </div>
-          <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center", marginTop: SP.sm }}>
+          <div style={{ fontSize: FS.sm, color: C.textDim, textAlign: "center" }}>{t("glaze_preview")}</div>
+          <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center" }}>
             {levelPreview.map((lp) => {
               const cands = LEVEL_CANDIDATES[lp.lv];
               const hasCands = cands.length > 1;

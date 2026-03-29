@@ -39,7 +39,7 @@ const S_TITLE: React.CSSProperties = {
   fontFamily: "'Inter', system-ui, sans-serif",
   fontSize: 22,
   fontWeight: FW.normal,
-  margin: `0 0 ${SP.lg}px`,
+  margin: "0 0 var(--sp-title-mb)",
   color: C.textPrimary,
   letterSpacing: 10,
 };
@@ -519,6 +519,11 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
                 redo={redo}
                 zoom={panZoom.zoom}
                 brushLevel={brushLevel}
+                panZoomMode={panZoom.panZoomMode}
+                setPanZoomMode={panZoom.setPanZoomMode}
+                onPinchDown={panZoom.onPinchDown}
+                onPinchMove={panZoom.onPinchMove}
+                onPinchUp={panZoom.onPinchUp}
               />
             </GlazeContextProvider>
           </div>
