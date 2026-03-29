@@ -41,7 +41,7 @@ const TH = BY + BH + 16; // 344
 
 // Active levels (skip black=0, white=7)
 const ACTIVE_LEVELS = [1, 2, 3, 4, 5, 6];
-const HUE_LABELS = [0, 60, 120, 180, 240, 300];
+const HUE_LABELS = [0, 60, 120, 180, 240, 300, 360];
 
 // Level display colors
 const LV_COLORS = ["", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", ""];
@@ -175,11 +175,11 @@ function renderWheel({ cx, cy, alpha, radiusFn, dots, hueAngle, hoveredDot, onHo
             key={`w${d.lv}${d.ci}`}
             cx={p.x}
             cy={p.y}
-            r={d.act ? (hov ? 5.5 : 4) : 2}
+            r={d.act ? (hov ? 5.5 : 4) : 1.8}
             fill={d.act ? `rgb(${d.rgb.join(",")})` : `rgb(${d.rgb.join(",")})`}
             stroke={d.act ? "#fff" : "rgba(255,255,255,0.15)"}
-            strokeWidth={d.act ? (hov ? 1.2 : 1) : 0.5}
-            opacity={d.act ? (dimmed ? 0.25 : 1) : 0.45}
+            strokeWidth={d.act ? (hov ? 1.4 : 1.0) : 0.5}
+            opacity={d.act ? (dimmed ? 0.25 : 1) : 0.3}
             filter={hov ? "url(#dot-glow)" : undefined}
             style={d.act ? { cursor: "pointer" } : undefined}
             onPointerEnter={
@@ -240,7 +240,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
   const [alpha7, setAlpha7] = useState(0);
   const [hoveredDot, setHoveredDot] = useState<{ lv: number; ci: number } | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
-  const dragRef = useRef<{ type: "wheel"; startAngle: number; startAlpha: number } | { type: "hue" } | null>(null);
+  const dragRef = useRef<{ type: "wheel"; startAngle: number; startAlpha: number } | { type: "hue" } | { type: "hue-bottom" } | null>(null);
 
   const activeAlpha = mode === 0 ? alpha0 : alpha7;
   const activeRadiusFn = mode === 0 ? lumR0 : lumR7;
@@ -305,6 +305,19 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
     [svgCoord, onHueAngleChange],
   );
 
+  // Hue line drag (on bottom graph)
+  const onHueBottomPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      e.stopPropagation();
+      dragRef.current = { type: "hue-bottom" };
+      svgRef.current?.setPointerCapture(e.pointerId);
+      const pt = svgCoord(e.clientX, e.clientY);
+      const hue = Math.max(0, Math.min(360, ((pt.y - BY - 8) / (BH - 16)) * 360));
+      onHueAngleChange?.(Math.round(hue));
+    },
+    [svgCoord, onHueAngleChange],
+  );
+
   const onPointerMove = useCallback(
     (e: React.PointerEvent) => {
       const drag = dragRef.current;
@@ -318,6 +331,9 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
         else setAlpha7(newAlpha);
       } else if (drag.type === "hue") {
         const hue = Math.max(0, Math.min(360, ((pt.x - RX - 10) / (RW - 14)) * 360));
+        onHueAngleChange?.(Math.round(hue));
+      } else if (drag.type === "hue-bottom") {
+        const hue = Math.max(0, Math.min(360, ((pt.y - BY - 8) / (BH - 16)) * 360));
         onHueAngleChange?.(Math.round(hue));
       }
     },
@@ -362,12 +378,16 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
     style: { cursor: "pointer" as const },
   });
   const dotOpacity = (d: Dot) => (hoveredDot === null ? 1 : isHovered(d) ? 1 : 0.25);
-  const legendL0 = t("linkedviz_legend_l0");
-  const legendL7 = t("linkedviz_legend_l7");
+  const legendL0 = mode === 0 ? t("linkedviz_legend_l0_origin") : t("linkedviz_legend_l0_boundary");
+  const legendL7 = mode === 0 ? t("linkedviz_legend_l7_boundary") : t("linkedviz_legend_l7_origin");
 
   // Main visualization content
   const vizContent = useMemo(() => {
     const activeDots = dots.filter((d) => d.act);
+    const lvColor = (lv: number) => {
+      const d = activeDots.find((ad) => ad.lv === lv);
+      return d ? `rgb(${d.rgb.join(",")})` : LV_COLORS[lv];
+    };
 
     return (
       <>
@@ -405,12 +425,21 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
 
         {/* ═══ RIGHT GRAPH: Sine (Y-projection) ═══ */}
         <g>
-          <rect x={RX} y={RYtop} width={RW} height={RH} fill="rgba(255,255,255,0.01)" rx={4} />
+          <rect
+            x={RX}
+            y={RYtop}
+            width={RW}
+            height={RH}
+            fill="rgba(255,255,255,0.035)"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth={0.5}
+            rx={4}
+          />
           {/* Grid lines */}
           {HUE_LABELS.map((a) => (
-            <line key={`rg${a}`} x1={rPx(a)} y1={RYtop} x2={rPx(a)} y2={RYbot} stroke="rgba(255,255,255,0.04)" strokeWidth={0.3} />
+            <line key={`rg${a}`} x1={rPx(a)} y1={RYtop} x2={rPx(a)} y2={RYbot} stroke="rgba(255,255,255,0.07)" strokeWidth={0.4} />
           ))}
-          <line x1={RX} y1={CY} x2={RX + RW} y2={CY} stroke="rgba(255,255,255,0.06)" strokeWidth={0.5} />
+          <line x1={RX} y1={CY} x2={RX + RW} y2={CY} stroke="rgba(255,255,255,0.10)" strokeWidth={0.5} />
           {/* Origin level center line: r=0 → projection always at CY */}
           <line
             x1={RX}
@@ -512,11 +541,11 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
             );
           })()}
           {/* Axis label */}
-          <text x={RX + RW / 2} y={RYtop - 4} fontSize={9} fill={C.textDimmer} textAnchor="middle">
-            Y projection
+          <text x={RX + RW / 2} y={RYtop - 4} fontSize={10} fill={C.textMuted} textAnchor="middle" fontStyle="italic">
+            {t("linkedviz_axis_sin")}
           </text>
           {HUE_LABELS.map((a) => (
-            <text key={`ra${a}`} x={rPx(a)} y={RYbot + 12} fontSize={7} fill={C.textDimmer} textAnchor="middle">
+            <text key={`ra${a}`} x={rPx(a)} y={RYbot + 12} fontSize={8} fill={C.textMuted} textAnchor="middle">
               {a}°
             </text>
           ))}
@@ -527,7 +556,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               key={`rs0-${lv}`}
               d={sinePath(lv, lumR0, alpha0)}
               fill="none"
-              stroke={LV_COLORS[lv]}
+              stroke={lvColor(lv)}
               strokeWidth={mode === 0 ? 1.8 : 0.8}
               opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
             />
@@ -538,7 +567,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               key={`rs7-${lv}`}
               d={sinePath(lv, lumR7, alpha7)}
               fill="none"
-              stroke={LV_COLORS[lv]}
+              stroke={lvColor(lv)}
               strokeWidth={mode === 7 ? 1.8 : 0.8}
               opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
               strokeDasharray="6,3"
@@ -569,11 +598,11 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
                   key={`ri-${d.lv}-${d.ci}`}
                   cx={rPx(d.a)}
                   cy={y}
-                  r={2}
+                  r={1.8}
                   fill={`rgb(${d.rgb.join(",")})`}
                   stroke="rgba(255,255,255,0.15)"
                   strokeWidth={0.5}
-                  opacity={0.45}
+                  opacity={0.3}
                 />
               );
             })}
@@ -590,7 +619,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
                 r={hov ? 5.5 : 4}
                 fill={`rgb(${d.rgb.join(",")})`}
                 stroke="#fff"
-                strokeWidth={hov ? 1.2 : 0.8}
+                strokeWidth={hov ? 1.4 : 1.0}
                 opacity={dotOpacity(d)}
                 filter={hov ? "url(#dot-glow)" : undefined}
                 {...dotHandlers(d)}
@@ -601,12 +630,21 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
 
         {/* ═══ BOTTOM GRAPH: Cosine (X-projection) ═══ */}
         <g>
-          <rect x={BXleft} y={BY} width={BW} height={BH} fill="rgba(255,255,255,0.01)" rx={4} />
+          <rect
+            x={BXleft}
+            y={BY}
+            width={BW}
+            height={BH}
+            fill="rgba(255,255,255,0.035)"
+            stroke="rgba(255,255,255,0.06)"
+            strokeWidth={0.5}
+            rx={4}
+          />
           {/* Grid lines */}
           {HUE_LABELS.map((a) => (
-            <line key={`bg${a}`} x1={BXleft} y1={bPy(a)} x2={BXright} y2={bPy(a)} stroke="rgba(255,255,255,0.04)" strokeWidth={0.3} />
+            <line key={`bg${a}`} x1={BXleft} y1={bPy(a)} x2={BXright} y2={bPy(a)} stroke="rgba(255,255,255,0.07)" strokeWidth={0.4} />
           ))}
-          <line x1={CX} y1={BY} x2={CX} y2={BY + BH} stroke="rgba(255,255,255,0.06)" strokeWidth={0.5} />
+          <line x1={CX} y1={BY} x2={CX} y2={BY + BH} stroke="rgba(255,255,255,0.10)" strokeWidth={0.5} />
           {/* Origin level center line: r=0 → projection always at CX */}
           <line
             x1={CX}
@@ -708,15 +746,25 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
             );
           })()}
           {/* Axis label */}
-          <text x={CX} y={BY + BH + 12} fontSize={8} fill={C.textDimmer} textAnchor="middle">
-            X projection
+          <text x={CX} y={BY + BH + 12} fontSize={10} fill={C.textMuted} textAnchor="middle" fontStyle="italic">
+            {t("linkedviz_axis_cos")}
           </text>
           {HUE_LABELS.map((a) => (
-            <text key={`ba${a}`} x={BXleft - 4} y={bPy(a)} fontSize={6} fill={C.textDimmer} textAnchor="end" dominantBaseline="middle">
+            <text key={`ba${a}`} x={BXleft - 4} y={bPy(a)} fontSize={8} fill={C.textMuted} textAnchor="end" dominantBaseline="middle">
               {a}°
             </text>
           ))}
           <line x1={BXleft} y1={bPy(hueAngle)} x2={BXright} y2={bPy(hueAngle)} stroke={C.accent} strokeWidth={1} opacity={0.5} />
+          {/* Narrow drag handle strip (12px tall) centered on hue line */}
+          <rect
+            x={BXleft - 5}
+            y={bPy(hueAngle) - 6}
+            width={BW + 10}
+            height={12}
+            fill="transparent"
+            style={{ cursor: "ns-resize" }}
+            onPointerDown={onHueBottomPointerDown}
+          />
 
           {/* L0 continuous cosine curves */}
           {ACTIVE_LEVELS.map((lv) => (
@@ -724,7 +772,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               key={`bc0-${lv}`}
               d={cosinePath(lv, lumR0, alpha0)}
               fill="none"
-              stroke={LV_COLORS[lv]}
+              stroke={lvColor(lv)}
               strokeWidth={mode === 0 ? 1.8 : 0.8}
               opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
             />
@@ -735,7 +783,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               key={`bc7-${lv}`}
               d={cosinePath(lv, lumR7, alpha7)}
               fill="none"
-              stroke={LV_COLORS[lv]}
+              stroke={lvColor(lv)}
               strokeWidth={mode === 7 ? 1.8 : 0.8}
               opacity={hoveredDot ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
               strokeDasharray="6,3"
@@ -753,11 +801,11 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
                   key={`bi-${d.lv}-${d.ci}`}
                   cx={x}
                   cy={bPy(d.a)}
-                  r={2}
+                  r={1.8}
                   fill={`rgb(${d.rgb.join(",")})`}
                   stroke="rgba(255,255,255,0.15)"
                   strokeWidth={0.5}
-                  opacity={0.45}
+                  opacity={0.3}
                 />
               );
             })}
@@ -774,7 +822,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
                 r={hov ? 5.5 : 4}
                 fill={`rgb(${d.rgb.join(",")})`}
                 stroke="#fff"
-                strokeWidth={hov ? 1.2 : 0.8}
+                strokeWidth={hov ? 1.4 : 1.0}
                 opacity={dotOpacity(d)}
                 filter={hov ? "url(#dot-glow)" : undefined}
                 {...dotHandlers(d)}
@@ -789,12 +837,14 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
           {(() => {
             const hovIdx = hoveredDot ? activeDots.findIndex((d) => d.lv === hoveredDot.lv && d.ci === hoveredDot.ci) : -1;
             const ix = BXright + 12;
-            const ROW_H = 20; // fixed row height with room for detail line
-            let yOffset = BY + 8;
+            const ixRgb = ix + 60; // fixed column for RGB values
+            const ixC2 = ixRgb + 70; // fixed column for C2 pairs
+            const ROW_H = 18; // single line per entry
+            let yOffset = BY + 20;
 
             // L0 legend at top
             const l0y = yOffset;
-            yOffset += 20; // extra gap after L0
+            yOffset += ROW_H; // same spacing as other entries
             const dotElements = activeDots.map((d, i) => {
               const col = `rgb(${d.rgb.join(",")})`;
               const y = yOffset;
@@ -802,50 +852,56 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
               yOffset += ROW_H; // always same increment
               return (
                 <g key={`info-${d.lv}-${d.ci}`} opacity={hov ? 1 : hovIdx >= 0 ? 0.3 : 0.8} {...dotHandlers(d)}>
-                  <rect x={ix} y={y} width={8} height={8} rx={1.5} fill={col} stroke={hov ? "#fff" : "none"} strokeWidth={hov ? 0.5 : 0} />
+                  <rect x={ix} y={y} width={11} height={11} rx={2} fill={col} stroke={hov ? "#fff" : "none"} strokeWidth={hov ? 0.5 : 0} />
                   <text
-                    x={ix + 12}
-                    y={y + 7}
-                    fontSize={hov ? 8 : 7}
+                    x={ix + 15}
+                    y={y + 9}
+                    fontSize={hov ? 11 : 10}
                     fill={hov ? C.textWhite : C.textDimmer}
                     fontWeight={hov ? "bold" : "normal"}
                   >
-                    L{d.lv} {Math.round(d.a)}°
+                    L{d.lv} <tspan style={{ fontVariantNumeric: "tabular-nums" }}>{String(Math.round(d.a)).padStart(3, "\u2007")}°</tspan>
                   </text>
-                  {/* Detail always visible below label */}
-                  {(() => {
-                    const gray = LEVEL_INFO[d.lv].gray;
-                    const pairLv = C2_PAIR[d.lv];
-                    return (
-                      <text x={ix + 12} y={y + 16} fontSize={6} fill={C.textDimmer}>
-                        ({d.rgb.join(",")}) g{gray} C2:L{pairLv}
-                      </text>
-                    );
-                  })()}
+                  <text x={ixRgb} y={y + 9} fontSize={10} fill={C.textDimmer}>
+                    ({d.rgb.join(",")})
+                  </text>
+                  <text x={ixC2} y={y + 9} fontSize={10} fill={C.textDimmer}>
+                    C2:L{C2_PAIR[d.lv]}
+                  </text>
                 </g>
               );
             });
 
             // L7 legend below L6
-            const l7y = yOffset + 10; // extra gap before L7
+            const l7y = yOffset; // same spacing as other entries
 
             return (
               <>
-                {/* L0 legend: black square + solid line */}
-                <g key="legend-l0">
-                  <rect x={ix} y={l0y + 1} width={8} height={8} rx={1.5} fill="#222" stroke="rgba(255,255,255,0.5)" strokeWidth={0.6} />
-                  <line x1={ix + 12} y1={l0y + 5} x2={ix + 22} y2={l0y + 5} stroke={C.textDimmer} strokeWidth={1.2} />
-                  <text x={ix + 26} y={l0y + 7} fontSize={8} fill={C.textDimmer}>
+                {/* L0 legend */}
+                <g key="legend-l0" opacity={hovIdx >= 0 ? 0.3 : 0.8}>
+                  <rect x={ix} y={l0y + 1} width={11} height={11} rx={2} fill="#222" stroke="rgba(255,255,255,0.5)" strokeWidth={0.6} />
+                  <text x={ix + 15} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
                     {legendL0}
+                  </text>
+                  <text x={ixRgb} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
+                    (0,0,0)
+                  </text>
+                  <text x={ixC2} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
+                    C2:L7
                   </text>
                 </g>
                 {dotElements}
-                {/* L7 legend: white square + dashed line */}
-                <g key="legend-l7">
-                  <rect x={ix} y={l7y + 1} width={8} height={8} rx={1.5} fill="#fff" stroke="rgba(0,0,0,0.5)" strokeWidth={0.6} />
-                  <line x1={ix + 12} y1={l7y + 5} x2={ix + 22} y2={l7y + 5} stroke={C.textDimmer} strokeWidth={1.2} strokeDasharray="4,3" />
-                  <text x={ix + 26} y={l7y + 7} fontSize={8} fill={C.textDimmer}>
+                {/* L7 legend */}
+                <g key="legend-l7" opacity={hovIdx >= 0 ? 0.3 : 0.8}>
+                  <rect x={ix} y={l7y + 1} width={11} height={11} rx={2} fill="#fff" stroke="rgba(0,0,0,0.5)" strokeWidth={0.6} />
+                  <text x={ix + 15} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
                     {legendL7}
+                  </text>
+                  <text x={ixRgb} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
+                    (255,255,255)
+                  </text>
+                  <text x={ixC2} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
+                    C2:L0
                   </text>
                 </g>
               </>
@@ -868,6 +924,7 @@ export const LinkedViz = React.memo(function LinkedViz({ hueAngle, brushLevel, o
     cosinePath,
     hoveredDot,
     onHuePointerDown,
+    onHueBottomPointerDown,
     legendL0,
     legendL7,
   ]);
