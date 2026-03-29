@@ -14,7 +14,7 @@ import { useAppState } from "./hooks/useAppState";
 import { DrawingContextProvider } from "./contexts/DrawingContext";
 import { GlazeContextProvider } from "./contexts/GlazeContext";
 import { S_TAB_ACTIVE, S_TAB_INACTIVE } from "./styles";
-import { C, Z, SP, FS, FW } from "./tokens";
+import { C, Z, FS, FW } from "./tokens";
 import { Toast } from "./components/Toast";
 import { SourcePanel } from "./components/SourcePanel";
 import { ColorPanel } from "./components/ColorPanel";
