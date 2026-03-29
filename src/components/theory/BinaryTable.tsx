@@ -1,0 +1,162 @@
+import React, { useCallback } from "react";
+import { THEORY_LEVELS } from "./theory-data";
+import { C, FS, FW } from "../../tokens";
+import { useTranslation } from "../../i18n";
+
+const W = 380,
+  H = 240;
+const ROW_H = 24,
+  HEADER_Y = 18;
+const COL = { lv: 24, bin: 62, dot: 108, g: 152, r: 184, b: 216, hamming: 270, luma: 340 };
+const BIT_R = 6;
+const CHANNEL_COLORS = ["#00ff00", "#ff0000", "#0000ff"];
+const LUMA_VALUES = [0, 29, 76, 106, 150, 179, 226, 255];
+const LUMA_MAX = 255;
+
+interface Props {
+  hlLevel: number | null;
+  onHover: (lv: number | null) => void;
+}
+
+export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }: Props) {
+  const { t } = useTranslation();
+  const enter = useCallback((lv: number) => onHover(lv), [onHover]);
+  const leave = useCallback(() => onHover(null), [onHover]);
+
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W }} role="img" aria-label={t("theory_binary_title")}>
+      {/* Header */}
+      <text x={COL.lv} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+        Lv
+      </text>
+      <text x={COL.bin} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+        GRB
+      </text>
+      <text x={COL.dot} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+        {t("theory_binary_color")}
+      </text>
+      {["G", "R", "B"].map((ch, i) => (
+        <text
+          key={ch}
+          x={[COL.g, COL.r, COL.b][i]}
+          y={HEADER_Y}
+          textAnchor="middle"
+          fontSize={FS.lg}
+          fill={CHANNEL_COLORS[i]}
+          fontFamily="monospace"
+          fontWeight={FW.bold}
+        >
+          {ch}
+        </text>
+      ))}
+      <text
+        x={COL.hamming}
+        y={HEADER_Y}
+        textAnchor="middle"
+        fontSize={FS.sm}
+        fill={C.textMuted}
+        fontFamily="monospace"
+        fontWeight={FW.bold}
+      >
+        Hamming
+      </text>
+      <text x={COL.luma} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+        Luma
+      </text>
+
+      {/* Data rows */}
+      {THEORY_LEVELS.map((lv, i) => {
+        const y = HEADER_Y + (i + 1) * ROW_H;
+        const textColor = lv.lv === 0 ? C.textDimmer : lv.color;
+        const active = hlLevel === lv.lv;
+        const dim = hlLevel !== null && !active;
+        const opacity = dim ? 0.25 : 1;
+        const binStr = lv.bits.join("");
+        const lumaW = 40 * (LUMA_VALUES[i] / LUMA_MAX);
+        return (
+          <g key={lv.lv} onMouseEnter={() => enter(lv.lv)} onMouseLeave={leave} style={{ cursor: "pointer" }} opacity={opacity}>
+            <rect x={0} y={y - ROW_H / 2} width={W} height={ROW_H} fill="transparent" />
+            {active && <rect x={2} y={y - ROW_H / 2 + 1} width={W - 4} height={ROW_H - 2} rx={3} fill="rgba(255,255,255,0.06)" />}
+            <text
+              x={COL.lv}
+              y={y}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={FS.md}
+              fill={textColor}
+              fontFamily="monospace"
+              fontWeight={FW.bold}
+            >
+              {lv.lv}
+            </text>
+            <text
+              x={COL.bin}
+              y={y}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={FS.sm}
+              fill={C.textDimmer}
+              fontFamily="monospace"
+            >
+              {binStr}
+            </text>
+            <circle
+              cx={COL.dot}
+              cy={y}
+              r={BIT_R + 1}
+              fill={lv.lv === 0 ? "none" : lv.color}
+              stroke={lv.lv === 0 ? C.textDimmer : lv.color}
+              strokeWidth={lv.lv === 0 ? 1 : 0}
+              fillOpacity={0.85}
+            />
+            {lv.bits.map((bit, bi) => (
+              <circle
+                key={bi}
+                cx={[COL.g, COL.r, COL.b][bi]}
+                cy={y}
+                r={BIT_R}
+                fill={bit ? CHANNEL_COLORS[bi] : "none"}
+                stroke={CHANNEL_COLORS[bi]}
+                strokeWidth={bit ? 0 : 1}
+                fillOpacity={bit ? 0.8 : 1}
+                opacity={bit ? 1 : 0.3}
+              />
+            ))}
+            <text
+              x={COL.hamming}
+              y={y}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={FS.sm}
+              fill={lv.hamming.startsWith("P") ? C.accentBright : lv.hamming.startsWith("D") ? C.textMuted : C.textDimmer}
+              fontFamily="monospace"
+            >
+              {lv.hamming}
+            </text>
+            {/* Luminance bar */}
+            <rect
+              x={COL.luma - 20}
+              y={y - 4}
+              width={lumaW}
+              height={8}
+              rx={2}
+              fill={lv.lv === 0 ? C.textDimmer : lv.color}
+              fillOpacity={0.5}
+            />
+            <text
+              x={COL.luma + 24}
+              y={y}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={FS.xs}
+              fill={C.textDimmer}
+              fontFamily="monospace"
+            >
+              {LUMA_VALUES[i]}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+});

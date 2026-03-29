@@ -164,6 +164,7 @@ export const en = {
   tab_glaze: "Glaze",
   tab_stats: "Analytics",
   tab_gallery: "Gallery",
+  tab_theory: "Theory",
 
   // Short tab labels (mobile)
   tab_source_short: "Source",
@@ -172,6 +173,55 @@ export const en = {
   tab_glaze_short: "Glaze",
   tab_stats_short: "Analytics",
   tab_gallery_short: "Gallery",
+  tab_theory_short: "Theory",
+
+  // Theory panel
+  theory_title: "Color Theory",
+  theory_intro:
+    "CHROMALUM's 8 luminance levels encode RGB channels as 3-bit binary. This reveals deep connections to the Fano plane, color cube, Gray codes, and Hamming codes.",
+  theory_binary_title: "Binary Levels",
+  theory_binary_desc:
+    "Each level is a 3-bit number (GRB). Bit 0 = Blue (lowest luminance), Bit 1 = Red, Bit 2 = Green (highest). Parity bits (P) and data bits (D) form a Hamming code.",
+  theory_binary_color: "Color",
+  theory_fano_title: "Fano Plane",
+  theory_fano_desc:
+    "The 7 chromatic levels form PG(2,2) \u2014 the smallest projective plane. Each line {a, b, c} satisfies a \u2295 b = c. The 3 orange lines through center (7) are complementary pairs \u2014 their XOR is always 111 (White). Hover a point to see its 3 lines.",
+  theory_fano_xor: "{0} \u2295 {1} = {2}",
+  theory_fano_primary: "Primary mixing",
+  theory_fano_complement: "Complementary",
+  theory_fano_secondary: "CMY circle",
+  theory_cube_title: "Color Cube",
+  theory_cube_desc:
+    "8 levels are vertices of a 3D cube (RGB axes). Each edge toggles one channel. The 6 chromatic vertices (excluding Black and White on the body diagonal) form the equator hexagon \u2014 a Gray code cycle. Click \u201cEquator\u201d to animate.",
+  theory_gray_title: "Gray Code Cycle",
+  theory_gray_desc:
+    "Walking the hexagon toggles one channel per step: G \u2192 R \u2192 B \u2192 G \u2192 R \u2192 B. This is a Hamiltonian cycle on the color cube equator.",
+  theory_gray_toggle: "Toggle: {0}",
+  theory_gray_cw: "\u21bb Clockwise",
+  theory_gray_ccw: "\u21ba Counter-clockwise",
+  theory_gray_pause: "\u23f8 Pause",
+  theory_xor_title: "XOR Mixing",
+  theory_xor_desc:
+    "Pick two levels to see their XOR result. For primary colors (1-bit), XOR equals additive light mixing. Complementary pairs XOR to 7 (White).",
+  theory_hamming_title: "Hamming Code",
+  theory_hamming_desc:
+    "Parity bits (B=1, R=2, G=4) are RGB primaries. Data bits (M=3, C=5, Y=6, W=7) are secondaries + white. Each parity bit checks specific positions.",
+  theory_hamming_parity: "Parity",
+  theory_hamming_checks: "Checks",
+  theory_connections_title: "Connections",
+  theory_connections_desc:
+    "GF(2)\u00b3 is the additive group of 3-bit binary vectors. Toggling an RGB channel is XOR \u2014 the group operation. These 5 structures arise inevitably from 8-level RGB encoding. This is not a design choice but a mathematical consequence.",
+  theory_conn_center_1: "8 Levels",
+  theory_conn_center_2: "GF(2)\u00b3",
+  theory_conn_gf23: "GF(2)\u00b3",
+  theory_conn_fano: "Fano",
+  theory_conn_cube: "Cube",
+  theory_conn_gray: "Gray",
+  theory_conn_hamming: "Hamm.",
+
+  theory_cube_equator: "Equator",
+  theory_conn_conclusion_1: "Five views of the same structure",
+  theory_conn_conclusion_2: "One mathematical foundation",
 
   // Stats panel
   stats_title: "PIXEL MAP ANALYSIS",

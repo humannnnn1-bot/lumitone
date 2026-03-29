@@ -164,6 +164,7 @@ export const ja: Record<TranslationKey, string> = {
   tab_glaze: "Glaze",
   tab_stats: "Analytics",
   tab_gallery: "Gallery",
+  tab_theory: "Theory",
 
   // Short tab labels (mobile)
   tab_source_short: "Source",
@@ -172,6 +173,53 @@ export const ja: Record<TranslationKey, string> = {
   tab_glaze_short: "Glaze",
   tab_stats_short: "Analytics",
   tab_gallery_short: "Gallery",
+  tab_theory_short: "Theory",
+
+  // Theory panel
+  theory_title: "色理論",
+  theory_intro:
+    "CHROMALUMの8段階輝度レベルはRGBチャンネルを3ビット2進数で表現しています。ファノ平面、カラーキューブ、グレイコード、ハミング符号との深い関係を探りましょう。",
+  theory_binary_title: "バイナリレベル",
+  theory_binary_desc:
+    "各レベルは3ビット数値（GRB）です。ビット0 = Blue（最低輝度）、ビット1 = Red、ビット2 = Green（最高輝度）。パリティビット（P）とデータビット（D）はハミング符号を構成します。",
+  theory_binary_color: "色",
+  theory_fano_title: "ファノ平面",
+  theory_fano_desc:
+    "7つの色彩レベルは最小の射影平面 PG(2,2) を構成します。各線 {a, b, c} は a \u2295 b = c を満たします。中心(7)を通る3本の橙色の線は補色ペア — XORが必ず111（白）になります。ポイントにホバーすると3本の線が表示されます。",
+  theory_fano_xor: "{0} \u2295 {1} = {2}",
+  theory_fano_primary: "原色混合",
+  theory_fano_complement: "補色ペア",
+  theory_fano_secondary: "CMY円",
+  theory_cube_title: "カラーキューブ",
+  theory_cube_desc:
+    "8レベルは3次元立方体（RGB軸）の頂点です。各辺は1チャンネルの切り替え。Black(000)とWhite(111)の体対角線を除いた6色彩頂点が赤道六角形 — グレイコード巡回路を形成します。「赤道」ボタンでアニメーション表示。",
+  theory_gray_title: "グレイコード巡回",
+  theory_gray_desc:
+    "六角形を巡回すると1ステップごとに1チャンネルが切り替わります: G \u2192 R \u2192 B \u2192 G \u2192 R \u2192 B。カラーキューブ赤道上のハミルトン閉路です。",
+  theory_gray_toggle: "トグル: {0}",
+  theory_gray_cw: "\u21bb 時計回り",
+  theory_gray_ccw: "\u21ba 反時計回り",
+  theory_gray_pause: "\u23f8 停止",
+  theory_xor_title: "XOR 混色",
+  theory_xor_desc: "2つのレベルを選んでXOR結果を確認。原色（1ビット色）同士のXORは加法混色と一致します。補色ペアのXORは7（白）になります。",
+  theory_hamming_title: "ハミング符号",
+  theory_hamming_desc:
+    "パリティビット（B=1, R=2, G=4）はRGB原色。データビット（M=3, C=5, Y=6, W=7）は二次色＋白。各パリティビットは特定の位置を検査します。",
+  theory_hamming_parity: "パリティ",
+  theory_hamming_checks: "検査対象",
+  theory_connections_title: "つながり",
+  theory_connections_desc:
+    "GF(2)\u00b3 は3ビット2進ベクトルの加法群です。RGBチャンネルのON/OFF操作はXOR — 群の演算そのものです。これら5つの構造は8レベルRGB符号化から必然的に生まれます。設計上の選択ではなく、数学的帰結です。",
+  theory_conn_center_1: "8レベル",
+  theory_conn_center_2: "GF(2)\u00b3",
+  theory_conn_gf23: "GF(2)\u00b3",
+  theory_conn_fano: "Fano",
+  theory_conn_cube: "Cube",
+  theory_conn_gray: "Gray",
+  theory_conn_hamming: "Hamm.",
+  theory_cube_equator: "赤道",
+  theory_conn_conclusion_1: "同一構造の5つの表現",
+  theory_conn_conclusion_2: "ひとつの数学的基盤",
 
   // Stats panel
   stats_title: "PIXEL MAP ANALYSIS",

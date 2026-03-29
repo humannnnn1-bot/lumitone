@@ -134,6 +134,19 @@ export const HexDiag = memo(
               const j = (i + 1) % NUM_VERTICES;
               return <line key={"e" + i} x1={vp[i].x} y1={vp[i].y} x2={vp[j].x} y2={vp[j].y} stroke={C.borderAlt} strokeWidth={1.5} />;
             })}
+            {/* RGB triangle (vertices 0,2,4) and CMY triangle (vertices 1,3,5) */}
+            <polygon
+              points={`${vp[0].x},${vp[0].y} ${vp[2].x},${vp[2].y} ${vp[4].x},${vp[4].y}`}
+              fill="rgba(255,255,255,.06)"
+              stroke="rgba(255,255,255,.18)"
+              strokeWidth={1}
+            />
+            <polygon
+              points={`${vp[1].x},${vp[1].y} ${vp[3].x},${vp[3].y} ${vp[5].x},${vp[5].y}`}
+              fill="rgba(255,255,255,.06)"
+              stroke="rgba(255,255,255,.18)"
+              strokeWidth={1}
+            />
             {cp && <path d={cp} fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.5)" strokeWidth={1.5} strokeDasharray="4,3" />}
             {/* Collect all circles (edges + vertices), sort by radius descending so smaller circles render on top */}
             {(() => {

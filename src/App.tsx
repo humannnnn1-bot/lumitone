@@ -26,12 +26,13 @@ import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { AnalyzePanel } from "./components/AnalyzePanel";
 import { GalleryPanel } from "./components/GalleryPanel";
 import { HexTab } from "./components/HexTab";
+import { TheoryPanel } from "./components/TheoryPanel";
 import { useTranslation } from "./i18n";
 
 /* ═══════════════════════════════════════════
    LAYOUT STYLE CONSTANTS
    ═══════════════════════════════════════════ */
-const TAB_KEYS = ["tab_source", "tab_color", "tab_hex", "tab_glaze", "tab_stats", "tab_gallery"] as const;
+const TAB_KEYS = ["tab_source", "tab_color", "tab_hex", "tab_glaze", "tab_stats", "tab_gallery", "tab_theory"] as const;
 
 const S_ROOT: React.CSSProperties = { minHeight: "100vh", background: C.bgRoot, color: C.textPrimary, fontFamily: "monospace" };
 const S_HEADER: React.CSSProperties = { textAlign: "center", marginBottom: "var(--sp-header-mb)" };
@@ -555,6 +556,9 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             scrollToCurrent={scrollToGallery}
             onScrollDone={() => setScrollToGallery(false)}
           />
+        </div>
+        <div id="tabpanel-6" role="tabpanel" style={{ display: activeTab === 6 ? undefined : "none" }}>
+          <TheoryPanel />
         </div>
       </div>
     </div>
