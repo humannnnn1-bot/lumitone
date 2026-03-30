@@ -93,20 +93,8 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
       <hr style={S_DIVIDER} />
 
-      <Section title={t("theory_fano_title")} desc={t("theory_fano_desc")}>
-        <FanoPlane hlLevel={hlLevel} onHover={onHover} />
-      </Section>
-
-      <hr style={S_DIVIDER} />
-
       <Section title={t("theory_cube_title")} desc={t("theory_cube_desc")}>
         <ColorCube hlLevel={hlLevel} onHover={onHover} />
-      </Section>
-
-      <hr style={S_DIVIDER} />
-
-      <Section title={t("theory_gray_title")} desc={t("theory_gray_desc")}>
-        <GrayCodeHex hlLevel={hlLevel} onHover={onHover} />
       </Section>
 
       <hr style={S_DIVIDER} />
@@ -117,8 +105,20 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
       <hr style={S_DIVIDER} />
 
+      <Section title={t("theory_gray_title")} desc={t("theory_gray_desc")}>
+        <GrayCodeHex hlLevel={hlLevel} onHover={onHover} />
+      </Section>
+
+      <hr style={S_DIVIDER} />
+
       <Section title={t("theory_hamming_title")} desc={t("theory_hamming_desc")}>
         <HammingDiagram hlLevel={hlLevel} onHover={onHover} />
+      </Section>
+
+      <hr style={S_DIVIDER} />
+
+      <Section title={t("theory_fano_title")} desc={t("theory_fano_desc")}>
+        <FanoPlane hlLevel={hlLevel} onHover={onHover} />
       </Section>
 
       <hr style={S_DIVIDER} />

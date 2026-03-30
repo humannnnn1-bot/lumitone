@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import { THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
+import { useTranslation } from "../../i18n";
 
 const DOT_R = 18;
 const CHANNEL_COLORS = ["#00ff00", "#ff0000", "#0000ff"];
 
 export const XorDemo = React.memo(function XorDemo() {
+  const { t } = useTranslation();
   const [a, setA] = useState(1);
   const [b, setB] = useState(2);
   const result = a ^ b;
+  const complementA = a ^ 7;
+  const complementB = b ^ 7;
 
   const infoA = THEORY_LEVELS[a];
   const infoB = THEORY_LEVELS[b];
@@ -138,6 +142,20 @@ export const XorDemo = React.memo(function XorDemo() {
       {/* Text summary */}
       <div style={{ fontSize: FS.md, fontFamily: "monospace", color: C.textMuted, textAlign: "center" }}>
         {infoA.name} ({infoA.bits.join("")}) {"\u2295"} {infoB.name} ({infoB.bits.join("")}) = {infoR.name} ({infoR.bits.join("")})
+      </div>
+
+      {/* Complement pairs */}
+      <div style={{ display: "flex", gap: SP["2xl"], justifyContent: "center", flexWrap: "wrap" }}>
+        {a > 0 && a < 7 && (
+          <div style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+            {t("theory_xor_complement", infoA.name, THEORY_LEVELS[complementA].name)}
+          </div>
+        )}
+        {b > 0 && b < 7 && b !== a && (
+          <div style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+            {t("theory_xor_complement", infoB.name, THEORY_LEVELS[complementB].name)}
+          </div>
+        )}
       </div>
     </div>
   );

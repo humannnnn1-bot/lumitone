@@ -3,14 +3,14 @@ import { THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW } from "../../tokens";
 import { useTranslation } from "../../i18n";
 
-const W = 380,
+const SVG_W = 420,
   H = 240;
 const ROW_H = 24,
   HEADER_Y = 18;
-const COL = { lv: 24, bin: 62, dot: 108, g: 152, r: 184, b: 216, hamming: 270, luma: 340 };
+const COL = { lv: 20, bin: 56, dot: 96, g: 136, r: 164, b: 192, wt: 224, hamming: 278, luma: 370 };
 const BIT_R = 6;
 const CHANNEL_COLORS = ["#00ff00", "#ff0000", "#0000ff"];
-const LUMA_VALUES = [0, 29, 76, 106, 150, 179, 226, 255];
+const LUMA_VALUES = [0, 29, 76, 105, 150, 179, 226, 255];
 const LUMA_MAX = 255;
 
 interface Props {
@@ -24,7 +24,7 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
   const leave = useCallback(() => onHover(null), [onHover]);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W }} role="img" aria-label={t("theory_binary_title")}>
+    <svg viewBox={`0 0 ${SVG_W} ${H}`} style={{ width: "100%", maxWidth: SVG_W }} role="img" aria-label={t("theory_binary_title")}>
       {/* Header */}
       <text x={COL.lv} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
         Lv
@@ -49,6 +49,9 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
           {ch}
         </text>
       ))}
+      <text x={COL.wt} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+        Wt
+      </text>
       <text
         x={COL.hamming}
         y={HEADER_Y}
@@ -73,10 +76,18 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
         const opacity = dim ? 0.25 : 1;
         const binStr = lv.bits.join("");
         const lumaW = 40 * (LUMA_VALUES[i] / LUMA_MAX);
+        const weight = lv.bits[0] + lv.bits[1] + lv.bits[2];
         return (
-          <g key={lv.lv} onMouseEnter={() => enter(lv.lv)} onMouseLeave={leave} style={{ cursor: "pointer" }} opacity={opacity}>
-            <rect x={0} y={y - ROW_H / 2} width={W} height={ROW_H} fill="transparent" />
-            {active && <rect x={2} y={y - ROW_H / 2 + 1} width={W - 4} height={ROW_H - 2} rx={3} fill="rgba(255,255,255,0.06)" />}
+          <g
+            key={lv.lv}
+            onMouseEnter={() => enter(lv.lv)}
+            onMouseLeave={leave}
+            onClick={() => onHover(lv.lv)}
+            style={{ cursor: "pointer" }}
+            opacity={opacity}
+          >
+            <rect x={0} y={y - ROW_H / 2} width={SVG_W} height={ROW_H} fill="transparent" />
+            {active && <rect x={2} y={y - ROW_H / 2 + 1} width={SVG_W - 4} height={ROW_H - 2} rx={3} fill="rgba(255,255,255,0.06)" />}
             <text
               x={COL.lv}
               y={y}
@@ -122,6 +133,17 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                 opacity={bit ? 1 : 0.3}
               />
             ))}
+            <text
+              x={COL.wt}
+              y={y}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={FS.sm}
+              fill={C.textDimmer}
+              fontFamily="monospace"
+            >
+              {weight}
+            </text>
             <text
               x={COL.hamming}
               y={y}
