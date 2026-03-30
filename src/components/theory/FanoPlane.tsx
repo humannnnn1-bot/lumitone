@@ -274,18 +274,24 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
 
         {/* CMY collapse equation label */}
         {isCmyAnimating && animT > 0.6 && (
-          <text
-            x={CX}
-            y={CY - 130}
-            textAnchor="middle"
-            fontSize={FS.md}
-            fontFamily="monospace"
-            fontWeight={FW.bold}
-            fill="#ff6644"
-            opacity={Math.min(1, (animT - 0.6) * 3)}
-          >
-            {t("theory_fano_cmy_eq")}
-          </text>
+          <g opacity={Math.min(1, (animT - 0.6) * 3)}>
+            <text x={CX} y={CY - 136} textAnchor="middle" fontSize={FS.md} fontFamily="monospace" fontWeight={FW.bold} fill="#ff6644">
+              {t("theory_fano_cmy_eq")}
+            </text>
+            {animT > 0.85 && (
+              <text
+                x={CX}
+                y={CY - 122}
+                textAnchor="middle"
+                fontSize={FS.xs}
+                fontFamily="monospace"
+                fill={C.textDimmer}
+                opacity={Math.min(1, (animT - 0.85) * 6)}
+              >
+                {t("theory_fano_cmy_why")}
+              </text>
+            )}
+          </g>
         )}
 
         {/* Points */}

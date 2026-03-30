@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import { C, SP, FS, FW } from "../tokens";
 import { useTranslation } from "../i18n";
 import { BinaryTable } from "./theory/BinaryTable";
+import { ColorDice } from "./theory/ColorDice";
 import { FanoPlane } from "./theory/FanoPlane";
 import { ColorCube } from "./theory/ColorCube";
 import { GrayCodeHex } from "./theory/GrayCodeHex";
@@ -93,14 +94,20 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
       <hr style={S_DIVIDER} />
 
-      <Section title={t("theory_cube_title")} desc={t("theory_cube_desc")}>
-        <ColorCube hlLevel={hlLevel} onHover={onHover} />
+      <Section title={t("theory_dice_title")} desc={t("theory_dice_desc")}>
+        <ColorDice hlLevel={hlLevel} onHover={onHover} />
       </Section>
 
       <hr style={S_DIVIDER} />
 
       <Section title={t("theory_xor_title")} desc={t("theory_xor_desc")}>
-        <XorDemo />
+        <XorDemo hlLevel={hlLevel} onHover={onHover} />
+      </Section>
+
+      <hr style={S_DIVIDER} />
+
+      <Section title={t("theory_cube_title")} desc={t("theory_cube_desc")}>
+        <ColorCube hlLevel={hlLevel} onHover={onHover} />
       </Section>
 
       <hr style={S_DIVIDER} />

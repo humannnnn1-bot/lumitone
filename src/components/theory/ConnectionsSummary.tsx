@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState } from "react";
 import { C, FS, FW, SP } from "../../tokens";
 import { useTranslation } from "../../i18n";
 
@@ -48,7 +48,6 @@ const S_CARD: React.CSSProperties = {
   border: `1px solid ${C.border}`,
   borderRadius: 6,
   overflow: "hidden",
-  cursor: "pointer",
 };
 
 const S_CARD_HEADER: React.CSSProperties = {
@@ -84,11 +83,6 @@ const S_SUMMARY: React.CSSProperties = {
 export const ConnectionsSummary = React.memo(function ConnectionsSummary() {
   const { t } = useTranslation();
   const [hlEdge, setHlEdge] = useState<number | null>(null);
-  const [openCard, setOpenCard] = useState<number | null>(null);
-
-  const toggleCard = useCallback((idx: number) => {
-    setOpenCard((prev) => (prev === idx ? null : idx));
-  }, []);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xl }}>
@@ -109,13 +103,7 @@ export const ConnectionsSummary = React.memo(function ConnectionsSummary() {
           const perpX = (-dy / len) * 12,
             perpY = (dx / len) * 12;
           return (
-            <g
-              key={"edge" + ei}
-              onMouseEnter={() => setHlEdge(ei)}
-              onMouseLeave={() => setHlEdge(null)}
-              onClick={() => toggleCard(e.cardIdx)}
-              style={{ cursor: "pointer" }}
-            >
+            <g key={"edge" + ei} onMouseEnter={() => setHlEdge(ei)} onMouseLeave={() => setHlEdge(null)} style={{ cursor: "default" }}>
               {/* Wider invisible hit area */}
               <line x1={p0.x} y1={p0.y} x2={p1.x} y2={p1.y} stroke="transparent" strokeWidth={20} />
               <line x1={p0.x} y1={p0.y} x2={p1.x} y2={p1.y} stroke={isHl ? "#fff" : "rgba(255,255,255,0.2)"} strokeWidth={isHl ? 2 : 1} />
@@ -173,37 +161,34 @@ export const ConnectionsSummary = React.memo(function ConnectionsSummary() {
       </svg>
 
       {/* Part B: Connection detail cards */}
-      {CARDS.map((card, ci) => {
-        const isOpen = openCard === ci;
-        return (
-          <div
-            key={"card" + ci}
-            style={{
-              ...S_CARD,
-              borderColor: isOpen ? card.color : C.border,
-            }}
-            onClick={() => toggleCard(ci)}
-          >
-            <div style={{ ...S_CARD_HEADER, color: card.color }}>
-              <span>{t(card.titleKey as Parameters<typeof t>[0])}</span>
-              <span style={{ fontSize: FS.sm, opacity: 0.6 }}>{isOpen ? "\u25b2" : "\u25bc"}</span>
-            </div>
-            {isOpen && (
-              <div style={S_CARD_BODY}>
-                <p style={{ color: C.textPrimary, margin: `0 0 ${SP.sm}px` }}>{t(card.hookKey as Parameters<typeof t>[0])}</p>
-                <p style={{ color: C.textDimmer, margin: 0, fontSize: FS.xs }}>{t(card.detailKey as Parameters<typeof t>[0])}</p>
-              </div>
-            )}
+      {CARDS.map((card, ci) => (
+        <div
+          key={"card" + ci}
+          style={{
+            ...S_CARD,
+            borderColor: card.color,
+            cursor: "default",
+          }}
+        >
+          <div style={{ ...S_CARD_HEADER, color: card.color }}>
+            <span>{t(card.titleKey as Parameters<typeof t>[0])}</span>
           </div>
-        );
-      })}
+          <div style={S_CARD_BODY}>
+            <p style={{ color: C.textPrimary, margin: `0 0 ${SP.sm}px` }}>{t(card.hookKey as Parameters<typeof t>[0])}</p>
+            <p style={{ color: C.textDimmer, margin: 0, fontSize: FS.xs }}>{t(card.detailKey as Parameters<typeof t>[0])}</p>
+          </div>
+        </div>
+      ))}
 
       {/* Part C: Trinity summary (always visible) */}
       <div style={S_SUMMARY}>
         <p style={{ color: C.accentBright, margin: `0 0 ${SP.sm}px`, fontWeight: FW.bold, fontSize: FS.md }}>{t("theory_conn_source")}</p>
         <p style={{ margin: `0 0 2px` }}>{t("theory_conn_fano_role")}</p>
         <p style={{ margin: `0 0 2px` }}>{t("theory_conn_cube_role")}</p>
-        <p style={{ margin: 0 }}>{t("theory_conn_hamming_role")}</p>
+        <p style={{ margin: `0 0 2px` }}>{t("theory_conn_hamming_role")}</p>
+        <p style={{ margin: `0 0 2px`, color: C.textDimmer }}>{t("theory_conn_gray_role")}</p>
+        <p style={{ margin: 0, color: C.textDimmer }}>{t("theory_conn_extended")}</p>
+        <p style={{ margin: `${SP.sm}px 0 0`, color: C.textDimmer, fontSize: FS.xs }}>{t("theory_conn_boundary")}</p>
       </div>
 
       {/* Closing tagline */}
