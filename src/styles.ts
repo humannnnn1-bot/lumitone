@@ -47,9 +47,9 @@ export const S_NAV_ARROW: React.CSSProperties = {
   justifyContent: "center",
 };
 export const S_TAB_ACTIVE: React.CSSProperties = {
-  padding: `${SP.md}px ${SP.xl}px`,
-  fontSize: FS.xl,
-  fontWeight: FW.bold,
+  padding: "var(--sp-tab-v) var(--sp-tab-h)",
+  fontSize: "var(--fs-tab)",
+  fontWeight: FW.normal,
   border: `1px solid ${C.accent}`,
   background: C.bgSurfaceAlt,
   color: C.accentBright,
@@ -61,8 +61,8 @@ export const S_TAB_ACTIVE: React.CSSProperties = {
   justifyContent: "center",
 };
 export const S_TAB_INACTIVE: React.CSSProperties = {
-  padding: `${SP.md}px ${SP.xl}px`,
-  fontSize: FS.xl,
+  padding: "var(--sp-tab-v) var(--sp-tab-h)",
+  fontSize: "var(--fs-tab)",
   fontWeight: FW.normal,
   border: `1px solid ${C.border}`,
   background: C.bgPanel,

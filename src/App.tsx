@@ -40,7 +40,7 @@ const S_TITLE: React.CSSProperties = {
   fontFamily: "'Inter', system-ui, sans-serif",
   fontSize: 22,
   fontWeight: FW.normal,
-  margin: "0 0 var(--sp-title-mb)",
+  margin: "2px 0 var(--sp-title-mb)",
   color: C.textPrimary,
   letterSpacing: 10,
 };
@@ -349,13 +349,6 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
       onDragOver={fileDrop.onDragOver}
       onDragLeave={fileDrop.onDragLeave}
       onDrop={fileDrop.onDrop}
-      onPointerDown={(e) => {
-        if (e.pointerType !== "touch") return;
-        const el = e.target as HTMLElement;
-        if (el.closest("button, a, canvas, input, select, textarea, [role='button'], [role='tab'], [role='radio'], [role='slider']"))
-          return;
-        panZoom.setPanZoomMode(true);
-      }}
     >
       <div ref={ariaLiveRef} role="status" aria-live="polite" aria-atomic="true" style={S_SR_ONLY} />
 
