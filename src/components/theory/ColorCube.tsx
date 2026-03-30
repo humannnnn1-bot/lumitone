@@ -320,10 +320,11 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
       </svg>
 
       <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>
-        <button style={S_BTN} onClick={() => setEquatorMode((v) => !v)}>
+        <button className="theory-annotation" style={S_BTN} onClick={() => setEquatorMode((v) => !v)}>
           {t("theory_cube_equator")} {equatorMode ? "\u25c0" : "\u25b6"}
         </button>
         <button
+          className="theory-annotation"
           style={{ ...S_BTN, opacity: showComplements ? 1 : 0.5, borderColor: showComplements ? "rgba(255,255,255,0.5)" : undefined }}
           onClick={() => setShowComplements((v) => !v)}
         >

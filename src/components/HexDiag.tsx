@@ -96,21 +96,16 @@ export const HexDiag = memo(
           onMouseOut={onSvgMouseOut}
         >
           <g transform="translate(0, 16)">
-            {/* Angle labels at 15° intervals on hexagonal outline */}
+            {/* Angle labels at 15° intervals on circular outline */}
             {(() => {
               const nodeAngles = new Set([15, 30, 45, 90, 195, 210, 225, 270]);
-              const labelHexR = HEX_R + 62;
-              const apothem = labelHexR * Math.cos(Math.PI / 6);
+              const labelCircleR = HEX_R + 62;
               return Array.from({ length: 24 }, (_, i) => {
                 const deg = i * 15;
                 const svgAng = deg - 90;
-                const svgNorm = (((svgAng + 30) % 360) + 360) % 360;
-                const withinSector = svgNorm % 60;
-                const angleFromMid = ((withinSector - 30) * Math.PI) / 180;
-                const hexR = apothem / Math.cos(angleFromMid);
                 const rad = (svgAng * Math.PI) / 180;
-                const lx = HEX_CX + hexR * Math.cos(rad),
-                  ly = HEX_CY + hexR * Math.sin(rad);
+                const lx = HEX_CX + labelCircleR * Math.cos(rad),
+                  ly = HEX_CY + labelCircleR * Math.sin(rad);
                 const isVertex = deg % 60 === 0;
                 const isNode = nodeAngles.has(deg);
                 return (

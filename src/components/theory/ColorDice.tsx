@@ -174,7 +174,7 @@ function MiniCube({
         ))}
       </svg>
       {/* Label */}
-      <div style={{ fontSize: 9, fontFamily: "monospace", textAlign: "center", lineHeight: 1 }}>
+      <div className="theory-annotation" style={{ fontSize: 9, fontFamily: "monospace", textAlign: "center", lineHeight: 1 }}>
         {view.type === "identity" ? (
           <span style={{ color: C.textDimmer }}>
             {"{ "}
@@ -352,6 +352,7 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
           return (
             <span
               key={`p${a}${b}`}
+              className="theory-annotation"
               style={{
                 fontSize: FS.xs,
                 fontFamily: "monospace",
@@ -365,7 +366,10 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
         })}
       </div>
 
-      <p style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+      <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}
+      >
         {t("theory_dice_hint")}
       </p>
 
@@ -373,10 +377,10 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
         {/* Column headers */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>
-          <div style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+          <div className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
             {t("theory_dice_additive_col")}
           </div>
-          <div style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+          <div className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
             {t("theory_dice_subtractive_col")}
           </div>
         </div>
@@ -388,7 +392,10 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
           </div>
         ))}
         {/* Footer annotation */}
-        <p style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+        <p
+          className="theory-annotation"
+          style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}
+        >
           {"\u2295"} = XOR (GF(2){"\u00b3"}) | {"\u2227"} = AND (Boolean)
         </p>
       </div>

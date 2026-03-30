@@ -119,6 +119,13 @@ input[type="checkbox"]:focus-visible {
   display: block;
 }
 
+/* Theory tab: sans-serif for body text (all breakpoints) */
+.theory-desc,
+.theory-conn-card-body,
+.theory-conn-summary {
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Yu Gothic UI", "Meiryo", "Noto Sans CJK JP", system-ui, sans-serif !important;
+}
+
 @media (min-width: 1024px) {
   :root {
     --sp-root-top: 16px;
@@ -167,6 +174,69 @@ input[type="checkbox"]:focus-visible {
   }
   .hex-diag-wrap {
     max-width: 462px;
+  }
+  /* Theory tab: enlarge diagrams on desktop horizontal layout */
+  .theory-container {
+    max-width: 700px !important;
+  }
+  .theory-binary-svg {
+    max-width: 540px !important;
+  }
+  .theory-zigzag-svg {
+    max-width: 500px !important;
+  }
+  .theory-trinity-svg {
+    max-width: 400px !important;
+  }
+  .theory-desc {
+    max-width: 620px !important;
+    font-size: 14px !important;
+    line-height: 1.8 !important;
+  }
+  .theory-title {
+    font-size: 24px !important;
+  }
+  .theory-heading {
+    font-size: 17px !important;
+  }
+  .theory-hint {
+    font-size: 9px !important;
+  }
+  .theory-conn-card {
+    max-width: 620px !important;
+  }
+  .theory-conn-card-header {
+    font-size: 13px !important;
+    padding: 6px 10px !important;
+  }
+  .theory-conn-card-body {
+    font-size: 12px !important;
+    padding: 0 10px 10px !important;
+    line-height: 1.7 !important;
+  }
+  .theory-conn-card-detail {
+    font-size: 10px !important;
+  }
+  .theory-conn-summary {
+    max-width: 620px !important;
+    font-size: 12px !important;
+    padding: 10px !important;
+    line-height: 2.0 !important;
+  }
+  .theory-conn-summary-title {
+    font-size: 13px !important;
+  }
+  .theory-conn-footer {
+    font-size: 11px !important;
+  }
+  .theory-conn-footer p {
+    font-size: inherit !important;
+  }
+  .theory-polar-svg {
+    max-width: 240px !important;
+  }
+  .theory-annotation {
+    font-size: 11px !important;
   }
 }
 

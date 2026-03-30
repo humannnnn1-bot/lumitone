@@ -275,16 +275,23 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
 
       <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>
         {flippedBit !== null ? (
-          <button style={S_BTN} onClick={() => setFlippedBit(null)}>
+          <button className="theory-annotation" style={S_BTN} onClick={() => setFlippedBit(null)}>
             {t("theory_hamming_reset")} {"\u21ba"}
           </button>
         ) : (
-          <span style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, alignSelf: "center" }}>
+          <span
+            className="theory-annotation"
+            style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, alignSelf: "center" }}
+          >
             {t("theory_hamming_flip")}
           </span>
         )}
         {flippedBit !== null && !corrected && (
-          <button style={{ ...S_BTN, color: "#44ff44", borderColor: "rgba(68,255,68,0.4)" }} onClick={handleCorrect}>
+          <button
+            className="theory-annotation"
+            style={{ ...S_BTN, color: "#44ff44", borderColor: "rgba(68,255,68,0.4)" }}
+            onClick={handleCorrect}
+          >
             {t("theory_hamming_correct")}
           </button>
         )}

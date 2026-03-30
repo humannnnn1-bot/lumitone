@@ -14,7 +14,7 @@ import { useAppState } from "./hooks/useAppState";
 import { DrawingContextProvider } from "./contexts/DrawingContext";
 import { GlazeContextProvider } from "./contexts/GlazeContext";
 import { S_TAB_ACTIVE, S_TAB_INACTIVE } from "./styles";
-import { C, Z, FS, FW } from "./tokens";
+import { C, Z, FS, FW, FONT } from "./tokens";
 import { Toast } from "./components/Toast";
 import { SourcePanel } from "./components/SourcePanel";
 import { ColorPanel } from "./components/ColorPanel";
@@ -34,7 +34,7 @@ import { useTranslation } from "./i18n";
    ═══════════════════════════════════════════ */
 const TAB_KEYS = ["tab_source", "tab_color", "tab_hex", "tab_glaze", "tab_stats", "tab_gallery", "tab_theory"] as const;
 
-const S_ROOT: React.CSSProperties = { minHeight: "100vh", background: C.bgRoot, color: C.textPrimary, fontFamily: "monospace" };
+const S_ROOT: React.CSSProperties = { minHeight: "100vh", background: C.bgRoot, color: C.textPrimary, fontFamily: FONT.mono };
 const S_HEADER: React.CSSProperties = { textAlign: "center", marginBottom: "var(--sp-header-mb)" };
 const S_TITLE: React.CSSProperties = {
   fontFamily: "'Inter', system-ui, sans-serif",

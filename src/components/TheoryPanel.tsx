@@ -37,6 +37,7 @@ const S_DESC: React.CSSProperties = {
   maxWidth: 440,
   lineHeight: 1.6,
   margin: 0,
+  width: "100%",
 };
 
 const S_DIVIDER: React.CSSProperties = {
@@ -56,8 +57,12 @@ interface SectionProps {
 function Section({ title, desc, children }: SectionProps) {
   return (
     <section style={S_SECTION}>
-      <h3 style={S_HEADING}>{title}</h3>
-      <p style={S_DESC}>{desc}</p>
+      <h3 className="theory-heading" style={S_HEADING}>
+        {title}
+      </h3>
+      <p className="theory-desc" style={S_DESC}>
+        {desc}
+      </p>
       {children}
     </section>
   );
@@ -70,6 +75,7 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
   return (
     <div
+      className="theory-container"
       style={{
         display: "flex",
         flexDirection: "column",
@@ -83,20 +89,23 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
       }}
     >
       {/* Subtitle */}
-      <div style={{ fontSize: FS.md, color: C.textDim, textAlign: "center", lineHeight: "14px", marginBottom: -SP.md }}>
-        {t("label_theory")}
-      </div>
+      <div style={{ fontSize: FS.md, color: C.textDim, textAlign: "center", lineHeight: "14px" }}>{t("label_theory")}</div>
 
       {/* Page title */}
       <div style={{ textAlign: "center" }}>
-        <h2 style={{ fontSize: FS.title, fontWeight: FW.bold, fontFamily: "monospace", color: C.textPrimary, margin: 0 }}>
+        <h2
+          className="theory-title"
+          style={{ fontSize: FS.title, fontWeight: FW.bold, fontFamily: "monospace", color: C.textPrimary, margin: 0 }}
+        >
           {t("theory_title")}
         </h2>
-        <p style={{ ...S_DESC, marginTop: SP.xl, textAlign: "center" }}>{t("theory_intro")}</p>
+        <p className="theory-desc theory-intro" style={{ ...S_DESC, marginTop: SP.xl, textAlign: "center" }}>
+          {t("theory_intro")}
+        </p>
       </div>
 
       {/* Pin hint */}
-      <p style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+      <p className="theory-hint" style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
         {t("theory_pin_hint")}
       </p>
 

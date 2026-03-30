@@ -158,19 +158,19 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
       </svg>
 
       {/* Text summary */}
-      <div style={{ fontSize: FS.md, fontFamily: "monospace", color: C.textMuted, textAlign: "center" }}>
+      <div className="theory-annotation" style={{ fontSize: FS.md, fontFamily: "monospace", color: C.textMuted, textAlign: "center" }}>
         {infoA.name} ({infoA.bits.join("")}) {"\u2295"} {infoB.name} ({infoB.bits.join("")}) = {infoR.name} ({infoR.bits.join("")})
       </div>
 
       {/* Complement pairs */}
       <div style={{ display: "flex", gap: SP["2xl"], justifyContent: "center", flexWrap: "wrap" }}>
         {a > 0 && a < 7 && (
-          <div style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+          <div className="theory-annotation" style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
             {t("theory_xor_complement", infoA.name, THEORY_LEVELS[complementA].name)}
           </div>
         )}
         {b > 0 && b < 7 && b !== a && (
-          <div style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+          <div className="theory-annotation" style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
             {t("theory_xor_complement", infoB.name, THEORY_LEVELS[complementB].name)}
           </div>
         )}

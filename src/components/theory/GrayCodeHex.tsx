@@ -237,20 +237,20 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
       {/* Controls */}
       <div style={{ display: "flex", gap: SP.lg }}>
         {playing === "cw" ? (
-          <button style={S_BTN} onClick={handlePause}>
+          <button className="theory-annotation" style={S_BTN} onClick={handlePause}>
             {t("theory_gray_pause")}
           </button>
         ) : (
-          <button style={S_BTN} onClick={handlePlayCW}>
+          <button className="theory-annotation" style={S_BTN} onClick={handlePlayCW}>
             {t("theory_gray_cw")}
           </button>
         )}
         {playing === "ccw" ? (
-          <button style={S_BTN} onClick={handlePause}>
+          <button className="theory-annotation" style={S_BTN} onClick={handlePause}>
             {t("theory_gray_pause")}
           </button>
         ) : (
-          <button style={S_BTN} onClick={handlePlayCCW}>
+          <button className="theory-annotation" style={S_BTN} onClick={handlePlayCCW}>
             {t("theory_gray_ccw")}
           </button>
         )}

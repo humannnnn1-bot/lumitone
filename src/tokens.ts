@@ -111,7 +111,8 @@ export const FW = {
 } as const;
 
 export const FONT = {
-  mono: "monospace",
+  mono: '"SF Mono", "Cascadia Mono", Consolas, Menlo, monospace',
+  sans: '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Yu Gothic UI", Meiryo, "Noto Sans CJK JP", system-ui, sans-serif',
 } as const;
 
 /* ── Border Radius ── */

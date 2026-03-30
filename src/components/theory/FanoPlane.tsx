@@ -392,6 +392,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
           ].map((item, i) => (
             <span
               key={"lg" + i}
+              className="theory-annotation"
               style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: FS.xs, fontFamily: "monospace", color: item.color }}
             >
               <svg width={14} height={2}>
@@ -418,6 +419,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
             return (
               <button
                 key={f}
+                className="theory-annotation"
                 style={{
                   ...S_BTN,
                   opacity: lineFilter === f ? 1 : 0.5,
@@ -430,6 +432,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
             );
           })}
         <button
+          className="theory-annotation"
           style={{
             ...S_BTN,
             opacity: cmyMode ? 1 : 0.5,

@@ -24,8 +24,14 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
   const leave = useCallback(() => onHover(null), [onHover]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6 }}>
-      <svg viewBox={`0 0 ${SVG_W} ${H}`} style={{ width: "100%", maxWidth: SVG_W }} role="img" aria-label={t("theory_binary_title")}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, width: "100%" }}>
+      <svg
+        viewBox={`0 0 ${SVG_W} ${H}`}
+        className="theory-binary-svg"
+        style={{ width: "100%", maxWidth: SVG_W }}
+        role="img"
+        aria-label={t("theory_binary_title")}
+      >
         {/* Header */}
         <text x={COL.lv} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
           Lv
@@ -181,10 +187,16 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
           );
         })}
       </svg>
-      <p style={{ fontSize: 10, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+      <p
+        className="theory-annotation"
+        style={{ fontSize: 10, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}
+      >
         {t("theory_binary_luma_formula")}
       </p>
-      <p style={{ fontSize: 9, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+      <p
+        className="theory-annotation"
+        style={{ fontSize: 9, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}
+      >
         {t("theory_binary_luma_complement")}
       </p>
     </div>

@@ -84,7 +84,7 @@ function PolarCubeView({
   const isOperator = (lv: number) => (operators as readonly number[]).includes(lv);
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W }}>
+    <svg viewBox={`0 0 ${W} ${H}`} className="theory-polar-svg" style={{ width: "100%", maxWidth: W }}>
       {/* Edges */}
       {CUBE_EDGES.map((e, ei) => {
         const p0 = pts[e[0]];
@@ -182,22 +182,27 @@ export const PolarCubes = React.memo(function PolarCubes({ hlLevel, onHover }: P
   const selectedPrimaries = ([4, 2, 1] as const).filter((b) => mask & b);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md, width: "100%" }}>
       <div style={{ display: "flex", gap: SP.sm, justifyContent: "center" }}>
         {/* Additive (Black pole) */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xs, flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer }}>{t("theory_polar_additive")}</span>
+          <span className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer }}>
+            {t("theory_polar_additive")}
+          </span>
           <PolarCubeView pole="black" mask={mask} onToggle={toggle} hlLevel={hlLevel} onHover={onHover} />
         </div>
         {/* Subtractive (White pole) */}
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xs, flex: 1, minWidth: 0 }}>
-          <span style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer }}>{t("theory_polar_subtractive")}</span>
+          <span className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer }}>
+            {t("theory_polar_subtractive")}
+          </span>
           <PolarCubeView pole="white" mask={mask} onToggle={toggle} hlLevel={hlLevel} onHover={onHover} />
         </div>
       </div>
 
       {/* Equations */}
       <div
+        className="theory-annotation"
         style={{ display: "flex", gap: SP["2xl"], justifyContent: "center", flexWrap: "wrap", fontSize: FS.sm, fontFamily: "monospace" }}
       >
         {/* Additive equation */}
@@ -242,7 +247,10 @@ export const PolarCubes = React.memo(function PolarCubes({ hlLevel, onHover }: P
       </div>
 
       {/* Hint */}
-      <p style={{ fontSize: FS.xxs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+      <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xxs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}
+      >
         {t("theory_polar_hint")}
       </p>
     </div>

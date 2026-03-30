@@ -85,9 +85,9 @@ export const ConnectionsSummary = React.memo(function ConnectionsSummary() {
   const [hlEdge, setHlEdge] = useState<number | null>(null);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xl }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xl, width: "100%" }}>
       {/* Part A: Trinity triangle */}
-      <svg viewBox={`0 0 ${TRI_W} ${TRI_H}`} style={{ width: "100%", maxWidth: TRI_W }}>
+      <svg viewBox={`0 0 ${TRI_W} ${TRI_H}`} className="theory-trinity-svg" style={{ width: "100%", maxWidth: TRI_W }}>
         {/* Edges */}
         {EDGES.map((e, ei) => {
           const p0 = getVPos(e.from),
@@ -164,35 +164,45 @@ export const ConnectionsSummary = React.memo(function ConnectionsSummary() {
       {CARDS.map((card, ci) => (
         <div
           key={"card" + ci}
+          className="theory-conn-card"
           style={{
             ...S_CARD,
             borderColor: card.color,
             cursor: "default",
           }}
         >
-          <div style={{ ...S_CARD_HEADER, color: card.color }}>
+          <div className="theory-conn-card-header" style={{ ...S_CARD_HEADER, color: card.color }}>
             <span>{t(card.titleKey as Parameters<typeof t>[0])}</span>
           </div>
-          <div style={S_CARD_BODY}>
+          <div className="theory-conn-card-body" style={S_CARD_BODY}>
             <p style={{ color: C.textPrimary, margin: `0 0 ${SP.sm}px` }}>{t(card.hookKey as Parameters<typeof t>[0])}</p>
-            <p style={{ color: C.textDimmer, margin: 0, fontSize: FS.xs }}>{t(card.detailKey as Parameters<typeof t>[0])}</p>
+            <p className="theory-conn-card-detail" style={{ color: C.textDimmer, margin: 0, fontSize: FS.xs }}>
+              {t(card.detailKey as Parameters<typeof t>[0])}
+            </p>
           </div>
         </div>
       ))}
 
       {/* Part C: Trinity summary (always visible) */}
-      <div style={S_SUMMARY}>
-        <p style={{ color: C.accentBright, margin: `0 0 ${SP.sm}px`, fontWeight: FW.bold, fontSize: FS.md }}>{t("theory_conn_source")}</p>
+      <div className="theory-conn-summary" style={S_SUMMARY}>
+        <p
+          className="theory-conn-summary-title"
+          style={{ color: C.accentBright, margin: `0 0 ${SP.sm}px`, fontWeight: FW.bold, fontSize: FS.md }}
+        >
+          {t("theory_conn_source")}
+        </p>
         <p style={{ margin: `0 0 2px` }}>{t("theory_conn_fano_role")}</p>
         <p style={{ margin: `0 0 2px` }}>{t("theory_conn_cube_role")}</p>
         <p style={{ margin: `0 0 2px` }}>{t("theory_conn_hamming_role")}</p>
         <p style={{ margin: `0 0 2px`, color: C.textDimmer }}>{t("theory_conn_gray_role")}</p>
         <p style={{ margin: 0, color: C.textDimmer }}>{t("theory_conn_extended")}</p>
-        <p style={{ margin: `${SP.sm}px 0 0`, color: C.textDimmer, fontSize: FS.xs }}>{t("theory_conn_boundary")}</p>
+        <p className="theory-conn-card-detail" style={{ margin: `${SP.sm}px 0 0`, color: C.textDimmer, fontSize: FS.xs }}>
+          {t("theory_conn_boundary")}
+        </p>
       </div>
 
       {/* Closing tagline */}
-      <div style={{ textAlign: "center" }}>
+      <div className="theory-conn-footer" style={{ textAlign: "center" }}>
         <p style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textMuted, margin: 0 }}>{t("theory_conn_conclusion_1")}</p>
         <p style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.accentBright, margin: 0 }}>{t("theory_conn_conclusion_2")}</p>
       </div>
