@@ -44,7 +44,7 @@ export const ja: Record<TranslationKey, string> = {
   btn_clear: "🗑クリア",
   title_clear: "キャンバスをクリア",
   btn_save_color: "💾カラー保存",
-  btn_save_gray: "💾グレー保存",
+  btn_save_gray: "💾モノクロ保存",
   btn_save_glaze: "💾グレーズ保存",
   btn_save_svg: "💾SVG",
   btn_copy: "📋コピー",
@@ -64,6 +64,12 @@ export const ja: Record<TranslationKey, string> = {
   aria_prev_color: "前の色候補 (Level {0} {1})",
   aria_next_color: "次の色候補 (Level {0} {1})",
   aria_color_candidate: "Level {0} 色候補 {1} {2}",
+  color_detail_bits: "ビット",
+  color_detail_rgb: "RGB",
+  color_detail_luma: "輝度",
+  color_detail_complement: "補色",
+  color_detail_xor: "XOR",
+  color_detail_hamming: "Hamming",
 
   // HexDiag
   hex_diagram_label: "色相環の六角形ダイアグラム",
@@ -421,8 +427,8 @@ export const ja: Record<TranslationKey, string> = {
   linkedviz_legend_l0_boundary: "L0 r=max",
   linkedviz_legend_l7_origin: "L7 r=0",
   linkedviz_legend_l7_boundary: "L7 r=max",
-  linkedviz_in_phase: "同相",
-  linkedviz_anti_phase: "逆相",
+  linkedviz_in_phase: "同位相",
+  linkedviz_anti_phase: "逆位相",
   linkedviz_axis_sin: "sin(θ−α)",
   linkedviz_axis_cos: "cos(θ−α)",
 

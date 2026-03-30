@@ -64,6 +64,12 @@ export const en = {
   aria_prev_color: "Previous color candidate (Level {0} {1})",
   aria_next_color: "Next color candidate (Level {0} {1})",
   aria_color_candidate: "Level {0} color candidate {1} {2}",
+  color_detail_bits: "Bits",
+  color_detail_rgb: "RGB",
+  color_detail_luma: "Luma",
+  color_detail_complement: "Complement",
+  color_detail_xor: "XOR",
+  color_detail_hamming: "Hamming",
 
   // HexDiag
   hex_diagram_label: "Hexagonal hue ring diagram",

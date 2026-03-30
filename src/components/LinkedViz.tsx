@@ -523,8 +523,8 @@ export const LinkedViz = React.memo(function LinkedViz({
             x2={RX + RW}
             y2={CY}
             stroke="rgba(255,255,255,0.6)"
-            strokeWidth={hoveredDot?.lv === 0 ? 1.4 : mode === 0 && !hoveredDot ? 1.4 : 0.6}
-            opacity={hoveredDot?.lv === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.4 : 0.12}
+            strokeWidth={hoveredDot?.lv === 0 && mode === 0 ? 1.4 : mode === 0 && !hoveredDot ? 1.4 : 0.6}
+            opacity={hoveredDot?.lv === 0 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.4 : 0.12}
           />
           {/* L7 center line: r=0 in L7-system → always at CY */}
           <line
@@ -533,8 +533,8 @@ export const LinkedViz = React.memo(function LinkedViz({
             x2={RX + RW}
             y2={CY}
             stroke="#fff"
-            strokeWidth={hoveredDot?.lv === 7 ? 1.4 : mode === 7 && !hoveredDot ? 1.4 : 0.6}
-            opacity={hoveredDot?.lv === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.4 : 0.12}
+            strokeWidth={hoveredDot?.lv === 7 && mode === 7 ? 1.4 : mode === 7 && !hoveredDot ? 1.4 : 0.6}
+            opacity={hoveredDot?.lv === 7 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.4 : 0.12}
           />
           {/* L7(white) boundary curve in L0 system — full amplitude WR */}
           <path
@@ -775,8 +775,8 @@ export const LinkedViz = React.memo(function LinkedViz({
             x2={CX}
             y2={BY + BH}
             stroke="rgba(255,255,255,0.6)"
-            strokeWidth={hoveredDot?.lv === 0 ? 1.4 : mode === 0 && !hoveredDot ? 1.4 : 0.6}
-            opacity={hoveredDot?.lv === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.4 : 0.12}
+            strokeWidth={hoveredDot?.lv === 0 && mode === 0 ? 1.4 : mode === 0 && !hoveredDot ? 1.4 : 0.6}
+            opacity={hoveredDot?.lv === 0 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.4 : 0.12}
           />
           {/* L7 center line: r=0 in L7-system → always at CX */}
           <line
@@ -785,8 +785,8 @@ export const LinkedViz = React.memo(function LinkedViz({
             x2={CX}
             y2={BY + BH}
             stroke="#fff"
-            strokeWidth={hoveredDot?.lv === 7 ? 1.4 : mode === 7 && !hoveredDot ? 1.4 : 0.6}
-            opacity={hoveredDot?.lv === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.4 : 0.12}
+            strokeWidth={hoveredDot?.lv === 7 && mode === 7 ? 1.4 : mode === 7 && !hoveredDot ? 1.4 : 0.6}
+            opacity={hoveredDot?.lv === 7 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.4 : 0.12}
           />
           {/* L7(white) boundary curve in L0 system — full amplitude WR */}
           <path
