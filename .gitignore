@@ -19,3 +19,10 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Temporary / one-off files
+itch-page.md
+logo-concepts.html
+logo-preview.html
+lumitone-itch.zip
+public/logo-preview.html

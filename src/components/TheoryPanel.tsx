@@ -30,10 +30,10 @@ const S_HEADING: React.CSSProperties = {
 };
 
 const S_DESC: React.CSSProperties = {
-  fontSize: FS.md,
+  fontSize: FS.xl,
   fontFamily: "monospace",
   color: C.textMuted,
-  textAlign: "center",
+  textAlign: "left",
   maxWidth: 440,
   lineHeight: 1.6,
   margin: 0,
@@ -44,7 +44,7 @@ const S_DIVIDER: React.CSSProperties = {
   height: 1,
   background: C.border,
   border: "none",
-  margin: `${SP.lg}px 0`,
+  margin: `${SP.xs}px 0`,
 };
 
 interface SectionProps {
@@ -92,7 +92,7 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
         <h2 style={{ fontSize: FS.title, fontWeight: FW.bold, fontFamily: "monospace", color: C.textPrimary, margin: 0 }}>
           {t("theory_title")}
         </h2>
-        <p style={{ ...S_DESC, marginTop: SP.xl }}>{t("theory_intro")}</p>
+        <p style={{ ...S_DESC, marginTop: SP.xl, textAlign: "center" }}>{t("theory_intro")}</p>
       </div>
 
       {/* Pin hint */}

@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
-import { S_BTN } from "../../styles";
 import { useTranslation } from "../../i18n";
 
 interface Props {
@@ -203,7 +202,6 @@ function MiniCube({
 export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Props) {
   const { t } = useTranslation();
   const [pinned, setPinned] = useState<number | null>(null);
-  const [showViews, setShowViews] = useState(false);
 
   const enter = useCallback((lv: number) => onHover(lv), [onHover]);
   const leave = useCallback(() => onHover(null), [onHover]);
@@ -371,36 +369,29 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
         {t("theory_dice_hint")}
       </p>
 
-      {/* Cube Views toggle */}
-      <button style={{ ...S_BTN, opacity: showViews ? 1 : 0.5 }} onClick={() => setShowViews((v) => !v)}>
-        {t("theory_dice_views")} {showViews ? "\u25b2" : "\u25bc"}
-      </button>
-
       {/* 8 isometric cube views: 2 columns × 4 rows */}
-      {showViews && (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
-          {/* Column headers */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>
-            <div style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
-              {t("theory_dice_additive_col")}
-            </div>
-            <div style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
-              {t("theory_dice_subtractive_col")}
-            </div>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
+        {/* Column headers */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>
+          <div style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+            {t("theory_dice_additive_col")}
           </div>
-          {/* Grid rows */}
-          {VIEW_ROWS.map(([left, right], ri) => (
-            <div key={`vr${ri}`} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>
-              <MiniCube view={left} hl={hl} onEnter={enter} onLeave={leave} onTap={onTap} />
-              <MiniCube view={right} hl={hl} onEnter={enter} onLeave={leave} onTap={onTap} />
-            </div>
-          ))}
-          {/* Footer annotation */}
-          <p style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
-            {"\u2295"} = XOR (GF(2){"\u00b3"}) | {"\u2227"} = AND (Boolean)
-          </p>
+          <div style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+            {t("theory_dice_subtractive_col")}
+          </div>
         </div>
-      )}
+        {/* Grid rows */}
+        {VIEW_ROWS.map(([left, right], ri) => (
+          <div key={`vr${ri}`} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>
+            <MiniCube view={left} hl={hl} onEnter={enter} onLeave={leave} onTap={onTap} />
+            <MiniCube view={right} hl={hl} onEnter={enter} onLeave={leave} onTap={onTap} />
+          </div>
+        ))}
+        {/* Footer annotation */}
+        <p style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+          {"\u2295"} = XOR (GF(2){"\u00b3"}) | {"\u2227"} = AND (Boolean)
+        </p>
+      </div>
     </div>
   );
 });

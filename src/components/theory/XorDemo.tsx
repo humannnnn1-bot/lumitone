@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
-import { S_BTN } from "../../styles";
 import { useTranslation } from "../../i18n";
 import { CayleyTable } from "./CayleyTable";
 
@@ -17,7 +16,17 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
   const { t } = useTranslation();
   const [a, setA] = useState(1);
   const [b, setB] = useState(2);
-  const [showCayley, setShowCayley] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const e of entries) setCompact(e.contentRect.width < 420);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   const result = a ^ b;
   const complementA = a ^ 7;
@@ -28,12 +37,12 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
   const infoR = THEORY_LEVELS[result];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xl }}>
+    <div ref={containerRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xl, width: "100%" }}>
       {/* Selectors */}
-      <div style={{ display: "flex", gap: SP["3xl"], alignItems: "center" }}>
-        <LevelSelector value={a} onChange={setA} label="A" onHover={onHover} />
-        <span style={{ fontSize: FS["2xl"], fontFamily: "monospace", color: C.textMuted }}>{"\u2295"}</span>
-        <LevelSelector value={b} onChange={setB} label="B" onHover={onHover} />
+      <div style={{ display: "flex", gap: compact ? SP.sm : SP["3xl"], alignItems: "center" }}>
+        <LevelSelector value={a} onChange={setA} label="A" onHover={onHover} compact={compact} />
+        <span style={{ fontSize: compact ? FS.xl : FS["2xl"], fontFamily: "monospace", color: C.textMuted }}>{"\u2295"}</span>
+        <LevelSelector value={b} onChange={setB} label="B" onHover={onHover} compact={compact} />
       </div>
 
       {/* Result visualization */}
@@ -167,12 +176,7 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
         )}
       </div>
 
-      {/* Cayley table toggle */}
-      <button style={S_BTN} onClick={() => setShowCayley((v) => !v)}>
-        {t("theory_xor_cayley")} {showCayley ? "\u25b2" : "\u25bc"}
-      </button>
-
-      {showCayley && <CayleyTable hlLevel={hlLevel} onHover={onHover} />}
+      <CayleyTable hlLevel={hlLevel} onHover={onHover} />
     </div>
   );
 });
@@ -182,16 +186,19 @@ function LevelSelector({
   onChange,
   label,
   onHover,
+  compact,
 }: {
   value: number;
   onChange: (v: number) => void;
   label: string;
   onHover?: (lv: number | null) => void;
+  compact?: boolean;
 }) {
+  const sz = compact ? 20 : 32;
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xs }}>
       <span style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer }}>{label}</span>
-      <div style={{ display: "flex", gap: 3, justifyContent: "center" }}>
+      <div style={{ display: "flex", gap: compact ? 2 : 3, justifyContent: "center" }}>
         {THEORY_LEVELS.map((lv) => {
           const active = lv.lv === value;
           return (
@@ -201,14 +208,14 @@ function LevelSelector({
               onMouseEnter={() => onHover?.(lv.lv)}
               onMouseLeave={() => onHover?.(null)}
               style={{
-                width: 32,
-                height: 32,
+                width: sz,
+                height: sz,
                 borderRadius: "50%",
                 border: active ? "2px solid #fff" : "1px solid rgba(255,255,255,0.2)",
                 background: lv.lv === 0 ? C.bgRoot : lv.color,
                 cursor: "pointer",
                 padding: 0,
-                fontSize: FS.xs,
+                fontSize: compact ? FS.xxs : FS.xs,
                 fontWeight: FW.bold,
                 fontFamily: "monospace",
                 color: lv.lv >= 4 ? "#000" : "#fff",

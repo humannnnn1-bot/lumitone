@@ -39,7 +39,12 @@ export const CayleyTable = React.memo(function CayleyTable({ hlLevel, onHover }:
   const cellY = (row: number) => HDR + row * (CELL + GAP);
 
   return (
-    <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: "100%", maxWidth: SVG_W }} role="img" aria-label={t("theory_xor_cayley_aria")}>
+    <svg
+      viewBox={`0 0 ${SVG_W} ${SVG_H}`}
+      style={{ width: "100%", maxWidth: SVG_W, height: "auto", display: "block", minWidth: 0 }}
+      role="img"
+      aria-label={t("theory_xor_cayley_aria")}
+    >
       {/* XOR symbol in corner */}
       <text
         x={HDR / 2}

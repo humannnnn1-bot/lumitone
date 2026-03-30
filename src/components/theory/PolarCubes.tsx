@@ -183,14 +183,14 @@ export const PolarCubes = React.memo(function PolarCubes({ hlLevel, onHover }: P
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
-      <div style={{ display: "flex", gap: SP.xl, justifyContent: "center", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: SP.sm, justifyContent: "center" }}>
         {/* Additive (Black pole) */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xs }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xs, flex: 1, minWidth: 0 }}>
           <span style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer }}>{t("theory_polar_additive")}</span>
           <PolarCubeView pole="black" mask={mask} onToggle={toggle} hlLevel={hlLevel} onHover={onHover} />
         </div>
         {/* Subtractive (White pole) */}
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xs }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xs, flex: 1, minWidth: 0 }}>
           <span style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer }}>{t("theory_polar_subtractive")}</span>
           <PolarCubeView pole="white" mask={mask} onToggle={toggle} hlLevel={hlLevel} onHover={onHover} />
         </div>

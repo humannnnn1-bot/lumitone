@@ -5,7 +5,7 @@ import { S_BTN } from "../../styles";
 import { useTranslation } from "../../i18n";
 
 const W = 300,
-  H = 340;
+  H = 270;
 const DOT_R = 16;
 const CX = 150,
   CY = 160;
@@ -380,22 +380,28 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
               </text>
             );
           })}
+      </svg>
 
-        {/* Legend */}
-        {!isCmyAnimating &&
-          [
+      {/* Legend */}
+      {!isCmyAnimating && (
+        <div style={{ display: "flex", gap: SP.xl, justifyContent: "center", flexWrap: "wrap" }}>
+          {[
             { label: t("theory_fano_primary"), color: "#80a0ff" },
             { label: t("theory_fano_complement"), color: "#ffa060" },
             { label: t("theory_fano_secondary"), color: "#60ffa0" },
           ].map((item, i) => (
-            <g key={"lg" + i}>
-              <line x1={20} y1={H - 42 + i * 14} x2={34} y2={H - 42 + i * 14} stroke={item.color} strokeWidth={2} />
-              <text x={40} y={H - 42 + i * 14} dominantBaseline="central" fontSize={FS.xs} fill={item.color} fontFamily="monospace">
-                {item.label}
-              </text>
-            </g>
+            <span
+              key={"lg" + i}
+              style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: FS.xs, fontFamily: "monospace", color: item.color }}
+            >
+              <svg width={14} height={2}>
+                <line x1={0} y1={1} x2={14} y2={1} stroke={item.color} strokeWidth={2} />
+              </svg>
+              {item.label}
+            </span>
           ))}
-      </svg>
+        </div>
+      )}
 
       {/* Buttons */}
       <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>

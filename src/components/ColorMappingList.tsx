@@ -5,7 +5,8 @@ import { S_NAV_ARROW, S_SWATCH } from "../styles";
 import type { ColorAction } from "../color-reducer";
 import { useTranslation } from "../i18n";
 import { C, SP, FS, R, DUR } from "../tokens";
-import { THEORY_LEVELS, FANO_LINES } from "./theory/theory-data";
+import { THEORY_LEVELS } from "./theory/theory-data";
+import { HEX_CANDIDATE_ANGLES } from "../hex-data";
 
 const MOBILE_BP = 600;
 
@@ -21,17 +22,6 @@ function hueDelta(current: number, canonical: number): number {
 }
 
 /** Compute XOR decompositions: find all pairs (a, b) where a XOR b = lv, a < b, both non-zero */
-function xorPairs(lv: number): [number, number][] {
-  const pairs: [number, number][] = [];
-  for (const line of FANO_LINES) {
-    const [a, b, c] = line;
-    if (c === lv) pairs.push([a, b]);
-    else if (b === lv) pairs.push([a, c]);
-    else if (a === lv) pairs.push([b, c]);
-  }
-  return pairs;
-}
-
 interface Props {
   cc: number[];
   dispatch: React.Dispatch<ColorAction>;
@@ -57,15 +47,13 @@ export const ColorMappingList = memo(
             has = alts.length > 1;
           const isActive = brushLevel === i;
           const tl = THEORY_LEVELS[i];
-          const pairs = xorPairs(i);
-          const xorStr = i === 0 ? "—" : pairs.map(([a, b]) => `${a}⊕${b}`).join(",");
           return (
             <div
               key={i}
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: mobile ? SP.sm : SP.md,
+                gap: mobile ? SP.md : SP.lg,
                 padding: mobile ? `${has ? 0 : SP.sm}px ${SP.xs}px` : `${has ? 0 : SP.md}px ${SP.lg}px`,
                 background: isActive ? C.bgSurface : C.bgPanelAlt,
                 borderRadius: R.lg,
@@ -119,19 +107,34 @@ export const ColorMappingList = memo(
                   </button>
                 )}
               </div>
-              {cur.hueLabel && <span style={{ fontSize: FS.sm, color: C.textDimmer, whiteSpace: "nowrap" }}>{cur.hueLabel}</span>}
               {CANONICAL_ANGLES[i] != null &&
                 cur.angle >= 0 &&
                 (() => {
-                  const d = hueDelta(cur.angle, CANONICAL_ANGLES[i]!);
+                  const canon = CANONICAL_ANGLES[i]!;
+                  const hexAngle = HEX_CANDIDATE_ANGLES[i]?.[ci];
+                  if (hexAngle == null) return null;
+                  const d = hueDelta(hexAngle, canon);
+                  const ibs = { display: "inline-block" as const, textAlign: "right" as const };
+                  const ibc = { display: "inline-block" as const, textAlign: "center" as const, width: 8 };
                   return (
-                    <span style={{ fontSize: FS.sm, color: d === 0 ? C.textDim : C.accent, fontFamily: "monospace", whiteSpace: "nowrap" }}>
-                      Δ{d >= 0 ? "+" : ""}
-                      {d}°
+                    <span style={{ fontSize: FS.sm, fontFamily: "monospace", whiteSpace: "nowrap" }}>
+                      <span style={{ ...ibs, color: tl.color, width: 32 }}>
+                        {"\u2B21"}
+                        {canon}°
+                      </span>
+                      <span style={{ ...ibc, color: C.textDim }}>{d >= 0 ? "+" : "\u2212"}</span>
+                      <span style={{ ...ibs, color: d === 0 ? C.textDim : C.textWhite, width: 32 }}>
+                        {"\u0394"}
+                        {Math.abs(d)}°
+                      </span>
+                      <span style={{ ...ibc, color: C.textDim }}>=</span>
+                      <span style={{ ...ibs, color: rgbStr(cur.rgb), width: 28 }}>{hexAngle}°</span>
                     </span>
                   );
                 })()}
-              <span style={{ fontSize: FS.sm, color: C.textDimmer, fontFamily: "monospace", whiteSpace: "nowrap" }}>{xorStr}</span>
+              {cur.hueLabel && CANONICAL_ANGLES[i] == null && (
+                <span style={{ fontSize: FS.sm, color: C.textDimmer, whiteSpace: "nowrap", fontFamily: "monospace" }}>{cur.hueLabel}</span>
+              )}
               {has && (
                 <div style={{ display: "flex", gap: mobile ? SP.xs : SP.sm, marginLeft: "auto" }}>
                   {alts.map((a, j) => (
