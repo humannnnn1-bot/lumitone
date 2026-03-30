@@ -132,7 +132,16 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
           const isCurrent = lv === currentLv;
           const isHl = hlLevel === lv;
           return (
-            <g key={"gv" + lv} onMouseEnter={() => onHover(lv)} onMouseLeave={() => onHover(null)} style={{ cursor: "pointer" }}>
+            <g
+              key={"gv" + lv}
+              onMouseEnter={() => onHover(lv)}
+              onMouseLeave={() => onHover(null)}
+              onClick={() => {
+                setStep(GRAY_PATH.indexOf(lv as (typeof GRAY_PATH)[number]));
+                onHover(lv);
+              }}
+              style={{ cursor: "pointer" }}
+            >
               {(isCurrent || isHl) && (
                 <circle
                   cx={p.x}
