@@ -8,6 +8,8 @@ import { ColorCube } from "./theory/ColorCube";
 import { GrayCodeHex } from "./theory/GrayCodeHex";
 import { XorDemo } from "./theory/XorDemo";
 import { HammingDiagram } from "./theory/HammingDiagram";
+import { PolarCubes } from "./theory/PolarCubes";
+import { LuminanceZigzag } from "./theory/LuminanceZigzag";
 import { ConnectionsSummary } from "./theory/ConnectionsSummary";
 
 const S_SECTION: React.CSSProperties = {
@@ -73,18 +75,30 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
         flexDirection: "column",
         alignItems: "center",
         gap: SP["3xl"],
+        width: "100%",
         maxWidth: 560,
         margin: "0 auto",
-        padding: `${SP.xl}px ${SP.lg}px ${SP["4xl"]}px`,
+        boxSizing: "border-box",
+        padding: `0 ${SP.lg}px ${SP["4xl"]}px`,
       }}
     >
+      {/* Subtitle */}
+      <div style={{ fontSize: FS.md, color: C.textDim, textAlign: "center", lineHeight: "14px", marginBottom: -SP.md }}>
+        {t("label_theory")}
+      </div>
+
       {/* Page title */}
       <div style={{ textAlign: "center" }}>
         <h2 style={{ fontSize: FS.title, fontWeight: FW.bold, fontFamily: "monospace", color: C.textPrimary, margin: 0 }}>
           {t("theory_title")}
         </h2>
-        <p style={{ ...S_DESC, marginTop: SP.md }}>{t("theory_intro")}</p>
+        <p style={{ ...S_DESC, marginTop: SP.xl }}>{t("theory_intro")}</p>
       </div>
+
+      {/* Pin hint */}
+      <p style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+        {t("theory_pin_hint")}
+      </p>
 
       <hr style={S_DIVIDER} />
 
@@ -94,8 +108,8 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
       <hr style={S_DIVIDER} />
 
-      <Section title={t("theory_dice_title")} desc={t("theory_dice_desc")}>
-        <ColorDice hlLevel={hlLevel} onHover={onHover} />
+      <Section title={t("theory_zigzag_title")} desc={t("theory_zigzag_desc")}>
+        <LuminanceZigzag hlLevel={hlLevel} onHover={onHover} />
       </Section>
 
       <hr style={S_DIVIDER} />
@@ -106,8 +120,20 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
       <hr style={S_DIVIDER} />
 
+      <Section title={t("theory_dice_title")} desc={t("theory_dice_desc")}>
+        <ColorDice hlLevel={hlLevel} onHover={onHover} />
+      </Section>
+
+      <hr style={S_DIVIDER} />
+
       <Section title={t("theory_cube_title")} desc={t("theory_cube_desc")}>
         <ColorCube hlLevel={hlLevel} onHover={onHover} />
+      </Section>
+
+      <hr style={S_DIVIDER} />
+
+      <Section title={t("theory_polar_title")} desc={t("theory_polar_desc")}>
+        <PolarCubes hlLevel={hlLevel} onHover={onHover} />
       </Section>
 
       <hr style={S_DIVIDER} />
@@ -118,14 +144,14 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
       <hr style={S_DIVIDER} />
 
-      <Section title={t("theory_hamming_title")} desc={t("theory_hamming_desc")}>
-        <HammingDiagram hlLevel={hlLevel} onHover={onHover} />
+      <Section title={t("theory_fano_title")} desc={t("theory_fano_desc")}>
+        <FanoPlane hlLevel={hlLevel} onHover={onHover} />
       </Section>
 
       <hr style={S_DIVIDER} />
 
-      <Section title={t("theory_fano_title")} desc={t("theory_fano_desc")}>
-        <FanoPlane hlLevel={hlLevel} onHover={onHover} />
+      <Section title={t("theory_hamming_title")} desc={t("theory_hamming_desc")}>
+        <HammingDiagram hlLevel={hlLevel} onHover={onHover} />
       </Section>
 
       <hr style={S_DIVIDER} />

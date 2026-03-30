@@ -445,14 +445,61 @@ export function MapCanvas({
 
   const onMouseLeave = useCallback(() => setHoverInfo(null), []);
 
+  // Long-press to save map image (mobile)
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [showSaveHint, setShowSaveHint] = useState(false);
+
+  const saveMap = useCallback(() => {
+    const c = ref.current;
+    if (!c) return;
+    c.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], `chromalum-map-${mode}.png`, { type: "image/png" });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        navigator.share({ files: [file] }).catch(() => {});
+      } else {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = file.name;
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+    });
+  }, [mode]);
+
+  const onPointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.pointerType !== "touch") return;
+      longPressTimer.current = setTimeout(() => {
+        longPressTimer.current = null;
+        setShowSaveHint(true);
+        setTimeout(() => setShowSaveHint(false), 1500);
+        saveMap();
+      }, 600);
+    },
+    [saveMap],
+  );
+
+  const cancelLongPress = useCallback(() => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  }, []);
+
   return (
-    <div>
+    <div style={{ position: "relative" }}>
       <canvas
         ref={ref}
         width={cw || 1}
         height={ch || 1}
         onMouseMove={onMouseMove}
         onMouseLeave={onMouseLeave}
+        onPointerDown={onPointerDown}
+        onPointerUp={cancelLongPress}
+        onPointerCancel={cancelLongPress}
+        onPointerMove={cancelLongPress}
         style={{
           width: displayW,
           height: displayH,
@@ -461,8 +508,28 @@ export function MapCanvas({
           borderRadius: R.lg,
           border: `1px solid ${C.border}`,
           cursor: "crosshair",
+          touchAction: "none",
         }}
       />
+      {showSaveHint && (
+        <div
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            background: "rgba(0,0,0,0.75)",
+            color: "#fff",
+            padding: `${SP.md}px ${SP.xl}px`,
+            borderRadius: R.lg,
+            fontSize: FS.sm,
+            fontFamily: "monospace",
+            pointerEvents: "none",
+          }}
+        >
+          Saving...
+        </div>
+      )}
       <div style={{ fontSize: FS.xs, color: C.textDimmer, fontFamily: "monospace", textAlign: "center", minHeight: 14, marginTop: SP.xs }}>
         {hoverInfo ?? "\u00A0"}
       </div>

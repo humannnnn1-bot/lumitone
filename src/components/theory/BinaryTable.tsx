@@ -184,6 +184,9 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
       <p style={{ fontSize: 10, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
         {t("theory_binary_luma_formula")}
       </p>
+      <p style={{ fontSize: 9, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+        {t("theory_binary_luma_complement")}
+      </p>
     </div>
   );
 });

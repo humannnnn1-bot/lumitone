@@ -44,9 +44,15 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
   const [animT, setAnimT] = useState(0); // 0 = cube, 1 = hexagon
   const animRef = useRef<number>(0);
 
+  const reducedMotion = useRef(typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
   // Animate transition
   useEffect(() => {
     const target = equatorMode ? 1 : 0;
+    if (reducedMotion.current) {
+      setAnimT(target);
+      return;
+    }
     let raf: number;
     const animate = () => {
       setAnimT((prev) => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
 import { S_BTN } from "../../styles";
@@ -19,10 +19,6 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
   const [b, setB] = useState(2);
   const [showCayley, setShowCayley] = useState(false);
 
-  // Sync from external highlight: set A to highlighted level
-  useEffect(() => {
-    if (hlLevel !== null && hlLevel >= 0 && hlLevel <= 7) setA(hlLevel);
-  }, [hlLevel]);
   const result = a ^ b;
   const complementA = a ^ 7;
   const complementB = b ^ 7;
@@ -195,7 +191,7 @@ function LevelSelector({
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xs }}>
       <span style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer }}>{label}</span>
-      <div style={{ display: "flex", gap: 2, flexWrap: "wrap", justifyContent: "center" }}>
+      <div style={{ display: "flex", gap: 3, justifyContent: "center" }}>
         {THEORY_LEVELS.map((lv) => {
           const active = lv.lv === value;
           return (
@@ -205,8 +201,8 @@ function LevelSelector({
               onMouseEnter={() => onHover?.(lv.lv)}
               onMouseLeave={() => onHover?.(null)}
               style={{
-                width: 24,
-                height: 24,
+                width: 32,
+                height: 32,
                 borderRadius: "50%",
                 border: active ? "2px solid #fff" : "1px solid rgba(255,255,255,0.2)",
                 background: lv.lv === 0 ? C.bgRoot : lv.color,

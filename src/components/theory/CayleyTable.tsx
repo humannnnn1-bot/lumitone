@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import { THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW } from "../../tokens";
+import { useTranslation } from "../../i18n";
 
 const CELL = 40;
 const HDR = 36;
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export const CayleyTable = React.memo(function CayleyTable({ hlLevel, onHover }: Props) {
+  const { t } = useTranslation();
   const [hoverCell, setHoverCell] = useState<{ r: number; c: number } | null>(null);
 
   const onCellEnter = useCallback(
@@ -37,7 +39,7 @@ export const CayleyTable = React.memo(function CayleyTable({ hlLevel, onHover }:
   const cellY = (row: number) => HDR + row * (CELL + GAP);
 
   return (
-    <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: "100%", maxWidth: SVG_W }} role="img" aria-label="XOR Cayley table">
+    <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: "100%", maxWidth: SVG_W }} role="img" aria-label={t("theory_xor_cayley_aria")}>
       {/* XOR symbol in corner */}
       <text
         x={HDR / 2}

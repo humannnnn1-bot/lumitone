@@ -37,14 +37,6 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
     if (reducedMotion.current) setPlaying(false);
   }, []);
 
-  // Sync from external highlight
-  useEffect(() => {
-    if (hlLevel !== null) {
-      const idx = GRAY_PATH.indexOf(hlLevel as (typeof GRAY_PATH)[number]);
-      if (idx >= 0) setStep(idx);
-    }
-  }, [hlLevel]);
-
   const handlePlayCW = useCallback(() => setPlaying("cw"), []);
   const handlePlayCCW = useCallback(() => setPlaying("ccw"), []);
   const handlePause = useCallback(() => setPlaying(false), []);

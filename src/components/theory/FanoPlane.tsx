@@ -48,8 +48,13 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
   const [cmyMode, setCmyMode] = useState(false);
   const [animT, setAnimT] = useState(0); // 0=normal, 0.5=triangle attempt, 1=collapsed
   const animRef = useRef(0);
+  const reducedMotion = useRef(typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   useEffect(() => {
+    if (reducedMotion.current) {
+      setAnimT(cmyMode ? 1 : 0);
+      return;
+    }
     if (!cmyMode) {
       // Animate back to 0
       let raf: number;

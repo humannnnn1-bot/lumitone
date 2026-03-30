@@ -140,6 +140,17 @@ export function isBackEdge(a: number, b: number): boolean {
   return a === 0 || b === 0;
 }
 
+/** White-pole projection: vertex v maps to where (v^7) sits in the standard view */
+export const CUBE_POINTS_WHITE: Record<number, { x: number; y: number }> = {};
+for (let i = 0; i < 8; i++) {
+  CUBE_POINTS_WHITE[i] = CUBE_POINTS[i ^ 7];
+}
+
+/** Back-edge test for White-pole view (edges connecting to vertex 7) */
+export function isBackEdgeWhite(a: number, b: number): boolean {
+  return a === 7 || b === 7;
+}
+
 /* ── Gray Code Hexagon geometry ──────────── */
 
 const GRAY_CX = 150,

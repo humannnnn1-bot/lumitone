@@ -557,7 +557,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             onScrollDone={() => setScrollToGallery(false)}
           />
         </div>
-        <div id="tabpanel-6" role="tabpanel" style={{ display: activeTab === 6 ? undefined : "none" }}>
+        <div id="tabpanel-6" role="tabpanel" style={{ width: "100%", display: activeTab === 6 ? undefined : "none" }}>
           <TheoryPanel />
         </div>
       </div>

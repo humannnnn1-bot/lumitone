@@ -1,53 +1,43 @@
 import React, { useCallback, useState } from "react";
 import { THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
+import { S_BTN } from "../../styles";
 import { useTranslation } from "../../i18n";
 
-/* ── Isometric die geometry ─────────────── */
+interface Props {
+  hlLevel: number | null;
+  onHover: (lv: number | null) => void;
+}
 
-const EDGE = 80;
-const CX = 130,
-  CY = 145;
+/* ── Die net (2-2-2 staircase unfolding) ── */
 
-// Isometric unit vectors
-const AX_R = { dx: EDGE * Math.cos(Math.PI / 6), dy: EDGE * Math.sin(Math.PI / 6) };
-const AX_L = { dx: -EDGE * Math.cos(Math.PI / 6), dy: EDGE * Math.sin(Math.PI / 6) };
-const AX_U = { dx: 0, dy: -EDGE };
+const NET_CELL = 52;
+const NET_GAP = 3;
+const NET_STEP = NET_CELL + NET_GAP;
+const NET_W = 4 * NET_STEP + NET_GAP;
+const NET_H = 3 * NET_STEP + NET_GAP;
 
-// Front-bottom vertex
-const O = { x: CX, y: CY + EDGE };
-const pts = (dx: number, dy: number) => `${O.x + dx},${O.y + dy}`;
+const NET_FACES: { lv: number; col: number; row: number }[] = [
+  { lv: 2, col: 0, row: 0 },
+  { lv: 6, col: 1, row: 0 },
+  { lv: 4, col: 1, row: 1 },
+  { lv: 5, col: 2, row: 1 },
+  { lv: 1, col: 2, row: 2 },
+  { lv: 3, col: 3, row: 2 },
+];
 
-// Three visible faces
-const FACE_TOP = [
-  pts(AX_U.dx, AX_U.dy),
-  pts(AX_U.dx + AX_R.dx, AX_U.dy + AX_R.dy),
-  pts(AX_U.dx + AX_R.dx + AX_L.dx, AX_U.dy + AX_R.dy + AX_L.dy),
-  pts(AX_U.dx + AX_L.dx, AX_U.dy + AX_L.dy),
-].join(" ");
+const NET_COMP_PAIRS: [number, number][] = [
+  [1, 6],
+  [2, 5],
+  [3, 4],
+];
 
-const FACE_LEFT = [pts(0, 0), pts(AX_L.dx, AX_L.dy), pts(AX_U.dx + AX_L.dx, AX_U.dy + AX_L.dy), pts(AX_U.dx, AX_U.dy)].join(" ");
-
-const FACE_RIGHT = [pts(0, 0), pts(AX_R.dx, AX_R.dy), pts(AX_U.dx + AX_R.dx, AX_U.dy + AX_R.dy), pts(AX_U.dx, AX_U.dy)].join(" ");
-
-// Face centroids
-const faceCentroid = (face: string) => {
-  const coords = face.split(" ").map((p) => {
-    const [x, y] = p.split(",").map(Number);
-    return { x, y };
-  });
-  return { x: coords.reduce((s, c) => s + c.x, 0) / coords.length, y: coords.reduce((s, c) => s + c.y, 0) / coords.length };
-};
-
-const CENTER_TOP = faceCentroid(FACE_TOP);
-const CENTER_LEFT = faceCentroid(FACE_LEFT);
-const CENTER_RIGHT = faceCentroid(FACE_RIGHT);
-
-// Die face assignments: opposite faces sum to 7
-const FACE_CONFIG: { face: string; center: { x: number; y: number }; lv: number; compLv: number }[] = [
-  { face: FACE_TOP, center: CENTER_TOP, lv: 6, compLv: 1 },
-  { face: FACE_LEFT, center: CENTER_LEFT, lv: 2, compLv: 5 },
-  { face: FACE_RIGHT, center: CENTER_RIGHT, lv: 4, compLv: 3 },
+const NET_TOGGLES: { from: number; to: number; ch: string; color: string }[] = [
+  { from: 0, to: 1, ch: "G", color: "#00ff00" },
+  { from: 1, to: 2, ch: "R", color: "#ff0000" },
+  { from: 2, to: 3, ch: "B", color: "#0000ff" },
+  { from: 3, to: 4, ch: "G", color: "#00ff00" },
+  { from: 4, to: 5, ch: "R", color: "#ff0000" },
 ];
 
 const PAIRS: [number, number][] = [
@@ -56,25 +46,164 @@ const PAIRS: [number, number][] = [
   [3, 4],
 ];
 
-const DOT_R = 14;
-const SVG_W = 380,
-  SVG_H = 280;
+/* ── Mini isometric cube geometry ──────── */
 
-// Front-facing edge endpoints (from O vertex)
-const FRONT_EDGES: [number, number, number, number][] = [
-  [O.x, O.y, O.x + AX_U.dx, O.y + AX_U.dy],
-  [O.x, O.y, O.x + AX_L.dx, O.y + AX_L.dy],
-  [O.x, O.y, O.x + AX_R.dx, O.y + AX_R.dy],
+const M_EDGE = 26;
+const M_COS30 = Math.cos(Math.PI / 6);
+const M_U = { dx: 0, dy: -M_EDGE };
+const M_R = { dx: M_COS30 * M_EDGE, dy: 0.5 * M_EDGE };
+const M_L = { dx: -M_COS30 * M_EDGE, dy: 0.5 * M_EDGE };
+const M_VW = 62;
+const M_VH = 62;
+const M_OX = M_VW / 2;
+const M_OY = M_VH / 2 + 5;
+
+// Precomputed face polygon points (O is front vertex at center)
+const fp = (dx: number, dy: number) => `${(M_OX + dx).toFixed(1)},${(M_OY + dy).toFixed(1)}`;
+const FACE_T = [fp(M_U.dx, M_U.dy), fp(M_U.dx + M_R.dx, M_U.dy + M_R.dy), fp(0, 0), fp(M_U.dx + M_L.dx, M_U.dy + M_L.dy)].join(" ");
+const FACE_R = [fp(0, 0), fp(M_R.dx, M_R.dy), fp(M_U.dx + M_R.dx, M_U.dy + M_R.dy), fp(M_U.dx, M_U.dy)].join(" ");
+const FACE_L = [fp(0, 0), fp(M_L.dx, M_L.dy), fp(M_U.dx + M_L.dx, M_U.dy + M_L.dy), fp(M_U.dx, M_U.dy)].join(" ");
+
+// Color abbreviations
+const ABBR: Record<number, string> = { 1: "B", 2: "R", 3: "M", 4: "G", 5: "C", 6: "Y" };
+
+// 8 die views: [left column = additive, right column = subtractive]
+interface DieView {
+  top: number;
+  left: number;
+  right: number;
+  type: "identity" | "additive" | "subtractive";
+}
+
+// Rows: [left, right] pairs
+const VIEW_ROWS: [DieView, DieView][] = [
+  [
+    { top: 4, left: 1, right: 2, type: "identity" }, // RGB
+    { top: 6, left: 5, right: 3, type: "identity" }, // CMY
+  ],
+  [
+    { top: 6, left: 2, right: 4, type: "additive" }, // R+G=Y
+    { top: 2, left: 3, right: 6, type: "subtractive" }, // M∧Y=R
+  ],
+  [
+    { top: 3, left: 2, right: 1, type: "additive" }, // R+B=M
+    { top: 4, left: 5, right: 6, type: "subtractive" }, // C∧Y=G
+  ],
+  [
+    { top: 5, left: 4, right: 1, type: "additive" }, // G+B=C
+    { top: 1, left: 5, right: 3, type: "subtractive" }, // C∧M=B
+  ],
 ];
 
-interface Props {
-  hlLevel: number | null;
-  onHover: (lv: number | null) => void;
+function MiniCube({
+  view,
+  hl,
+  onEnter,
+  onLeave,
+  onTap,
+}: {
+  view: DieView;
+  hl: number | null;
+  onEnter: (lv: number) => void;
+  onLeave: () => void;
+  onTap: (lv: number) => void;
+}) {
+  const faces = [
+    { pts: FACE_L, lv: view.left },
+    { pts: FACE_R, lv: view.right },
+    { pts: FACE_T, lv: view.top },
+  ];
+
+  const isOutput = (lv: number) => view.type !== "identity" && lv === view.top;
+  const viewLevels = [view.top, view.left, view.right];
+  const anyHl = hl !== null && viewLevels.includes(hl);
+
+  // Build label
+  const op = view.type === "additive" ? " \u2295 " : view.type === "subtractive" ? " \u2227 " : "";
+  const leftA = ABBR[view.left];
+  const rightA = ABBR[view.right];
+  const topA = ABBR[view.top];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
+      <svg viewBox={`0 0 ${M_VW} ${M_VH}`} style={{ width: 80, height: 80 }}>
+        {faces.map(({ pts, lv }) => {
+          const info = THEORY_LEVELS[lv];
+          const active = hl === lv;
+          const dim = hl !== null && !active && !anyHl;
+          const output = isOutput(lv);
+          return (
+            <g
+              key={`f${lv}`}
+              onMouseEnter={() => onEnter(lv)}
+              onMouseLeave={onLeave}
+              onClick={() => onTap(lv)}
+              style={{ cursor: "pointer" }}
+            >
+              <polygon
+                points={pts}
+                fill={info.color}
+                fillOpacity={dim ? 0.08 : output ? 0.6 : active ? 0.5 : 0.35}
+                stroke={output ? "#fff" : info.color}
+                strokeWidth={output ? 1.5 : active ? 1.5 : 0.8}
+                strokeOpacity={dim ? 0.15 : output ? 0.8 : 0.5}
+                strokeLinejoin="round"
+              />
+            </g>
+          );
+        })}
+        {/* Level numbers on each face */}
+        {[
+          { lv: view.top, x: M_OX, y: M_OY - M_EDGE * 0.5 },
+          { lv: view.left, x: M_OX - M_COS30 * M_EDGE * 0.45, y: M_OY + M_EDGE * 0.15 },
+          { lv: view.right, x: M_OX + M_COS30 * M_EDGE * 0.45, y: M_OY + M_EDGE * 0.15 },
+        ].map(({ lv, x, y }) => (
+          <text
+            key={`n${lv}`}
+            x={x}
+            y={y}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={9}
+            fontWeight={900}
+            fontFamily="monospace"
+            fill={lv >= 4 ? "#000" : "#fff"}
+            opacity={0.9}
+          >
+            {lv}
+          </text>
+        ))}
+      </svg>
+      {/* Label */}
+      <div style={{ fontSize: 9, fontFamily: "monospace", textAlign: "center", lineHeight: 1 }}>
+        {view.type === "identity" ? (
+          <span style={{ color: C.textDimmer }}>
+            {"{ "}
+            <span style={{ color: THEORY_LEVELS[view.left].color }}>{leftA}</span>
+            {", "}
+            <span style={{ color: THEORY_LEVELS[view.right].color }}>{rightA}</span>
+            {", "}
+            <span style={{ color: THEORY_LEVELS[view.top].color }}>{topA}</span>
+            {" }"}
+          </span>
+        ) : (
+          <span>
+            <span style={{ color: THEORY_LEVELS[view.left].color }}>{leftA}</span>
+            <span style={{ color: C.textDimmer }}>{op}</span>
+            <span style={{ color: THEORY_LEVELS[view.right].color }}>{rightA}</span>
+            <span style={{ color: C.textDimmer }}> = </span>
+            <span style={{ color: THEORY_LEVELS[view.top].color, fontWeight: FW.bold }}>{topA}</span>
+          </span>
+        )}
+      </div>
+    </div>
+  );
 }
 
 export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Props) {
   const { t } = useTranslation();
   const [pinned, setPinned] = useState<number | null>(null);
+  const [showViews, setShowViews] = useState(false);
 
   const enter = useCallback((lv: number) => onHover(lv), [onHover]);
   const leave = useCallback(() => onHover(null), [onHover]);
@@ -89,219 +218,189 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
     [onHover],
   );
 
-  // Highlight resolution: external > pinned > null
   const hl = hlLevel !== null && hlLevel >= 1 && hlLevel <= 6 ? hlLevel : pinned;
-  const activePairIdx = hl !== null ? PAIRS.findIndex(([a, b]) => a === hl || b === hl) : -1;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
-      <svg viewBox={`0 0 ${SVG_W} ${SVG_H}`} style={{ width: "100%", maxWidth: SVG_W }} role="img" aria-label={t("theory_dice_title")}>
-        {/* Die faces */}
-        {FACE_CONFIG.map(({ face, center, lv, compLv }, fi) => {
-          const info = THEORY_LEVELS[lv];
-          const compInfo = THEORY_LEVELS[compLv];
-          const isActive = hl === lv || hl === compLv;
-          const isDim = hl !== null && !isActive;
-          const fillOpacity = isActive ? 0.45 : isDim ? 0.08 : 0.25;
-          const strokeOpacity = isActive ? 0.8 : isDim ? 0.2 : 0.55;
-
-          // Ghost complement position
-          const dx = center.x - CX,
-            dy = center.y - CY;
-          const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-          const gx = center.x + (dx / dist) * 58;
-          const gy = center.y + (dy / dist) * 58;
-          const compOpacity = isActive ? 0.9 : isDim ? 0.1 : 0.35;
-          const compR = isActive ? DOT_R - 1 : 10;
-
-          // Perpendicular offset for "= 7" label
-          const mx = (center.x + gx) / 2,
-            my = (center.y + gy) / 2;
-          const ldx = gx - center.x,
-            ldy = gy - center.y;
-          const llen = Math.sqrt(ldx * ldx + ldy * ldy) || 1;
-          const px = (-ldy / llen) * 14,
-            py = (ldx / llen) * 14;
-
+      {/* Die net (staircase unfolding) */}
+      <svg viewBox={`0 0 ${NET_W} ${NET_H}`} style={{ width: "100%", maxWidth: NET_W }} role="img" aria-label={t("theory_dice_title")}>
+        {NET_COMP_PAIRS.map(([a, b]) => {
+          const fa = NET_FACES.find((f) => f.lv === a)!;
+          const fb = NET_FACES.find((f) => f.lv === b)!;
+          const ax = NET_GAP + fa.col * NET_STEP + NET_CELL / 2;
+          const ay = NET_GAP + fa.row * NET_STEP + NET_CELL / 2;
+          const bx = NET_GAP + fb.col * NET_STEP + NET_CELL / 2;
+          const by = NET_GAP + fb.row * NET_STEP + NET_CELL / 2;
+          const isActive = hl === a || hl === b;
           return (
-            <g key={"face" + fi}>
-              {/* Face polygon */}
-              <g onMouseEnter={() => enter(lv)} onMouseLeave={leave} onClick={() => onTap(lv)} style={{ cursor: "pointer" }}>
-                <polygon
-                  points={face}
-                  fill={info.color}
-                  fillOpacity={fillOpacity}
-                  stroke={info.color}
-                  strokeWidth={isActive ? 2 : 1.2}
-                  strokeOpacity={strokeOpacity}
-                  strokeLinejoin="round"
-                />
-                {isActive && (
-                  <circle cx={center.x} cy={center.y} r={DOT_R + 4} fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth={1.5} />
-                )}
-                <circle
-                  cx={center.x}
-                  cy={center.y}
-                  r={DOT_R}
-                  fill={info.color}
-                  fillOpacity={isDim ? 0.2 : 0.85}
-                  stroke="#fff"
-                  strokeWidth={isActive ? 2.5 : 1.5}
-                  strokeOpacity={isDim ? 0.2 : 0.7}
-                />
-                <text
-                  x={center.x}
-                  y={center.y}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={FS.xl}
-                  fontWeight={900}
-                  fontFamily="monospace"
-                  fill={lv >= 4 ? "#000" : "#fff"}
-                  opacity={isDim ? 0.3 : 1}
-                >
-                  {lv}
-                </text>
-              </g>
-
-              {/* Complement ghost + connector */}
-              <g onMouseEnter={() => enter(compLv)} onMouseLeave={leave} onClick={() => onTap(compLv)} style={{ cursor: "pointer" }}>
-                <line
-                  x1={center.x}
-                  y1={center.y}
-                  x2={gx}
-                  y2={gy}
-                  stroke={compInfo.color}
-                  strokeWidth={isActive ? 1.5 : 1}
-                  strokeDasharray="3,3"
-                  opacity={compOpacity * 0.5}
-                />
-                <circle
-                  cx={gx}
-                  cy={gy}
-                  r={compR}
-                  fill={compInfo.color}
-                  fillOpacity={compOpacity * 0.7}
-                  stroke={compInfo.color}
-                  strokeWidth={isActive ? 2 : 1}
-                  strokeDasharray={isActive ? undefined : "2,2"}
-                  strokeOpacity={compOpacity}
-                />
-                <text
-                  x={gx}
-                  y={gy}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={isActive ? FS.lg : FS.sm}
-                  fontWeight={FW.bold}
-                  fontFamily="monospace"
-                  fill={compLv >= 4 ? "#000" : "#fff"}
-                  opacity={compOpacity}
-                >
-                  {compLv}
-                </text>
-              </g>
-
-              {/* "= 7" label — always visible, brighter when active */}
-              <text
-                x={mx + px}
-                y={my + py}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={FS.xs}
-                fontFamily="monospace"
-                fill={C.textDimmer}
-                opacity={isActive ? 1 : isDim ? 0.15 : 0.45}
-              >
-                = 7
-              </text>
-            </g>
+            <line
+              key={`nc${a}${b}`}
+              x1={ax}
+              y1={ay}
+              x2={bx}
+              y2={by}
+              stroke="rgba(255,255,255,0.15)"
+              strokeWidth={isActive ? 2 : 1}
+              strokeDasharray="4,3"
+              opacity={isActive ? 0.6 : 0.3}
+            />
           );
         })}
 
-        {/* Front-facing edge lines for cube definition */}
-        {FRONT_EDGES.map(([x1, y1, x2, y2], ei) => (
-          <line key={"edge" + ei} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#fff" strokeWidth={1.5} strokeOpacity={hl !== null ? 0.2 : 0.4} />
-        ))}
+        {NET_TOGGLES.map(({ from, to, ch, color }) => {
+          const fa = NET_FACES[from];
+          const fb = NET_FACES[to];
+          const ax = NET_GAP + fa.col * NET_STEP + NET_CELL / 2;
+          const ay = NET_GAP + fa.row * NET_STEP + NET_CELL / 2;
+          const bx = NET_GAP + fb.col * NET_STEP + NET_CELL / 2;
+          const by = NET_GAP + fb.row * NET_STEP + NET_CELL / 2;
+          const mx = (ax + bx) / 2;
+          const my = (ay + by) / 2;
+          const isHorizontal = fa.row === fb.row;
+          const ox = isHorizontal ? 0 : -12;
+          const oy = isHorizontal ? -10 : 0;
+          return (
+            <text
+              key={`nt${from}${to}`}
+              x={mx + ox}
+              y={my + oy}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={FS.xs}
+              fontFamily="monospace"
+              fontWeight={FW.bold}
+              fill={color}
+              opacity={0.7}
+            >
+              {ch}
+            </text>
+          );
+        })}
 
-        {/* Complement pairs summary (right column) */}
-        {PAIRS.map(([a, b], pi) => {
+        {NET_FACES.map(({ lv, col, row }) => {
+          const info = THEORY_LEVELS[lv];
+          const x = NET_GAP + col * (NET_CELL + NET_GAP);
+          const y = NET_GAP + row * (NET_CELL + NET_GAP);
+          const cx = x + NET_CELL / 2;
+          const cy = y + NET_CELL / 2;
+          const comp = lv ^ 7;
+          const isActive = hl === lv || hl === comp;
+          const isDim = hl !== null && !isActive;
+          return (
+            <g key={`nf${lv}`} onMouseEnter={() => enter(lv)} onMouseLeave={leave} onClick={() => onTap(lv)} style={{ cursor: "pointer" }}>
+              <rect
+                x={x}
+                y={y}
+                width={NET_CELL}
+                height={NET_CELL}
+                rx={4}
+                fill={info.color}
+                fillOpacity={isDim ? 0.1 : isActive ? 0.5 : 0.3}
+                stroke={isActive ? "#fff" : info.color}
+                strokeWidth={isActive ? 2 : 1}
+                strokeOpacity={isDim ? 0.2 : 0.6}
+              />
+              <circle
+                cx={cx}
+                cy={cy}
+                r={14}
+                fill={info.color}
+                fillOpacity={isDim ? 0.2 : 0.85}
+                stroke={isDim ? info.color : "#fff"}
+                strokeWidth={isActive ? 2.5 : 1.5}
+                strokeOpacity={isDim ? 0.3 : 0.7}
+              />
+              <text
+                x={cx}
+                y={cy}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={FS.xl}
+                fontWeight={900}
+                fontFamily="monospace"
+                fill={lv >= 4 ? "#000" : "#fff"}
+                opacity={isDim ? 0.3 : 1}
+              >
+                {lv}
+              </text>
+              <text
+                x={cx}
+                y={y + NET_CELL - 6}
+                textAnchor="middle"
+                fontSize={FS.xxs}
+                fontFamily="monospace"
+                fill={isDim ? C.textDimmer : info.color}
+                opacity={isDim ? 0.3 : 0.8}
+              >
+                {info.name}
+              </text>
+              {isActive && (
+                <text x={cx} y={y + 10} textAnchor="middle" fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer} opacity={0.7}>
+                  +{comp}=7
+                </text>
+              )}
+            </g>
+          );
+        })}
+      </svg>
+
+      {/* Complement pairs summary */}
+      <div style={{ display: "flex", gap: SP.lg, justifyContent: "center", flexWrap: "wrap" }}>
+        {PAIRS.map(([a, b]) => {
           const infoA = THEORY_LEVELS[a];
           const infoB = THEORY_LEVELS[b];
-          const isActive = activePairIdx === pi;
+          const isActive = hl === a || hl === b;
           const isDim = hl !== null && !isActive;
-          const opacity = isDim ? 0.2 : isActive ? 1 : 0.6;
-          const baseX = 290,
-            baseY = 80 + pi * 56;
-          const r = 12;
-
           return (
-            <g key={"pair" + pi} opacity={opacity}>
-              <g onMouseEnter={() => enter(a)} onMouseLeave={leave} onClick={() => onTap(a)} style={{ cursor: "pointer" }}>
-                <circle cx={baseX - 22} cy={baseY} r={r} fill={infoA.color} fillOpacity={0.85} stroke="#fff" strokeWidth={1.2} />
-                <text
-                  x={baseX - 22}
-                  y={baseY}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={FS.md}
-                  fontWeight={900}
-                  fontFamily="monospace"
-                  fill={a >= 4 ? "#000" : "#fff"}
-                >
-                  {a}
-                </text>
-              </g>
-              <text
-                x={baseX}
-                y={baseY}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={FS.md}
-                fontFamily="monospace"
-                fill={C.textDimmer}
-              >
-                +
-              </text>
-              <g onMouseEnter={() => enter(b)} onMouseLeave={leave} onClick={() => onTap(b)} style={{ cursor: "pointer" }}>
-                <circle cx={baseX + 22} cy={baseY} r={r} fill={infoB.color} fillOpacity={0.85} stroke="#fff" strokeWidth={1.2} />
-                <text
-                  x={baseX + 22}
-                  y={baseY}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={FS.md}
-                  fontWeight={900}
-                  fontFamily="monospace"
-                  fill={b >= 4 ? "#000" : "#fff"}
-                >
-                  {b}
-                </text>
-              </g>
-              <text
-                x={baseX + 48}
-                y={baseY}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={FS.md}
-                fontFamily="monospace"
-                fontWeight={FW.bold}
-                fill={C.textMuted}
-              >
-                = 7
-              </text>
-              <text x={baseX} y={baseY + 16} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textDimmer}>
-                {infoA.name} + {infoB.name}
-              </text>
-            </g>
+            <span
+              key={`p${a}${b}`}
+              style={{
+                fontSize: FS.xs,
+                fontFamily: "monospace",
+                color: isDim ? C.textDimmer : C.textMuted,
+                opacity: isDim ? 0.3 : isActive ? 1 : 0.6,
+              }}
+            >
+              {infoA.name}({a}) + {infoB.name}({b}) = 7
+            </span>
           );
         })}
+      </div>
 
-        {/* Transition hint */}
-        <text x={SVG_W / 2} y={SVG_H - 14} textAnchor="middle" fontSize={FS.sm} fontFamily="monospace" fill={C.textDimmer}>
-          {t("theory_dice_hint")}
-        </text>
-      </svg>
+      <p style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+        {t("theory_dice_hint")}
+      </p>
+
+      {/* Cube Views toggle */}
+      <button style={{ ...S_BTN, opacity: showViews ? 1 : 0.5 }} onClick={() => setShowViews((v) => !v)}>
+        {t("theory_dice_views")} {showViews ? "\u25b2" : "\u25bc"}
+      </button>
+
+      {/* 8 isometric cube views: 2 columns × 4 rows */}
+      {showViews && (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
+          {/* Column headers */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>
+            <div style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+              {t("theory_dice_additive_col")}
+            </div>
+            <div style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+              {t("theory_dice_subtractive_col")}
+            </div>
+          </div>
+          {/* Grid rows */}
+          {VIEW_ROWS.map(([left, right], ri) => (
+            <div key={`vr${ri}`} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>
+              <MiniCube view={left} hl={hl} onEnter={enter} onLeave={leave} onTap={onTap} />
+              <MiniCube view={right} hl={hl} onEnter={enter} onLeave={leave} onTap={onTap} />
+            </div>
+          ))}
+          {/* Footer annotation */}
+          <p style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+            {"\u2295"} = XOR (GF(2){"\u00b3"}) | {"\u2227"} = AND (Boolean)
+          </p>
+        </div>
+      )}
     </div>
   );
 });
