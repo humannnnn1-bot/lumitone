@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useEffect, useRef } from "react";
 import { THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
 import { S_BTN } from "../../styles";
@@ -26,11 +26,27 @@ interface Props {
 export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHover }: Props) {
   const { t } = useTranslation();
   const [flippedBit, setFlippedBit] = useState<number | null>(null);
+  const [corrected, setCorrected] = useState(false);
+  const correctedTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const enter = useCallback((lv: number) => onHover(lv), [onHover]);
   const leave = useCallback(() => onHover(null), [onHover]);
 
+  // Reset corrected state when flippedBit changes
+  useEffect(() => {
+    setCorrected(false);
+    return () => clearTimeout(correctedTimerRef.current);
+  }, [flippedBit]);
+
+  const handleCorrect = useCallback(() => {
+    setCorrected(true);
+    correctedTimerRef.current = setTimeout(() => {
+      setFlippedBit(null);
+      setCorrected(false);
+    }, 1200);
+  }, []);
+
   // Compute syndrome from flipped bit
-  const syndrome = flippedBit !== null ? flippedBit : 0;
+  const syndrome = corrected ? 0 : flippedBit !== null ? flippedBit : 0;
   const parityResults = PARITY_GROUPS.map((pg) => ({
     ...pg,
     failed: (syndrome & pg.parity) !== 0,
@@ -241,20 +257,32 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
               fontSize={FS.md}
               fontFamily="monospace"
               fontWeight={FW.bold}
-              fill={syndrome > 0 ? "#ff4444" : "#44ff44"}
+              fill={corrected ? "#44ff44" : syndrome > 0 ? "#ff4444" : "#44ff44"}
             >
-              {syndrome > 0 ? t("theory_hamming_error", THEORY_LEVELS[syndrome].name + " (" + syndrome + ")") : t("theory_hamming_ok")}
+              {corrected
+                ? t("theory_hamming_corrected", THEORY_LEVELS[flippedBit].name + " (" + flippedBit + ")")
+                : syndrome > 0
+                  ? t("theory_hamming_error", THEORY_LEVELS[syndrome].name + " (" + syndrome + ")")
+                  : t("theory_hamming_ok")}
             </text>
             <text x={W / 2} y={H - 14} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textDimmer}>
               syndrome = {syndrome.toString(2).padStart(3, "0")}
+              {corrected ? " \u2192 corrected" : ""}
             </text>
           </g>
         )}
       </svg>
 
-      <button style={S_BTN} onClick={() => setFlippedBit(null)}>
-        {t("theory_hamming_flip")} {flippedBit !== null ? "\u21ba" : "\u25b6"}
-      </button>
+      <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>
+        <button style={S_BTN} onClick={() => setFlippedBit(null)}>
+          {t("theory_hamming_flip")} {flippedBit !== null ? "\u21ba" : "\u25b6"}
+        </button>
+        {flippedBit !== null && !corrected && (
+          <button style={{ ...S_BTN, color: "#44ff44", borderColor: "rgba(68,255,68,0.4)" }} onClick={handleCorrect}>
+            {t("theory_hamming_correct")}
+          </button>
+        )}
+      </div>
     </div>
   );
 });

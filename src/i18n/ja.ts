@@ -178,21 +178,26 @@ export const ja: Record<TranslationKey, string> = {
   // Theory panel
   theory_title: "色彩理論",
   theory_intro:
-    "CHROMALUMの8段階ルマレベルはRGBチャンネルを3ビット2進数で表現しています。カラーキューブ、XOR混色、グレイコード、ハミング符号、ファノ平面との深い関係を探りましょう。",
+    "CHROMALUMの8段階ルマレベルはRGBチャンネルを3ビット2進数で符号化します \u2014 ひとつの設計選択。ここから、カラーキューブ、XOR代数、グレイコード、ハミング符号、ファノ平面のすべてが GF(2)\u00b3 の数学的帰結として現れます。",
   theory_binary_title: "バイナリレベル",
   theory_binary_desc:
     "各レベルは3ビット数値です。ビットとチャンネルの割り当て6通りのうち、レベル番号がルマ値に対して単調増加するのはGRB（ビット2=Green, ビット1=Red, ビット0=Blue）だけ — Greenのルマ係数がRed+Blueを超えるためです（0.587 > 0.413）。設計上の選択ではなく、人間の色覚の帰結。",
   theory_binary_color: "色",
+  theory_binary_luma_formula: "Luma (BT.601): Y = 0.299R + 0.587G + 0.114B",
+  theory_dice_title: "カラーダイス",
+  theory_dice_desc:
+    "6つの色彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数 (L\u1d63, L\u1d33, L\u1d07) に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。",
+  theory_dice_hint: "6面 \u2192 8頂点: Black (0) と White (7) を加えるとカラーキューブに",
   theory_fano_title: "ファノ平面",
   theory_fano_desc:
-    "7つの色彩レベルは、どの2点も正確に1本の線を共有し、どの2本の線も正確に1点で交わる構造を形成します — 最小の射影平面 PG(2,2) であり、唯一のシュタイナー三重系 S(2,3,7) です。各線 {a, b, c} は a \u2295 b \u2295 c = 0 を満たします（どのペアのXORも残りの1つ）。タップ/ホバーで3本の線を確認。",
+    "7つの色彩レベルは最小の射影平面 PG(2,2)、唯一のシュタイナー三重系 S(2,3,7) を形成します。三角形で: 頂点 = RGB（原色）、辺の中点 = CMY（隣接頂点のXOR）、中心 = White（全補色線の交点）。3辺 = 加法混色、3中線 = 補色合成、内接円 = CMY閉包。各線 {a, b, c} は a \u2295 b \u2295 c = 0。",
   theory_fano_xor: "{0} \u2295 {1} = {2}",
   theory_fano_primary: "原色混合",
   theory_fano_complement: "補色ペア",
-  theory_fano_secondary: "二次色トライアド",
+  theory_fano_secondary: "CMY閉包",
   theory_cube_title: "カラーキューブ",
   theory_cube_desc:
-    "8レベルは3次元立方体（RGB軸）の頂点です。各辺は1チャンネルの切り替え。BlackとWhiteを除いた6色彩頂点が赤道六角形を形成します。「赤道」ボタンでアニメーション表示。",
+    "8レベルは3次元立方体（RGB軸）の頂点です。各辺は1チャンネルの切り替え。BlackとWhiteを両極とし、6色彩頂点が赤道帯を形成します \u2014 重み1の原色層と重み2の二次色層。「赤道」ボタンでアニメーション表示。",
   theory_gray_title: "グレイコード巡回",
   theory_gray_desc:
     "6色彩頂点はK\u2083,\u2083（原色\u2194二次色）から補色ペア3組を除いた構造 — ちょうど六角形になり、他の辺は存在しません。この唯一の巡回路は1ステップごとに1チャンネルを切り替え: G \u2192 R \u2192 B、カラーホイールと同じ順序。各辺は原色ファノ線上にあり、3本の線を各2回ずつ使います。",
@@ -202,7 +207,7 @@ export const ja: Record<TranslationKey, string> = {
   theory_gray_pause: "\u23f8 停止",
   theory_xor_title: "XOR 混色",
   theory_xor_desc:
-    "XOR は GF(2)\u00b3 の基本演算 \u2014 このタブのすべての構造を定義する操作です。2つのレベルを選んで結果を確認。すべての色には補色があります（c \u2295 7 = 白）。",
+    "XOR は GF(2)\u00b3 の基本演算 \u2014 このタブのすべての構造を定義する操作です。繰り上がりのない2進加算であり、どのビット位置でも 1+1 が生じません。2つのレベルを選んで結果を確認。各色 c の補色は c \u2295 7 であり、c \u2295 (c \u2295 7) = 7 (White) が成立します。",
   theory_hamming_title: "ハミング符号",
   theory_hamming_desc:
     "パリティビット（B=1, R=2, G=4）はRGB原色。データビット（M=3, C=5, Y=6, W=7）は二次色＋白。各パリティビットは、2進表現にそのビットを含む位置を検査します。ビットを反転させてエラー検出を体験！",
@@ -211,9 +216,11 @@ export const ja: Record<TranslationKey, string> = {
   theory_hamming_flip: "ビット反転",
   theory_hamming_error: "{0} にエラー",
   theory_hamming_ok: "エラーなし",
+  theory_hamming_corrected: "{0} を訂正",
+  theory_hamming_correct: "訂正 \u2713",
   theory_connections_title: "連関",
   theory_connections_desc:
-    "GF(2)\u00b3 から3つの独立な構成が導出されます: Cube（ケイリーグラフ）、Fano平面（射影化）、Hamming符号（検査行列の核）。XOR はそれらを結ぶ演算、Gray code はキューブの赤道サイクルです。設計上の選択ではなく、数学的帰結。",
+    "GF(2)\u00b3 から3つの独立な構成が導出されます: Cube（ケイリーグラフ）、Fano平面（射影化）、Hamming符号（検査行列の核）。XOR はそれらを結ぶ演算、Gray code はキューブの色彩赤道上のハミルトン閉路です。",
   theory_conn_center_1: "8レベル",
   theory_conn_center_2: "GF(2)\u00b3",
   theory_conn_gf23: "GF(2)\u00b3",
@@ -227,12 +234,14 @@ export const ja: Record<TranslationKey, string> = {
   theory_conn_edge_cycle: "巡回",
   theory_conn_edge_parity: "パリティ",
   theory_cube_equator: "赤道",
+  theory_cube_complements: "補色対角",
   theory_conn_conclusion_1: "ひとつのベクトル空間からの3つの構成",
   theory_conn_conclusion_2: "GF(2)\u00b3 \u2014 共通の代数的源泉",
   theory_conn_cube_fano: "Cube \u2194 Fano",
-  theory_conn_cube_fano_hook: "ファノ平面の7本の線は、カラーキューブでBlack(0)を通る7つの面・断面に対応します。",
+  theory_conn_cube_fano_hook:
+    "ファノ平面の7本の線は GF(2)\u00b3 の7つの2次元部分空間 \u2014 Black(0)を通るキューブの平面断面に対応します。",
   theory_conn_cube_fano_detail:
-    "座標面3つ \u2192 原色線、対角断面3つ \u2192 補色線、反対角断面1つ \u2192 二次色線。各々が GF(2)\u00b3 の2次元部分空間。",
+    "座標平面3つ \u2192 原色線、対角平面3つ \u2192 補色線、反対角平面1つ \u2192 CMY閉包。各々4頂点（Black含む）を含み非零3点。",
   theory_conn_fano_hamming: "Fano \u2194 Hamming",
   theory_conn_fano_hamming_hook: "ファノ線 {a, b, c}（a\u2295b\u2295c = 0）は、ハミング(7,4)の最小重み符号語そのものです。",
   theory_conn_fano_hamming_detail: "7本の線 = 7つの重み3符号語。重み分布: [1, 0, 0, 7, 7, 0, 0, 1] = 全16符号語。",
@@ -243,17 +252,23 @@ export const ja: Record<TranslationKey, string> = {
   theory_conn_fano_role: "Fano = PG(2,2)\u3001射影化",
   theory_conn_cube_role: "Cube = (GF(2)\u00b3, \u2295) \u306e\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5",
   theory_conn_hamming_role: "Hamming = GF(2)\u00b3\\{0}\u3092\u5217\u306b\u6301\u3064\u691c\u67fb\u884c\u5217",
+  theory_conn_gray_role: "Gray = ケイリーグラフの色彩赤道上のハミルトン閉路",
+  theory_conn_extended: "Black を全体パリティビットとして追加すると [8,4,4] 拡張ハミング符号になる",
+  theory_conn_boundary:
+    "GL(3,2)（位数168）のうち色彩的に有意なのは S\u2083（チャンネル置換6通り）のみ。GF(8) の乗法構造と12色以上への拡張はこの枠組みの外。",
   theory_conn_edge_subspaces: "\u90e8\u5206\u7a7a\u9593",
   theory_conn_edge_codewords: "\u7b26\u53f7\u8a9e",
   theory_conn_edge_checks: "\u30d1\u30ea\u30c6\u30a3",
   theory_xor_complement: "補色: {0} \u2295 7 = {1}",
+  theory_xor_cayley: "ケイリー表",
   theory_fano_show_primary: "原色",
   theory_fano_show_complement: "補色",
-  theory_fano_show_secondary: "二次色",
+  theory_fano_show_secondary: "CMY",
   theory_fano_show_all: "全て",
   theory_binary_hamming_toggle: "Hamming",
   theory_fano_cmy_collapse: "CMY共線",
   theory_fano_cmy_eq: "M\u2295C\u2295Y = 0 \u2192 共線！",
+  theory_fano_cmy_why: "M=G\u2032 C=R\u2032 \u2192 M\u2295C = G\u2295R = Y（補色の鏡像）",
 
   // Stats panel
   stats_title: "PIXEL MAP ANALYSIS",

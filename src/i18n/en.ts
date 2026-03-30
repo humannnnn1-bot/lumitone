@@ -178,21 +178,26 @@ export const en = {
   // Theory panel
   theory_title: "Color Theory",
   theory_intro:
-    "CHROMALUM\u2019s 8 luma levels encode RGB channels as 3-bit binary. This reveals deep connections to the color cube, XOR mixing, Gray codes, Hamming codes, and the Fano plane.",
+    "CHROMALUM\u2019s 8 luma levels encode RGB channels as 3-bit binary \u2014 a single design choice. From this, the color cube, XOR algebra, Gray codes, Hamming codes, and the Fano plane all emerge as mathematical consequences of GF(2)\u00b3.",
   theory_binary_title: "Binary Levels",
   theory_binary_desc:
     "Each level is a 3-bit number. Of the 6 possible bit-to-channel assignments, only GRB (Bit 2 = Green, Bit 1 = Red, Bit 0 = Blue) makes level numbers increase monotonically with luma \u2014 because Green\u2019s luma coefficient alone exceeds Red + Blue (0.587 > 0.413). This is not a design choice but a consequence of human color vision.",
   theory_binary_color: "Color",
+  theory_binary_luma_formula: "Luma (BT.601): Y = 0.299R + 0.587G + 0.114B",
+  theory_dice_title: "Color Dice",
+  theory_dice_desc:
+    "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule. This is a universal theorem: for any positive luminance coefficients (L\u1d63, L\u1d33, L\u1d07) with no ties, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7.",
+  theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
   theory_fano_title: "Fano Plane",
   theory_fano_desc:
-    "The 7 chromatic levels form a structure where every pair of points shares exactly one line, and every pair of lines meets at exactly one point \u2014 known as PG(2,2), the smallest projective plane and the unique Steiner triple system S(2,3,7). For any line {a, b, c}, a \u2295 b \u2295 c = 0 (each pair XORs to the third). Tap/hover a point to see its 3 lines.",
+    "The 7 chromatic levels form PG(2,2), the smallest projective plane and unique Steiner triple system S(2,3,7). In the triangle: vertices = RGB (primaries), midpoints = CMY (each is XOR of adjacent vertices), center = White (where all complement lines meet). The 3 sides are additive mixing, 3 medians are complement pairs, and the inscribed circle is CMY closure. For any line {a, b, c}, a \u2295 b \u2295 c = 0.",
   theory_fano_xor: "{0} \u2295 {1} = {2}",
   theory_fano_primary: "Primary mixing",
   theory_fano_complement: "Complementary",
-  theory_fano_secondary: "Secondary triad",
+  theory_fano_secondary: "CMY closure",
   theory_cube_title: "Color Cube",
   theory_cube_desc:
-    "8 levels sit at the vertices of a 3D cube (RGB axes). Each edge toggles one channel. The 6 chromatic vertices (excluding Black and White) form the equator hexagon. Click \u201cEquator\u201d to animate.",
+    "8 levels sit at the vertices of a 3D cube (RGB axes). Each edge toggles one channel. The 6 chromatic vertices (excluding Black and White) form an equatorial belt between the two poles \u2014 weight-1 primaries on one layer, weight-2 secondaries on the other. Click \u201cEquator\u201d to animate.",
   theory_gray_title: "Gray Code Cycle",
   theory_gray_desc:
     "The 6 chromatic vertices form K\u2083,\u2083 (primaries \u2194 secondaries) minus the 3 complement pairs \u2014 leaving exactly a hexagon with no other edges. This unique cycle toggles one channel per step: G \u2192 R \u2192 B, matching the color wheel. Each edge lies on a primary Fano line, using all 3 lines twice.",
@@ -202,7 +207,7 @@ export const en = {
   theory_gray_pause: "\u23f8 Pause",
   theory_xor_title: "XOR Mixing",
   theory_xor_desc:
-    "XOR is the fundamental operation of GF(2)\u00b3 \u2014 it defines every structure in this tab. Pick two levels to see their result. Every color has a complement (c \u2295 7 = White).",
+    "XOR is the fundamental operation of GF(2)\u00b3 \u2014 it defines every structure in this tab. It is carry-free binary addition: no bit position ever sums 1+1. Pick two levels to see their result. Every chromatic color c has a complement c \u2295 7; together they XOR to White (c \u2295 (c \u2295 7) = 7).",
   theory_hamming_title: "Hamming Code",
   theory_hamming_desc:
     "Parity bits (B=1, R=2, G=4) are RGB primaries. Data bits (M=3, C=5, Y=6, W=7) are secondaries + white. Each parity bit checks positions whose binary has that bit set. Flip a bit to see error detection in action!",
@@ -211,9 +216,11 @@ export const en = {
   theory_hamming_flip: "Flip a bit",
   theory_hamming_error: "Error at {0}",
   theory_hamming_ok: "No error",
+  theory_hamming_corrected: "Corrected {0}",
+  theory_hamming_correct: "Correct \u2713",
   theory_connections_title: "Connections",
   theory_connections_desc:
-    "GF(2)\u00b3 yields three independent constructions: Cube (Cayley graph), Fano plane (projectivization), and Hamming code (parity-check kernel). XOR is the operation binding them all; Gray code is the cube\u2019s equatorial cycle. A mathematical consequence, not a design choice.",
+    "GF(2)\u00b3 yields three independent constructions: Cube (Cayley graph), Fano plane (projectivization), and Hamming code (parity-check kernel). XOR is the operation binding them all; Gray code is the Hamiltonian cycle on the cube\u2019s chromatic equator.",
   theory_conn_center_1: "8 Levels",
   theory_conn_center_2: "GF(2)\u00b3",
   theory_conn_gf23: "GF(2)\u00b3",
@@ -228,12 +235,14 @@ export const en = {
   theory_conn_edge_parity: "parity",
 
   theory_cube_equator: "Equator",
+  theory_cube_complements: "Complements",
   theory_conn_conclusion_1: "Three constructions from one vector space",
   theory_conn_conclusion_2: "GF(2)\u00b3 \u2014 the common algebraic source",
   theory_conn_cube_fano: "Cube \u2194 Fano",
-  theory_conn_cube_fano_hook: "The 7 Fano lines are exactly the 7 faces and cross-sections of the color cube that pass through Black (0).",
+  theory_conn_cube_fano_hook:
+    "The 7 Fano lines are exactly the 7 two-dimensional subspaces of GF(2)\u00b3 \u2014 planar cross-sections of the cube through Black (0).",
   theory_conn_cube_fano_detail:
-    "3 coordinate faces \u2192 primary lines, 3 diagonal sections \u2192 complement lines, 1 anti-diagonal \u2192 secondary line. Each is a 2D subspace of GF(2)\u00b3.",
+    "3 coordinate planes \u2192 primary lines, 3 diagonal planes \u2192 complement lines, 1 anti-diagonal plane \u2192 CMY closure. Each contains 4 vertices (including Black) with 3 non-zero.",
   theory_conn_fano_hamming: "Fano \u2194 Hamming",
   theory_conn_fano_hamming_hook: "Each Fano line {a, b, c} where a\u2295b\u2295c = 0 is a minimum-weight codeword of Hamming(7,4).",
   theory_conn_fano_hamming_detail: "7 lines = 7 weight-3 codewords. Weight distribution: [1, 0, 0, 7, 7, 0, 0, 1] = 16 total.",
@@ -244,17 +253,23 @@ export const en = {
   theory_conn_fano_role: "Fano = PG(2,2), projectivization",
   theory_conn_cube_role: "Cube = Cayley graph of (GF(2)\u00b3, \u2295)",
   theory_conn_hamming_role: "Hamming = parity-check matrix with GF(2)\u00b3\\{0} as columns",
+  theory_conn_gray_role: "Gray = Hamiltonian cycle on the chromatic equator of the Cayley graph",
+  theory_conn_extended: "Adding Black as overall parity bit yields the [8,4,4] extended Hamming code over all 8 levels",
+  theory_conn_boundary:
+    "Only S\u2083 (6 channel permutations) of GL(3,2) (order 168) preserves chromatic meaning. GF(8) multiplication and 12+ color extensions lie outside this framework.",
   theory_conn_edge_subspaces: "subspaces",
   theory_conn_edge_codewords: "codewords",
   theory_conn_edge_checks: "parity",
   theory_xor_complement: "Complement: {0} \u2295 7 = {1}",
+  theory_xor_cayley: "Cayley Table",
   theory_fano_show_primary: "Primary",
   theory_fano_show_complement: "Complement",
-  theory_fano_show_secondary: "Secondary",
+  theory_fano_show_secondary: "CMY",
   theory_fano_show_all: "All",
   theory_binary_hamming_toggle: "Hamming",
   theory_fano_cmy_collapse: "CMY collapse",
   theory_fano_cmy_eq: "M\u2295C\u2295Y = 0 \u2192 collinear!",
+  theory_fano_cmy_why: "M=G\u2032 C=R\u2032 \u2192 M\u2295C = G\u2295R = Y (complement mirror)",
 
   // Stats panel
   stats_title: "PIXEL MAP ANALYSIS",

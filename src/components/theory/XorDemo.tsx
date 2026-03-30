@@ -1,15 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
+import { S_BTN } from "../../styles";
 import { useTranslation } from "../../i18n";
+import { CayleyTable } from "./CayleyTable";
 
 const DOT_R = 18;
 const CHANNEL_COLORS = ["#00ff00", "#ff0000", "#0000ff"];
 
-export const XorDemo = React.memo(function XorDemo() {
+interface Props {
+  hlLevel: number | null;
+  onHover: (lv: number | null) => void;
+}
+
+export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) {
   const { t } = useTranslation();
   const [a, setA] = useState(1);
   const [b, setB] = useState(2);
+  const [showCayley, setShowCayley] = useState(false);
+
+  // Sync from external highlight: set A to highlighted level
+  useEffect(() => {
+    if (hlLevel !== null && hlLevel >= 0 && hlLevel <= 7) setA(hlLevel);
+  }, [hlLevel]);
   const result = a ^ b;
   const complementA = a ^ 7;
   const complementB = b ^ 7;
@@ -22,9 +35,9 @@ export const XorDemo = React.memo(function XorDemo() {
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xl }}>
       {/* Selectors */}
       <div style={{ display: "flex", gap: SP["3xl"], alignItems: "center" }}>
-        <LevelSelector value={a} onChange={setA} label="A" />
+        <LevelSelector value={a} onChange={setA} label="A" onHover={onHover} />
         <span style={{ fontSize: FS["2xl"], fontFamily: "monospace", color: C.textMuted }}>{"\u2295"}</span>
-        <LevelSelector value={b} onChange={setB} label="B" />
+        <LevelSelector value={b} onChange={setB} label="B" onHover={onHover} />
       </div>
 
       {/* Result visualization */}
@@ -157,11 +170,28 @@ export const XorDemo = React.memo(function XorDemo() {
           </div>
         )}
       </div>
+
+      {/* Cayley table toggle */}
+      <button style={S_BTN} onClick={() => setShowCayley((v) => !v)}>
+        {t("theory_xor_cayley")} {showCayley ? "\u25b2" : "\u25bc"}
+      </button>
+
+      {showCayley && <CayleyTable hlLevel={hlLevel} onHover={onHover} />}
     </div>
   );
 });
 
-function LevelSelector({ value, onChange, label }: { value: number; onChange: (v: number) => void; label: string }) {
+function LevelSelector({
+  value,
+  onChange,
+  label,
+  onHover,
+}: {
+  value: number;
+  onChange: (v: number) => void;
+  label: string;
+  onHover?: (lv: number | null) => void;
+}) {
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xs }}>
       <span style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer }}>{label}</span>
@@ -172,6 +202,8 @@ function LevelSelector({ value, onChange, label }: { value: number; onChange: (v
             <button
               key={lv.lv}
               onClick={() => onChange(lv.lv)}
+              onMouseEnter={() => onHover?.(lv.lv)}
+              onMouseLeave={() => onHover?.(null)}
               style={{
                 width: 24,
                 height: 24,

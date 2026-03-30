@@ -40,6 +40,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
   const { t } = useTranslation();
   const [pinned, setPinned] = useState<number | null>(null);
   const [equatorMode, setEquatorMode] = useState(false);
+  const [showComplements, setShowComplements] = useState(false);
   const [animT, setAnimT] = useState(0); // 0 = cube, 1 = hexagon
   const animRef = useRef<number>(0);
 
@@ -175,6 +176,55 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
             );
           })}
 
+        {/* Complement diagonals (space diagonals through center) */}
+        {showComplements &&
+          (
+            [
+              [1, 6],
+              [2, 5],
+              [3, 4],
+            ] as const
+          ).map(([a, b]) => {
+            const pa = getPos(a),
+              pb = getPos(b);
+            const la = THEORY_LEVELS[a],
+              lb = THEORY_LEVELS[b];
+            const grad = `url(#compGrad${a}${b})`;
+            return (
+              <g key={"comp" + a + b}>
+                <defs>
+                  <linearGradient id={`compGrad${a}${b}`} x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor={la.color} stopOpacity={0.6} />
+                    <stop offset="100%" stopColor={lb.color} stopOpacity={0.6} />
+                  </linearGradient>
+                </defs>
+                <line
+                  x1={pa.x}
+                  y1={pa.y}
+                  x2={pb.x}
+                  y2={pb.y}
+                  stroke={grad}
+                  strokeWidth={1.5}
+                  strokeDasharray="6,4"
+                  opacity={0.7 * (1 - animT)}
+                />
+                <text
+                  x={(pa.x + pb.x) / 2}
+                  y={(pa.y + pb.y) / 2 - 8}
+                  textAnchor="middle"
+                  fontSize={FS.xxs}
+                  fontFamily="monospace"
+                  fill={C.textDimmer}
+                  opacity={0.6 * (1 - animT)}
+                >
+                  {a}
+                  {"\u2295"}
+                  {b}=7
+                </text>
+              </g>
+            );
+          })}
+
         {/* Edges */}
         {CUBE_EDGES.map((e, ei) => {
           const p0 = getPos(e[0]),
@@ -263,9 +313,17 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
         })}
       </svg>
 
-      <button style={S_BTN} onClick={() => setEquatorMode((v) => !v)}>
-        {t("theory_cube_equator")} {equatorMode ? "\u25c0" : "\u25b6"}
-      </button>
+      <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>
+        <button style={S_BTN} onClick={() => setEquatorMode((v) => !v)}>
+          {t("theory_cube_equator")} {equatorMode ? "\u25c0" : "\u25b6"}
+        </button>
+        <button
+          style={{ ...S_BTN, opacity: showComplements ? 1 : 0.5, borderColor: showComplements ? "rgba(255,255,255,0.5)" : undefined }}
+          onClick={() => setShowComplements((v) => !v)}
+        >
+          {t("theory_cube_complements")}
+        </button>
+      </div>
     </div>
   );
 });
