@@ -102,6 +102,12 @@ input[type="checkbox"]:focus-visible {
   flex-direction: column;
   align-items: center;
 }
+/* Vertical layout spacing for Glaze hue section */
+.glaze-hue-section {
+  margin-top: 6px;
+  padding-bottom: 8px;
+}
+
 .hex-diag-wrap {
   max-width: 462px;
 }
@@ -151,9 +157,13 @@ input[type="checkbox"]:focus-visible {
     flex-direction: column;
     align-items: center;
     align-self: center;
-    gap: 12px;
-    width: 350px;
+    gap: 8px;
+    width: 420px;
     flex-shrink: 0;
+  }
+  .glaze-hue-section {
+    margin-top: 0;
+    padding-bottom: 0;
   }
   .hex-diag-wrap {
     max-width: 462px;

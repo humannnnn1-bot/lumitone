@@ -481,7 +481,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
           </div>
 
           {/* Hue angle slider with marker */}
-          <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: SP.md }}>
+          <div className="glaze-hue-section" style={{ width: "100%", display: "flex", flexDirection: "column", gap: SP.md }}>
             <div style={{ fontSize: FS.lg, color: C.textPrimary, textAlign: "center", fontFamily: "monospace" }}>
               {t("glaze_hue_angle")}: {Math.round(hueAngle % 360)}°
             </div>
@@ -547,7 +547,6 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
           </div>
 
           {/* Level preview — 2D candidate grid */}
-          <div style={{ fontSize: FS.sm, color: C.textDim, textAlign: "center" }}>{t("glaze_preview")}</div>
           <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center" }}>
             {levelPreview.map((lp) => {
               const cands = LEVEL_CANDIDATES[lp.lv];
