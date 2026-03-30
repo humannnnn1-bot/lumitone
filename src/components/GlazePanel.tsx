@@ -321,7 +321,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
             tabIndex={0}
             onKeyDown={handleKeyDown}
             style={{
-              border: panZoomMode ? `2px solid ${C.accentBright}` : `1px solid ${C.border}`,
+              border: panZoomMode ? `1px solid ${C.accentBright}` : `1px solid ${C.border}`,
               borderRadius: R.lg,
               overflow: "hidden",
               position: "relative",

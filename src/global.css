@@ -21,6 +21,9 @@
   --sp-header-mb: 7px;
   --sp-tablist-mb: 6px;
   --sp-title-mb: 2px;
+  --fs-tab: 12px;
+  --sp-tab-v: 4px;
+  --sp-tab-h: 8px;
 }
 
 /* ── Base reset ── */
@@ -116,6 +119,9 @@ input[type="checkbox"]:focus-visible {
     --sp-header-mb: 10px;
     --sp-tablist-mb: 8px;
     --sp-title-mb: 6px;
+    --fs-tab: 13px;
+    --sp-tab-v: 5px;
+    --sp-tab-h: 10px;
   }
   .hex-title-standalone {
     display: block;

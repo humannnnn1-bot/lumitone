@@ -166,7 +166,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             tabIndex={0}
             onKeyDown={handleKeyDown}
             style={{
-              border: panZoomMode ? `2px solid ${C.accentBright}` : `1px solid ${C.border}`,
+              border: panZoomMode ? `1px solid ${C.accentBright}` : `1px solid ${C.border}`,
               borderRadius: R.lg,
               overflow: "hidden",
               position: "relative",
@@ -223,9 +223,9 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
           <div
             role="radiogroup"
             aria-label={t("aria_drawing_tools")}
-            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xs }}
+            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg }}
           >
-            <div style={{ display: "flex", gap: SP.sm, justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: SP.lg, justifyContent: "center" }}>
               {TOOLS.slice(0, 3).map((tl) => (
                 <button
                   key={tl.id}
@@ -242,7 +242,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
                 </button>
               ))}
             </div>
-            <div style={{ display: "flex", gap: SP.sm, justifyContent: "center" }}>
+            <div style={{ display: "flex", gap: SP.lg, justifyContent: "center" }}>
               {TOOLS.slice(3).map((tl) => (
                 <button
                   key={tl.id}
@@ -261,7 +261,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: SP.md, flexWrap: "wrap", justifyContent: "center", marginTop: SP.lg }}>
+          <div style={{ display: "flex", gap: SP.md, flexWrap: "wrap", justifyContent: "center", marginTop: SP["2xl"] }}>
             <button
               onClick={undo}
               disabled={!state.undoStack.length}
@@ -299,7 +299,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
               alignItems: "center",
               gap: SP.lg,
               fontSize: 11,
-              marginTop: SP.md,
+              marginTop: SP["2xl"],
               marginBottom: SP.md,
               width: "100%",
             }}
@@ -333,7 +333,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
           </div>
 
           {/* Level indicator + buttons (grouped) */}
-          <div style={{ display: "flex", alignItems: "center", gap: SP.lg, justifyContent: "center", marginTop: SP.md }}>
+          <div style={{ display: "flex", alignItems: "center", gap: SP.lg, justifyContent: "center", marginTop: SP["2xl"] }}>
             <span style={{ fontSize: FS.sm, color: C.textDim }}>{t("label_input")}</span>
             <div
               style={{
@@ -357,7 +357,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             <span style={{ fontSize: FS.sm, color: C.textDim }}>{t("label_output")}</span>
           </div>
 
-          <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", maxWidth: "100%", marginTop: SP.md, marginBottom: SP.md }}>
+          <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", maxWidth: "100%", marginTop: SP.xl, marginBottom: SP.md }}>
             {LEVEL_INFO.map((info, i) => (
               <button
                 key={i}
@@ -400,7 +400,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             ))}
           </div>
 
-          <div style={{ display: "flex", gap: SP.lg, flexWrap: "wrap", justifyContent: "center", marginTop: SP.lg }}>
+          <div style={{ display: "flex", gap: SP.lg, flexWrap: "wrap", justifyContent: "center", marginTop: SP["3xl"] }}>
             <button onClick={onNewCanvas} style={S_BTN} title={t("title_new_canvas")}>
               {t("btn_new")}
             </button>
@@ -429,7 +429,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             </button>
           </div>
 
-          <div style={{ display: "flex", gap: SP.md, justifyContent: "center", flexWrap: "wrap", marginTop: SP.lg }}>
+          <div style={{ display: "flex", gap: SP.md, justifyContent: "center", flexWrap: "wrap", marginTop: SP["5xl"] }}>
             <button onClick={handleSaveGray} onContextMenu={handleSaveGrayCustom} style={S_BTN} title={t("title_save_gray")}>
               {t("btn_save_gray")}
             </button>
