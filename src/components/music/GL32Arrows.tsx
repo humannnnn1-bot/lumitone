@@ -1,0 +1,127 @@
+import React from "react";
+import { C, R } from "../../tokens";
+
+interface GL32ArrowsProps {
+  perm: number[]; // current permutation [0,1,2,3,4,5,6,7] or permuted
+  activeLevels: { lv: number; rgb: [number, number, number] }[];
+}
+
+const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
+
+const LEVELS = [1, 2, 3, 4, 5, 6, 7];
+const CR = 7;
+const Y_TOP = 20;
+const Y_BOT = 80;
+const X_START = 16;
+const X_GAP = 22;
+
+function lvColor(lv: number, activeLevels: GL32ArrowsProps["activeLevels"]): string {
+  const found = activeLevels.find((l) => l.lv === lv);
+  if (found) return `rgb(${found.rgb.join(",")})`;
+  return LV_COLORS[lv] ?? "#888";
+}
+
+function isIdentity(perm: number[]): boolean {
+  return LEVELS.every((lv) => perm[lv] === lv);
+}
+
+export const GL32Arrows = React.memo(function GL32Arrows({ perm, activeLevels }: GL32ArrowsProps) {
+  const identity = isIdentity(perm);
+
+  // Build bottom row positions: perm[i] goes to position where it appears
+  const bottomValues = LEVELS.map((lv) => perm[lv] ?? lv);
+
+  return (
+    <svg width={180} height={100} viewBox="0 0 180 100" style={{ borderRadius: R.md, border: `1px solid ${C.border}` }}>
+      <rect width={180} height={100} fill={C.bgPanel} rx={R.md} />
+
+      <defs>
+        <marker id="gl-arrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+          <path d="M0,0 L6,2 L0,4 Z" fill={C.textDimmer} />
+        </marker>
+      </defs>
+
+      {/* Identity label */}
+      {identity && (
+        <text x={170} y={52} fontSize={9} fill={C.accent} textAnchor="end" fontStyle="italic">
+          e
+        </text>
+      )}
+
+      {/* Arrows from top[i] to bottom position */}
+      {LEVELS.map((lv, i) => {
+        const topX = X_START + i * X_GAP;
+        const permVal = perm[lv] ?? lv;
+
+        // Find position in bottom row where permVal landed
+        const botIdx = i; // bottom row shows perm[1..7] in order
+        const botX = X_START + botIdx * X_GAP;
+        const color = lvColor(lv, activeLevels);
+
+        if (permVal === lv) {
+          // Fixed point: small dot indicator
+          return (
+            <line
+              key={`a${lv}`}
+              x1={topX}
+              y1={Y_TOP + CR + 2}
+              x2={botX}
+              y2={Y_BOT - CR - 2}
+              stroke={color}
+              strokeWidth={1}
+              opacity={0.5}
+              strokeDasharray="2,2"
+            />
+          );
+        }
+
+        // Curved arrow
+        const midX = (topX + botX) / 2;
+        const curveOffset = (botIdx - i) * 3;
+        const cpX = midX + curveOffset;
+        const cpY = 50;
+
+        return (
+          <path
+            key={`a${lv}`}
+            d={`M${topX},${Y_TOP + CR + 2} Q${cpX},${cpY} ${botX},${Y_BOT - CR - 2}`}
+            fill="none"
+            stroke={color}
+            strokeWidth={1.2}
+            opacity={0.7}
+            markerEnd="url(#gl-arrow)"
+          />
+        );
+      })}
+
+      {/* Top row: identity order */}
+      {LEVELS.map((lv, i) => {
+        const x = X_START + i * X_GAP;
+        const color = lvColor(lv, activeLevels);
+        return (
+          <g key={`t${lv}`}>
+            <circle cx={x} cy={Y_TOP} r={CR} fill={color} stroke="#fff" strokeWidth={0.5} />
+            <text x={x} y={Y_TOP + 2.5} fontSize={7} fill="#fff" textAnchor="middle" pointerEvents="none">
+              {lv}
+            </text>
+          </g>
+        );
+      })}
+
+      {/* Bottom row: permuted order */}
+      {LEVELS.map((lv, i) => {
+        const x = X_START + i * X_GAP;
+        const val = bottomValues[i];
+        const color = lvColor(val, activeLevels);
+        return (
+          <g key={`b${lv}`}>
+            <circle cx={x} cy={Y_BOT} r={CR} fill={color} stroke="#fff" strokeWidth={0.5} />
+            <text x={x} y={Y_BOT + 2.5} fontSize={7} fill="#fff" textAnchor="middle" pointerEvents="none">
+              {val}
+            </text>
+          </g>
+        );
+      })}
+    </svg>
+  );
+});

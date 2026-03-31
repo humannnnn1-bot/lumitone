@@ -21,9 +21,9 @@
   --sp-header-mb: 7px;
   --sp-tablist-mb: 6px;
   --sp-title-mb: 2px;
-  --fs-tab: 12px;
+  --fs-tab: 11px;
   --sp-tab-v: 4px;
-  --sp-tab-h: 8px;
+  --sp-tab-h: 4px;
 }
 
 /* ── Base reset ── */
@@ -34,6 +34,17 @@ html, body {
 }
 body {
   overflow-x: hidden;
+}
+
+/* Tab bar: mobile stretches to fill width */
+[role="tablist"] > button[role="tab"] {
+  flex: 1;
+  min-width: 0;
+}
+@media (min-width: 1024px) {
+  [role="tablist"] > button[role="tab"] {
+    flex: none;
+  }
 }
 
 /* Focus indicators */

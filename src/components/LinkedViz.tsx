@@ -10,6 +10,19 @@ interface LinkedVizProps {
   hoveredCandidate?: { lv: number; ci: number } | null;
   onHoverCandidate?: (d: { lv: number; ci: number } | null) => void;
   directCandidates?: Map<number, number>;
+  /** External audio engine — when provided, LinkedViz shows audio toggle button */
+  externalAudio?: { initAudio: () => void; enabled: boolean; setEnabled: (b: boolean) => void };
+  /** Rotation speed in degrees/second (default 36) */
+  rotationSpeed?: number;
+  /** Hide the legend section and show interval ratios instead */
+  hideLegend?: boolean;
+  /** Scale mode for interval ratio display (only shown when hideLegend) */
+  scaleMode?: "12tet" | "ji" | "octatonic";
+  /** Controlled alpha state (for Music tab integration) */
+  alpha0?: number;
+  onAlpha0Change?: (a: number) => void;
+  alpha7?: number;
+  onAlpha7Change?: (a: number) => void;
 }
 
 /* ── Layout constants ── */
@@ -43,7 +56,7 @@ const TW = RX + RW + 4; // 332
 const TH = BY + BH + 16; // 344
 
 // Active levels (skip black=0, white=7)
-const ACTIVE_LEVELS = [1, 2, 3, 4, 5, 6];
+export const ACTIVE_LEVELS = [1, 2, 3, 4, 5, 6];
 const HUE_LABELS = [0, 60, 120, 180, 240, 300, 360];
 
 // Level display colors
@@ -281,16 +294,36 @@ export const LinkedViz = React.memo(function LinkedViz({
   hoveredCandidate,
   onHoverCandidate,
   directCandidates,
+  externalAudio,
+  hideLegend,
+  scaleMode,
+  alpha0: alpha0Prop,
+  onAlpha0Change,
+  alpha7: alpha7Prop,
+  onAlpha7Change,
 }: LinkedVizProps) {
   const { t } = useTranslation();
   const [mode, setMode] = useState<0 | 7>(0);
-  const [alpha0, setAlpha0] = useState(0);
-  const [alpha7, setAlpha7] = useState(0);
+  const [alpha0Internal, setAlpha0Internal] = useState(0);
+  const [alpha7Internal, setAlpha7Internal] = useState(0);
+  const alpha0 = alpha0Prop ?? alpha0Internal;
+  const alpha7 = alpha7Prop ?? alpha7Internal;
+  const setAlpha0: React.Dispatch<React.SetStateAction<number>> = onAlpha0Change
+    ? (v) => {
+        onAlpha0Change(typeof v === "function" ? (v as (prev: number) => number)(alpha0) : v);
+      }
+    : setAlpha0Internal;
+  const setAlpha7: React.Dispatch<React.SetStateAction<number>> = onAlpha7Change
+    ? (v) => {
+        onAlpha7Change(typeof v === "function" ? (v as (prev: number) => number)(alpha7) : v);
+      }
+    : setAlpha7Internal;
   const [localHoveredDot, setLocalHoveredDot] = useState<{ lv: number; ci: number } | null>(null);
   const hoveredDot = onHoverCandidate ? (hoveredCandidate ?? null) : localHoveredDot;
   const setHoveredDot = onHoverCandidate ?? setLocalHoveredDot;
   const svgRef = useRef<SVGSVGElement>(null);
   const dragRef = useRef<{ type: "wheel"; startAngle: number; startAlpha: number } | { type: "hue" } | { type: "hue-bottom" } | null>(null);
+  const audioEnabled = externalAudio?.enabled ?? false;
 
   const activeAlpha = mode === 0 ? alpha0 : alpha7;
   const activeRadiusFn = mode === 0 ? lumR0 : lumR7;
@@ -308,6 +341,13 @@ export const LinkedViz = React.memo(function LinkedViz({
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- brushLevel triggers re-render for active dot updates
   }, [hueAngle, brushLevel, directCandidates]);
+
+  const handleAudioToggle = useCallback(() => {
+    if (externalAudio) {
+      if (!externalAudio.enabled) externalAudio.initAudio();
+      externalAudio.setEnabled(!externalAudio.enabled);
+    }
+  }, [externalAudio]);
 
   // Wheel dot position (for guide lines)
   const wP = useCallback(
@@ -1002,165 +1042,246 @@ export const LinkedViz = React.memo(function LinkedViz({
         </g>
 
         {/* ═══ BOTTOM-RIGHT: Legend + Active color info ═══ */}
-        <g>
-          {/* Active color info with L0 legend above, L7 legend below */}
-          {(() => {
-            const hovIdx = hoveredDot ? activeDots.findIndex((d) => d.lv === hoveredDot.lv && d.ci === hoveredDot.ci) : -1;
-            const ix = BXright + 12;
-            const ixRgb = ix + 60; // fixed column for RGB values
-            const ixC2 = ixRgb + 70; // fixed column for C2 pairs
-            const ROW_H = 18; // single line per entry
-            let yOffset = BY + 20;
+        {!hideLegend && (
+          <g>
+            {/* Active color info with L0 legend above, L7 legend below */}
+            {(() => {
+              const hovIdx = hoveredDot ? activeDots.findIndex((d) => d.lv === hoveredDot.lv && d.ci === hoveredDot.ci) : -1;
+              const ix = BXright + 12;
+              const ixRgb = ix + 60; // fixed column for RGB values
+              const ixC2 = ixRgb + 70; // fixed column for C2 pairs
+              const ROW_H = 18; // single line per entry
+              let yOffset = BY + 20;
 
-            // L0 legend at top
-            const l0y = yOffset;
-            yOffset += ROW_H; // same spacing as other entries
-            const dotElements = activeDots.map((d, i) => {
-              const col = `rgb(${d.rgb.join(",")})`;
-              const y = yOffset;
-              const hov = hovIdx === i;
-              yOffset += ROW_H; // always same increment
+              // L0 legend at top
+              const l0y = yOffset;
+              yOffset += ROW_H; // same spacing as other entries
+              const dotElements = activeDots.map((d, i) => {
+                const col = `rgb(${d.rgb.join(",")})`;
+                const y = yOffset;
+                const hov = hovIdx === i;
+                yOffset += ROW_H; // always same increment
+                return (
+                  <g key={`info-${d.lv}-${d.ci}`} opacity={hov ? 1 : hoveredDot !== null ? 0.3 : 0.8} {...dotHandlers(d)}>
+                    <rect
+                      x={ix}
+                      y={y}
+                      width={11}
+                      height={11}
+                      rx={2}
+                      fill={col}
+                      stroke={hov ? "#fff" : "none"}
+                      strokeWidth={hov ? 0.5 : 0}
+                    />
+                    <text
+                      x={ix + 15}
+                      y={y + 9}
+                      fontSize={hov ? 11 : 10}
+                      fill={hov ? C.textWhite : C.textDimmer}
+                      fontWeight={hov ? "bold" : "normal"}
+                    >
+                      L{d.lv} <tspan style={{ fontVariantNumeric: "tabular-nums" }}>{String(Math.round(d.a)).padStart(3, "\u2007")}°</tspan>
+                    </text>
+                    <text x={ixRgb} y={y + 9} fontSize={10} fill={C.textDimmer}>
+                      ({d.rgb.join(",")})
+                    </text>
+                    {(() => {
+                      const pairLv = C2_PAIR[d.lv];
+                      const pairDot = activeDots.find((ad) => ad.lv === pairLv);
+                      const pairCol = pairDot ? `rgb(${pairDot.rgb.join(",")})` : LV_COLORS[pairLv];
+                      return (
+                        <>
+                          <text x={ixC2} y={y + 9} fontSize={10} fill={C.textDimmer}>
+                            ↔
+                          </text>
+                          <rect x={ixC2 + 12} y={y + 1} width={9} height={9} rx={2} fill={pairCol} opacity={0.8} />
+                          <text x={ixC2 + 24} y={y + 9} fontSize={10} fill={C.textDimmer}>
+                            L{pairLv}
+                          </text>
+                        </>
+                      );
+                    })()}
+                  </g>
+                );
+              });
+
+              // L7 legend below L6
+              const l7y = yOffset; // same spacing as other entries
+
               return (
-                <g key={`info-${d.lv}-${d.ci}`} opacity={hov ? 1 : hoveredDot !== null ? 0.3 : 0.8} {...dotHandlers(d)}>
-                  <rect x={ix} y={y} width={11} height={11} rx={2} fill={col} stroke={hov ? "#fff" : "none"} strokeWidth={hov ? 0.5 : 0} />
-                  <text
-                    x={ix + 15}
-                    y={y + 9}
-                    fontSize={hov ? 11 : 10}
-                    fill={hov ? C.textWhite : C.textDimmer}
-                    fontWeight={hov ? "bold" : "normal"}
-                  >
-                    L{d.lv} <tspan style={{ fontVariantNumeric: "tabular-nums" }}>{String(Math.round(d.a)).padStart(3, "\u2007")}°</tspan>
-                  </text>
-                  <text x={ixRgb} y={y + 9} fontSize={10} fill={C.textDimmer}>
-                    ({d.rgb.join(",")})
-                  </text>
+                <>
+                  {/* L0 legend */}
                   {(() => {
-                    const pairLv = C2_PAIR[d.lv];
-                    const pairDot = activeDots.find((ad) => ad.lv === pairLv);
-                    const pairCol = pairDot ? `rgb(${pairDot.rgb.join(",")})` : LV_COLORS[pairLv];
+                    const hovL0 = hoveredDot !== null && hoveredDot.lv === 0;
                     return (
-                      <>
-                        <text x={ixC2} y={y + 9} fontSize={10} fill={C.textDimmer}>
+                      <g
+                        key="legend-l0"
+                        opacity={hovL0 ? 1 : hoveredDot !== null ? 0.3 : 0.8}
+                        onPointerEnter={() => setHoveredDot({ lv: 0, ci: -1 })}
+                        onPointerLeave={() => setHoveredDot(null)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <rect
+                          x={ix}
+                          y={l0y + 1}
+                          width={11}
+                          height={11}
+                          rx={2}
+                          fill="#222"
+                          stroke={hovL0 ? "#fff" : "rgba(255,255,255,0.5)"}
+                          strokeWidth={hovL0 ? 0.8 : 0.6}
+                        />
+                        <text
+                          x={ix + 15}
+                          y={l0y + 9}
+                          fontSize={hovL0 ? 11 : 10}
+                          fill={hovL0 ? C.textWhite : C.textDimmer}
+                          fontWeight={hovL0 ? "bold" : "normal"}
+                        >
+                          {legendL0}
+                        </text>
+                        <text x={ixRgb} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
+                          (0,0,0)
+                        </text>
+                        <text x={ixC2} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
                           ↔
                         </text>
-                        <rect x={ixC2 + 12} y={y + 1} width={9} height={9} rx={2} fill={pairCol} opacity={0.8} />
-                        <text x={ixC2 + 24} y={y + 9} fontSize={10} fill={C.textDimmer}>
-                          L{pairLv}
+                        <rect x={ixC2 + 12} y={l0y + 1} width={9} height={9} rx={2} fill="#fff" opacity={0.8} />
+                        <text x={ixC2 + 24} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
+                          L7
                         </text>
-                      </>
+                      </g>
                     );
                   })()}
-                </g>
+                  {dotElements}
+                  {/* L7 legend */}
+                  {(() => {
+                    const hovL7 = hoveredDot !== null && hoveredDot.lv === 7;
+                    return (
+                      <g
+                        key="legend-l7"
+                        opacity={hovL7 ? 1 : hoveredDot !== null ? 0.3 : 0.8}
+                        onPointerEnter={() => setHoveredDot({ lv: 7, ci: -1 })}
+                        onPointerLeave={() => setHoveredDot(null)}
+                        style={{ cursor: "pointer" }}
+                      >
+                        <rect
+                          x={ix}
+                          y={l7y + 1}
+                          width={11}
+                          height={11}
+                          rx={2}
+                          fill="#fff"
+                          stroke={hovL7 ? "#000" : "rgba(0,0,0,0.5)"}
+                          strokeWidth={hovL7 ? 0.8 : 0.6}
+                        />
+                        <text
+                          x={ix + 15}
+                          y={l7y + 9}
+                          fontSize={hovL7 ? 11 : 10}
+                          fill={hovL7 ? C.textWhite : C.textDimmer}
+                          fontWeight={hovL7 ? "bold" : "normal"}
+                        >
+                          {legendL7}
+                        </text>
+                        <text x={ixRgb} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
+                          (255,255,255)
+                        </text>
+                        <text x={ixC2} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
+                          ↔
+                        </text>
+                        <rect
+                          x={ixC2 + 12}
+                          y={l7y + 1}
+                          width={9}
+                          height={9}
+                          rx={2}
+                          fill="#222"
+                          stroke="rgba(255,255,255,0.5)"
+                          strokeWidth={0.4}
+                          opacity={0.8}
+                        />
+                        <text x={ixC2 + 24} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
+                          L0
+                        </text>
+                      </g>
+                    );
+                  })()}
+                </>
               );
-            });
+            })()}
+          </g>
+        )}
 
-            // L7 legend below L6
-            const l7y = yOffset; // same spacing as other entries
+        {/* ═══ BOTTOM-RIGHT: Interval Ratios (when legend hidden) ═══ */}
+        {hideLegend &&
+          scaleMode &&
+          (() => {
+            const ix = BXright + 10;
+            const iy = BY + 14;
+            const ROW = 20;
+            const FS_TITLE = 12;
+            const FS_ROW = 11;
+            const LABEL_W = 28;
+
+            type RatioEntry = { label: string; value: string; dim?: boolean };
+            let title = "";
+            const rows: RatioEntry[] = [];
+
+            if (scaleMode === "ji") {
+              title = "Palindromic JI";
+              const ratios = ["1:1", "8:7", "7:5", "8:5", "2:1"];
+              const cents = ["0", "231", "583", "814", "1200"];
+              const labels = ["L2", "L3", "L4", "L5", "L6"];
+              for (let i = 0; i < 5; i++) rows.push({ label: labels[i], value: `${ratios[i]}  (${cents[i]}¢)` });
+              rows.push({ label: "", value: "" });
+              rows.push({ label: "\u2190", value: "palindrome \u2192", dim: true });
+              rows.push({ label: "", value: "8:7 \u00b7 7:5 \u00b7 8:5 \u00b7 2:1", dim: true });
+              rows.push({ label: "", value: "2:1 \u00b7 8:5 \u00b7 7:5 \u00b7 8:7", dim: true });
+            } else if (scaleMode === "12tet") {
+              title = "12-TET (Equal)";
+              const activeDeg = activeDots.map((d) => Math.round((d.a / 360) * 2 * 1200));
+              activeDeg.sort((a, b) => a - b);
+              for (let i = 0; i < activeDeg.length; i++) {
+                const prev = i === 0 ? 0 : activeDeg[i - 1];
+                const diff = activeDeg[i] - prev;
+                rows.push({ label: `L${activeDots[i]?.lv ?? "?"}`, value: `${activeDeg[i]}¢  (\u0394${diff}¢)` });
+              }
+            } else {
+              title = "Octatonic Scale";
+              const steps = [0, 1, 3, 4, 6, 7, 9, 10];
+              const names = ["C", "C\u266f", "E\u266d", "E", "F\u266f", "G", "A", "B\u266d"];
+              for (let i = 0; i < 8; i++) {
+                const next = steps[(i + 1) % 8];
+                const diff = (next - steps[i] + 12) % 12;
+                rows.push({ label: names[i], value: `${steps[i]}st  (\u0394${diff})` });
+              }
+            }
 
             return (
-              <>
-                {/* L0 legend */}
-                {(() => {
-                  const hovL0 = hoveredDot !== null && hoveredDot.lv === 0;
-                  return (
-                    <g
-                      key="legend-l0"
-                      opacity={hovL0 ? 1 : hoveredDot !== null ? 0.3 : 0.8}
-                      onPointerEnter={() => setHoveredDot({ lv: 0, ci: -1 })}
-                      onPointerLeave={() => setHoveredDot(null)}
-                      style={{ cursor: "pointer" }}
+              <g>
+                <text x={ix} y={iy} fontSize={FS_TITLE} fill={C.accent} fontWeight="bold">
+                  {title}
+                </text>
+                {rows.map((r, i) => (
+                  <g key={i}>
+                    <text
+                      x={ix}
+                      y={iy + (i + 1) * ROW}
+                      fontSize={FS_ROW}
+                      fill={r.dim ? C.textDimmer : C.textDim}
+                      fontWeight={r.dim ? "normal" : "bold"}
                     >
-                      <rect
-                        x={ix}
-                        y={l0y + 1}
-                        width={11}
-                        height={11}
-                        rx={2}
-                        fill="#222"
-                        stroke={hovL0 ? "#fff" : "rgba(255,255,255,0.5)"}
-                        strokeWidth={hovL0 ? 0.8 : 0.6}
-                      />
-                      <text
-                        x={ix + 15}
-                        y={l0y + 9}
-                        fontSize={hovL0 ? 11 : 10}
-                        fill={hovL0 ? C.textWhite : C.textDimmer}
-                        fontWeight={hovL0 ? "bold" : "normal"}
-                      >
-                        {legendL0}
-                      </text>
-                      <text x={ixRgb} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
-                        (0,0,0)
-                      </text>
-                      <text x={ixC2} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
-                        ↔
-                      </text>
-                      <rect x={ixC2 + 12} y={l0y + 1} width={9} height={9} rx={2} fill="#fff" opacity={0.8} />
-                      <text x={ixC2 + 24} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
-                        L7
-                      </text>
-                    </g>
-                  );
-                })()}
-                {dotElements}
-                {/* L7 legend */}
-                {(() => {
-                  const hovL7 = hoveredDot !== null && hoveredDot.lv === 7;
-                  return (
-                    <g
-                      key="legend-l7"
-                      opacity={hovL7 ? 1 : hoveredDot !== null ? 0.3 : 0.8}
-                      onPointerEnter={() => setHoveredDot({ lv: 7, ci: -1 })}
-                      onPointerLeave={() => setHoveredDot(null)}
-                      style={{ cursor: "pointer" }}
-                    >
-                      <rect
-                        x={ix}
-                        y={l7y + 1}
-                        width={11}
-                        height={11}
-                        rx={2}
-                        fill="#fff"
-                        stroke={hovL7 ? "#000" : "rgba(0,0,0,0.5)"}
-                        strokeWidth={hovL7 ? 0.8 : 0.6}
-                      />
-                      <text
-                        x={ix + 15}
-                        y={l7y + 9}
-                        fontSize={hovL7 ? 11 : 10}
-                        fill={hovL7 ? C.textWhite : C.textDimmer}
-                        fontWeight={hovL7 ? "bold" : "normal"}
-                      >
-                        {legendL7}
-                      </text>
-                      <text x={ixRgb} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
-                        (255,255,255)
-                      </text>
-                      <text x={ixC2} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
-                        ↔
-                      </text>
-                      <rect
-                        x={ixC2 + 12}
-                        y={l7y + 1}
-                        width={9}
-                        height={9}
-                        rx={2}
-                        fill="#222"
-                        stroke="rgba(255,255,255,0.5)"
-                        strokeWidth={0.4}
-                        opacity={0.8}
-                      />
-                      <text x={ixC2 + 24} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
-                        L0
-                      </text>
-                    </g>
-                  );
-                })()}
-              </>
+                      {r.label}
+                    </text>
+                    <text x={ix + LABEL_W} y={iy + (i + 1) * ROW} fontSize={FS_ROW} fill={r.dim ? C.textDimmer : C.textDim}>
+                      {r.value}
+                    </text>
+                  </g>
+                ))}
+              </g>
             );
           })()}
-        </g>
       </>
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hoveredDot is intentionally reactive
@@ -1180,6 +1301,8 @@ export const LinkedViz = React.memo(function LinkedViz({
     onHueBottomPointerDown,
     legendL0,
     legendL7,
+    hideLegend,
+    scaleMode,
   ]);
 
   const deltaAlpha = Math.round((((alpha0 - alpha7) % 360) + 360) % 360);
@@ -1215,6 +1338,16 @@ export const LinkedViz = React.memo(function LinkedViz({
         <button type="button" style={isInverted ? S_TOGGLE_ACTIVE : S_TOGGLE} onClick={() => setAlpha7((alpha0 + 180) % 360)}>
           {t("linkedviz_anti_phase")}
         </button>
+        {externalAudio && (
+          <button
+            type="button"
+            style={audioEnabled ? S_TOGGLE_ACTIVE : S_TOGGLE}
+            onClick={handleAudioToggle}
+            title={t("linkedviz_sound_title")}
+          >
+            {audioEnabled ? t("linkedviz_sound_on") : t("linkedviz_sound_off")}
+          </button>
+        )}
       </div>
 
       <svg

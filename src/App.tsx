@@ -27,12 +27,13 @@ import { AnalyzePanel } from "./components/AnalyzePanel";
 import { GalleryPanel } from "./components/GalleryPanel";
 import { HexTab } from "./components/HexTab";
 import { TheoryPanel } from "./components/TheoryPanel";
+import { MusicPanel } from "./components/MusicPanel";
 import { useTranslation } from "./i18n";
 
 /* ═══════════════════════════════════════════
    LAYOUT STYLE CONSTANTS
    ═══════════════════════════════════════════ */
-const TAB_KEYS = ["tab_source", "tab_color", "tab_hex", "tab_glaze", "tab_stats", "tab_gallery", "tab_theory"] as const;
+const TAB_KEYS = ["tab_source", "tab_color", "tab_hex", "tab_glaze", "tab_stats", "tab_gallery", "tab_theory", "tab_music"] as const;
 
 const S_ROOT: React.CSSProperties = { minHeight: "100vh", background: C.bgRoot, color: C.textPrimary, fontFamily: FONT.mono };
 const S_HEADER: React.CSSProperties = { textAlign: "center", marginBottom: "var(--sp-header-mb)" };
@@ -49,9 +50,9 @@ const S_HELP_LINK: React.CSSProperties = { cursor: "pointer", color: C.textDimme
 const S_TABLIST: React.CSSProperties = {
   display: "flex",
   justifyContent: "center",
-  gap: 1,
+  gap: 0,
   marginBottom: "var(--sp-tablist-mb)",
-  maxWidth: "100%",
+  width: "100%",
 };
 const S_TAB_CENTER: React.CSSProperties = { display: "flex", justifyContent: "center", width: "100%" };
 const S_DROP_OVERLAY: React.CSSProperties = {
@@ -553,6 +554,11 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
         <div id="tabpanel-6" role="tabpanel" style={{ width: "100%", display: activeTab === 6 ? undefined : "none" }}>
           <TheoryPanel />
         </div>
+        {activeTab === 7 && (
+          <div id="tabpanel-7" role="tabpanel" style={{ width: "100%" }}>
+            <MusicPanel />
+          </div>
+        )}
       </div>
     </div>
   );
