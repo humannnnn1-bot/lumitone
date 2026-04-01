@@ -125,8 +125,9 @@ function ccDistance(a: number[], b: number[]): number {
 }
 
 const S_HUE_FILTER_TRACK: React.CSSProperties = {
-  flex: "3 1 120px",
+  flex: "2 1 100px",
   minWidth: 80,
+  maxWidth: 280,
   height: 14,
   borderRadius: R.md,
   background: HUE_GRADIENT,
@@ -317,44 +318,63 @@ export const GalleryPanel = React.memo(function GalleryPanel({
         )}
       </div>
 
-      {/* Filter + Sort + Hue filter — single row */}
-      <div style={{ display: "flex", gap: SP.xs, justifyContent: "center", flexWrap: "wrap", alignItems: "center" }}>
-        <button onClick={() => setFilter("all")} style={filter === "all" ? S_BTN_ACTIVE : S_BTN}>
-          {t("gallery_filter_all")}
-        </button>
-        <button onClick={() => setFilter("bookmarks")} style={filter === "bookmarks" ? S_BTN_ACTIVE : S_BTN}>
-          {t("gallery_filter_bookmarks")} ({bookmarks.length})
-        </button>
-        <button
-          onClick={() =>
-            setSortMode((m) => (m === "default" ? "hue_asc" : m === "hue_asc" ? "hue_desc" : m === "hue_desc" ? "similar" : "default"))
-          }
-          style={sortMode !== "default" ? S_BTN_ACTIVE : S_BTN}
-          title={t("gallery_sort_title")}
-        >
-          {sortMode === "hue_asc"
-            ? t("gallery_sort_hue_asc")
-            : sortMode === "hue_desc"
-              ? t("gallery_sort_hue_desc")
-              : sortMode === "similar"
-                ? t("gallery_sort_similar")
-                : t("gallery_sort_default")}
-        </button>
-        {(["S", "M", "L"] as ThumbSize[]).map((sz) => (
-          <button
-            key={sz}
-            onClick={() => setThumbSize(sz)}
-            style={thumbSize === sz ? S_BTN_SM_ACTIVE : S_BTN_SM}
-            aria-label={`Thumbnail size ${sz}`}
-          >
-            {t(`gallery_thumb_${sz}`)}
+      {/* Filter + Sort + Size — grouped with spacing between groups */}
+      <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", alignItems: "center", gap: SP.sm }}>
+        {/* Filter group */}
+        <div style={{ display: "flex", gap: SP.sm }}>
+          <button onClick={() => setFilter("all")} style={filter === "all" ? S_BTN_ACTIVE : S_BTN}>
+            {t("gallery_filter_all")}
           </button>
-        ))}
+          <button onClick={() => setFilter("bookmarks")} style={filter === "bookmarks" ? S_BTN_ACTIVE : S_BTN}>
+            {t("gallery_filter_bookmarks")} ({bookmarks.length})
+          </button>
+        </div>
+        {/* Sort group */}
+        <div style={{ display: "flex", gap: SP.sm, marginInline: SP.sm }}>
+          <button
+            onClick={() =>
+              setSortMode((m) => (m === "default" ? "hue_asc" : m === "hue_asc" ? "hue_desc" : m === "hue_desc" ? "similar" : "default"))
+            }
+            style={sortMode !== "default" ? S_BTN_ACTIVE : S_BTN}
+            title={t("gallery_sort_title")}
+          >
+            {sortMode === "hue_asc"
+              ? t("gallery_sort_hue_asc")
+              : sortMode === "hue_desc"
+                ? t("gallery_sort_hue_desc")
+                : sortMode === "similar"
+                  ? t("gallery_sort_similar")
+                  : t("gallery_sort_default")}
+          </button>
+        </div>
+        {/* Size group */}
+        <div style={{ display: "flex", gap: SP.xs }}>
+          {(["S", "M", "L"] as ThumbSize[]).map((sz) => (
+            <button
+              key={sz}
+              onClick={() => setThumbSize(sz)}
+              style={thumbSize === sz ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              aria-label={`Thumbnail size ${sz}`}
+            >
+              {t(`gallery_thumb_${sz}`)}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Hue filter sliders — shown only when a level is selected */}
       {
-        <div style={{ display: "flex", gap: SP.md, alignItems: "center", width: "100%", fontSize: FS.sm, color: C.textDim }}>
+        <div
+          style={{
+            display: "flex",
+            gap: SP.md,
+            alignItems: "center",
+            width: "100%",
+            justifyContent: "center",
+            fontSize: FS.sm,
+            color: C.textDim,
+          }}
+        >
           <div style={S_HUE_FILTER_TRACK}>
             {/* Range boundary lines + arrow colored by hue angle */}
             {(() => {
@@ -402,25 +422,10 @@ export const GalleryPanel = React.memo(function GalleryPanel({
               style={S_HUE_FILTER_INPUT}
             />
           </div>
-          <span style={{ fontFamily: "monospace", whiteSpace: "nowrap" }}>
+          <span style={{ fontFamily: "monospace", whiteSpace: "nowrap", width: "9ch", flexShrink: 0, textAlign: "right" }}>
             {filterHue}°±{filterRange}°
           </span>
-          <div style={{ position: "relative", flex: "1 1 80px", minWidth: 60, height: 14 }}>
-            {/* Tick marks at 45° intervals */}
-            {[45, 90, 135].map((deg) => (
-              <div
-                key={deg}
-                style={{
-                  position: "absolute",
-                  left: `${((deg - 10) / 170) * 100}%`,
-                  top: 0,
-                  width: 1,
-                  height: "100%",
-                  background: "rgba(255,255,255,0.2)",
-                  pointerEvents: "none",
-                }}
-              />
-            ))}
+          <div style={{ position: "relative", flex: "0 1 140px", minWidth: 60, height: 20 }}>
             <input
               type="range"
               min={10}
@@ -429,8 +434,23 @@ export const GalleryPanel = React.memo(function GalleryPanel({
               value={filterRange}
               onChange={(e) => setFilterRange(Number(e.target.value))}
               aria-label={t("aria_gallery_filter_range")}
-              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", accentColor: C.accent }}
+              style={{ position: "absolute", top: 0, left: 0, width: "100%", height: 14, accentColor: C.accent }}
             />
+            {/* Tick marks at 45° intervals — below the slider */}
+            {[45, 90, 135].map((deg) => (
+              <div
+                key={deg}
+                style={{
+                  position: "absolute",
+                  left: `${((deg - 10) / 170) * 100}%`,
+                  top: 14,
+                  width: 1,
+                  height: 6,
+                  background: "rgba(255,255,255,0.25)",
+                  pointerEvents: "none",
+                }}
+              />
+            ))}
           </div>
         </div>
       }

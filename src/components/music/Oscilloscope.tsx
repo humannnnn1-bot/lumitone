@@ -5,7 +5,7 @@ interface OscilloscopeProps {
   analyserNode: AnalyserNode | null;
 }
 
-const W = 420;
+const W = 360;
 const H = 80;
 const BG = "#0a0a1a";
 const LINE_COLOR = "#00ff88";

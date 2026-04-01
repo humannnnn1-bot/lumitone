@@ -675,12 +675,6 @@ export const MusicPanel = React.memo(function MusicPanel() {
           <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, width: "100%" }}>
             {/* Control buttons — grouped with spacing */}
             <div style={{ display: "flex", justifyContent: "center", gap: SP.sm, width: "100%", flexWrap: "wrap" }}>
-              <button type="button" style={{ ...S_BTN_SM, borderColor: C.error, color: C.error }} onClick={handleStopAll}>
-                {t("music_stop_all")}
-              </button>
-              <button type="button" style={S_BTN_SM} onClick={handleResetDefaults}>
-                {t("music_reset")}
-              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -701,6 +695,13 @@ export const MusicPanel = React.memo(function MusicPanel() {
               >
                 {muted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
                 {t("music_mute")}
+              </button>
+              <span style={{ width: SP.md }} />
+              <button type="button" style={{ ...S_BTN_SM, borderColor: C.error, color: C.error }} onClick={handleStopAll}>
+                {t("music_stop_all")}
+              </button>
+              <button type="button" style={S_BTN_SM} onClick={handleResetDefaults}>
+                {t("music_reset")}
               </button>
               <span style={{ width: SP.xl }} />
               <button type="button" style={fmEnabled ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => setFmEnabled(!fmEnabled)}>

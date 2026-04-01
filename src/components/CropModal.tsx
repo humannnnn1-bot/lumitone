@@ -13,7 +13,8 @@ interface CropModalProps {
 }
 
 const MIN_CROP = 4;
-const HANDLE_SIZE = 12;
+const HANDLE_VISUAL = 12;
+const HANDLE_TOUCH = 44; // minimum recommended touch target
 
 type DragMode = "move" | "nw" | "ne" | "sw" | "se" | "n" | "s" | "e" | "w" | null;
 
@@ -59,6 +60,9 @@ export const CropModal = React.memo(function CropModal({ img, imgW, imgH, onConf
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
   }, [img, imgW, imgH]);
 
+  // Active drag mode for visual feedback
+  const [activeMode, setActiveMode] = useState<DragMode>(null);
+
   // Drag state
   const dragRef = useRef<{
     mode: DragMode;
@@ -86,6 +90,7 @@ export const CropModal = React.memo(function CropModal({ img, imgW, imgH, onConf
       e.preventDefault();
       e.stopPropagation();
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
+      setActiveMode(mode);
       dragRef.current = {
         mode,
         startX: e.clientX,
@@ -152,6 +157,7 @@ export const CropModal = React.memo(function CropModal({ img, imgW, imgH, onConf
 
   const handlePointerUp = useCallback(() => {
     dragRef.current = null;
+    setActiveMode(null);
   }, []);
 
   const handleConfirm = useCallback(() => {
@@ -164,15 +170,22 @@ export const CropModal = React.memo(function CropModal({ img, imgW, imgH, onConf
   const sw = cw * displayScale;
   const sh = ch * displayScale;
 
-  const handleStyle: React.CSSProperties = {
+  const pad = (HANDLE_TOUCH - HANDLE_VISUAL) / 2;
+  const mkHandle = (mode: DragMode): React.CSSProperties => ({
     position: "absolute",
-    width: HANDLE_SIZE,
-    height: HANDLE_SIZE,
-    background: C.accent,
-    border: `1px solid ${C.accentBright}`,
+    width: HANDLE_TOUCH,
+    height: HANDLE_TOUCH,
+    padding: pad,
+    backgroundClip: "content-box",
+    background: activeMode === mode ? C.accentBright : C.accent,
+    border: "none",
     borderRadius: 2,
+    boxShadow: activeMode === mode ? `0 0 8px 2px ${C.accentBright}` : "none",
+    transform: activeMode === mode ? "scale(1.3)" : "none",
+    transition: activeMode ? "none" : "transform 0.15s, box-shadow 0.15s",
     zIndex: 2,
-  };
+    touchAction: "none",
+  });
 
   return (
     <div
@@ -184,6 +197,8 @@ export const CropModal = React.memo(function CropModal({ img, imgW, imgH, onConf
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
+        touchAction: "none",
+        overscrollBehavior: "contain",
       }}
       onClick={onCancel}
     >
@@ -213,6 +228,7 @@ export const CropModal = React.memo(function CropModal({ img, imgW, imgH, onConf
             position: "relative",
             display: "inline-block",
             lineHeight: 0,
+            touchAction: "none",
           }}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -240,7 +256,8 @@ export const CropModal = React.memo(function CropModal({ img, imgW, imgH, onConf
               top: sy,
               width: sw,
               height: sh,
-              border: `2px solid ${C.accent}`,
+              border: `2px solid ${activeMode === "move" ? C.accentBright : C.accent}`,
+              boxShadow: activeMode === "move" ? `inset 0 0 0 1px ${C.accentBright}` : "none",
               boxSizing: "border-box",
               cursor: "move",
               touchAction: "none",
@@ -248,39 +265,39 @@ export const CropModal = React.memo(function CropModal({ img, imgW, imgH, onConf
             onPointerDown={(e) => handlePointerDown(e, "move")}
           />
 
-          {/* Resize handles */}
+          {/* Resize handles — 44px touch target, 12px visual square centered via padding+backgroundClip */}
           {/* Corners */}
           <div
-            style={{ ...handleStyle, left: sx - HANDLE_SIZE / 2, top: sy - HANDLE_SIZE / 2, cursor: "nw-resize" }}
+            style={{ ...mkHandle("nw"), left: sx - HANDLE_TOUCH / 2, top: sy - HANDLE_TOUCH / 2, cursor: "nw-resize" }}
             onPointerDown={(e) => handlePointerDown(e, "nw")}
           />
           <div
-            style={{ ...handleStyle, left: sx + sw - HANDLE_SIZE / 2, top: sy - HANDLE_SIZE / 2, cursor: "ne-resize" }}
+            style={{ ...mkHandle("ne"), left: sx + sw - HANDLE_TOUCH / 2, top: sy - HANDLE_TOUCH / 2, cursor: "ne-resize" }}
             onPointerDown={(e) => handlePointerDown(e, "ne")}
           />
           <div
-            style={{ ...handleStyle, left: sx - HANDLE_SIZE / 2, top: sy + sh - HANDLE_SIZE / 2, cursor: "sw-resize" }}
+            style={{ ...mkHandle("sw"), left: sx - HANDLE_TOUCH / 2, top: sy + sh - HANDLE_TOUCH / 2, cursor: "sw-resize" }}
             onPointerDown={(e) => handlePointerDown(e, "sw")}
           />
           <div
-            style={{ ...handleStyle, left: sx + sw - HANDLE_SIZE / 2, top: sy + sh - HANDLE_SIZE / 2, cursor: "se-resize" }}
+            style={{ ...mkHandle("se"), left: sx + sw - HANDLE_TOUCH / 2, top: sy + sh - HANDLE_TOUCH / 2, cursor: "se-resize" }}
             onPointerDown={(e) => handlePointerDown(e, "se")}
           />
           {/* Edges */}
           <div
-            style={{ ...handleStyle, left: sx + sw / 2 - HANDLE_SIZE / 2, top: sy - HANDLE_SIZE / 2, cursor: "n-resize" }}
+            style={{ ...mkHandle("n"), left: sx + sw / 2 - HANDLE_TOUCH / 2, top: sy - HANDLE_TOUCH / 2, cursor: "n-resize" }}
             onPointerDown={(e) => handlePointerDown(e, "n")}
           />
           <div
-            style={{ ...handleStyle, left: sx + sw / 2 - HANDLE_SIZE / 2, top: sy + sh - HANDLE_SIZE / 2, cursor: "s-resize" }}
+            style={{ ...mkHandle("s"), left: sx + sw / 2 - HANDLE_TOUCH / 2, top: sy + sh - HANDLE_TOUCH / 2, cursor: "s-resize" }}
             onPointerDown={(e) => handlePointerDown(e, "s")}
           />
           <div
-            style={{ ...handleStyle, left: sx - HANDLE_SIZE / 2, top: sy + sh / 2 - HANDLE_SIZE / 2, cursor: "w-resize" }}
+            style={{ ...mkHandle("w"), left: sx - HANDLE_TOUCH / 2, top: sy + sh / 2 - HANDLE_TOUCH / 2, cursor: "w-resize" }}
             onPointerDown={(e) => handlePointerDown(e, "w")}
           />
           <div
-            style={{ ...handleStyle, left: sx + sw - HANDLE_SIZE / 2, top: sy + sh / 2 - HANDLE_SIZE / 2, cursor: "e-resize" }}
+            style={{ ...mkHandle("e"), left: sx + sw - HANDLE_TOUCH / 2, top: sy + sh / 2 - HANDLE_TOUCH / 2, cursor: "e-resize" }}
             onPointerDown={(e) => handlePointerDown(e, "e")}
           />
         </div>
