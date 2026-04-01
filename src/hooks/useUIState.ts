@@ -5,7 +5,14 @@ import type { TranslationFn } from "../i18n";
 import { useSyncRef } from "./useSyncRef";
 
 export function useUIState(_t: TranslationFn) {
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTabRaw] = useState(() => {
+    const saved = localStorage.getItem("chromalum-active-tab");
+    return saved !== null ? Number(saved) : 0;
+  });
+  const setActiveTab = useCallback((tab: number) => {
+    setActiveTabRaw(tab);
+    localStorage.setItem("chromalum-active-tab", String(tab));
+  }, []);
   const [showHelp, setShowHelp] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" | "info" } | null>(null);
   const [showNewCanvas, setShowNewCanvas] = useState(false);
@@ -19,11 +26,16 @@ export function useUIState(_t: TranslationFn) {
   const showToast = useCallback((message: string, type: "error" | "success" | "info" = "info") => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
     setToast({ message, type });
-    toastTimerRef.current = setTimeout(() => { setToast(null); toastTimerRef.current = null; }, TOAST_DURATION);
+    toastTimerRef.current = setTimeout(() => {
+      setToast(null);
+      toastTimerRef.current = null;
+    }, TOAST_DURATION);
   }, []);
 
   const requestFilename = useCallback((defaultValue: string): Promise<string | null> => {
-    return new Promise(resolve => { setPromptState({ defaultValue, resolve }); });
+    return new Promise((resolve) => {
+      setPromptState({ defaultValue, resolve });
+    });
   }, []);
 
   const promptRef = useSyncRef(promptState);
@@ -39,15 +51,25 @@ export function useUIState(_t: TranslationFn) {
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
-    activeTab, setActiveTab,
-    showHelp, setShowHelp,
-    toast, showToast,
-    showNewCanvas, setShowNewCanvas,
-    mapMode, setMapMode,
-    hueAngle, setHueAngle,
-    directCandidates, setDirectCandidates,
-    promptState, setPromptState,
-    requestFilename, handlePromptConfirm, handlePromptCancel,
+    activeTab,
+    setActiveTab,
+    showHelp,
+    setShowHelp,
+    toast,
+    showToast,
+    showNewCanvas,
+    setShowNewCanvas,
+    mapMode,
+    setMapMode,
+    hueAngle,
+    setHueAngle,
+    directCandidates,
+    setDirectCandidates,
+    promptState,
+    setPromptState,
+    requestFilename,
+    handlePromptConfirm,
+    handlePromptCancel,
     toastTimerRef,
   };
 }

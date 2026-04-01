@@ -384,7 +384,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
           {" | "}
           <LanguageSwitcher />
           {" | "}
-          <span style={{ opacity: 0.5 }}>v{APP_VERSION}</span>
+          <span style={{ opacity: 0.8 }}>v{APP_VERSION}</span>
         </div>
       </div>
 

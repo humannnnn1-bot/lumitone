@@ -20,15 +20,23 @@ const FANO_LINES = [
   [3, 5, 6],
 ];
 
+// Projective duality: each line's dual point in GF(2)³
+const LINE_DUAL_POINTS = [4, 2, 1, 6, 5, 3, 7];
+
+// Standard Fano plane layout: equilateral triangle + midpoints + centroid
+// Matching MiniFanoChord coordinates scaled to viewBox 0 0 180 155
 const PTS: Record<number, [number, number]> = {
-  1: [90, 15],
-  2: [30, 45],
-  3: [150, 45],
-  4: [55, 95],
-  5: [125, 95],
-  6: [90, 130],
-  7: [90, 70],
+  2: [90, 15], // Red - top vertex
+  1: [17, 122], // Blue - bottom-left vertex
+  4: [163, 122], // Green - bottom-right vertex
+  3: [53.5, 68.5], // Magenta - midpoint of left edge (1↔2)
+  6: [126.5, 68.5], // Yellow - midpoint of right edge (2↔4)
+  5: [90, 122], // Cyan - midpoint of bottom edge (1↔4)
+  7: [90, 86.3], // White - centroid (exact: (17+90+163)/3, (122+15+122)/3)
 };
+
+// Inscribed circle line index
+const CIRCLE_LINE_INDEX = 6; // [3, 5, 6]
 
 function pointColor(lv: number, activeLevels: XorFanoLineProps["activeLevels"]): string {
   const found = activeLevels.find((l) => l.lv === lv);
@@ -41,14 +49,14 @@ function linePath(line: number[]): string {
   return `M${pts[0][0]},${pts[0][1]} L${pts[1][0]},${pts[1][1]} L${pts[2][0]},${pts[2][1]}`;
 }
 
-function arcPath(): string {
-  const [x1, y1] = PTS[3];
-  const [x2, y2] = PTS[5];
-  const [x3, y3] = PTS[6];
-  const cx = (x1 + x2 + x3) / 3;
-  const cy = (y1 + y2 + y3) / 3;
-  const r = Math.sqrt((x1 - cx) ** 2 + (y1 - cy) ** 2);
-  return `M${x1},${y1} A${r},${r} 0 1,0 ${x2},${y2} A${r},${r} 0 0,0 ${x3},${y3} A${r},${r} 0 0,0 ${x1},${y1}`;
+function inscribedCirclePath(): string {
+  const [x3, y3] = PTS[3];
+  const [x5, y5] = PTS[5];
+  const [x6, y6] = PTS[6];
+  const cx = (x3 + x5 + x6) / 3;
+  const cy = (y3 + y5 + y6) / 3;
+  const r = Math.sqrt((x3 - cx) ** 2 + (y3 - cy) ** 2);
+  return `M${x3},${y3} A${r},${r} 0 1,0 ${x5},${y5} A${r},${r} 0 0,0 ${x6},${y6} A${r},${r} 0 0,0 ${x3},${y3}`;
 }
 
 export const XorFanoLine = React.memo(function XorFanoLine({ stepLv, lvA, lvB, activeLevels }: XorFanoLineProps) {
@@ -60,7 +68,7 @@ export const XorFanoLine = React.memo(function XorFanoLine({ stepLv, lvA, lvB, a
   const labelC = xorResult !== null ? xorResult : "?";
 
   return (
-    <svg viewBox="0 0 180 140" style={{ width: "100%", maxWidth: 180, aspectRatio: "180/140" }}>
+    <svg viewBox="0 0 180 155" style={{ width: "100%", maxWidth: 180, aspectRatio: "180/155" }}>
       <defs>
         <filter id="xfl-pulse" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur" />
@@ -90,14 +98,16 @@ export const XorFanoLine = React.memo(function XorFanoLine({ stepLv, lvA, lvB, a
       {/* Lines */}
       {FANO_LINES.map((line, i) => {
         const isActive = i === activeLineIdx;
-        const isCircle = i === 6;
-        const d = isCircle ? arcPath() : linePath(line);
+        const isCircle = i === CIRCLE_LINE_INDEX;
+        const d = isCircle ? inscribedCirclePath() : linePath(line);
+        // Line color = dual point's color (dynamic via activeLevels)
+        const lineColor = pointColor(LINE_DUAL_POINTS[i], activeLevels);
         return (
           <path
             key={i}
             d={d}
             fill="none"
-            stroke={isActive ? C.accent : C.textDimmer}
+            stroke={isActive ? lineColor : lineColor}
             strokeWidth={isActive ? 2.5 : 1}
             opacity={isActive ? 1 : 0.15}
             strokeLinecap="round"
@@ -113,6 +123,7 @@ export const XorFanoLine = React.memo(function XorFanoLine({ stepLv, lvA, lvB, a
         const isXorResult = xorResult !== null && lv === xorResult;
         const isXorRing = isXorResult && stepLv === xorResult;
         const r = isStep ? 10 : 7;
+        const textColor = lv >= 4 ? "#000" : "#fff";
 
         return (
           <g key={lv}>
@@ -121,7 +132,7 @@ export const XorFanoLine = React.memo(function XorFanoLine({ stepLv, lvA, lvB, a
               <circle className="xfl-ring" cx={px} cy={py} r={9} fill="none" stroke={col} strokeWidth={2} filter="url(#xfl-ring)" />
             )}
             <circle cx={px} cy={py} r={r} fill={col} stroke="#fff" strokeWidth={1} filter={isStep ? "url(#xfl-pulse)" : undefined} />
-            <text x={px} y={py + 3} fontSize={8} fill="#fff" textAnchor="middle" pointerEvents="none">
+            <text x={px} y={py + 3} fontSize={8} fill={textColor} textAnchor="middle" pointerEvents="none">
               {lv}
             </text>
           </g>
@@ -129,7 +140,7 @@ export const XorFanoLine = React.memo(function XorFanoLine({ stepLv, lvA, lvB, a
       })}
 
       {/* XOR label */}
-      <text x={90} y={140} fontSize={10} fill={C.textSecondary} textAnchor="middle">
+      <text x={90} y={150} fontSize={10} fill={C.textSecondary} textAnchor="middle">
         {labelA}&#8853;{labelB}={labelC}
       </text>
     </svg>

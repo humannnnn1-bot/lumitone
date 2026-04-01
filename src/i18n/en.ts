@@ -463,7 +463,7 @@ export const en = {
   music_fano_chord: "Fano Chords",
   music_rhythm_start: "\u25b6 Rhythm",
   music_rhythm_stop: "\u23f9 Rhythm",
-  music_rhythm_tempo: "Tempo",
+  music_rhythm_tempo: "BPM",
 
   // Algebraic Sonification
   music_algebra_title: "Algebraic Sonification",
@@ -486,6 +486,7 @@ export const en = {
   music_weight_stop: "\u23f9 W(x)",
   music_cayley_title: "Cayley Table",
   music_cayley_play: "\u25b6 Row",
+  music_cayley_stop: "\u23f9 Row",
   music_gl32_title: "GL(3,2)",
   music_gl32_a: "Gen A",
   music_gl32_b: "Gen B",

@@ -191,7 +191,9 @@ export const MusicPanel = React.memo(function MusicPanel() {
   const [gray3Code, setGray3Code] = useState<number | null>(null);
   const [cayleyCol, setCayleyCol] = useState(-1);
   const [rhythmBeat, setRhythmBeat] = useState(0);
-  const [gl32Perm, _setGl32Perm] = useState([0, 1, 2, 3, 4, 5, 6, 7]);
+  const [gl32Perm, setGl32Perm] = useState([0, 1, 2, 3, 4, 5, 6, 7]);
+  const [gl32Flash, setGl32Flash] = useState(false);
+  const [lumFlash, setLumFlash] = useState(false);
 
   // Compute sonification levels
   const sonificationLevels = useMemo(() => {
@@ -222,7 +224,6 @@ export const MusicPanel = React.memo(function MusicPanel() {
     engine.stopGrayMelody?.();
     engine.stopFanoRhythm?.();
     engine.stopAlgebra?.();
-    setVolume(0);
     setAlphaDir(0);
     setHueDir(0);
     setGrayStep(null);
@@ -253,6 +254,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setAlpha7(0);
     setRhythmTempo(120);
     setLuminanceMode("symmetric");
+    setGl32Perm([0, 1, 2, 3, 4, 5, 6, 7]);
   }, [handleStopAll]);
 
   // Handlers
@@ -283,8 +285,8 @@ export const MusicPanel = React.memo(function MusicPanel() {
       return;
     }
     engine.initAudio();
-    engine.playGrayMelody((lv) => setGrayStep(lv));
-  }, [engine, grayStep]);
+    engine.playGrayMelody(rhythmTempo, (lv) => setGrayStep(lv));
+  }, [engine, grayStep, rhythmTempo]);
 
   const handleFanoRhythm = useCallback(() => {
     if (rhythmPlaying) {
@@ -338,12 +340,14 @@ export const MusicPanel = React.memo(function MusicPanel() {
   // All buttons auto-init audio on click; no disabled state needed
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, padding: SP.md }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, padding: `0 ${SP.md}px ${SP.md}px` }}>
       <div className="panel-layout music-layout">
         {/* ═══ Left Column: Visualizations ═══ */}
         <div className="panel-canvas" style={{ "--display-max": "420px" } as React.CSSProperties}>
           {/* Title — same style as other tabs */}
-          <div style={{ fontSize: FS.md, color: C.textDim, textAlign: "center", lineHeight: "14px" }}>{t("music_title")}</div>
+          <div style={{ fontSize: FS.md, color: C.textDim, textAlign: "center", lineHeight: "14px", marginBottom: SP.md }}>
+            {t("music_title")}
+          </div>
 
           {/* Hue angle slider with marker */}
           <div style={{ width: "100%", display: "flex", flexDirection: "column", gap: SP.md }}>
@@ -445,7 +449,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
           </div>
 
           {/* Level preview — 2D candidate grid with tone burst */}
-          <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center", marginTop: SP.sm }}>
+          <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center", marginTop: SP.lg }}>
             {levelPreview.map((lp) => {
               const cands = LEVEL_CANDIDATES[lp.lv];
               const hasCands = cands.length > 1;
@@ -726,7 +730,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
           <Oscilloscope analyserNode={engine.analyserNode} />
 
           {/* ═══ Fano Sequences ═══ */}
-          <div style={S_SECTION} role="heading" aria-level={3}>
+          <div style={{ ...S_SECTION, marginTop: SP.xl }} role="heading" aria-level={3}>
             {t("music_section_sequences")}
           </div>
           <div
@@ -737,7 +741,13 @@ export const MusicPanel = React.memo(function MusicPanel() {
             {/* Mini Fano Chord diagram — larger */}
             <div style={{ fontSize: FS.lg, color: C.textDim, textAlign: "center" }}>{t("music_fano_chord")}</div>
             <div style={{ width: "100%", maxWidth: 300 }}>
-              <MiniFanoChord hoveredLine={hoveredFanoLine} onLineHover={setHoveredFanoLine} activeLevels={activeLevels} />
+              <MiniFanoChord
+                hoveredLine={hoveredFanoLine}
+                onLineHover={setHoveredFanoLine}
+                activeLevels={activeLevels}
+                playingLevel={grayStep}
+                playingLine={rhythmPlaying ? rhythmBeat : null}
+              />
             </div>
 
             {/* Sequencer controls — below the diagram */}
@@ -765,7 +775,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
       </div>
 
       {/* ═══ Algebraic Sonification — full-width below both columns ═══ */}
-      <div style={S_SECTION} role="heading" aria-level={3}>
+      <div style={{ ...S_SECTION, marginTop: SP.xl }} role="heading" aria-level={3}>
         {t("music_section_algebra")}
       </div>
       <div id="music-algebra-panel" role="region" className="music-algebra-scroll" style={S_CARD_GRID}>
@@ -896,10 +906,10 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 if (gray3Playing) {
                   engine.stopAlgebra?.();
                   setGray3Playing(false);
+                  setGray3Code(null);
                 } else {
                   engine.initAudio();
                   engine.playGray3Voice?.((lv: number | null) => {
-                    if (lv === null) setGray3Playing(false);
                     setGray3Code(lv);
                   });
                   setGray3Playing(true);
@@ -958,11 +968,16 @@ export const MusicPanel = React.memo(function MusicPanel() {
               type="button"
               style={cayleyCol >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM}
               onClick={() => {
-                engine.initAudio();
-                engine.playCayleyRow?.(cayleyRow, (col, _val) => setCayleyCol(col));
+                if (cayleyCol >= 0) {
+                  engine.stopAlgebra?.();
+                  setCayleyCol(-1);
+                } else {
+                  engine.initAudio();
+                  engine.playCayleyRow?.(cayleyRow, (col, _val) => setCayleyCol(col));
+                }
               }}
             >
-              {t("music_cayley_play")}
+              {cayleyCol >= 0 ? t("music_cayley_stop") : t("music_cayley_play")}
             </button>
           </div>
           <CayleyGrid row={cayleyRow} activeCol={cayleyCol} activeLevels={activeLevels} />
@@ -982,7 +997,11 @@ export const MusicPanel = React.memo(function MusicPanel() {
               style={{ ...S_BTN_SM }}
               onClick={() => {
                 engine.initAudio();
-                engine.applyGL32Transform?.("A");
+                engine.applyGL32Transform?.("A", (p) => {
+                  setGl32Perm(p);
+                  setGl32Flash(true);
+                  setTimeout(() => setGl32Flash(false), 500);
+                });
               }}
             >
               {t("music_gl32_a")}
@@ -992,13 +1011,17 @@ export const MusicPanel = React.memo(function MusicPanel() {
               style={{ ...S_BTN_SM }}
               onClick={() => {
                 engine.initAudio();
-                engine.applyGL32Transform?.("B");
+                engine.applyGL32Transform?.("B", (p) => {
+                  setGl32Perm(p);
+                  setGl32Flash(true);
+                  setTimeout(() => setGl32Flash(false), 500);
+                });
               }}
             >
               {t("music_gl32_b")}
             </button>
           </div>
-          <GL32Arrows perm={gl32Perm} activeLevels={activeLevels} />
+          <GL32Arrows perm={gl32Perm} activeLevels={activeLevels} flash={gl32Flash} />
         </div>
 
         {/* Card 10: Luminance */}
@@ -1008,19 +1031,27 @@ export const MusicPanel = React.memo(function MusicPanel() {
             <button
               type="button"
               style={luminanceMode === "symmetric" ? S_BTN_SM_ACTIVE : S_BTN_SM}
-              onClick={() => setLuminanceMode("symmetric")}
+              onClick={() => {
+                setLuminanceMode("symmetric");
+                setLumFlash(true);
+                setTimeout(() => setLumFlash(false), 600);
+              }}
             >
               {t("music_luminance_sym")}
             </button>
             <button
               type="button"
               style={luminanceMode === "luminance" ? S_BTN_SM_ACTIVE : S_BTN_SM}
-              onClick={() => setLuminanceMode("luminance")}
+              onClick={() => {
+                setLuminanceMode("luminance");
+                setLumFlash(true);
+                setTimeout(() => setLumFlash(false), 600);
+              }}
             >
               {t("music_luminance_bt601")}
             </button>
           </div>
-          <LuminanceBars mode={luminanceMode} activeLevels={activeLevels} />
+          <LuminanceBars mode={luminanceMode} activeLevels={activeLevels} flash={lumFlash} />
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@ import { C, R } from "../../tokens";
 interface GL32ArrowsProps {
   perm: number[]; // current permutation [0,1,2,3,4,5,6,7] or permuted
   activeLevels: { lv: number; rgb: [number, number, number] }[];
+  flash?: boolean; // true for ~500ms after a transform is applied
 }
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
@@ -25,7 +26,7 @@ function isIdentity(perm: number[]): boolean {
   return LEVELS.every((lv) => perm[lv] === lv);
 }
 
-export const GL32Arrows = React.memo(function GL32Arrows({ perm, activeLevels }: GL32ArrowsProps) {
+export const GL32Arrows = React.memo(function GL32Arrows({ perm, activeLevels, flash }: GL32ArrowsProps) {
   const identity = isIdentity(perm);
 
   // Build bottom row positions: perm[i] goes to position where it appears
@@ -42,6 +43,16 @@ export const GL32Arrows = React.memo(function GL32Arrows({ perm, activeLevels }:
         <marker id="gl-arrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
           <path d="M0,0 L6,2 L0,4 Z" fill={C.textDimmer} />
         </marker>
+        <marker id="gl-arrow-flash" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+          <path d="M0,0 L6,2 L0,4 Z" fill="#fff" />
+        </marker>
+        <filter id="gl-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
       </defs>
 
       {/* Identity label */}
@@ -60,8 +71,10 @@ export const GL32Arrows = React.memo(function GL32Arrows({ perm, activeLevels }:
         const botIdx = i; // bottom row shows perm[1..7] in order
         const botX = X_START + botIdx * X_GAP;
         const color = lvColor(lv, activeLevels);
+        const moved = permVal !== lv;
+        const isFlashing = flash && moved;
 
-        if (permVal === lv) {
+        if (!moved) {
           // Fixed point: small dot indicator
           return (
             <line
@@ -72,7 +85,7 @@ export const GL32Arrows = React.memo(function GL32Arrows({ perm, activeLevels }:
               y2={Y_BOT - CR - 2}
               stroke={color}
               strokeWidth={1}
-              opacity={0.5}
+              opacity={flash ? 0.2 : 0.5}
               strokeDasharray="2,2"
             />
           );
@@ -89,10 +102,12 @@ export const GL32Arrows = React.memo(function GL32Arrows({ perm, activeLevels }:
             key={`a${lv}`}
             d={`M${topX},${Y_TOP + CR + 2} Q${cpX},${cpY} ${botX},${Y_BOT - CR - 2}`}
             fill="none"
-            stroke={color}
-            strokeWidth={1.2}
-            opacity={0.7}
-            markerEnd="url(#gl-arrow)"
+            stroke={isFlashing ? "#fff" : color}
+            strokeWidth={isFlashing ? 2 : 1.2}
+            opacity={isFlashing ? 1 : 0.7}
+            markerEnd={isFlashing ? "url(#gl-arrow-flash)" : "url(#gl-arrow)"}
+            filter={isFlashing ? "url(#gl-glow)" : undefined}
+            style={{ transition: "stroke 0.3s, opacity 0.3s, stroke-width 0.3s" }}
           />
         );
       })}
@@ -116,9 +131,19 @@ export const GL32Arrows = React.memo(function GL32Arrows({ perm, activeLevels }:
         const x = X_START + i * X_GAP;
         const val = bottomValues[i];
         const color = lvColor(val, activeLevels);
+        const moved = val !== i + 1;
+        const isFlashing = flash && moved;
         return (
-          <g key={`b${lv}`}>
-            <circle cx={x} cy={Y_BOT} r={CR} fill={color} stroke="#fff" strokeWidth={0.5} />
+          <g key={`b${lv}`} filter={isFlashing ? "url(#gl-glow)" : undefined}>
+            <circle
+              cx={x}
+              cy={Y_BOT}
+              r={isFlashing ? 8 : CR}
+              fill={color}
+              stroke="#fff"
+              strokeWidth={isFlashing ? 1.5 : 0.5}
+              style={{ transition: "r 0.3s" }}
+            />
             <text x={x} y={Y_BOT + 2.5} fontSize={7} fill="#fff" textAnchor="middle" pointerEvents="none">
               {val}
             </text>

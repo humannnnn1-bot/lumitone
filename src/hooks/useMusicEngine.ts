@@ -27,7 +27,7 @@ interface MusicEngineParams {
 interface MusicEngineReturn {
   initAudio: () => void;
   triggerToneBurst: (lv: number, angle: number) => void;
-  playGrayMelody: (onStep: (lv: number | null) => void) => void;
+  playGrayMelody: (tempo: number, onStep: (lv: number | null) => void) => void;
   stopGrayMelody: () => void;
   startFanoRhythm: (tempo: number, onBeat: (line: number, pos: number) => void) => void;
   stopFanoRhythm: () => void;
@@ -40,7 +40,7 @@ interface MusicEngineReturn {
   playGray3Voice: (onStep: (lv: number | null) => void) => void;
   playWeightSpectrum: (onStep: (positions: number[], weight: number, index: number) => void) => void;
   playCayleyRow: (row: number, onStep: (col: number, value: number) => void) => void;
-  applyGL32Transform: (gen: "A" | "B") => void;
+  applyGL32Transform: (gen: "A" | "B", onPerm?: (perm: number[]) => void) => void;
   setLuminanceMode: (mode: "symmetric" | "luminance") => void;
   stopAlgebra: () => void;
 }
@@ -397,6 +397,8 @@ export function useMusicEngine({
   const grayIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const fanoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const algebraTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const gray3IntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cayleyIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const gl32PermRef = useRef<number[]>([1, 2, 3, 4, 5, 6, 7]); // identity permutation
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
 
@@ -553,28 +555,23 @@ export function useMusicEngine({
 
   /* ── Gray Code Melody ── */
   const playGrayMelody = useCallback(
-    (onStep: (lv: number | null) => void) => {
+    (tempo: number, onStep: (lv: number | null) => void) => {
       if (!nodesRef.current) return;
       // Stop any existing melody
       if (grayIntervalRef.current !== null) {
         clearInterval(grayIntervalRef.current);
       }
 
+      const intervalMs = 60000 / tempo;
       let step = 0;
       const id = setInterval(() => {
-        if (step >= GRAY_PATH.length) {
-          clearInterval(id);
-          grayIntervalRef.current = null;
-          onStep(null);
-          return;
-        }
-        const lv = GRAY_PATH[step];
+        const lv = GRAY_PATH[step % GRAY_PATH.length];
         const p = paramsRef.current;
         const lvData = p.levels.find((l) => l.lv === lv);
         triggerToneBurst(lv, lvData?.angle ?? 0);
         onStep(lv);
         step++;
-      }, 400);
+      }, intervalMs);
       grayIntervalRef.current = id;
     },
     [triggerToneBurst],
@@ -670,6 +667,14 @@ export function useMusicEngine({
   /* ── stopAlgebra ── */
   const stopAlgebra = useCallback(() => {
     clearAlgebraTimers();
+    if (gray3IntervalRef.current !== null) {
+      clearInterval(gray3IntervalRef.current);
+      gray3IntervalRef.current = null;
+    }
+    if (cayleyIntervalRef.current !== null) {
+      clearInterval(cayleyIntervalRef.current);
+      cayleyIntervalRef.current = null;
+    }
   }, [clearAlgebraTimers]);
 
   /* ── 1. playXorTriple ── */
@@ -819,44 +824,44 @@ export function useMusicEngine({
     [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
   );
 
-  /* ── 6. playGray3Voice ── */
-  const playGray3Voice = useCallback(
-    (onStep: (lv: number | null) => void) => {
-      if (!nodesRef.current) return;
-      clearAlgebraTimers();
+  /* ── 6. playGray3Voice (looping) ── */
+  const playGray3Voice = useCallback((onStep: (lv: number | null) => void) => {
+    if (!nodesRef.current) return;
+    // Stop any existing
+    if (gray3IntervalRef.current !== null) {
+      clearInterval(gray3IntervalRef.current);
+    }
+
+    let step = 0;
+    const id = setInterval(() => {
       const nodes = nodesRef.current;
+      if (!nodes) return;
       const ctx = nodes.ctx;
+      const lv = FULL_GRAY_CODE[step % FULL_GRAY_CODE.length];
+      onStep(lv);
 
-      for (let step = 0; step < FULL_GRAY_CODE.length; step++) {
-        scheduleAlgebra(() => {
-          const lv = FULL_GRAY_CODE[step];
-          onStep(lv);
+      // Create oscillators for each bit that is 1
+      for (let bit = 0; bit < 3; bit++) {
+        if (lv & (1 << bit)) {
+          const osc = ctx.createOscillator();
+          osc.type = "sine";
+          osc.frequency.value = GRAY_VOICE_FREQS[bit];
 
-          // Create oscillators for each bit that is 1
-          for (let bit = 0; bit < 3; bit++) {
-            if (lv & (1 << bit)) {
-              const osc = ctx.createOscillator();
-              osc.type = "sine";
-              osc.frequency.value = GRAY_VOICE_FREQS[bit];
+          const gain = ctx.createGain();
+          const now = ctx.currentTime;
+          gain.gain.setValueAtTime(0, now);
+          gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
+          gain.gain.linearRampToValueAtTime(0.0, now + 0.35);
 
-              const gain = ctx.createGain();
-              const now = ctx.currentTime;
-              gain.gain.setValueAtTime(0, now);
-              gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
-              gain.gain.linearRampToValueAtTime(0.0, now + 0.35);
-
-              osc.connect(gain).connect(nodes.master);
-              osc.start(now);
-              osc.stop(now + 0.38);
-            }
-          }
-        }, step * 400);
+          osc.connect(gain).connect(nodes.master);
+          osc.start(now);
+          osc.stop(now + 0.38);
+        }
       }
-
-      scheduleAlgebra(() => onStep(null), FULL_GRAY_CODE.length * 400);
-    },
-    [clearAlgebraTimers, scheduleAlgebra],
-  );
+      step++;
+    }, 400);
+    gray3IntervalRef.current = id;
+  }, []);
 
   /* ── 7. playWeightSpectrum ── */
   const playWeightSpectrum = useCallback(
@@ -903,49 +908,53 @@ export function useMusicEngine({
     [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
   );
 
-  /* ── 8. playCayleyRow ── */
+  /* ── 8. playCayleyRow (looping) ── */
   const playCayleyRow = useCallback(
     (row: number, onStep: (col: number, value: number) => void) => {
       if (!nodesRef.current) return;
-      clearAlgebraTimers();
-      const nodes = nodesRef.current;
-      const ctx = nodes.ctx;
-
-      for (let col = 0; col < 8; col++) {
-        scheduleAlgebra(() => {
-          const value = row ^ col;
-          onStep(col, value);
-
-          if (value === 0) {
-            // Level 0 (Black) = silence — do nothing
-          } else if (value === 7) {
-            // Level 7 (White) = noise burst
-            const bufLen = Math.floor(ctx.sampleRate * 0.25);
-            const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
-            const data = buf.getChannelData(0);
-            for (let j = 0; j < bufLen; j++) data[j] = Math.random() * 2 - 1;
-            const source = ctx.createBufferSource();
-            source.buffer = buf;
-            const gain = ctx.createGain();
-            const now = ctx.currentTime;
-            gain.gain.setValueAtTime(0.05, now);
-            gain.gain.linearRampToValueAtTime(0, now + 0.25);
-            source.connect(gain).connect(nodes.master);
-            source.start(now);
-            source.stop(now + 0.28);
-          } else {
-            triggerToneBurst(value, angleForLv(value));
-          }
-        }, col * 300);
+      // Stop any existing
+      if (cayleyIntervalRef.current !== null) {
+        clearInterval(cayleyIntervalRef.current);
       }
 
-      scheduleAlgebra(() => onStep(-1, -1), 8 * 300);
+      let step = 0;
+      const id = setInterval(() => {
+        const nodes = nodesRef.current;
+        if (!nodes) return;
+        const ctx = nodes.ctx;
+        const col = step % 8;
+        const value = row ^ col;
+        onStep(col, value);
+
+        if (value === 0) {
+          // Level 0 (Black) = silence — do nothing
+        } else if (value === 7) {
+          // Level 7 (White) = noise burst
+          const bufLen = Math.floor(ctx.sampleRate * 0.25);
+          const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+          const data = buf.getChannelData(0);
+          for (let j = 0; j < bufLen; j++) data[j] = Math.random() * 2 - 1;
+          const source = ctx.createBufferSource();
+          source.buffer = buf;
+          const gain = ctx.createGain();
+          const now = ctx.currentTime;
+          gain.gain.setValueAtTime(0.05, now);
+          gain.gain.linearRampToValueAtTime(0, now + 0.25);
+          source.connect(gain).connect(nodes.master);
+          source.start(now);
+          source.stop(now + 0.28);
+        } else {
+          triggerToneBurst(value, angleForLv(value));
+        }
+        step++;
+      }, 300);
+      cayleyIntervalRef.current = id;
     },
-    [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
+    [triggerToneBurst, angleForLv],
   );
 
   /* ── 9. applyGL32Transform ── */
-  const applyGL32Transform = useCallback((gen: "A" | "B") => {
+  const applyGL32Transform = useCallback((gen: "A" | "B", onPerm?: (perm: number[]) => void) => {
     if (!nodesRef.current) return;
     const genFn = gen === "A" ? gl32GenA : gl32GenB;
     const perm = gl32PermRef.current;
@@ -965,6 +974,9 @@ export function useMusicEngine({
         nodes.oscs[i].frequency.setTargetAtTime(angleToFreq(lvData.angle, p.scaleMode), now, RAMP_TC);
       }
     }
+
+    // Notify caller with the full permutation array [0, perm[1], ..., perm[7]]
+    onPerm?.([0, ...newPerm]);
   }, []);
 
   /* ── 10. setLuminanceMode ── */

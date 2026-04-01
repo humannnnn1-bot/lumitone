@@ -4,6 +4,7 @@ import { C, R } from "../../tokens";
 interface LuminanceBarsProps {
   mode: "symmetric" | "luminance";
   activeLevels: { lv: number; rgb: [number, number, number] }[];
+  flash?: boolean; // true for ~600ms after mode switch
 }
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
@@ -32,7 +33,7 @@ function lvColor(lv: number, activeLevels: LuminanceBarsProps["activeLevels"]): 
   return LV_COLORS[lv] ?? "#888";
 }
 
-export const LuminanceBars = React.memo(function LuminanceBars({ mode, activeLevels }: LuminanceBarsProps) {
+export const LuminanceBars = React.memo(function LuminanceBars({ mode, activeLevels, flash }: LuminanceBarsProps) {
   return (
     <svg
       viewBox="0 0 180 90"
@@ -40,8 +41,18 @@ export const LuminanceBars = React.memo(function LuminanceBars({ mode, activeLev
     >
       <rect width={180} height={90} fill={C.bgPanel} rx={R.md} />
 
+      <defs>
+        <filter id="lb-glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
       {/* Mode label */}
-      <text x={90} y={12} fontSize={8} fill={C.accent} textAnchor="middle">
+      <text x={90} y={12} fontSize={8} fill={C.accent} textAnchor="middle" fontWeight={flash ? 700 : 400}>
         {mode === "symmetric" ? "Equal" : "BT.601"}
       </text>
 
@@ -54,7 +65,7 @@ export const LuminanceBars = React.memo(function LuminanceBars({ mode, activeLev
         const y = TOP + MAX_H - h;
 
         return (
-          <g key={lv}>
+          <g key={lv} filter={flash ? "url(#lb-glow)" : undefined}>
             <rect
               x={x}
               y={y}
@@ -62,8 +73,10 @@ export const LuminanceBars = React.memo(function LuminanceBars({ mode, activeLev
               height={h}
               rx={2}
               fill={color}
-              opacity={0.8}
-              style={{ transition: "y 0.3s ease, height 0.3s ease" }}
+              opacity={flash ? 1 : 0.8}
+              stroke={flash ? "#fff" : "none"}
+              strokeWidth={flash ? 1 : 0}
+              style={{ transition: "y 0.3s ease, height 0.3s ease, opacity 0.3s ease" }}
             />
             {/* Level label below */}
             <text x={x + BAR_W / 2} y={TOP + MAX_H + 12} fontSize={8} fill={C.textDimmer} textAnchor="middle">

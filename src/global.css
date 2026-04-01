@@ -164,6 +164,20 @@ input[type="checkbox"]:focus-visible {
   }
 }
 
+/* ── Algebra cards: center SVG/canvas vertically, keep header at top ── */
+.music-algebra-scroll > div > svg,
+.music-algebra-scroll > div > canvas {
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+/* ── Desktop: 5-column grid for Music algebra cards ── */
+@media (min-width: 1024px) and (orientation: landscape) {
+  .music-algebra-scroll {
+    grid-template-columns: repeat(5, 1fr) !important;
+  }
+}
+
 @media (min-width: 1024px) {
   :root {
     --sp-root-top: 16px;

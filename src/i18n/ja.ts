@@ -464,7 +464,7 @@ export const ja: Record<TranslationKey, string> = {
   music_fano_chord: "ファノ和音",
   music_rhythm_start: "\u25b6 リズム",
   music_rhythm_stop: "\u23f9 リズム",
-  music_rhythm_tempo: "テンポ",
+  music_rhythm_tempo: "BPM",
 
   // Algebraic Sonification
   music_algebra_title: "代数的音響化",
@@ -487,6 +487,7 @@ export const ja: Record<TranslationKey, string> = {
   music_weight_stop: "\u23f9 W(x)",
   music_cayley_title: "ケイリー表",
   music_cayley_play: "\u25b6 行",
+  music_cayley_stop: "\u23f9 行",
   music_gl32_title: "GL(3,2)",
   music_gl32_a: "生成元A",
   music_gl32_b: "生成元B",
