@@ -21,6 +21,7 @@ export function useFileDrop(
   showToast: (message: string, type: "error" | "success" | "info") => void,
   announce: (msg: string) => void,
   t: import("../i18n").TranslationFn,
+  onCropRequest?: (img: HTMLImageElement, w: number, h: number) => void,
 ): FileDropResult {
   const [dragging, setDragging] = useState(false);
   const dragCountRef = useRef(0);
@@ -49,27 +50,38 @@ export function useFileDrop(
           showToast(t("toast_image_process_failed"), "error");
           return;
         }
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(img, 0, 0, w, h);
-        const id = ctx.getImageData(0, 0, w, h);
-        const nd = new Uint8Array(w * h);
-        const px = id.data;
-        for (let i = 0; i < w * h; i++) {
-          const off = i * 4;
-          const gray = Math.min(255, Math.round(LUMA_R * px[off] + LUMA_G * px[off + 1] + LUMA_B * px[off + 2]));
-          nd[i] = GRAY_LUT[gray];
-        }
-        dispatch({ type: "load_image", w, h, data: nd });
-        setZoom(1);
-        setPan({ x: 0, y: 0 });
         if (img.width > MAX_IMAGE_SIZE || img.height > MAX_IMAGE_SIZE) {
           showToast(t("toast_image_resized", img.width, img.height, w, h), "info");
+        }
+        if (onCropRequest) {
+          // Draw resized image onto a temp canvas so the HTMLImageElement can be used by crop modal
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          // Create a new image from the resized canvas for the crop modal
+          const resizedImg = new Image();
+          resizedImg.onload = () => onCropRequest(resizedImg, w, h);
+          resizedImg.src = tc.toDataURL();
+        } else {
+          ctx.fillStyle = "#fff";
+          ctx.fillRect(0, 0, w, h);
+          ctx.drawImage(img, 0, 0, w, h);
+          const id = ctx.getImageData(0, 0, w, h);
+          const nd = new Uint8Array(w * h);
+          const px = id.data;
+          for (let i = 0; i < w * h; i++) {
+            const off = i * 4;
+            const gray = Math.min(255, Math.round(LUMA_R * px[off] + LUMA_G * px[off + 1] + LUMA_B * px[off + 2]));
+            nd[i] = GRAY_LUT[gray];
+          }
+          dispatch({ type: "load_image", w, h, data: nd });
+          setZoom(1);
+          setPan({ x: 0, y: 0 });
         }
       };
       img.src = url;
     },
-    [showToast, dispatch, setZoom, setPan, t],
+    [showToast, dispatch, setZoom, setPan, t, onCropRequest],
   );
 
   const loadImgRef = useSyncRef(loadImg);

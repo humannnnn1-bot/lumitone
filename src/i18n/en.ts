@@ -191,13 +191,13 @@ export const en = {
     "Each level is a 3-bit number. Of the 6 possible bit-to-channel assignments, only GRB (Bit 2 = Green, Bit 1 = Red, Bit 0 = Blue) makes level numbers increase monotonically with luma \u2014 because Green\u2019s luma coefficient alone exceeds Red + Blue (0.587 > 0.413). This is not a design choice but a consequence of human color vision.",
   theory_binary_color: "Color",
   theory_binary_luma_formula: "Luma (BT.601): Y = 0.299R + 0.587G + 0.114B",
-  theory_binary_luma_complement: "Complement luminance: Y\u2096 + Y\u2087\u208b\u2096 = 255 (universal for any coefficients summing to 1)",
-  theory_zigzag_title: "Luminance Zigzag",
+  theory_binary_luma_complement: "Complement luma: Y\u2096 + Y\u2087\u208b\u2096 = 255 (universal for any coefficients summing to 1)",
+  theory_zigzag_title: "Luma Zigzag",
   theory_zigzag_desc:
-    "Pure colors (max channel = 255, min = 0) trace a 6-segment zigzag as hue rotates. Each segment toggles one channel; the slope is proportional to its BT.601 coefficient. Horizontal lines at each level intersect the zigzag at 1 or 3 points \u2014 these are the equal-luminance candidates. The maximum is 4 (between vertices). Complements mirror about Y = 127.5.",
+    "Fully saturated colors (max channel = 255, min = 0) trace a 6-segment zigzag as hue rotates. Each segment toggles one channel; the slope is proportional to its BT.601 coefficient. Horizontal lines at each vertex luma value intersect the zigzag at 1 or 3 points \u2014 these are the equal-luma candidates. The maximum is 4 (between vertices). Complements mirror about Y = 127.5.",
   theory_dice_title: "Color Die",
   theory_dice_desc:
-    "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule. This is a universal theorem: for any positive luminance coefficients (L\u1d63, L\u1d33, L\u1d07) with no ties, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7. The staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luminance rank, Gray code adjacency, and hue angle simultaneously.",
+    "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule. This is a universal theorem: for any positive luma coefficients with no ties, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7. The staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, Gray code adjacency, and hue angle simultaneously.",
   theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
   theory_dice_net: "Net",
   theory_dice_views: "Cube Views",
@@ -236,7 +236,7 @@ export const en = {
   theory_hamming_correct: "Correct \u2713",
   theory_connections_title: "Connections",
   theory_connections_desc:
-    "GF(2)\u00b3 yields three constructions: Cube (Cayley graph), Fano plane (projectivization), and Hamming code (parity-check kernel). XOR (addition) and AND (multiplication) coexist as the two operations of a Boolean ring, linked by the distributive law a \u2227 (b \u2295 c) = (a \u2227 b) \u2295 (a \u2227 c). The Gray code cycle \u2014 the unique Hamiltonian path on the chromatic hexagon \u2014 is simultaneously the hue wheel, the die-face adjacency, and the equatorial belt of the Cayley graph.",
+    "GF(2)\u00b3 yields three constructions: Cube (Cayley graph), Fano plane (projectivization), and Hamming code (parity-check kernel). XOR (addition) and AND (multiplication) coexist as the two operations of a Boolean ring, linked by the distributive law a \u2227 (b \u2295 c) = (a \u2227 b) \u2295 (a \u2227 c). The Gray code cycle \u2014 the unique Hamiltonian cycle on the chromatic hexagon \u2014 is simultaneously the hue wheel, the die-face adjacency, and the equatorial belt of the Cayley graph.",
   theory_conn_center_1: "8 Levels",
   theory_conn_center_2: "GF(2)\u00b3",
   theory_conn_gf23: "GF(2)\u00b3",
@@ -273,7 +273,7 @@ export const en = {
   theory_conn_gray_role: "Gray = Hamiltonian cycle on the chromatic equator = hue wheel = die-face adjacency",
   theory_conn_extended: "Adding Black as overall parity bit yields the [8,4,4] extended Hamming code over all 8 levels",
   theory_conn_boundary:
-    "GL(3,2) \u2245 PSL(2,7) (order 168) is the full automorphism group of PG(2,2). Only its S\u2083 subgroup (6 channel permutations) preserves chromatic meaning. Complement \u03c3(v) = v \u2295 (1,1,1) is a translation in AG(3,2), not a linear map in GL(3,2) \u2014 it sends W\u21a6K, leaving PG(2,2). GF(8) multiplication and 12+ color extensions lie outside this framework.",
+    "GL(3,2) \u2245 PSL(2,7) (order 168) is the full automorphism group of PG(2,2). Only its S\u2083 subgroup (6 channel permutations) preserves chromatic meaning. Complement \u03c3(v) = v \u2295 (1,1,1) is a translation in AG(3,2), not a linear map in GL(3,2) \u2014 it sends W\u21a6K, which lies outside PG(2,2). GF(8) multiplication and 12+ color extensions lie outside this framework.",
   theory_conn_edge_subspaces: "subspaces",
   theory_conn_edge_codewords: "codewords",
   theory_conn_edge_checks: "parity",
@@ -498,6 +498,7 @@ export const en = {
   music_luminance_bt601: "BT.601",
   music_stop_all: "Stop All",
   music_reset: "Reset",
+  music_mute: "Mute",
   music_section_engine: "SONIFICATION ENGINE",
   music_section_sequences: "FANO SEQUENCES",
   music_section_algebra: "ALGEBRAIC SONIFICATION",

@@ -1,37 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
   <!-- Fano plane favicon for CHROMALUM -->
   <!-- Projective duality coloring: each line colored by its dual point in GF(2)³ -->
+  <!-- Vertices: Top=Red(2), BottomLeft=Blue(1), BottomRight=Green(4) -->
 
   <!-- Triangle edges — colored by opposite vertex (dual point) -->
-  <!-- R-G edge (line [2,4,6]): dual L1(Blue) -->
-  <line x1="16" y1="4" x2="5.6" y2="22" stroke="#4040ff" stroke-width="1.2" stroke-linecap="round"/>
   <!-- R-B edge (line [1,2,3]): dual L4(Green) -->
-  <line x1="16" y1="4" x2="26.4" y2="22" stroke="#40ff40" stroke-width="1.2" stroke-linecap="round"/>
-  <!-- G-B edge (line [1,4,5]): dual L2(Red) -->
+  <line x1="16" y1="4" x2="5.6" y2="22" stroke="#40ff40" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- R-G edge (line [2,4,6]): dual L1(Blue) -->
+  <line x1="16" y1="4" x2="26.4" y2="22" stroke="#4040ff" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- B-G edge (line [1,4,5]): dual L2(Red) -->
   <line x1="5.6" y1="22" x2="26.4" y2="22" stroke="#ff4040" stroke-width="1.2" stroke-linecap="round"/>
 
   <!-- Medians — colored by midpoint (self-dual) -->
   <!-- R to Cyan (line [2,5,7]): dual L5(Cyan) -->
   <line x1="16" y1="4" x2="16" y2="22" stroke="#40ffff" stroke-width="1.2" stroke-linecap="round"/>
-  <!-- G to Magenta (line [3,4,7]): dual L3(Magenta) -->
-  <line x1="5.6" y1="22" x2="21.2" y2="13" stroke="#ff40ff" stroke-width="1.2" stroke-linecap="round"/>
   <!-- B to Yellow (line [1,6,7]): dual L6(Yellow) -->
-  <line x1="26.4" y1="22" x2="10.8" y2="13" stroke="#ffff40" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="5.6" y1="22" x2="21.2" y2="13" stroke="#ffff40" stroke-width="1.2" stroke-linecap="round"/>
+  <!-- G to Magenta (line [3,4,7]): dual L3(Magenta) -->
+  <line x1="26.4" y1="22" x2="10.8" y2="13" stroke="#ff40ff" stroke-width="1.2" stroke-linecap="round"/>
 
   <!-- Inscribed circle (line [3,5,6]): dual L7(White) -->
   <circle cx="16" cy="16" r="5.2" fill="none" stroke="#ffffff" stroke-width="1.2"/>
 
   <!-- Vertex dots: RGB at triangle vertices -->
   <circle cx="16" cy="4" r="2.2" fill="#ff4040"/>
-  <circle cx="5.6" cy="22" r="2.2" fill="#40ff40"/>
-  <circle cx="26.4" cy="22" r="2.2" fill="#4040ff"/>
+  <circle cx="5.6" cy="22" r="2.2" fill="#4040ff"/>
+  <circle cx="26.4" cy="22" r="2.2" fill="#40ff40"/>
 
-  <!-- Midpoint dots: corrected XOR placement -->
-  <!-- Left midpoint (R⊕G = Yellow) -->
-  <circle cx="10.8" cy="13" r="2.2" fill="#ffff40"/>
-  <!-- Right midpoint (R⊕B = Magenta) -->
-  <circle cx="21.2" cy="13" r="2.2" fill="#ff40ff"/>
-  <!-- Bottom midpoint (G⊕B = Cyan) -->
+  <!-- Midpoint dots: XOR of adjacent vertices -->
+  <!-- Left midpoint (R⊕B = Magenta) -->
+  <circle cx="10.8" cy="13" r="2.2" fill="#ff40ff"/>
+  <!-- Right midpoint (R⊕G = Yellow) -->
+  <circle cx="21.2" cy="13" r="2.2" fill="#ffff40"/>
+  <!-- Bottom midpoint (B⊕G = Cyan) -->
   <circle cx="16" cy="22" r="2.2" fill="#40ffff"/>
 
   <!-- Center dot: White -->

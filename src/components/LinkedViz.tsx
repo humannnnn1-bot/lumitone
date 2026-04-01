@@ -463,6 +463,27 @@ export const LinkedViz = React.memo(function LinkedViz({
     return pts.join(" ");
   }, []);
 
+  // Pre-compute all sine/cosine paths so vizContent doesn't recalculate them
+  const sinePaths = useMemo(() => {
+    const r0: Record<number, string> = {};
+    const r7: Record<number, string> = {};
+    for (let lv = 0; lv <= 7; lv++) {
+      r0[lv] = sinePath(lv, lumR0, alpha0);
+      r7[lv] = sinePath(lv, lumR7, alpha7);
+    }
+    return { r0, r7 };
+  }, [sinePath, alpha0, alpha7]);
+
+  const cosinePaths = useMemo(() => {
+    const r0: Record<number, string> = {};
+    const r7: Record<number, string> = {};
+    for (let lv = 0; lv <= 7; lv++) {
+      r0[lv] = cosinePath(lv, lumR0, alpha0);
+      r7[lv] = cosinePath(lv, lumR7, alpha7);
+    }
+    return { r0, r7 };
+  }, [cosinePath, alpha0, alpha7]);
+
   // Hover helpers
   const isHovered = (d: Dot) => hoveredDot !== null && hoveredDot.lv === d.lv && hoveredDot.ci === d.ci;
   const dotHandlers = (d: Dot) => ({
@@ -580,7 +601,7 @@ export const LinkedViz = React.memo(function LinkedViz({
           />
           {/* L7(white) boundary curve in L0 system — full amplitude WR */}
           <path
-            d={sinePath(7, lumR0, alpha0)}
+            d={sinePaths.r0[7]}
             fill="none"
             stroke="#fff"
             strokeWidth={mode === 0 ? 1.4 : 0.6}
@@ -588,7 +609,7 @@ export const LinkedViz = React.memo(function LinkedViz({
           />
           {/* L0(black) boundary curve in L7 system — full amplitude WR */}
           <path
-            d={sinePath(0, lumR7, alpha7)}
+            d={sinePaths.r7[0]}
             fill="none"
             stroke="rgba(255,255,255,0.6)"
             strokeWidth={mode === 7 ? 1.4 : 0.6}
@@ -681,7 +702,7 @@ export const LinkedViz = React.memo(function LinkedViz({
           {ACTIVE_LEVELS.map((lv) => (
             <path
               key={`rs0-${lv}`}
-              d={sinePath(lv, lumR0, alpha0)}
+              d={sinePaths.r0[lv]}
               fill="none"
               stroke={lvColor(lv)}
               strokeWidth={mode === 0 ? 1.8 : 0.8}
@@ -692,7 +713,7 @@ export const LinkedViz = React.memo(function LinkedViz({
           {ACTIVE_LEVELS.map((lv) => (
             <path
               key={`rs7-${lv}`}
-              d={sinePath(lv, lumR7, alpha7)}
+              d={sinePaths.r7[lv]}
               fill="none"
               stroke={lvColor(lv)}
               strokeWidth={mode === 7 ? 1.8 : 0.8}
@@ -832,7 +853,7 @@ export const LinkedViz = React.memo(function LinkedViz({
           />
           {/* L7(white) boundary curve in L0 system — full amplitude WR */}
           <path
-            d={cosinePath(7, lumR0, alpha0)}
+            d={cosinePaths.r0[7]}
             fill="none"
             stroke="#fff"
             strokeWidth={mode === 0 ? 1.4 : 0.6}
@@ -840,7 +861,7 @@ export const LinkedViz = React.memo(function LinkedViz({
           />
           {/* L0(black) boundary curve in L7 system — full amplitude WR */}
           <path
-            d={cosinePath(0, lumR7, alpha7)}
+            d={cosinePaths.r7[0]}
             fill="none"
             stroke="rgba(255,255,255,0.6)"
             strokeWidth={mode === 7 ? 1.4 : 0.6}
@@ -944,7 +965,7 @@ export const LinkedViz = React.memo(function LinkedViz({
           {ACTIVE_LEVELS.map((lv) => (
             <path
               key={`bc0-${lv}`}
-              d={cosinePath(lv, lumR0, alpha0)}
+              d={cosinePaths.r0[lv]}
               fill="none"
               stroke={lvColor(lv)}
               strokeWidth={mode === 0 ? 1.8 : 0.8}
@@ -955,7 +976,7 @@ export const LinkedViz = React.memo(function LinkedViz({
           {ACTIVE_LEVELS.map((lv) => (
             <path
               key={`bc7-${lv}`}
-              d={cosinePath(lv, lumR7, alpha7)}
+              d={cosinePaths.r7[lv]}
               fill="none"
               stroke={lvColor(lv)}
               strokeWidth={mode === 7 ? 1.8 : 0.8}
@@ -1286,7 +1307,14 @@ export const LinkedViz = React.memo(function LinkedViz({
 
             return (
               <g>
-                <text x={ix} y={iy} fontSize={FS_TITLE} fill={C.accent} fontWeight="bold">
+                <text
+                  x={ix}
+                  y={iy}
+                  fontSize={FS_TITLE}
+                  fill={C.accent}
+                  fontWeight="bold"
+                  fontFamily="'SF Mono','Cascadia Mono',Consolas,Menlo,monospace"
+                >
                   {title}
                 </text>
                 {rows.map((r, i) => {
@@ -1308,10 +1336,23 @@ export const LinkedViz = React.memo(function LinkedViz({
                       {r.lv != null && <rect x={ix - 2} y={iy + (i + 1) * ROW - FS_ROW} width={TW - ix} height={ROW} fill="transparent" />}
                       {/* Color swatch */}
                       {r.color && <rect x={sqX} y={iy + (i + 1) * ROW - SQ} width={SQ} height={SQ} rx={2} fill={r.color} />}
-                      <text x={textX} y={iy + (i + 1) * ROW} fontSize={FS_ROW} fill={textFill} fontWeight={r.dim ? "normal" : "bold"}>
+                      <text
+                        x={textX}
+                        y={iy + (i + 1) * ROW}
+                        fontSize={FS_ROW}
+                        fill={textFill}
+                        fontWeight={r.dim ? "normal" : "bold"}
+                        fontFamily="'SF Mono','Cascadia Mono',Consolas,Menlo,monospace"
+                      >
                         {r.label}
                       </text>
-                      <text x={textX + LABEL_W} y={iy + (i + 1) * ROW} fontSize={FS_ROW} fill={textFill}>
+                      <text
+                        x={textX + LABEL_W}
+                        y={iy + (i + 1) * ROW}
+                        fontSize={FS_ROW}
+                        fill={textFill}
+                        fontFamily="'SF Mono','Cascadia Mono',Consolas,Menlo,monospace"
+                      >
                         {r.value}
                       </text>
                     </g>
@@ -1332,8 +1373,8 @@ export const LinkedViz = React.memo(function LinkedViz({
     mode,
     activeAlpha,
     activeRadiusFn,
-    sinePath,
-    cosinePath,
+    sinePaths,
+    cosinePaths,
     hoveredDot,
     onHuePointerDown,
     onHueBottomPointerDown,

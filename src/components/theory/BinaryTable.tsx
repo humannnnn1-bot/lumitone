@@ -77,7 +77,6 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
         {/* Data rows */}
         {THEORY_LEVELS.map((lv, i) => {
           const y = HEADER_Y + (i + 1) * ROW_H;
-          const textColor = lv.lv === 0 ? C.textDimmer : lv.color;
           const active = hlLevel === lv.lv;
           const dim = hlLevel !== null && !active;
           const opacity = dim ? 0.25 : 1;
@@ -101,7 +100,7 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={FS.md}
-                fill={textColor}
+                fill={C.textMuted}
                 fontFamily="monospace"
                 fontWeight={FW.bold}
               >
@@ -173,9 +172,9 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                 fillOpacity={0.5}
               />
               <text
-                x={COL.luma + 24}
+                x={COL.luma + 26}
                 y={y}
-                textAnchor="middle"
+                textAnchor="start"
                 dominantBaseline="central"
                 fontSize={FS.xs}
                 fill={C.textDimmer}

@@ -191,14 +191,13 @@ export const ja: Record<TranslationKey, string> = {
     "各レベルは3ビット数値です。ビットとチャンネルの割り当て6通りのうち、レベル番号がルマ値に対して単調増加するのはGRB（ビット2=Green, ビット1=Red, ビット0=Blue）だけ — Greenのルマ係数がRed+Blueを超えるためです（0.587 > 0.413）。設計上の選択ではなく、人間の色覚の帰結。",
   theory_binary_color: "色",
   theory_binary_luma_formula: "Luma (BT.601): Y = 0.299R + 0.587G + 0.114B",
-  theory_binary_luma_complement:
-    "\u88dc\u8272\u8f1d\u5ea6\u5b9a\u7406: Y\u2096 + Y\u2087\u208b\u2096 = 255\uff08\u4fc2\u6570\u306e\u548c\u304c1\u306a\u3089\u4efb\u610f\u306e\u4fc2\u6570\u3067\u6210\u7acb\uff09",
-  theory_zigzag_title: "\u8f1d\u5ea6\u30b8\u30b0\u30b6\u30b0",
+  theory_binary_luma_complement: "補色ルマ定理: Y\u2096 + Y\u2087\u208b\u2096 = 255（係数の和が1なら任意の係数で成立）",
+  theory_zigzag_title: "ルマジグザグ",
   theory_zigzag_desc:
-    "\u7d14\u8272\uff08\u6700\u5927\u30c1\u30e3\u30f3\u30cd\u30eb=255\u3001\u6700\u5c0f=0\uff09\u306f\u8272\u76f8\u306e\u56de\u8ee2\u306b\u5f93\u30446\u533a\u9593\u306e\u30b8\u30b0\u30b6\u30b0\u3092\u63cf\u304f\u3002\u5404\u533a\u9593\u30671\u30c1\u30e3\u30f3\u30cd\u30eb\u304c\u5909\u5316\u3057\u3001\u50be\u304d\u306fBT.601\u4fc2\u6570\u306b\u6bd4\u4f8b\u3002\u5404\u30ec\u30d9\u30eb\u306e\u6c34\u5e73\u7dda\u306f\u30b8\u30b0\u30b6\u30b0\u30681\u307e\u305f\u306f3\u70b9\u3067\u4ea4\u308f\u308b \u2014 \u3053\u308c\u304c\u7b49\u8f1d\u5ea6\u5019\u88dc\u3002\u6700\u5927\u306f4\uff08\u9802\u70b9\u9593\uff09\u3002\u88dc\u8272\u306f Y=127.5 \u3092\u8ef8\u306b\u93e1\u50cf\u3002",
+    "完全飽和色（最大チャンネル=255、最小=0）は色相の回転に従い6区間のジグザグを描く。各区間で1チャンネルが変化し、傾きはBT.601係数に比例。各頂点ルマ値の水平線はジグザグと1または3点で交わる — これが等ルマ候補。最大は4（頂点間）。補色は Y=127.5 を軸に鏡像。",
   theory_dice_title: "\u30ab\u30e9\u30fc\u30c0\u30a4\u30b9",
   theory_dice_desc:
-    "6つの色彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数 (L\u1d63, L\u1d33, L\u1d07) に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fbグレイコード隣接\u30fb色相角を同時に符号化しています。",
+    "6つの色彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fbグレイコード隣接\u30fb色相角を同時に符号化しています。",
   theory_dice_hint:
     "6\u9762 \u2192 8\u9802\u70b9: Black (0) \u3068 White (7) \u3092\u52a0\u3048\u308b\u3068\u30ab\u30e9\u30fc\u30ad\u30e5\u30fc\u30d6\u306b",
   theory_dice_net: "\u5c55\u958b\u56f3",
@@ -351,7 +350,7 @@ export const ja: Record<TranslationKey, string> = {
   gallery_generating: "生成中...",
   gallery_patterns: "{0} パターン",
   gallery_apply: "適用しました",
-  gallery_apply_btn: "適用",
+  gallery_apply_btn: "適用する",
   gallery_preview: "クリックでプレビュー",
   gallery_close_preview: "クリックで閉じる",
   gallery_bookmark: "ブックマークする",
@@ -499,6 +498,7 @@ export const ja: Record<TranslationKey, string> = {
   music_luminance_bt601: "BT.601",
   music_stop_all: "\u5168\u505c\u6b62",
   music_reset: "\u30ea\u30bb\u30c3\u30c8",
+  music_mute: "\u30df\u30e5\u30fc\u30c8",
   music_section_engine: "\u30bd\u30cb\u30d5\u30a3\u30b1\u30fc\u30b7\u30e7\u30f3\u30a8\u30f3\u30b8\u30f3",
   music_section_sequences: "\u30d5\u30a1\u30ce\u30b7\u30fc\u30b1\u30f3\u30b9",
   music_section_algebra: "\u4ee3\u6570\u7684\u97f3\u97ff\u5316",

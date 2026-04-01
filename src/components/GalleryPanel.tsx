@@ -269,15 +269,18 @@ export const GalleryPanel = React.memo(function GalleryPanel({
   const THUMB_SIZES: Record<ThumbSize, number> = { S: 120, M: 180, L: 260 };
   const [thumbSize, setThumbSize] = useState<ThumbSize>("M");
   const thumbDisplaySize = THUMB_SIZES[thumbSize];
-  const expandedDisplaySize =
-    typeof window !== "undefined"
-      ? Math.min(720, Math.floor(window.innerWidth * 0.75), Math.floor((window.innerHeight - 100) * 0.75))
-      : 300;
+  // Fit expanded preview within viewport while preserving aspect ratio
+  // Reserve space for border (4px) + gap + buttons (~50px)
+  const expandedMaxW = typeof window !== "undefined" ? Math.floor(window.innerWidth * 0.9) : 300;
+  const expandedMaxH = typeof window !== "undefined" ? Math.floor(window.innerHeight * 0.9 - 60) : 300;
+  const expandedAspect = cvs.w / Math.max(1, cvs.h);
+  const expandedDisplayW = expandedAspect >= expandedMaxW / expandedMaxH ? expandedMaxW : Math.round(expandedMaxH * expandedAspect);
+  const expandedDisplayH = expandedAspect >= expandedMaxW / expandedMaxH ? Math.round(expandedMaxW / expandedAspect) : expandedMaxH;
 
   // High-res thumbnail for expanded item (render at 2x for sharp display on high-DPI screens)
   const expandedRenderScale = typeof window !== "undefined" ? Math.min(2, window.devicePixelRatio || 1) : 1;
-  const expandedRenderW = Math.min(cvs.w, Math.round(expandedDisplaySize * expandedRenderScale));
-  const expandedRenderH = Math.min(cvs.h, Math.round(((expandedDisplaySize * cvs.h) / cvs.w) * expandedRenderScale));
+  const expandedRenderW = Math.min(cvs.w, Math.round(expandedDisplayW * expandedRenderScale));
+  const expandedRenderH = Math.min(cvs.h, Math.round(expandedDisplayH * expandedRenderScale));
   const expandedImageData = useMemo(() => {
     if (expandedIndex === null || expandedIndex >= displayItems.length) return null;
     const item = displayItems[expandedIndex];
@@ -460,7 +463,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
             }}
           >
             <div style={{ border: `2px solid ${C.accent}`, borderRadius: R.lg, overflow: "hidden" }}>
-              <ThumbCanvas imageData={expandedImageData} w={expandedDisplaySize} h={Math.round((expandedDisplaySize * cvs.h) / cvs.w)} />
+              <ThumbCanvas imageData={expandedImageData} w={expandedDisplayW} h={expandedDisplayH} />
             </div>
             <div style={{ display: "flex", gap: SP.xl }}>
               <button
@@ -468,11 +471,28 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                   applyScheme(displayItems[expandedIndex].cc);
                   setExpandedIndex(null);
                 }}
-                style={S_BTN}
+                style={{
+                  ...S_BTN,
+                  padding: `${SP.lg}px ${SP.xl}px`,
+                  fontSize: FS["2xl"],
+                  background: C.accent,
+                  color: C.textWhite,
+                  border: `1px solid ${C.accentBright}`,
+                }}
               >
                 {t("gallery_apply_btn")}
               </button>
-              <button onClick={() => toggleBookmark(displayItems[expandedIndex].cc)} style={S_BTN}>
+              <button
+                onClick={() => toggleBookmark(displayItems[expandedIndex].cc)}
+                style={{
+                  ...S_BTN,
+                  padding: `${SP.lg}px ${SP.xl}px`,
+                  fontSize: FS["2xl"],
+                  background: C.bgSurfaceAlt,
+                  color: C.textPrimary,
+                  border: `1px solid ${C.borderHover}`,
+                }}
+              >
                 {isBookmarked(displayItems[expandedIndex].cc) ? t("gallery_unbookmark") : t("gallery_bookmark")}
               </button>
             </div>

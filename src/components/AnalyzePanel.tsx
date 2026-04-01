@@ -55,8 +55,26 @@ export const AnalyzePanel = React.memo(
           <div className="panel-canvas" style={{ "--display-max": displayW + "px" } as React.CSSProperties}>
             <div style={{ fontSize: FS.md, color: C.textDim, textAlign: "center", lineHeight: "14px" }}>{t("stats_title")}</div>
             <MapCanvas mode={mapMode} pixelMaps={pixelMaps} colorLUT={colorLUT} cvs={cvs} displayW={displayW} displayH={displayH} />
-            <div style={{ display: "flex", gap: SP.xs, justifyContent: "center", marginTop: SP.xs, flexWrap: "wrap" }}>
-              {(["luminance", "colorlum", "region", "gradient", "depth", "noise", "entropy"] as const).map((m) => (
+            <div
+              className="map-mode-buttons"
+              style={{ display: "flex", flexWrap: "wrap", gap: SP.xs, justifyContent: "center", marginTop: SP.xs }}
+            >
+              {(["luminance", "colorlum", "region", "gradient"] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setMapMode(m)}
+                  style={{
+                    ...(mapMode === m ? S_BTN_ACTIVE : S_BTN),
+                    padding: `${SP.xs}px ${SP.md}px`,
+                    fontSize: FS.md,
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {t("stats_map_" + m)}
+                </button>
+              ))}
+              <span className="map-mode-break" />
+              {(["depth", "noise", "entropy"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setMapMode(m)}

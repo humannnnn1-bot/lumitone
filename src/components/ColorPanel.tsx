@@ -119,7 +119,11 @@ export const ColorPanel = React.memo(function ColorPanel(props: ColorPanelProps)
         <div className="panel-canvas" style={{ "--display-max": displayW + "px" } as React.CSSProperties}>
           <div style={{ fontSize: FS.md, color: C.textDim, textAlign: "center", lineHeight: "14px" }}>
             {t("label_colorized")}
-            <span style={{ marginLeft: SP.xl, color: C.textDimmest }}>{t("tool_" + tool)}</span>
+            <span style={{ marginLeft: SP.xl, color: C.textDimmest }}>
+              {t("tool_" + tool)
+                .replace(/[A-Za-z\u3000-\u9fff\u30a0-\u30ff\u3040-\u309f]+/g, "")
+                .trim()}
+            </span>
           </div>
           <div
             ref={prvWrapRef}

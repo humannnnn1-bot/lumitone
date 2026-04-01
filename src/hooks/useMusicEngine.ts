@@ -318,8 +318,9 @@ function applyParams(
     const lvData = levels.find((l) => l.lv === lv);
     if (!lvData) continue;
 
-    // Frequency
-    nodes.oscs[i].frequency.setTargetAtTime(angleToFreq(lvData.angle, scaleMode), now, RAMP_TC);
+    // Frequency — alpha0 rotates pitch mapping around the hue wheel
+    const rotatedAngle = lvData.angle + alpha0;
+    nodes.oscs[i].frequency.setTargetAtTime(angleToFreq(rotatedAngle, scaleMode), now, RAMP_TC);
 
     // Gain — hover logic with Fano line boost
     const gainScale =
@@ -371,7 +372,7 @@ function applyParams(
         pairIdx++;
         continue;
       }
-      nodes.fmOscs[pairIdx].frequency.setTargetAtTime(angleToFreq(modData.angle, scaleMode), now, RAMP_TC);
+      nodes.fmOscs[pairIdx].frequency.setTargetAtTime(angleToFreq(modData.angle + alpha0, scaleMode), now, RAMP_TC);
       const modIndex = (Math.abs(carrierData.gray - modData.gray) / 255) * 400;
       nodes.fmGains[pairIdx].gain.setTargetAtTime(modIndex, now, RAMP_TC);
       pairIdx++;

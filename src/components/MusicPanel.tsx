@@ -116,6 +116,8 @@ export const MusicPanel = React.memo(function MusicPanel() {
     }
   }, []);
   const [volume, setVolume] = useState(0.7);
+  const [muted, setMuted] = useState(false);
+  const preMuteVolumeRef = useRef(0.7);
   const [scaleMode, setScaleMode] = useState<ScaleMode>("12tet");
   const [fmEnabled, setFmEnabled] = useState(false);
   const [panEnabled, setPanEnabled] = useState(false);
@@ -211,7 +213,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
     hoveredLv: hoveredCandidate?.lv ?? null,
     alpha0,
     alpha7,
-    volume,
+    volume: muted ? 0 : volume,
     scaleMode,
     fmEnabled,
     panEnabled,
@@ -258,16 +260,24 @@ export const MusicPanel = React.memo(function MusicPanel() {
   }, [handleStopAll]);
 
   // Handlers
-  const handleHueChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setHueAngle(Number(e.target.value));
-    setDirectCandidates(new Map());
-  }, []);
+  const handleHueChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      engine.initAudio();
+      setHueAngle(Number(e.target.value));
+      setDirectCandidates(new Map());
+    },
+    [engine],
+  );
 
-  const handleAlphaBarChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const v = Number(e.target.value);
-    setAlpha0(v);
-    setAlpha7(v);
-  }, []);
+  const handleAlphaBarChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      engine.initAudio();
+      const v = Number(e.target.value);
+      setAlpha0(v);
+      setAlpha7(v);
+    },
+    [engine],
+  );
 
   const handleBlockClick = useCallback(
     (lv: number, angle: number) => {
@@ -278,6 +288,9 @@ export const MusicPanel = React.memo(function MusicPanel() {
     [engine, ensureAudio],
   );
 
+  const grayStepCbRef = useRef<(lv: number | null) => void>((lv: number | null) => setGrayStep(lv));
+  const fanoBeatCbRef = useRef<(line: number, pos: number) => void>((_line, pos) => setRhythmBeat(pos % 7));
+
   const handleGrayMelody = useCallback(() => {
     if (grayStep !== null) {
       engine.stopGrayMelody();
@@ -285,7 +298,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
       return;
     }
     engine.initAudio();
-    engine.playGrayMelody(rhythmTempo, (lv) => setGrayStep(lv));
+    engine.playGrayMelody(rhythmTempo, grayStepCbRef.current);
   }, [engine, grayStep, rhythmTempo]);
 
   const handleFanoRhythm = useCallback(() => {
@@ -295,9 +308,26 @@ export const MusicPanel = React.memo(function MusicPanel() {
       return;
     }
     engine.initAudio();
-    engine.startFanoRhythm(rhythmTempo, (_line, pos) => setRhythmBeat(pos % 7));
+    engine.startFanoRhythm(rhythmTempo, fanoBeatCbRef.current);
     setRhythmPlaying(true);
   }, [engine, rhythmPlaying, rhythmTempo]);
+
+  // Restart playback when BPM changes while playing
+  const tempoMountedRef = useRef(false);
+  useEffect(() => {
+    if (!tempoMountedRef.current) {
+      tempoMountedRef.current = true;
+      return;
+    }
+    if (grayStep !== null) {
+      engine.stopGrayMelody();
+      engine.playGrayMelody(rhythmTempo, grayStepCbRef.current);
+    }
+    if (rhythmPlaying) {
+      engine.stopFanoRhythm();
+      engine.startFanoRhythm(rhythmTempo, fanoBeatCbRef.current);
+    }
+  }, [rhythmTempo]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Level preview (same as GlazePanel)
   const levelPreview = useMemo(() => {
@@ -339,8 +369,16 @@ export const MusicPanel = React.memo(function MusicPanel() {
   // Disabled style for play buttons when audio is off
   // All buttons auto-init audio on click; no disabled state needed
 
+  const handleBgTap = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
+    // Reset hover state when tapping non-interactive background areas
+    const el = e.target as HTMLElement;
+    if (el.closest("button, [role='button'], input, select, a, canvas, svg")) return;
+    setHoveredCandidate(null);
+    setHoveredFanoLine(null);
+  }, []);
+
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, padding: `0 ${SP.md}px ${SP.md}px` }}>
+    <div onClick={handleBgTap} style={{ display: "flex", flexDirection: "column", gap: SP.md, padding: `0 ${SP.md}px ${SP.md}px` }}>
       <div className="panel-layout music-layout">
         {/* ═══ Left Column: Visualizations ═══ */}
         <div className="panel-canvas" style={{ "--display-max": "420px" } as React.CSSProperties}>
@@ -460,17 +498,16 @@ export const MusicPanel = React.memo(function MusicPanel() {
               const prevIdx = hasCands ? (currentIdx - 1 + cands.length) % cands.length : -1;
               const nextIdx = hasCands ? (currentIdx + 1) % cands.length : -1;
 
+              const isTouchDevice = typeof window !== "undefined" && "ontouchstart" in window;
+
               const makeSwatch = (ci: number, size: number) => {
                 const cand = cands[ci];
                 const isSelected = directCandidates.get(lp.lv) === ci;
                 const isSwatchHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === ci;
                 const isDimmed = hoveredCandidate !== null && !isSwatchHovered;
-                return (
-                  <div
-                    key={ci}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => {
+                const swatchClick = isTouchDevice
+                  ? undefined
+                  : () => {
                       const deselecting = directCandidates.get(lp.lv) === ci;
                       setDirectCandidates((prev) => {
                         const next = new Map(prev);
@@ -480,29 +517,31 @@ export const MusicPanel = React.memo(function MusicPanel() {
                       });
                       setHoveredCandidate({ lv: lp.lv, ci: deselecting ? autoIdx : ci });
                       handleBlockClick(lp.lv, cand.angle);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        const deselecting = directCandidates.get(lp.lv) === ci;
-                        setDirectCandidates((prev) => {
-                          const next = new Map(prev);
-                          if (deselecting) next.delete(lp.lv);
-                          else next.set(lp.lv, ci);
-                          return next;
-                        });
-                        setHoveredCandidate({ lv: lp.lv, ci: deselecting ? autoIdx : ci });
-                        handleBlockClick(lp.lv, cand.angle);
-                      }
-                    }}
-                    onPointerEnter={() => setHoveredCandidate({ lv: lp.lv, ci })}
-                    onPointerLeave={() => setHoveredCandidate(null)}
+                    };
+                return (
+                  <div
+                    key={ci}
+                    role={isTouchDevice ? undefined : "button"}
+                    tabIndex={isTouchDevice ? -1 : 0}
+                    onClick={swatchClick}
+                    onKeyDown={
+                      isTouchDevice
+                        ? undefined
+                        : (e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              swatchClick?.();
+                            }
+                          }
+                    }
+                    onPointerEnter={isTouchDevice ? undefined : () => setHoveredCandidate({ lv: lp.lv, ci })}
+                    onPointerLeave={isTouchDevice ? undefined : () => setHoveredCandidate(null)}
                     title={`#${cand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")} ${Math.round(cand.angle)}\u00B0`}
                     style={{
                       width: size,
                       height: size,
                       borderRadius: R.md,
-                      cursor: "pointer",
+                      cursor: isTouchDevice ? "default" : "pointer",
                       background: `rgb(${cand.rgb.join(",")})`,
                       border: `2px solid ${isSwatchHovered || isSelected ? C.accent : C.border}`,
                       boxSizing: "border-box" as const,
@@ -532,16 +571,19 @@ export const MusicPanel = React.memo(function MusicPanel() {
                   }
                 : undefined;
 
-              const swipeStartRef = { current: 0 };
+              const swipeStartRef = { current: 0, startX: 0 };
               const handleTouchStart = hasCands
                 ? (e: React.TouchEvent) => {
                     swipeStartRef.current = e.touches[0].clientY;
+                    swipeStartRef.startX = e.touches[0].clientX;
                   }
                 : undefined;
               const handleTouchEnd = hasCands
                 ? (e: React.TouchEvent) => {
                     const dy = e.changedTouches[0].clientY - swipeStartRef.current;
-                    if (Math.abs(dy) > 20) cycleCand(dy > 0 ? 1 : -1);
+                    const dx = e.changedTouches[0].clientX - swipeStartRef.startX;
+                    // Only cycle if intentional vertical swipe (not a tap)
+                    if (Math.abs(dy) > 30 && Math.abs(dy) > Math.abs(dx)) cycleCand(dy > 0 ? 1 : -1);
                   }
                 : undefined;
 
@@ -639,6 +681,27 @@ export const MusicPanel = React.memo(function MusicPanel() {
               <button type="button" style={S_BTN_SM} onClick={handleResetDefaults}>
                 {t("music_reset")}
               </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (muted) {
+                    setMuted(false);
+                    setVolume(preMuteVolumeRef.current);
+                  } else {
+                    preMuteVolumeRef.current = volume;
+                    setMuted(true);
+                  }
+                }}
+                style={{
+                  ...S_BTN_SM,
+                  opacity: muted ? 0.5 : 1,
+                }}
+                aria-label={muted ? "Unmute" : "Mute"}
+                title={muted ? "Unmute" : "Mute"}
+              >
+                {muted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
+                {t("music_mute")}
+              </button>
               <span style={{ width: SP.xl }} />
               <button type="button" style={fmEnabled ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => setFmEnabled(!fmEnabled)}>
                 {t("music_fm_on")}
@@ -718,8 +781,13 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 type="range"
                 min={0}
                 max={100}
-                value={Math.round(volume * 100)}
-                onChange={(e) => setVolume(Number(e.target.value) / 100)}
+                value={muted ? 0 : Math.round(volume * 100)}
+                onChange={(e) => {
+                  engine.initAudio();
+                  const v = Number(e.target.value) / 100;
+                  setVolume(v);
+                  if (muted && v > 0) setMuted(false);
+                }}
                 aria-label={t("music_volume")}
                 style={{ flex: 1, minWidth: 60 }}
               />

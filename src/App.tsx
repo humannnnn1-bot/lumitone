@@ -1,6 +1,7 @@
 import React, { useRef, useCallback, useMemo, useState } from "react";
 
 import { isShapeTool } from "./constants";
+import { LUMA_R, LUMA_G, LUMA_B, GRAY_LUT } from "./color-engine";
 import { useSyncRef } from "./hooks/useSyncRef";
 import { usePanZoom } from "./hooks/usePanZoom";
 import { useCanvasDrawing } from "./hooks/useCanvasDrawing";
@@ -21,6 +22,7 @@ import { ColorPanel } from "./components/ColorPanel";
 import { GlazePanel } from "./components/GlazePanel";
 import { HelpModal } from "./components/HelpModal";
 import { NewCanvasModal } from "./components/NewCanvasModal";
+import { CropModal } from "./components/CropModal";
 import { PromptModal } from "./components/PromptModal";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { AnalyzePanel } from "./components/AnalyzePanel";
@@ -175,7 +177,41 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
 
   const brushSizeRef = useSyncRef(brushSize);
 
-  const fileDrop = useFileDrop(dispatch, panZoom.setZoom, panZoom.setPan, showToast, announce, t);
+  // Crop modal state
+  const [cropImage, setCropImage] = useState<{ img: HTMLImageElement; w: number; h: number } | null>(null);
+  const handleCropRequest = useCallback((img: HTMLImageElement, w: number, h: number) => {
+    setCropImage({ img, w, h });
+  }, []);
+  const handleCropConfirm = useCallback(
+    (x: number, y: number, w: number, h: number) => {
+      const ci = cropImage;
+      if (!ci) return;
+      const tc = document.createElement("canvas");
+      tc.width = w;
+      tc.height = h;
+      const ctx = tc.getContext("2d");
+      if (!ctx) return;
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, w, h);
+      ctx.drawImage(ci.img, x, y, w, h, 0, 0, w, h);
+      const id = ctx.getImageData(0, 0, w, h);
+      const nd = new Uint8Array(w * h);
+      const px = id.data;
+      for (let i = 0; i < w * h; i++) {
+        const off = i * 4;
+        const gray = Math.min(255, Math.round(LUMA_R * px[off] + LUMA_G * px[off + 1] + LUMA_B * px[off + 2]));
+        nd[i] = GRAY_LUT[gray];
+      }
+      dispatch({ type: "load_image", w, h, data: nd });
+      panZoom.setZoom(1);
+      panZoom.setPan({ x: 0, y: 0 });
+      setCropImage(null);
+    },
+    [cropImage, dispatch, panZoom],
+  );
+  const handleCropCancel = useCallback(() => setCropImage(null), []);
+
+  const fileDrop = useFileDrop(dispatch, panZoom.setZoom, panZoom.setPan, showToast, announce, t, handleCropRequest);
 
   const undo = useCallback(() => dispatch({ type: "undo" }), [dispatch]);
   const redo = useCallback(() => dispatch({ type: "redo" }), [dispatch]);
@@ -358,6 +394,9 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
       {toast && <Toast message={toast.message} type={toast.type} />}
 
       <NewCanvasModal open={showNewCanvas} onConfirm={handleNewCanvasConfirm} onCancel={handleNewCanvasCancel} />
+      {cropImage && (
+        <CropModal img={cropImage.img} imgW={cropImage.w} imgH={cropImage.h} onConfirm={handleCropConfirm} onCancel={handleCropCancel} />
+      )}
       <PromptModal
         open={!!promptState}
         title={t("prompt_custom_filename")}
