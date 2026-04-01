@@ -57,7 +57,7 @@ export const MiniFanoChord = React.memo(function MiniFanoChord({ hoveredLine, on
   const anyHovered = hoveredLine !== null;
 
   return (
-    <svg viewBox="0 0 200 180" style={{ width: "100%", maxWidth: 200, aspectRatio: "200/180" }}>
+    <svg viewBox="0 0 200 180" style={{ width: "100%", maxWidth: 300, aspectRatio: "200/180" }}>
       <defs>
         <filter id="fano-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />

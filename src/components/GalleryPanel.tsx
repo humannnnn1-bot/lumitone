@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
-import { LEVEL_CANDIDATES, LEVEL_INFO, buildColorLUT } from "../color-engine";
+import { LEVEL_CANDIDATES, buildColorLUT, hue2rgb } from "../color-engine";
 import { S_BTN, S_BTN_ACTIVE, S_BTN_SM, S_BTN_SM_ACTIVE } from "../styles";
 import { rgbStr } from "../utils";
 import { useGallery, renderThumbnail } from "../hooks/useGallery";
@@ -72,14 +72,18 @@ function patternHue(patternCc: number[]): number {
 }
 
 /** Check if a pattern's cc[] matches a hue filter on a specific level. */
-function matchesHueFilter(patternCc: number[], filterLevel: number, filterHue: number, filterRange: number): boolean {
-  const cands = LEVEL_CANDIDATES[filterLevel];
-  if (cands.length <= 1) return true;
-  const ci = patternCc[filterLevel] % cands.length;
-  const angle = cands[ci].angle;
-  if (angle < 0) return true;
-  const diff = Math.abs(angle - filterHue);
-  return Math.min(diff, 360 - diff) <= filterRange;
+function matchesHueFilter(patternCc: number[], filterHue: number, filterRange: number): boolean {
+  // Check if ANY of the 6 chromatic levels (L1-L6) has a candidate within the hue range
+  for (let lv = 1; lv <= 6; lv++) {
+    const cands = LEVEL_CANDIDATES[lv];
+    if (cands.length <= 1) continue;
+    const ci = patternCc[lv] % cands.length;
+    const angle = cands[ci].angle;
+    if (angle < 0) continue;
+    const diff = Math.abs(angle - filterHue);
+    if (Math.min(diff, 360 - diff) <= filterRange) return true;
+  }
+  return false;
 }
 
 const ThumbCanvas = React.memo(function ThumbCanvas({ imageData, w, h }: { imageData: ImageData | null; w: number; h: number }) {
@@ -87,14 +91,24 @@ const ThumbCanvas = React.memo(function ThumbCanvas({ imageData, w, h }: { image
   useEffect(() => {
     const c = ref.current;
     if (!c || !imageData) return;
-    if (c.width !== imageData.width || c.height !== imageData.height) {
-      c.width = imageData.width;
-      c.height = imageData.height;
+    const dpr = window.devicePixelRatio || 1;
+    const bw = Math.round(w * dpr);
+    const bh = Math.round(h * dpr);
+    if (c.width !== bw || c.height !== bh) {
+      c.width = bw;
+      c.height = bh;
     }
     const ctx = c.getContext("2d");
-    if (ctx) ctx.putImageData(imageData, 0, 0);
-  }, [imageData]);
-  return <canvas ref={ref} style={{ width: w, height: h, display: "block", borderRadius: R.sm, imageRendering: "auto" }} />;
+    if (!ctx) return;
+    ctx.imageSmoothingEnabled = false;
+    const tmp = document.createElement("canvas");
+    tmp.width = imageData.width;
+    tmp.height = imageData.height;
+    const tmpCtx = tmp.getContext("2d")!;
+    tmpCtx.putImageData(imageData, 0, 0);
+    ctx.drawImage(tmp, 0, 0, bw, bh);
+  }, [imageData, w, h]);
+  return <canvas ref={ref} style={{ width: w, height: h, display: "block", borderRadius: R.sm }} />;
 });
 
 type SortMode = "default" | "hue_asc" | "hue_desc" | "similar";
@@ -149,9 +163,8 @@ export const GalleryPanel = React.memo(function GalleryPanel({
   const currentItemRef = useRef<HTMLDivElement>(null);
 
   // Hue filter state
-  const [filterLevel, setFilterLevel] = useState<number | null>(null);
   const [filterHue, setFilterHue] = useState(180);
-  const [filterRange, setFilterRange] = useState(60);
+  const [filterRange, setFilterRange] = useState(180);
 
   // Scroll to current pattern only when requested (e.g. from Diagram tab link)
   useEffect(() => {
@@ -230,9 +243,9 @@ export const GalleryPanel = React.memo(function GalleryPanel({
   const displayItems = useMemo(() => {
     let list = filter === "bookmarks" ? bookmarkItems : items;
 
-    // Hue filter
-    if (filterLevel !== null) {
-      list = list.filter((item) => matchesHueFilter(item.cc, filterLevel, filterHue, filterRange));
+    // Hue filter — active when range < 180° (full circle)
+    if (filterRange < 180) {
+      list = list.filter((item) => matchesHueFilter(item.cc, filterHue, filterRange));
     }
 
     // Sort
@@ -250,14 +263,16 @@ export const GalleryPanel = React.memo(function GalleryPanel({
       return sorted;
     }
     return list;
-  }, [filter, items, bookmarkItems, sortMode, filterLevel, filterHue, filterRange, cc]);
+  }, [filter, items, bookmarkItems, sortMode, filterHue, filterRange, cc]);
 
   type ThumbSize = "S" | "M" | "L";
   const THUMB_SIZES: Record<ThumbSize, number> = { S: 120, M: 180, L: 260 };
   const [thumbSize, setThumbSize] = useState<ThumbSize>("M");
   const thumbDisplaySize = THUMB_SIZES[thumbSize];
   const expandedDisplaySize =
-    typeof window !== "undefined" ? Math.min(600, Math.floor(Math.min(window.innerWidth, window.innerHeight) * 0.7)) : 300;
+    typeof window !== "undefined"
+      ? Math.min(720, Math.floor(window.innerWidth * 0.75), Math.floor((window.innerHeight - 100) * 0.75))
+      : 300;
 
   // High-res thumbnail for expanded item (render at 2x for sharp display on high-DPI screens)
   const expandedRenderScale = typeof window !== "undefined" ? Math.min(2, window.devicePixelRatio || 1) : 1;
@@ -269,12 +284,6 @@ export const GalleryPanel = React.memo(function GalleryPanel({
     const lut = buildColorLUT(item.cc);
     return renderThumbnail(cvs.data, cvs.w, cvs.h, lut, expandedRenderW, expandedRenderH);
   }, [expandedIndex, displayItems, cvs, expandedRenderW, expandedRenderH]);
-
-  // Filter levels that have multiple candidates
-  const filterableLevels = useMemo(
-    () => LEVEL_INFO.map((info, lv) => ({ lv, name: info.name, count: LEVEL_CANDIDATES[lv].length })).filter((l) => l.count > 1),
-    [],
-  );
 
   return (
     <div ref={panelRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg, width: "100%" }}>
@@ -328,27 +337,6 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                 ? t("gallery_sort_similar")
                 : t("gallery_sort_default")}
         </button>
-        <select
-          value={filterLevel ?? ""}
-          onChange={(e) => setFilterLevel(e.target.value === "" ? null : Number(e.target.value))}
-          aria-label={t("aria_gallery_filter_level")}
-          style={{
-            fontSize: FS.lg,
-            background: C.bgPanel,
-            color: C.textMuted,
-            border: `1px solid ${C.border}`,
-            borderRadius: R.lg,
-            padding: `${SP.xs}px ${SP.lg}px`,
-            cursor: "pointer",
-          }}
-        >
-          <option value="">{t("gallery_filter_hue")}</option>
-          {filterableLevels.map((l) => (
-            <option key={l.lv} value={l.lv}>
-              L{l.lv}
-            </option>
-          ))}
-        </select>
         {(["S", "M", "L"] as ThumbSize[]).map((sz) => (
           <button
             key={sz}
@@ -356,25 +344,26 @@ export const GalleryPanel = React.memo(function GalleryPanel({
             style={thumbSize === sz ? S_BTN_SM_ACTIVE : S_BTN_SM}
             aria-label={`Thumbnail size ${sz}`}
           >
-            {sz}
+            {t(`gallery_thumb_${sz}`)}
           </button>
         ))}
       </div>
 
       {/* Hue filter sliders — shown only when a level is selected */}
-      {filterLevel !== null && (
+      {
         <div style={{ display: "flex", gap: SP.md, alignItems: "center", width: "100%", fontSize: FS.sm, color: C.textDim }}>
           <div style={S_HUE_FILTER_TRACK}>
-            {/* Range boundary lines */}
+            {/* Range boundary lines + arrow colored by hue angle */}
             {(() => {
               const lo = (((filterHue - filterRange) % 360) + 360) % 360;
               const hi = (((filterHue + filterRange) % 360) + 360) % 360;
+              const hueColor = `rgb(${hue2rgb(filterHue).join(",")})`;
               const line: React.CSSProperties = {
                 position: "absolute",
                 top: 0,
                 width: 2,
                 height: "100%",
-                background: C.textPrimary,
+                background: hueColor,
                 pointerEvents: "none",
               };
               return (
@@ -384,7 +373,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                 </>
               );
             })()}
-            {/* Current position indicator */}
+            {/* Current position indicator — colored by hue angle */}
             <div
               style={{
                 position: "absolute",
@@ -395,7 +384,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                 height: 0,
                 borderLeft: "4px solid transparent",
                 borderRight: "4px solid transparent",
-                borderBottom: `5px solid ${C.textPrimary}`,
+                borderBottom: `5px solid rgb(${hue2rgb(filterHue).join(",")})`,
                 pointerEvents: "none",
               }}
             />
@@ -441,7 +430,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
             />
           </div>
         </div>
-      )}
+      }
 
       {/* Expanded preview modal */}
       {expandedImageData && expandedIndex !== null && expandedIndex < displayItems.length && (
@@ -460,7 +449,15 @@ export const GalleryPanel = React.memo(function GalleryPanel({
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xl, cursor: "default" }}
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: SP.xl,
+              cursor: "default",
+              maxWidth: "90vw",
+              maxHeight: "85vh",
+            }}
           >
             <div style={{ border: `2px solid ${C.accent}`, borderRadius: R.lg, overflow: "hidden" }}>
               <ThumbCanvas imageData={expandedImageData} w={expandedDisplaySize} h={Math.round((expandedDisplaySize * cvs.h) / cvs.w)} />
@@ -490,7 +487,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
       {filter === "bookmarks" && bookmarks.length === 0 && (
         <div style={{ fontSize: FS.md, color: C.textSubtle, textAlign: "center", padding: 16 }}>{t("gallery_no_bookmarks")}</div>
       )}
-      {filterLevel !== null && displayItems.length === 0 && items.length > 0 && (
+      {filterRange < 180 && displayItems.length === 0 && items.length > 0 && (
         <div style={{ fontSize: FS.md, color: C.textSubtle, textAlign: "center", padding: 16 }}>{t("gallery_no_match")}</div>
       )}
 

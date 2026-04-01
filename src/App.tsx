@@ -30,6 +30,8 @@ import { TheoryPanel } from "./components/TheoryPanel";
 import { MusicPanel } from "./components/MusicPanel";
 import { useTranslation } from "./i18n";
 
+const APP_VERSION = "5.0.0";
+
 /* ═══════════════════════════════════════════
    LAYOUT STYLE CONSTANTS
    ═══════════════════════════════════════════ */
@@ -381,6 +383,8 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
           </span>
           {" | "}
           <LanguageSwitcher />
+          {" | "}
+          <span style={{ opacity: 0.5 }}>v{APP_VERSION}</span>
         </div>
       </div>
 
