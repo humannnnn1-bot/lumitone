@@ -1,5 +1,4 @@
 import React from "react";
-import { C } from "../../tokens";
 
 interface MiniFanoChordProps {
   hoveredLine: number | null;
@@ -88,7 +87,7 @@ export const MiniFanoChord = React.memo(function MiniFanoChord({
   playingLine,
 }: MiniFanoChordProps) {
   const anyHovered = hoveredLine !== null;
-  const playingLineLevels = playingLine !== null ? FANO_LINES[playingLine] : null;
+  const playingLineLevels = playingLine != null ? FANO_LINES[playingLine] : null;
 
   return (
     <svg viewBox="0 0 200 190" style={{ width: "100%", maxWidth: 300, aspectRatio: "200/190" }}>
