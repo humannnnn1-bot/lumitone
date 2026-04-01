@@ -141,6 +141,29 @@ input[type="checkbox"]:focus-visible {
   font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Yu Gothic UI", "Meiryo", "Noto Sans CJK JP", system-ui, sans-serif !important;
 }
 
+/* ── Tablet: 2-column for Music tab only ── */
+@media (min-width: 768px) and (max-width: 1023px) {
+  .music-layout {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 16px;
+  }
+  .music-layout > .panel-canvas,
+  .music-layout > .panel-sidebar {
+    max-width: 360px;
+  }
+}
+
+/* ── Mobile: constrain algebra card scroll ── */
+@media (max-width: 767px) {
+  .music-algebra-scroll {
+    max-height: 60vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 @media (min-width: 1024px) {
   :root {
     --sp-root-top: 16px;

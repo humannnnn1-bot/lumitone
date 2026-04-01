@@ -23,6 +23,8 @@ interface LinkedVizProps {
   onAlpha0Change?: (a: number) => void;
   alpha7?: number;
   onAlpha7Change?: (a: number) => void;
+  /** Optional scale mode buttons to render above the interval ratio display */
+  scaleButtons?: React.ReactNode;
 }
 
 /* ── Layout constants ── */
@@ -1290,7 +1292,10 @@ export const LinkedViz = React.memo(function LinkedViz({
                 {rows.map((r, i) => {
                   const isHovered = hoveredDot !== null && r.lv != null && hoveredDot.lv === r.lv;
                   const isDimmed = hoveredDot !== null && r.lv != null && !isHovered;
-                  const fill = r.dim ? C.textDimmer : isHovered ? "#fff" : (r.color ?? C.textDim);
+                  const textFill = r.dim ? C.textDimmer : isHovered ? "#fff" : C.textDim;
+                  const SQ = FS_ROW - 2;
+                  const sqX = ix;
+                  const textX = r.color ? ix + SQ + 4 : ix;
                   return (
                     <g
                       key={i}
@@ -1301,10 +1306,12 @@ export const LinkedViz = React.memo(function LinkedViz({
                     >
                       {/* Hit area */}
                       {r.lv != null && <rect x={ix - 2} y={iy + (i + 1) * ROW - FS_ROW} width={TW - ix} height={ROW} fill="transparent" />}
-                      <text x={ix} y={iy + (i + 1) * ROW} fontSize={FS_ROW} fill={fill} fontWeight={r.dim ? "normal" : "bold"}>
+                      {/* Color swatch */}
+                      {r.color && <rect x={sqX} y={iy + (i + 1) * ROW - SQ} width={SQ} height={SQ} rx={2} fill={r.color} />}
+                      <text x={textX} y={iy + (i + 1) * ROW} fontSize={FS_ROW} fill={textFill} fontWeight={r.dim ? "normal" : "bold"}>
                         {r.label}
                       </text>
-                      <text x={ix + LABEL_W} y={iy + (i + 1) * ROW} fontSize={FS_ROW} fill={fill}>
+                      <text x={textX + LABEL_W} y={iy + (i + 1) * ROW} fontSize={FS_ROW} fill={textFill}>
                         {r.value}
                       </text>
                     </g>
