@@ -299,6 +299,31 @@ export const ja: Record<TranslationKey, string> = {
     "色立方体の双対。6頂点 = 6色相色（原色は+軸、CMYは−軸）、8面 = 8色（各八分空間が1つのGF(2)\u00b3元に対応）。3本の補色軸 R\u2194C, G\u2194M, B\u2194Y が対頂点を結ぶ。面隣接グラフは立方体グラフQ\u2083そのもの。",
   theory_octa_axes: "補色軸",
 
+  // K₈ three-factor decomposition (ColorCube extension)
+  theory_cube_k8_annotation: "K₈ = Q₃ ∪ (K₄⊔K₄) ∪ M₄　度数: 3+3+1=7",
+
+  // Cuboctahedron (rectified cube)
+  theory_cubocta_title: "立方八面体",
+  theory_cubocta_desc:
+    "色立方体の整流（各辺の中点を頂点とする）。12頂点 = 12本のQ₃辺 = 隣接色の中間色。14面 = 8三角形（8色）+ 6正方形（3座標超平面×2）。色遷移空間の幾何学的実現。回転群S₄が24辺に正則に作用する。",
+  theory_cubocta_faces: "面",
+
+  // Rhombic Dodecahedron (dual of cuboctahedron)
+  theory_rhombic_title: "菱形十二面体",
+  theory_rhombic_desc:
+    "立方八面体の双対。14頂点 = 8色（立方体型）+ 6座標軸（八面体型、3補色軸×2方向）。12菱形面 = 12本のHamming距離1遷移。24辺 = AG(3,2)の24点-超平面入射。FCC格子のVoronoi胞体で、偶数重み部分群{K,C,M,Y}に対応。",
+  theory_rhombic_faces: "面",
+
+  // Truncated tetrahedron (ColorDice extension)
+  theory_dice_trunc: "切頂",
+  theory_dice_trunc_annotation: "双対グラフ = Q₃ ∪ K₄(T1)　欠落辺 = 4補色対 {v, v⊕7}",
+
+  // AG(3,2) affine planes (Connections extension)
+  theory_conn_ag32: "AG(3,2) アフィン平面",
+  theory_conn_ag32_hook: "GF(2)³の14個のアフィン平面（4元素部分集合）が7平行類を形成し、各類がFano直線に対応する。",
+  theory_conn_ag32_detail:
+    "14平面 = 7部分空間（0を含む）+ 7剰余類。7平行類 ↔ 7 Fano直線（全単射）。注：立方八面体の14面との対応は偶然の数値一致（7+7 ≠ 8+6の分割不一致、AGL(3,2)→O_hの非自明準同型なし）。",
+
   // ColorDice tetrahedra
   theory_dice_tetra: "T0/T1 四面体",
   theory_dice_tetra_t0: "T0: 偶数重み",

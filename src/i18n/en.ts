@@ -299,6 +299,31 @@ export const en = {
     "Dual of the color cube. 6 vertices = 6 chromatic colors (primaries on +axis, CMY on \u2212axis), 8 faces = 8 GF(2)\u00b3 elements (each octant maps to one color). 3 complement axes R\u2194C, G\u2194M, B\u2194Y connect antipodal vertices. The face-adjacency graph is Q\u2083 \u2014 the color cube itself.",
   theory_octa_axes: "Complement axes",
 
+  // K₈ three-factor decomposition (ColorCube extension)
+  theory_cube_k8_annotation: "K₈ = Q₃ ∪ (K₄⊔K₄) ∪ M₄  degrees: 3+3+1=7",
+
+  // Cuboctahedron (rectified cube)
+  theory_cubocta_title: "Cuboctahedron",
+  theory_cubocta_desc:
+    "Rectification of the color cube (vertices at edge midpoints). 12 vertices = 12 Q₃ edges = adjacent-color midpoints. 14 faces = 8 triangles (8 colors) + 6 squares (3 coordinate hyperplanes × 2). Geometric realization of the color-transition space. Rotation group S₄ acts regularly on 24 edges.",
+  theory_cubocta_faces: "Faces",
+
+  // Rhombic Dodecahedron (dual of cuboctahedron)
+  theory_rhombic_title: "Rhombic Dodecahedron",
+  theory_rhombic_desc:
+    "Dual of the cuboctahedron. 14 vertices = 8 colors (cube-type) + 6 coordinate axes (octahedron-type, 3 complement axes × 2 directions). 12 rhombic faces = 12 Hamming-distance-1 transitions. 24 edges = 24 point-hyperplane incidences of AG(3,2). Voronoi cell of FCC lattice, corresponding to even-weight subgroup {K,C,M,Y}.",
+  theory_rhombic_faces: "Faces",
+
+  // Truncated tetrahedron (ColorDice extension)
+  theory_dice_trunc: "Truncation",
+  theory_dice_trunc_annotation: "Dual graph = Q₃ ∪ K₄(T1)  missing edges = 4 complement pairs {v, v⊕7}",
+
+  // AG(3,2) affine planes (Connections extension)
+  theory_conn_ag32: "AG(3,2) Affine Planes",
+  theory_conn_ag32_hook: "The 14 affine planes of GF(2)³ (4-element subsets) form 7 parallel classes, each corresponding to a Fano line.",
+  theory_conn_ag32_detail:
+    "14 planes = 7 subspaces (containing 0) + 7 cosets. 7 parallel classes ↔ 7 Fano lines (bijection). Note: correspondence with 14 cuboctahedron faces is numerical coincidence (7+7 ≠ 8+6 splitting mismatch, no non-trivial homomorphism AGL(3,2)→O_h).",
+
   // ColorDice tetrahedra
   theory_dice_tetra: "T0/T1 Tetrahedra",
   theory_dice_tetra_t0: "T0: even weight",

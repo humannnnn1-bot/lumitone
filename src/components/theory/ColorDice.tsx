@@ -1,5 +1,15 @@
 import React, { useCallback, useState } from "react";
-import { THEORY_LEVELS, CUBE_EDGES, CUBE_POINTS, TETRA_T0, TETRA_T1, TETRA_T0_EDGES, TETRA_T1_EDGES } from "./theory-data";
+import {
+  THEORY_LEVELS,
+  CUBE_EDGES,
+  CUBE_POINTS,
+  TETRA_T0,
+  TETRA_T1,
+  TETRA_T0_EDGES,
+  TETRA_T1_EDGES,
+  TRUNC_TETRA_FACES,
+  TRUNC_MISSING_EDGES,
+} from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
 import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
@@ -598,6 +608,99 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
             {t("theory_dice_tetra_face_xor")}
           </p>
         </div>
+      </div>
+
+      {/* Truncated Tetrahedron: 8 faces = T0 (triangles) + T1 (hexagons) */}
+      <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.accentBright, margin: 0, fontWeight: FW.bold }}
+      >
+        {t("theory_dice_trunc")}
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
+        {/* 8 colored face blocks: 4 triangles (T0) + 4 hexagons (T1) */}
+        <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center", maxWidth: 320 }}>
+          {TRUNC_TETRA_FACES.map((face, i) => {
+            const info = THEORY_LEVELS[face.color];
+            const isActive = hl === face.color;
+            const isDim = hl !== null && !isActive;
+            const shape = face.type === "tri" ? "△" : "⬡";
+            const group = face.type === "tri" ? "T0" : "T1";
+            return (
+              <div
+                key={`ttf${i}`}
+                onMouseEnter={() => enter(face.color)}
+                onMouseLeave={leave}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: 2,
+                  opacity: isDim ? 0.25 : 1,
+                  cursor: "default",
+                }}
+              >
+                <div
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: face.type === "tri" ? 0 : 6,
+                    clipPath: face.type === "tri" ? "polygon(50% 0%, 0% 100%, 100% 100%)" : undefined,
+                    background: face.color === 0 ? C.bgRoot : info.color,
+                    border: isActive ? "2px solid #fff" : `1px solid ${info.color}`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <span
+                    style={{
+                      fontSize: FS.md,
+                      fontWeight: 900,
+                      fontFamily: "monospace",
+                      color: face.color >= 4 ? "#000" : "#fff",
+                      marginTop: face.type === "tri" ? 8 : 0,
+                    }}
+                  >
+                    {face.color}
+                  </span>
+                </div>
+                <span style={{ fontSize: 7, fontFamily: "monospace", color: C.textDimmer }}>
+                  {shape} {group}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Missing edges: 4 complement pairs */}
+        <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>
+          {TRUNC_MISSING_EDGES.map(([a, b]) => {
+            const infoA = THEORY_LEVELS[a];
+            const infoB = THEORY_LEVELS[b];
+            return (
+              <span key={`me${a}${b}`} className="theory-annotation" style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer }}>
+                <span style={{ color: infoA.color === "#000000" ? "#666" : infoA.color }}>{a}</span>
+                {" ✕ "}
+                <span style={{ color: infoB.color }}>{b}</span>
+              </span>
+            );
+          })}
+        </div>
+        <p
+          className="theory-annotation"
+          style={{
+            fontSize: FS.xs,
+            fontFamily: "monospace",
+            color: C.textDimmer,
+            margin: 0,
+            textAlign: "center",
+            maxWidth: 300,
+            lineHeight: 1.5,
+          }}
+        >
+          {t("theory_dice_trunc_annotation")}
+        </p>
       </div>
     </div>
   );

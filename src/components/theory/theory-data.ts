@@ -238,6 +238,258 @@ export const TETRA_T1_EDGES: [number, number][] = [
   [4, 7],
 ];
 
+/* ── K₈ Three-Factor Decomposition ─────────
+   K₈ = Q₃ (dist 1, 12 edges) ∪ Stella (dist 2, 12 edges) ∪ M₄ (dist 3, 4 edges)
+   Degrees: 3 + 3 + 1 = 7 = deg(K₈)  */
+
+/** Hamming distance between two GF(2)³ elements */
+export function hammingDist(a: number, b: number): number {
+  const d = a ^ b;
+  return (d & 1) + ((d >> 1) & 1) + ((d >> 2) & 1);
+}
+
+/** Distance-2 edges (stella octangula): T0 internal + T1 internal */
+export const STELLA_EDGES: [number, number][] = [...TETRA_T0_EDGES, ...TETRA_T1_EDGES];
+
+/** Distance-3 edges (complement matching): 4 body diagonals */
+export const COMPLEMENT_EDGES: [number, number][] = [
+  [0, 7],
+  [1, 6],
+  [2, 5],
+  [3, 4],
+];
+
+/* ── Cuboctahedron (rectified cube) geometry ──
+   12 vertices = midpoints of 12 cube edges
+   14 faces = 8 triangles (one per cube vertex) + 6 squares (one per cube face)  */
+
+export interface CuboctaVertex {
+  x: number;
+  y: number;
+  lv0: number; // first cube vertex of the edge
+  lv1: number; // second cube vertex of the edge
+  midColor: string; // averaged RGB color
+}
+
+function midColor(a: number, b: number): string {
+  const ra = (a >> 1) & 1,
+    ga = (a >> 2) & 1,
+    ba2 = a & 1;
+  const rb = (b >> 1) & 1,
+    gb = (b >> 2) & 1,
+    bb = b & 1;
+  const r = Math.round(((ra + rb) / 2) * 255);
+  const g = Math.round(((ga + gb) / 2) * 255);
+  const bl = Math.round(((ba2 + bb) / 2) * 255);
+  return `rgb(${r},${g},${bl})`;
+}
+
+export const CUBOCTA_VERTICES: CuboctaVertex[] = CUBE_EDGES.map(([a, b]) => {
+  const pa = CUBE_POINTS[a],
+    pb = CUBE_POINTS[b];
+  return {
+    x: (pa.x + pb.x) / 2,
+    y: (pa.y + pb.y) / 2,
+    lv0: a,
+    lv1: b,
+    midColor: midColor(a, b),
+  };
+});
+
+/** 8 triangular faces: one per cube vertex. Each lists 3 cuboctahedron vertex indices. */
+export const CUBOCTA_TRI_FACES: { color: number; verts: number[] }[] = [];
+for (let v = 0; v < 8; v++) {
+  const adj: number[] = [];
+  CUBE_EDGES.forEach(([a, b], ei) => {
+    if (a === v || b === v) adj.push(ei);
+  });
+  CUBOCTA_TRI_FACES.push({ color: v, verts: adj });
+}
+
+/** 6 square faces: one per cube face (pair of parallel edges sharing a coordinate plane).
+ *  Cube faces are defined by fixing one coordinate (bit). */
+export const CUBOCTA_SQ_FACES: { axis: "G" | "R" | "B"; value: 0 | 1; verts: number[] }[] = [];
+for (const axis of ["G", "R", "B"] as const) {
+  for (const val of [0, 1] as const) {
+    const bit = axis === "G" ? 2 : axis === "R" ? 1 : 0;
+    const mask = 1 << bit;
+    const faceEdges: number[] = [];
+    CUBE_EDGES.forEach(([a, b], ei) => {
+      const ch = edgeChannel(a, b);
+      if (ch !== axis && (a & mask) >> bit === val && (b & mask) >> bit === val) {
+        faceEdges.push(ei);
+      }
+    });
+    CUBOCTA_SQ_FACES.push({ axis, value: val, verts: faceEdges });
+  }
+}
+
+/** Cuboctahedron edges: two cuboctahedron vertices (edge midpoints) are connected
+ *  if their original cube edges share a vertex and flip different bits */
+export const CUBOCTA_EDGES: [number, number][] = [];
+for (let i = 0; i < CUBOCTA_VERTICES.length; i++) {
+  for (let j = i + 1; j < CUBOCTA_VERTICES.length; j++) {
+    const vi = CUBOCTA_VERTICES[i],
+      vj = CUBOCTA_VERTICES[j];
+    const shared = [vi.lv0, vi.lv1].filter((v) => v === vj.lv0 || v === vj.lv1);
+    if (shared.length === 1) {
+      const chi = edgeChannel(vi.lv0, vi.lv1);
+      const chj = edgeChannel(vj.lv0, vj.lv1);
+      if (chi !== chj) CUBOCTA_EDGES.push([i, j]);
+    }
+  }
+}
+
+/* ── Rhombic Dodecahedron geometry ──────────
+   14 vertices = 8 cube-type + 6 octahedron-type (face centers)
+   12 rhombic faces = 12 cube edges (dual of cuboctahedron)
+   24 edges: each connects a cube-type to an octahedron-type vertex  */
+
+export interface RhombicOctaVertex {
+  x: number;
+  y: number;
+  axis: "G" | "R" | "B";
+  sign: 1 | -1;
+  label: string; // e.g., "+R" or "−B"
+}
+
+// Octahedron-type vertices sit at midpoints of cube faces, pushed outward.
+// In isometric projection, each is the average of 4 cube vertices on that face,
+// scaled outward from center by factor 1.33 (to make rhombic proportions).
+const RHOMBIC_CENTER = { x: ISO_CX, y: ISO_CY };
+const RHOMBIC_SCALE = 1.33;
+
+function cubeVerticesOnFace(axis: "G" | "R" | "B", val: 0 | 1): number[] {
+  const bit = axis === "G" ? 2 : axis === "R" ? 1 : 0;
+  const mask = 1 << bit;
+  const result: number[] = [];
+  for (let i = 0; i < 8; i++) {
+    if ((i & mask) >> bit === val) result.push(i);
+  }
+  return result;
+}
+
+export const RHOMBIC_OCTA_VERTICES: RhombicOctaVertex[] = [];
+for (const axis of ["G", "R", "B"] as const) {
+  for (const val of [0, 1] as const) {
+    const verts = cubeVerticesOnFace(axis, val);
+    const avgX = verts.reduce((s, v) => s + CUBE_POINTS[v].x, 0) / 4;
+    const avgY = verts.reduce((s, v) => s + CUBE_POINTS[v].y, 0) / 4;
+    // Push outward from center
+    const dx = avgX - RHOMBIC_CENTER.x;
+    const dy = avgY - RHOMBIC_CENTER.y;
+    const sign = val === 1 ? 1 : -1;
+    const label = val === 1 ? `+${axis}` : `−${axis}`;
+    RHOMBIC_OCTA_VERTICES.push({
+      x: RHOMBIC_CENTER.x + dx * RHOMBIC_SCALE,
+      y: RHOMBIC_CENTER.y + dy * RHOMBIC_SCALE,
+      axis,
+      sign: sign as 1 | -1,
+      label,
+    });
+  }
+}
+
+/** Rhombic dodecahedron edges: cube-type vertex v connects to octa-type vertex
+ *  (axis, val) if the bit of v at axis equals val. Each cube vertex has 3 such edges. */
+export const RHOMBIC_EDGES: { cubeVert: number; octaIdx: number }[] = [];
+for (let v = 0; v < 8; v++) {
+  RHOMBIC_OCTA_VERTICES.forEach((ov, oi) => {
+    const bit = ov.axis === "G" ? 2 : ov.axis === "R" ? 1 : 0;
+    const val = ov.sign === 1 ? 1 : 0;
+    if (((v >> bit) & 1) === val) {
+      RHOMBIC_EDGES.push({ cubeVert: v, octaIdx: oi });
+    }
+  });
+}
+
+/** 12 rhombic faces: one per cube edge. Each face has 4 vertices:
+ *  2 cube-type (endpoints of the edge) + 2 octahedron-type (the two face-centers
+ *  sharing that edge). */
+export const RHOMBIC_FACES: { edge: [number, number]; cubeVerts: [number, number]; octaIdxs: [number, number] }[] = [];
+CUBE_EDGES.forEach(([a, b]) => {
+  const ch = edgeChannel(a, b);
+  // The two octahedron vertices adjacent to this edge are on axes OTHER than ch
+  const otherAxes = (["G", "R", "B"] as const).filter((ax) => ax !== ch);
+  const octaIdxs: number[] = [];
+  for (const ax of otherAxes) {
+    const bit = ax === "G" ? 2 : ax === "R" ? 1 : 0;
+    // Both endpoints share the same value on this axis (since they differ only on ch)
+    const val = (a >> bit) & 1;
+    const oi = RHOMBIC_OCTA_VERTICES.findIndex((ov) => ov.axis === ax && ov.sign === (val === 1 ? 1 : -1));
+    if (oi >= 0) octaIdxs.push(oi);
+  }
+  if (octaIdxs.length === 2) {
+    RHOMBIC_FACES.push({ edge: [a, b], cubeVerts: [a, b], octaIdxs: octaIdxs as [number, number] });
+  }
+});
+
+/* ── Truncated Tetrahedron net layout ──────
+   8 faces: 4 triangles (T0 vertices) + 4 hexagons (T1 colors via complement)
+   Used in ColorDice expansion */
+
+export interface TruncTetraFace {
+  type: "tri" | "hex";
+  color: number; // GF(2)³ level
+  fromVertex: number; // T0 vertex that generated this face
+}
+
+/** Truncation of T0: triangles from vertices, hexagons from faces */
+export const TRUNC_TETRA_FACES: TruncTetraFace[] = [
+  // Triangles: one per T0 vertex (labeled by that vertex)
+  { type: "tri", color: 0, fromVertex: 0 },
+  { type: "tri", color: 3, fromVertex: 3 },
+  { type: "tri", color: 5, fromVertex: 5 },
+  { type: "tri", color: 6, fromVertex: 6 },
+  // Hexagons: one per T0 face (labeled by complement of opposite vertex)
+  { type: "hex", color: 7, fromVertex: 0 }, // face opp 000 → color 111
+  { type: "hex", color: 4, fromVertex: 3 }, // face opp 011 → color 100
+  { type: "hex", color: 2, fromVertex: 5 }, // face opp 101 → color 010
+  { type: "hex", color: 1, fromVertex: 6 }, // face opp 110 → color 001
+];
+
+/** The 4 missing edges in the triakis tetrahedron = complement pairs */
+export const TRUNC_MISSING_EDGES: [number, number][] = [
+  [0, 7],
+  [3, 4],
+  [5, 2],
+  [6, 1],
+];
+
+/* ── AG(3,2) Affine Planes ─────────────────
+   14 planes = 7 parallel classes × 2 cosets
+   Each plane is a 4-element subset of GF(2)³  */
+
+export interface AffinePlane {
+  elements: number[]; // 4 GF(2)³ elements
+  isSubspace: boolean; // true if contains 0
+  fanoLine: number; // index into FANO_LINES (0-6)
+}
+
+export const AG32_PLANES: AffinePlane[] = [
+  // Class 0: L={1,2,3}={B,R,M}
+  { elements: [0, 1, 2, 3], isSubspace: true, fanoLine: 0 },
+  { elements: [4, 5, 6, 7], isSubspace: false, fanoLine: 0 },
+  // Class 1: L={1,4,5}={B,G,C}
+  { elements: [0, 1, 4, 5], isSubspace: true, fanoLine: 1 },
+  { elements: [2, 3, 6, 7], isSubspace: false, fanoLine: 1 },
+  // Class 2: L={2,4,6}={R,G,Y}
+  { elements: [0, 2, 4, 6], isSubspace: true, fanoLine: 2 },
+  { elements: [1, 3, 5, 7], isSubspace: false, fanoLine: 2 },
+  // Class 3: L={1,6,7}={B,Y,W}
+  { elements: [0, 1, 6, 7], isSubspace: true, fanoLine: 3 },
+  { elements: [2, 3, 4, 5], isSubspace: false, fanoLine: 3 },
+  // Class 4: L={2,5,7}={R,C,W}
+  { elements: [0, 2, 5, 7], isSubspace: true, fanoLine: 4 },
+  { elements: [1, 3, 4, 6], isSubspace: false, fanoLine: 4 },
+  // Class 5: L={3,4,7}={M,G,W}
+  { elements: [0, 4, 3, 7], isSubspace: true, fanoLine: 5 },
+  { elements: [1, 2, 5, 6], isSubspace: false, fanoLine: 5 },
+  // Class 6: L={3,5,6}={C,M,Y}
+  { elements: [0, 3, 5, 6], isSubspace: true, fanoLine: 6 },
+  { elements: [1, 2, 4, 7], isSubspace: false, fanoLine: 6 },
+];
+
 /* ── Gray Code Hexagon geometry ──────────── */
 
 const GRAY_CX = 150,

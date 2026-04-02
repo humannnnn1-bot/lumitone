@@ -11,6 +11,8 @@ import { XorDemo } from "./theory/XorDemo";
 import { HammingDiagram } from "./theory/HammingDiagram";
 import { PolarCubes } from "./theory/PolarCubes";
 import { Octahedron } from "./theory/Octahedron";
+import { Cuboctahedron } from "./theory/Cuboctahedron";
+import { RhombicDodecahedron } from "./theory/RhombicDodecahedron";
 import { LuminanceZigzag } from "./theory/LuminanceZigzag";
 import { ConnectionsSummary } from "./theory/ConnectionsSummary";
 
@@ -164,6 +166,18 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
         <Section title={t("theory_octa_title")} desc={t("theory_octa_desc")}>
           <Octahedron hlLevel={hlLevel} onHover={onHover} />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
+        <Section title={t("theory_cubocta_title")} desc={t("theory_cubocta_desc")}>
+          <Cuboctahedron hlLevel={hlLevel} onHover={onHover} />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
+        <Section title={t("theory_rhombic_title")} desc={t("theory_rhombic_desc")}>
+          <RhombicDodecahedron hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />

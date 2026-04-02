@@ -1,5 +1,15 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { THEORY_LEVELS, CUBE_EDGES, CUBE_POINTS, GRAY_PATH, edgeChannel, isBackEdge, GRAY_TOGGLES } from "./theory-data";
+import {
+  THEORY_LEVELS,
+  CUBE_EDGES,
+  CUBE_POINTS,
+  GRAY_PATH,
+  edgeChannel,
+  isBackEdge,
+  GRAY_TOGGLES,
+  STELLA_EDGES,
+  COMPLEMENT_EDGES,
+} from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
 import { usePinReset } from "./pin-reset";
 import { S_BTN } from "../../styles";
@@ -43,6 +53,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
   usePinReset(setPinned);
   const [equatorMode, setEquatorMode] = useState(false);
   const [showComplements, setShowComplements] = useState(false);
+  const [showK8, setShowK8] = useState(false);
   const [animT, setAnimT] = useState(0); // 0 = cube, 1 = hexagon
   const animRef = useRef<number>(0);
 
@@ -236,6 +247,56 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
             );
           })}
 
+        {/* K₈ distance-2 edges (stella octangula) */}
+        {showK8 &&
+          STELLA_EDGES.map(([a, b], i) => {
+            const pa = getPos(a),
+              pb = getPos(b);
+            return (
+              <line
+                key={"stella" + i}
+                x1={pa.x}
+                y1={pa.y}
+                x2={pb.x}
+                y2={pb.y}
+                stroke="rgba(255,255,255,0.35)"
+                strokeWidth={1}
+                strokeDasharray="5,3"
+                opacity={1 - animT}
+              />
+            );
+          })}
+
+        {/* K₈ distance-3 edges (complement matching) */}
+        {showK8 &&
+          COMPLEMENT_EDGES.map(([a, b], i) => {
+            const pa = getPos(a),
+              pb = getPos(b);
+            const la = THEORY_LEVELS[a],
+              lb = THEORY_LEVELS[b];
+            const gradId = `k8Comp${a}${b}`;
+            return (
+              <g key={"k8c" + i}>
+                <defs>
+                  <linearGradient id={gradId} x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} gradientUnits="userSpaceOnUse">
+                    <stop offset="0%" stopColor={la.color} stopOpacity={0.8} />
+                    <stop offset="100%" stopColor={lb.color} stopOpacity={0.8} />
+                  </linearGradient>
+                </defs>
+                <line
+                  x1={pa.x}
+                  y1={pa.y}
+                  x2={pb.x}
+                  y2={pb.y}
+                  stroke={`url(#${gradId})`}
+                  strokeWidth={1.5}
+                  strokeDasharray="2,3"
+                  opacity={1 - animT}
+                />
+              </g>
+            );
+          })}
+
         {/* Edges */}
         {CUBE_EDGES.map((e, ei) => {
           const p0 = getPos(e[0]),
@@ -324,6 +385,12 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
         })}
       </svg>
 
+      {showK8 && (
+        <div style={{ fontSize: FS.xs, color: C.textDimmer, textAlign: "center", fontFamily: "monospace" }}>
+          {"K\u2088 = Q\u2083 \u222A (K\u2084\u2294K\u2084) \u222A M\u2084"}
+        </div>
+      )}
+
       <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>
         <button className="theory-annotation" style={S_BTN} onClick={() => setEquatorMode((v) => !v)}>
           {t("theory_cube_equator")} {equatorMode ? "\u25c0" : "\u25b6"}
@@ -335,6 +402,15 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
         >
           {t("theory_cube_complements")}
         </button>
+        {!equatorMode && (
+          <button
+            className="theory-annotation"
+            style={{ ...S_BTN, opacity: showK8 ? 1 : 0.5, borderColor: showK8 ? "rgba(255,255,255,0.5)" : undefined }}
+            onClick={() => setShowK8((v) => !v)}
+          >
+            {"K\u2088"}
+          </button>
+        )}
       </div>
     </div>
   );

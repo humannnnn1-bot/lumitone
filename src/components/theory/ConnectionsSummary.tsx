@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { C, FS, FW, SP } from "../../tokens";
 import { useTranslation } from "../../i18n";
+import { AG32_PLANES, THEORY_LEVELS, FANO_LINES } from "./theory-data";
 
 /* ── Trinity triangle layout ── */
 const TRI_W = 280,
@@ -209,6 +210,69 @@ export const ConnectionsSummary = React.memo(function ConnectionsSummary() {
         <p style={{ margin: `0 0 2px`, color: C.textDimmer, fontSize: FS.xs }}>{t("theory_conn_168_decomp")}</p>
         <p style={{ margin: `0 0 2px`, color: C.textDimmer, fontSize: FS.xs }}>{t("theory_conn_e8_chain")}</p>
         <p style={{ margin: 0, color: C.textDimmer, fontSize: FS.xs }}>{t("theory_conn_5fold")}</p>
+      </div>
+
+      {/* Part D: AG(3,2) affine planes */}
+      <div className="theory-conn-card" style={{ ...S_CARD, borderColor: "#80b0c0" }}>
+        <div className="theory-conn-card-header" style={{ ...S_CARD_HEADER, color: "#80b0c0" }}>
+          <span>{t("theory_conn_ag32")}</span>
+        </div>
+        <div className="theory-conn-card-body" style={S_CARD_BODY}>
+          <p style={{ color: C.textPrimary, margin: `0 0 ${SP.sm}px` }}>{t("theory_conn_ag32_hook")}</p>
+          {/* 7 parallel classes × 2 planes, with color dots */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+            {Array.from({ length: 7 }).map((_, fi) => {
+              const plane0 = AG32_PLANES[fi * 2];
+              const plane1 = AG32_PLANES[fi * 2 + 1];
+              const line = FANO_LINES[fi];
+              return (
+                <div key={`ag${fi}`} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 9, fontFamily: "monospace" }}>
+                  <span style={{ color: C.textDimmer, width: 16 }}>π{fi + 1}</span>
+                  {/* Plane 1 (subspace) */}
+                  <div style={{ display: "flex", gap: 2 }}>
+                    {plane0.elements.map((el) => (
+                      <span
+                        key={`p0${el}`}
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: "50%",
+                          background: el === 0 ? "#333" : THEORY_LEVELS[el].color,
+                          border: el === 0 ? "1px solid #666" : "none",
+                          display: "inline-block",
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <span style={{ color: C.textDimmer }}>∥</span>
+                  {/* Plane 2 (coset) */}
+                  <div style={{ display: "flex", gap: 2 }}>
+                    {plane1.elements.map((el) => (
+                      <span
+                        key={`p1${el}`}
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: "50%",
+                          background: THEORY_LEVELS[el].color,
+                          display: "inline-block",
+                        }}
+                      />
+                    ))}
+                  </div>
+                  <span style={{ color: C.textDimmer, marginLeft: 4 }}>
+                    ← L{fi + 1}:{"{"}
+                    {line.map((p) => THEORY_LEVELS[p].name[0]).join(",")}
+                    {"}"}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="theory-conn-card-detail" style={{ color: C.textDimmer, margin: `${SP.sm}px 0 0`, fontSize: FS.xs }}>
+            {t("theory_conn_ag32_detail")}
+          </p>
+        </div>
       </div>
 
       {/* Closing tagline */}
