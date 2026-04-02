@@ -188,13 +188,13 @@ export const en = {
     "CHROMALUM\u2019s 8 luma levels encode RGB channels as 3-bit binary \u2014 a single design choice. From this, the color cube, XOR algebra, Gray codes, Hamming codes, and the Fano plane all emerge as mathematical consequences of GF(2)\u00b3.",
   theory_binary_title: "Binary Levels",
   theory_binary_desc:
-    "Each level is a 3-bit number. Of the 6 possible bit-to-channel assignments, only GRB (Bit 2 = Green, Bit 1 = Red, Bit 0 = Blue) makes level numbers increase monotonically with luma \u2014 because Green\u2019s luma coefficient alone exceeds Red + Blue (0.587 > 0.413). This is not a design choice but a consequence of human color vision.",
+    "Each level is a 3-bit number. Of the 6 possible bit-to-channel assignments, only GRB (Bit 2 = Green, Bit 1 = Red, Bit 0 = Blue) makes level numbers increase monotonically with luma \u2014 because Green\u2019s luma coefficient alone exceeds Red + Blue (0.587 > 0.413). This is not a design choice but a consequence of human color vision. The primary set {1, 2, 4} is the unique 3-element subset of naturals whose elements, pairwise sums, and total sum partition {1, \u2026, 7} without overlap.",
   theory_binary_color: "Color",
   theory_binary_luma_formula: "Luma (BT.601): Y = 0.299R + 0.587G + 0.114B",
   theory_binary_luma_complement: "Complement luma: Y\u2096 + Y\u2087\u208b\u2096 = 255 (universal for any coefficients summing to 1)",
   theory_zigzag_title: "Luma Zigzag",
   theory_zigzag_desc:
-    "Fully saturated colors (max channel = 255, min = 0) trace a 6-segment zigzag as hue rotates. Each segment toggles one channel; the slope is proportional to its BT.601 coefficient. Horizontal lines at each vertex luma value intersect the zigzag at 1 or 3 points \u2014 these are the equal-luma candidates. The maximum is 4 (between vertices). Complements mirror about Y = 127.5.",
+    "Fully saturated colors (max channel = 255, min = 0) trace a 6-segment zigzag as hue rotates. Each segment toggles one channel; the slope is proportional to its BT.601 coefficient. Horizontal lines at each vertex luma value intersect the zigzag at 1 or 3 points \u2014 these are the equal-luma candidates. The maximum is 4 (between vertices). For any hue angle h, Y(h) + Y(h+180\u00b0) = 255 \u2014 complementary colors always sum to the same luma. This is universal for any coefficients summing to 1.",
   theory_dice_title: "Color Die",
   theory_dice_desc:
     "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule. This is a universal theorem: for any positive luma coefficients with no ties, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7. The staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, Gray code adjacency, and hue angle simultaneously.",
@@ -222,7 +222,7 @@ export const en = {
   theory_gray_pause: "\u23f8 Pause",
   theory_xor_title: "XOR Mixing",
   theory_xor_desc:
-    "XOR is the fundamental operation of GF(2)\u00b3 \u2014 it defines every structure in this tab. It is carry-free binary addition: even 1+1 gives 0, never 10. The three primaries {G, R, B} are the standard basis of this vector space; every level is their unique XOR combination. Each chromatic color c has a complement c \u2295 7, and c \u2295 (c \u2295 7) = 7 (White).",
+    "XOR is the fundamental operation of GF(2)\u00b3 \u2014 it defines every structure in this tab. It is carry-free binary addition: even 1+1 gives 0, never 10. The three primaries {G, R, B} are the standard basis of this vector space; every level is their unique XOR combination. Each chromatic color c has a complement c \u2295 7, and c \u2295 (c \u2295 7) = 7 (White). For binary-disjoint pairs (primaries), integer addition equals XOR directly (1+4=5=1\u22954). For CMY, bits overlap and carry occurs (3+5=8), but XOR discards the carry (3\u22955=6). The \u201csubtract 7\u201d rule of subtractive mixing is exactly this carry correction in integer arithmetic.",
   theory_hamming_title: "Hamming Code",
   theory_hamming_desc:
     "Parity bits (B=1, R=2, G=4) are RGB primaries. Data bits (M=3, C=5, Y=6, W=7) are secondaries + white. Each parity bit checks positions whose binary has that bit set. Flip a bit to see error detection in action!",
@@ -502,6 +502,15 @@ export const en = {
   music_section_engine: "SONIFICATION ENGINE",
   music_section_sequences: "FANO SEQUENCES",
   music_section_algebra: "ALGEBRAIC SONIFICATION",
+  music_complement_title: "Complement Canon",
+  music_complement_play: "\u25b6 Canon",
+  music_zigzag_title: "Luma Zigzag",
+  music_zigzag_play: "\u25b6 Zigzag",
+  music_zigzag_stop: "\u23f9 Zigzag",
+  music_pointfano_title: "Point Context",
+  music_pointfano_play: "\u25b6 Context",
+  music_distrib_title: "Distributive Law",
+  music_distrib_play: "\u25b6 a\u2227(b\u2295c)",
 
   // Language switcher
   lang_switch: "JA",

@@ -5,6 +5,7 @@ import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../styles";
 import { useTranslation } from "../i18n";
 import { LinkedViz, ACTIVE_LEVELS } from "./LinkedViz";
 import { useMusicEngine, type ScaleMode } from "../hooks/useMusicEngine";
+import { FANO_LINES } from "./theory/theory-data";
 import { MiniFanoChord } from "./music/MiniFanoChord";
 import { Oscilloscope } from "./music/Oscilloscope";
 import { XorFanoLine } from "./music/XorFanoLine";
@@ -17,6 +18,10 @@ import { LineDualPartition } from "./music/LineDualPartition";
 import { WeightHistogram } from "./music/WeightHistogram";
 import { GL32Arrows } from "./music/GL32Arrows";
 import { LuminanceBars } from "./music/LuminanceBars";
+import { ComplementPairs } from "./music/ComplementPairs";
+import { ZigzagGraph } from "./music/ZigzagGraph";
+import { PointFanoContext } from "./music/PointFanoContext";
+import { DistributiveFlow } from "./music/DistributiveFlow";
 
 /* ── Style constants ── */
 
@@ -95,6 +100,16 @@ const S_CARD_GRID: React.CSSProperties = {
   gap: SP.xl,
   width: "100%",
 };
+
+/** Find Fano line index for a triple {a, b, a⊕b}, or -1 if not a Fano line */
+function findFanoLine(a: number, b: number): number {
+  const c = a ^ b;
+  const triple = [a, b, c].sort((x, y) => x - y);
+  return FANO_LINES.findIndex((line) => {
+    const sorted = [...line].sort((x, y) => x - y);
+    return sorted[0] === triple[0] && sorted[1] === triple[1] && sorted[2] === triple[2];
+  });
+}
 
 export const MusicPanel = React.memo(function MusicPanel() {
   const { t } = useTranslation();
@@ -185,7 +200,8 @@ export const MusicPanel = React.memo(function MusicPanel() {
   const [errorPhase, setErrorPhase] = useState<string | null>(null);
   const [gray3Playing, setGray3Playing] = useState(false);
   const [weightPlaying, setWeightPlaying] = useState(false);
-  const [weightStep, setWeightStep] = useState<{ positions: number[]; weight: number } | null>(null);
+  const [weightStep, setWeightStep] = useState<{ positions: number[]; weight: number; index: number } | null>(null);
+  const [hammingMode, setHammingMode] = useState<"743" | "844">("743");
   const [cayleyRow, setCayleyRow] = useState(1);
   const [luminanceMode, setLuminanceMode] = useState<"symmetric" | "luminance">("symmetric");
 
@@ -200,6 +216,16 @@ export const MusicPanel = React.memo(function MusicPanel() {
   const [gl32Perm, setGl32Perm] = useState([0, 1, 2, 3, 4, 5, 6, 7]);
   const [gl32Flash, setGl32Flash] = useState(false);
   const [lumFlash, setLumFlash] = useState(false);
+
+  // Extended algebra state
+  const [canonPair, setCanonPair] = useState(-1);
+  const [zigzagStep, setZigzagStep] = useState<number | null>(null);
+  const [fanoContextPoint, setFanoContextPoint] = useState(1);
+  const [fanoContextLine, setFanoContextLine] = useState(-1);
+  const [distA, setDistA] = useState(5);
+  const [distB, setDistB] = useState(3);
+  const [distC, setDistC] = useState(6);
+  const [distPhase, setDistPhase] = useState<"bxc" | "left" | "ab" | "ac" | "right" | "equal" | null>(null);
 
   // Compute sonification levels
   const sonificationLevels = useMemo(() => {
@@ -273,6 +299,10 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setDualPhase(null);
     setGray3Code(null);
     setCayleyCol(-1);
+    setCanonPair(-1);
+    setZigzagStep(null);
+    setFanoContextLine(-1);
+    setDistPhase(null);
     engine.setDroneMuted(true);
     setDroneMuted(true);
   }, [engine]);
@@ -295,6 +325,10 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setRhythmTempo(120);
     setLuminanceMode("symmetric");
     setGl32Perm([0, 1, 2, 3, 4, 5, 6, 7]);
+    setFanoContextPoint(1);
+    setDistA(5);
+    setDistB(3);
+    setDistC(6);
   }, [handleStopAll, engine]);
 
   // Handlers
@@ -657,14 +691,18 @@ export const MusicPanel = React.memo(function MusicPanel() {
                         onClick={() => {
                           if (mainCand) handleBlockClick(lp.lv, mainCand.angle);
                         }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            if (mainCand) handleBlockClick(lp.lv, mainCand.angle);
-                          }
-                        }}
-                        onPointerEnter={() => setHoveredCandidate({ lv: lp.lv, ci: mainCi })}
-                        onPointerLeave={() => setHoveredCandidate(null)}
+                        onKeyDown={
+                          isTouchDevice
+                            ? undefined
+                            : (e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  if (mainCand) handleBlockClick(lp.lv, mainCand.angle);
+                                }
+                              }
+                        }
+                        onPointerEnter={isTouchDevice ? undefined : () => setHoveredCandidate({ lv: lp.lv, ci: mainCi })}
+                        onPointerLeave={isTouchDevice ? undefined : () => setHoveredCandidate(null)}
                         title={
                           mainCand
                             ? `#${mainCand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")} ${Math.round(mainCand.angle)}\u00B0`
@@ -905,7 +943,9 @@ export const MusicPanel = React.memo(function MusicPanel() {
         {t("music_section_algebra")}
       </div>
       <div id="music-algebra-panel" role="region" className="music-algebra-scroll" style={S_CARD_GRID}>
-        {/* Card 1: XOR Triple */}
+        {/* ── A: Core Algebra (GF(2)³ operations) ── */}
+
+        {/* 1. XOR Triple */}
         <div style={S_CARD_FANO}>
           <div style={S_ROW}>
             <span style={S_LABEL}>{t("music_xor_triple")}</span>
@@ -932,7 +972,12 @@ export const MusicPanel = React.memo(function MusicPanel() {
               onClick={() => {
                 if (xorA != null && xorB != null) {
                   engine.initAudio();
-                  engine.playXorTriple?.(xorA, xorB, (lv) => setXorStep(lv));
+                  const fanoIdx = findFanoLine(xorA, xorB);
+                  if (fanoIdx >= 0) setHoveredFanoLine(fanoIdx);
+                  engine.playXorTriple?.(xorA, xorB, (lv) => {
+                    setXorStep(lv);
+                    if (lv === null && fanoIdx >= 0) setHoveredFanoLine(null);
+                  });
                 }
               }}
               disabled={xorA == null || xorB == null}
@@ -943,143 +988,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
           <XorFanoLine stepLv={xorStep} lvA={xorA} lvB={xorB} activeLevels={activeLevels} />
         </div>
 
-        {/* Card 2: Parity Chords */}
-        <div style={S_CARD_FANO}>
-          <div style={S_ROW}>
-            <span style={S_LABEL}>{t("music_parity_title")}</span>
-            {([0, 1, 2] as const).map((p) => (
-              <button
-                key={p}
-                type="button"
-                style={activeParityGroup === p ? S_BTN_SM_ACTIVE : S_BTN_SM}
-                onClick={() => {
-                  setActiveParityGroup(p);
-                  engine.initAudio();
-                  engine.playParityChord?.(p);
-                  setTimeout(() => setActiveParityGroup(null), 500);
-                }}
-              >
-                {t(p === 0 ? "music_parity_p1" : p === 1 ? "music_parity_p2" : "music_parity_p4")}
-              </button>
-            ))}
-          </div>
-          <ParityGrid activeGroup={activeParityGroup} activeLevels={activeLevels} />
-        </div>
-
-        {/* Card 3: Line + Dual */}
-        <div style={S_CARD_FANO}>
-          <div style={S_ROW}>
-            <span style={S_LABEL}>{t("music_dual_title")}</span>
-            <select value={hoveredFanoLine ?? 0} onChange={(e) => setHoveredFanoLine(Number(e.target.value))} style={S_SELECT}>
-              {[0, 1, 2, 3, 4, 5, 6].map((i) => (
-                <option key={i} value={i}>
-                  L{i + 1}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              style={dualPhase !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
-              onClick={() => {
-                setDualLineIndex(hoveredFanoLine ?? 0);
-                engine.initAudio();
-                engine.playLineAndDual?.(hoveredFanoLine ?? 0, (phase) => setDualPhase(phase));
-              }}
-            >
-              {t("music_dual_play")}
-            </button>
-          </div>
-          <LineDualPartition phase={dualPhase} lineIndex={dualLineIndex} activeLevels={activeLevels} />
-        </div>
-
-        {/* Card 4: Error Correction */}
-        <div style={S_CARD}>
-          <div style={S_ROW}>
-            <span style={S_LABEL}>{t("music_error_title")}</span>
-            <select value={errorPos} onChange={(e) => setErrorPos(Number(e.target.value))} style={S_SELECT}>
-              {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-                <option key={i} value={i}>
-                  {i}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              style={{ ...(errorPhase ? S_BTN_SM_ACTIVE : S_BTN_SM) }}
-              onClick={() => {
-                engine.initAudio();
-                engine.playSyndromeDemo?.(errorPos, (p) => setErrorPhase(p));
-              }}
-            >
-              {t("music_error_play")}
-            </button>
-            {errorPhase && <span style={{ fontSize: FS.md, color: C.accent }}>{errorPhase}</span>}
-          </div>
-          <SyndromeTimeline
-            phase={errorPhase as "original" | "corrupted" | "syndrome" | "corrected" | null}
-            errorPos={errorPos}
-            activeLevels={activeLevels}
-          />
-        </div>
-
-        {/* Card 5: Gray 3-Voice */}
-        <div style={S_CARD_GROUP}>
-          <div style={S_ROW}>
-            <button
-              type="button"
-              style={{ ...(gray3Playing ? S_BTN_SM_ACTIVE : S_BTN_SM) }}
-              onClick={() => {
-                if (gray3Playing) {
-                  engine.stopAlgebra?.();
-                  setGray3Playing(false);
-                  setGray3Code(null);
-                } else {
-                  engine.initAudio();
-                  engine.playGray3Voice?.((lv: number | null) => {
-                    setGray3Code(lv);
-                  });
-                  setGray3Playing(true);
-                }
-              }}
-            >
-              {gray3Playing ? t("music_gray3v_stop") : t("music_gray3v_play")}
-            </button>
-          </div>
-          <GrayCube currentCode={gray3Code} activeLevels={activeLevels} />
-        </div>
-
-        {/* Card 6: Weight Spectrum */}
-        <div style={S_CARD_GROUP}>
-          <div style={S_ROW}>
-            <button
-              type="button"
-              style={{ ...(weightPlaying ? S_BTN_SM_ACTIVE : S_BTN_SM) }}
-              onClick={() => {
-                if (weightPlaying) {
-                  engine.stopAlgebra?.();
-                  setWeightPlaying(false);
-                  setWeightStep(null);
-                } else {
-                  engine.initAudio();
-                  engine.playWeightSpectrum?.((pos, w) => {
-                    setWeightStep({ positions: pos, weight: w });
-                    if (pos.length === 0 && w === -1) {
-                      setWeightPlaying(false);
-                      setWeightStep(null);
-                    }
-                  });
-                  setWeightPlaying(true);
-                }
-              }}
-            >
-              {weightPlaying ? t("music_weight_stop") : t("music_weight_play")}
-            </button>
-            {weightStep && <span style={{ fontSize: FS.md, color: C.accent }}>w={weightStep.weight}</span>}
-          </div>
-          <WeightHistogram currentWeight={weightStep?.weight ?? -1} currentIndex={0} activeLevels={activeLevels} />
-        </div>
-
-        {/* Card 7: Cayley Table */}
+        {/* 2. Cayley Table */}
         <div style={S_CARD_GROUP}>
           <div style={S_ROW}>
             <span style={S_LABEL}>{t("music_cayley_title")}</span>
@@ -1109,12 +1018,264 @@ export const MusicPanel = React.memo(function MusicPanel() {
           <CayleyGrid row={cayleyRow} activeCol={cayleyCol} activeLevels={activeLevels} />
         </div>
 
-        {/* Card 8: Fano Rhythm */}
+        {/* 3. Distributive Law */}
+        <div style={S_CARD_GROUP}>
+          <div style={S_ROW}>
+            <span style={S_LABEL}>{t("music_distrib_title")}</span>
+            <select value={distA} onChange={(e) => setDistA(Number(e.target.value))} style={S_SELECT}>
+              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <option key={i} value={i}>
+                  {i}
+                </option>
+              ))}
+            </select>
+            <select value={distB} onChange={(e) => setDistB(Number(e.target.value))} style={S_SELECT}>
+              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <option key={i} value={i}>
+                  {i}
+                </option>
+              ))}
+            </select>
+            <select value={distC} onChange={(e) => setDistC(Number(e.target.value))} style={S_SELECT}>
+              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <option key={i} value={i}>
+                  {i}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              style={distPhase !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              onClick={() => {
+                engine.initAudio();
+                engine.playDistributiveLaw?.(distA, distB, distC, (phase) => {
+                  setDistPhase(phase);
+                });
+              }}
+            >
+              {t("music_distrib_play")}
+            </button>
+          </div>
+          <DistributiveFlow a={distA} b={distB} c={distC} phase={distPhase} activeLevels={activeLevels} />
+        </div>
+
+        {/* ── B: Fano Plane (PG(2,2)) ── */}
+
+        {/* 4. Line + Dual */}
+        <div style={S_CARD_FANO}>
+          <div style={S_ROW}>
+            <span style={S_LABEL}>{t("music_dual_title")}</span>
+            <select value={hoveredFanoLine ?? 0} onChange={(e) => setHoveredFanoLine(Number(e.target.value))} style={S_SELECT}>
+              {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                <option key={i} value={i}>
+                  L{i + 1}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              style={dualPhase !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              onClick={() => {
+                setDualLineIndex(hoveredFanoLine ?? 0);
+                engine.initAudio();
+                engine.playLineAndDual?.(hoveredFanoLine ?? 0, (phase) => setDualPhase(phase));
+              }}
+            >
+              {t("music_dual_play")}
+            </button>
+          </div>
+          <LineDualPartition phase={dualPhase} lineIndex={dualLineIndex} activeLevels={activeLevels} />
+        </div>
+
+        {/* 5. Point Context */}
+        <div style={S_CARD_FANO}>
+          <div style={S_ROW}>
+            <span style={S_LABEL}>{t("music_pointfano_title")}</span>
+            <select value={fanoContextPoint} onChange={(e) => setFanoContextPoint(Number(e.target.value))} style={S_SELECT}>
+              {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <option key={i} value={i}>
+                  {i}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              style={fanoContextLine >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              onClick={() => {
+                engine.initAudio();
+                engine.playPointFanoContext?.(fanoContextPoint, (idx) => {
+                  setFanoContextLine(idx ?? -1);
+                  setHoveredFanoLine(idx ?? null);
+                });
+              }}
+            >
+              {t("music_pointfano_play")}
+            </button>
+          </div>
+          <PointFanoContext selectedPoint={fanoContextPoint} activeLineIdx={fanoContextLine} activeLevels={activeLevels} />
+        </div>
+
+        {/* 6. Fano Rhythm */}
         <div style={S_CARD_FANO}>
           <FanoRhythmGrid playing={rhythmPlaying} currentBeat={rhythmBeat} activeLevels={activeLevels} />
         </div>
 
-        {/* Card 9: GL(3,2) */}
+        {/* ── C: Hamming Code ── */}
+
+        {/* 7. Parity Chords */}
+        <div style={S_CARD_FANO}>
+          <div style={S_ROW}>
+            <span style={S_LABEL}>{t("music_parity_title")}</span>
+            {([0, 1, 2] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                style={activeParityGroup === p ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                onClick={() => {
+                  setActiveParityGroup(p);
+                  engine.initAudio();
+                  engine.playParityChord?.(p);
+                  setTimeout(() => setActiveParityGroup(null), 500);
+                }}
+              >
+                {t(p === 0 ? "music_parity_p1" : p === 1 ? "music_parity_p2" : "music_parity_p4")}
+              </button>
+            ))}
+          </div>
+          <ParityGrid activeGroup={activeParityGroup} activeLevels={activeLevels} />
+        </div>
+
+        {/* 8. Error Correction */}
+        <div style={S_CARD}>
+          <div style={S_ROW}>
+            <span style={S_LABEL}>{t("music_error_title")}</span>
+            <select value={errorPos} onChange={(e) => setErrorPos(Number(e.target.value))} style={S_SELECT}>
+              {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+                <option key={i} value={i}>
+                  {i}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              style={{ ...(errorPhase ? S_BTN_SM_ACTIVE : S_BTN_SM) }}
+              onClick={() => {
+                engine.initAudio();
+                engine.playSyndromeDemo?.(errorPos, (p) => setErrorPhase(p));
+              }}
+            >
+              {t("music_error_play")}
+            </button>
+            {errorPhase && <span style={{ fontSize: FS.md, color: C.accent }}>{errorPhase}</span>}
+          </div>
+          <SyndromeTimeline
+            phase={errorPhase as "original" | "corrupted" | "syndrome" | "corrected" | null}
+            errorPos={errorPos}
+            activeLevels={activeLevels}
+          />
+        </div>
+
+        {/* 9. Weight Spectrum ([7,4,3] / [8,4,4]) */}
+        <div style={S_CARD_GROUP}>
+          <div style={S_ROW}>
+            <button
+              type="button"
+              style={hammingMode === "743" ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              onClick={() => {
+                if (weightPlaying) {
+                  engine.stopAlgebra?.();
+                  setWeightPlaying(false);
+                  setWeightStep(null);
+                }
+                setHammingMode("743");
+              }}
+            >
+              [7,4,3]
+            </button>
+            <button
+              type="button"
+              style={hammingMode === "844" ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              onClick={() => {
+                if (weightPlaying) {
+                  engine.stopAlgebra?.();
+                  setWeightPlaying(false);
+                  setWeightStep(null);
+                }
+                setHammingMode("844");
+              }}
+            >
+              [8,4,4]
+            </button>
+            <button
+              type="button"
+              style={weightPlaying ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              onClick={() => {
+                if (weightPlaying) {
+                  engine.stopAlgebra?.();
+                  setWeightPlaying(false);
+                  setWeightStep(null);
+                  setHoveredFanoLine(null);
+                } else {
+                  engine.initAudio();
+                  const playFn = hammingMode === "743" ? engine.playWeightSpectrum : engine.playExtendedHamming;
+                  playFn?.((pos: number[], w: number, idx: number) => {
+                    setWeightStep({ positions: pos, weight: w, index: idx });
+                    // Link to Fano: w=3 codewords (743) or w=4 Fano+Black (844) at idx 1-7
+                    const isFanoLine = (hammingMode === "743" && w === 3) || (hammingMode === "844" && idx >= 1 && idx <= 7);
+                    setHoveredFanoLine(isFanoLine && idx >= 1 && idx <= 7 ? idx - 1 : null);
+                    if (pos.length === 0 && w === -1) {
+                      setWeightPlaying(false);
+                      setWeightStep(null);
+                      setHoveredFanoLine(null);
+                    }
+                  });
+                  setWeightPlaying(true);
+                }
+              }}
+            >
+              {weightPlaying ? t("music_weight_stop") : t("music_weight_play")}
+            </button>
+            {weightStep && weightStep.weight >= 0 && <span style={{ fontSize: FS.md, color: C.accent }}>w={weightStep.weight}</span>}
+          </div>
+          <WeightHistogram
+            mode={hammingMode}
+            currentWeight={weightStep?.weight ?? -1}
+            currentIndex={weightStep?.index ?? -1}
+            activeLevels={activeLevels}
+          />
+        </div>
+
+        {/* ── D: Cube / Gray Code ── */}
+
+        {/* 10. Gray 3-Voice */}
+        <div style={S_CARD_GROUP}>
+          <div style={S_ROW}>
+            <button
+              type="button"
+              style={{ ...(gray3Playing ? S_BTN_SM_ACTIVE : S_BTN_SM) }}
+              onClick={() => {
+                if (gray3Playing) {
+                  engine.stopAlgebra?.();
+                  setGray3Playing(false);
+                  setGray3Code(null);
+                } else {
+                  engine.initAudio();
+                  engine.playGray3Voice?.((lv: number | null) => {
+                    setGray3Code(lv);
+                  });
+                  setGray3Playing(true);
+                }
+              }}
+            >
+              {gray3Playing ? t("music_gray3v_stop") : t("music_gray3v_play")}
+            </button>
+          </div>
+          <GrayCube currentCode={gray3Code} activeLevels={activeLevels} />
+        </div>
+
+        {/* ── E: Symmetry / Automorphism ── */}
+
+        {/* 11. GL(3,2) */}
         <div style={S_CARD_GROUP}>
           <div style={S_ROW}>
             <span style={S_LABEL}>{t("music_gl32_title")}</span>
@@ -1150,7 +1311,9 @@ export const MusicPanel = React.memo(function MusicPanel() {
           <GL32Arrows perm={gl32Perm} activeLevels={activeLevels} flash={gl32Flash} />
         </div>
 
-        {/* Card 10: Luminance */}
+        {/* ── F: BT.601 Luminance ── */}
+
+        {/* 12. Symmetry */}
         <div style={S_CARD}>
           <div style={S_ROW}>
             <span style={S_LABEL}>{t("music_luminance_title")}</span>
@@ -1178,6 +1341,50 @@ export const MusicPanel = React.memo(function MusicPanel() {
             </button>
           </div>
           <LuminanceBars mode={luminanceMode} activeLevels={activeLevels} flash={lumFlash} />
+        </div>
+
+        {/* 13. Complement Canon */}
+        <div style={S_CARD}>
+          <div style={S_ROW}>
+            <span style={S_LABEL}>{t("music_complement_title")}</span>
+            <button
+              type="button"
+              style={canonPair >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              onClick={() => {
+                engine.initAudio();
+                engine.playComplementCanon?.((idx, phase) => {
+                  setCanonPair(idx);
+                  if (!phase) setCanonPair(-1);
+                });
+              }}
+            >
+              {t("music_complement_play")}
+            </button>
+          </div>
+          <ComplementPairs activePair={canonPair} activeLevels={activeLevels} />
+        </div>
+
+        {/* 14. Zigzag Melody (looping) */}
+        <div style={S_CARD}>
+          <div style={S_ROW}>
+            <span style={S_LABEL}>{t("music_zigzag_title")}</span>
+            <button
+              type="button"
+              style={zigzagStep !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              onClick={() => {
+                if (zigzagStep !== null) {
+                  engine.stopZigzagMelody?.();
+                  setZigzagStep(null);
+                } else {
+                  engine.initAudio();
+                  engine.playZigzagMelody?.((step) => setZigzagStep(step));
+                }
+              }}
+            >
+              {zigzagStep !== null ? t("music_zigzag_stop") : t("music_zigzag_play")}
+            </button>
+          </div>
+          <ZigzagGraph currentStep={zigzagStep} activeLevels={activeLevels} />
         </div>
       </div>
     </div>
