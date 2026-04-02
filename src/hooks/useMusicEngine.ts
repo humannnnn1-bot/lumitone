@@ -45,6 +45,17 @@ interface MusicEngineReturn {
   setLuminanceMode: (mode: "symmetric" | "luminance") => void;
   stopAlgebra: () => void;
   setDroneMuted: (muted: boolean) => void;
+  playComplementCanon: (onStep: (pairIndex: number, phase: "playing" | null) => void) => void;
+  playZigzagMelody: (onStep: (stepIndex: number | null) => void) => void;
+  stopZigzagMelody: () => void;
+  playPointFanoContext: (point: number, onStep: (lineIdx: number | null) => void) => void;
+  playExtendedHamming: (onStep: (positions: number[], weight: number, index: number) => void) => void;
+  playDistributiveLaw: (
+    a: number,
+    b: number,
+    c: number,
+    onStep: (phase: "bxc" | "left" | "ab" | "ac" | "right" | "equal" | null, value: number) => void,
+  ) => void;
 }
 
 /* ── Constants ── */
@@ -103,6 +114,45 @@ function gl32GenB(lv: number): number {
 
 /** 3-voice frequencies for Gray code decomposition */
 const GRAY_VOICE_FREQS = [550, 440, 330]; // bit0=B, bit1=R, bit2=G
+
+/* ── Extended algebra constants ── */
+const LUMA_VALUES = [0, 29, 76, 105, 150, 179, 226, 255];
+const COMPLEMENT_PAIRS: [number, number][] = [
+  [1, 6],
+  [2, 5],
+  [3, 4],
+];
+const ZIGZAG_PATH = [2, 6, 4, 5, 1, 3]; // R -> Y -> G -> C -> B -> M (luma order)
+
+/** Luma value → frequency (distinct from angleToFreq: sonifies BT.601 luma theorem) */
+function lumaToFreq(gray: number): number {
+  return 220 + (gray / 255) * 660; // 220–880 Hz linear
+}
+
+/** Lines through a Fano point */
+function linesThrough(p: number): number[] {
+  return FANO_LINES.reduce<number[]>((acc, line, i) => {
+    if (line.includes(p)) acc.push(i);
+    return acc;
+  }, []);
+}
+
+/** [8,4,4] extended Hamming codewords (sorted by weight) */
+function extendedHammingCodewords(): { positions: number[]; weight: number }[] {
+  const codewords: { positions: number[]; weight: number }[] = [];
+  codewords.push({ positions: [], weight: 0 });
+  // w=4: Fano lines + Black
+  for (const line of FANO_LINES) {
+    codewords.push({ positions: [0, ...line], weight: 4 });
+  }
+  // w=4: complements of Fano lines (no Black)
+  for (const line of FANO_LINES) {
+    const lineSet = new Set(line);
+    codewords.push({ positions: ALL_POINTS.filter((lv) => !lineSet.has(lv)), weight: 4 });
+  }
+  codewords.push({ positions: [0, ...ALL_POINTS], weight: 8 });
+  return codewords;
+}
 
 /* ── Frequency mapping ── */
 function angleToFreq(angle: number, mode: ScaleMode): number {
@@ -285,6 +335,22 @@ function buildFM(nodes: AudioNodes, levels: SonificationLevel[], scaleMode: Scal
   nodes.fmGains = fmGains;
 }
 
+/** Trigger a short tone burst at a luma-derived frequency */
+function triggerLumaBurst(nodes: AudioNodes, gray: number) {
+  const ctx = nodes.ctx;
+  const osc = ctx.createOscillator();
+  osc.type = "sine";
+  osc.frequency.value = lumaToFreq(gray);
+  const gain = ctx.createGain();
+  const now = ctx.currentTime;
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.3, now + 0.01);
+  gain.gain.linearRampToValueAtTime(0.0, now + 0.31);
+  osc.connect(gain).connect(nodes.master);
+  osc.start(now);
+  osc.stop(now + 0.35);
+}
+
 /** Apply current frequency, gain, pan, and FM values to the audio graph */
 function applyParams(
   nodes: AudioNodes,
@@ -421,6 +487,7 @@ export function useMusicEngine({
   const fanoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const algebraTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
   const gray3IntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const zigzagIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cayleyIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const gl32PermRef = useRef<number[]>([1, 2, 3, 4, 5, 6, 7]); // identity permutation
   const droneMutedRef = useRef(false);
@@ -502,6 +569,10 @@ export function useMusicEngine({
         clearInterval(fanoIntervalRef.current);
         fanoIntervalRef.current = null;
       }
+      if (zigzagIntervalRef.current !== null) {
+        clearInterval(zigzagIntervalRef.current);
+        zigzagIntervalRef.current = null;
+      }
       for (const t of algebraTimersRef.current) clearTimeout(t);
       algebraTimersRef.current = [];
       if (nodesRef.current) {
@@ -522,6 +593,10 @@ export function useMusicEngine({
       if (fanoIntervalRef.current !== null) {
         clearInterval(fanoIntervalRef.current);
         fanoIntervalRef.current = null;
+      }
+      if (zigzagIntervalRef.current !== null) {
+        clearInterval(zigzagIntervalRef.current);
+        zigzagIntervalRef.current = null;
       }
       for (const t of algebraTimersRef.current) clearTimeout(t);
       algebraTimersRef.current = [];
@@ -706,6 +781,10 @@ export function useMusicEngine({
       clearInterval(cayleyIntervalRef.current);
       cayleyIntervalRef.current = null;
     }
+    if (zigzagIntervalRef.current !== null) {
+      clearInterval(zigzagIntervalRef.current);
+      zigzagIntervalRef.current = null;
+    }
   }, [clearAlgebraTimers]);
 
   /* ── 1. playXorTriple ── */
@@ -792,7 +871,6 @@ export function useMusicEngine({
       if (errorPos < 1 || errorPos > 7) return;
       clearAlgebraTimers();
 
-      const p = paramsRef.current;
       let t = 0;
 
       // Phase "original": 7 tones, 200ms each
@@ -843,9 +921,8 @@ export function useMusicEngine({
       scheduleAlgebra(() => onPhase("corrected"), t);
       for (let i = 1; i <= 7; i++) {
         const lv = i;
-        const lvData = p.levels.find((l) => l.lv === lv);
         scheduleAlgebra(() => {
-          triggerToneBurst(lv, lvData?.angle ?? 0);
+          triggerToneBurst(lv, angleForLv(lv));
         }, t);
         t += 200;
       }
@@ -1055,6 +1132,148 @@ export function useMusicEngine({
     );
   }, []);
 
+  /* ── 12. playComplementCanon ── */
+  const playComplementCanon = useCallback(
+    (onStep: (pairIndex: number, phase: "playing" | null) => void) => {
+      const nodes = nodesRef.current;
+      if (!nodes) return;
+      clearAlgebraTimers();
+      for (let i = 0; i < 3; i++) {
+        scheduleAlgebra(() => {
+          const [a, b] = COMPLEMENT_PAIRS[i];
+          triggerLumaBurst(nodes, LUMA_VALUES[a]);
+          triggerLumaBurst(nodes, LUMA_VALUES[b]);
+          onStep(i, "playing");
+        }, i * 600);
+      }
+      scheduleAlgebra(() => onStep(-1, null), 1800);
+    },
+    [clearAlgebraTimers, scheduleAlgebra],
+  );
+
+  /* ── 13. playZigzagMelody (looping) ── */
+  const playZigzagMelody = useCallback((onStep: (stepIndex: number | null) => void) => {
+    const nodes = nodesRef.current;
+    if (!nodes) return;
+    if (zigzagIntervalRef.current !== null) {
+      clearInterval(zigzagIntervalRef.current);
+    }
+    let step = 0;
+    const id = setInterval(() => {
+      const currentNodes = nodesRef.current;
+      if (!currentNodes) return;
+      const i = step % ZIGZAG_PATH.length;
+      const lv = ZIGZAG_PATH[i];
+      triggerLumaBurst(currentNodes, LUMA_VALUES[lv]);
+      onStep(i);
+      step++;
+    }, 400);
+    zigzagIntervalRef.current = id;
+  }, []);
+
+  const stopZigzagMelody = useCallback(() => {
+    if (zigzagIntervalRef.current !== null) {
+      clearInterval(zigzagIntervalRef.current);
+      zigzagIntervalRef.current = null;
+    }
+  }, []);
+
+  /* ── 14. playPointFanoContext ── */
+  const playPointFanoContext = useCallback(
+    (point: number, onStep: (lineIdx: number | null) => void) => {
+      if (!nodesRef.current) return;
+      if (point < 1 || point > 7) return;
+      clearAlgebraTimers();
+      const lines = linesThrough(point);
+      for (let i = 0; i < lines.length; i++) {
+        scheduleAlgebra(() => {
+          onStep(lines[i]);
+          for (const lv of FANO_LINES[lines[i]]) {
+            triggerToneBurst(lv, angleForLv(lv));
+          }
+        }, i * 600);
+      }
+      scheduleAlgebra(() => onStep(null), lines.length * 600);
+    },
+    [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
+  );
+
+  /* ── 15. playExtendedHamming ── */
+  const playExtendedHamming = useCallback(
+    (onStep: (positions: number[], weight: number, index: number) => void) => {
+      const nodes = nodesRef.current;
+      if (!nodes) return;
+      clearAlgebraTimers();
+      const codewords = extendedHammingCodewords();
+      let t = 0;
+      for (let idx = 0; idx < codewords.length; idx++) {
+        const cw = codewords[idx];
+        const duration = cw.weight === 0 || cw.weight === 8 ? 500 : 350;
+        scheduleAlgebra(() => {
+          onStep(cw.positions, cw.weight, idx);
+          for (const lv of cw.positions) {
+            if (lv === 0) {
+              triggerLumaBurst(nodes, 0);
+            } else {
+              triggerToneBurst(lv, angleForLv(lv));
+            }
+          }
+        }, t);
+        t += duration;
+      }
+      scheduleAlgebra(() => onStep([], -1, codewords.length), t);
+    },
+    [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
+  );
+
+  /* ── 16. playDistributiveLaw ── */
+  const playDistributiveLaw = useCallback(
+    (a: number, b: number, c: number, onStep: (phase: "bxc" | "left" | "ab" | "ac" | "right" | "equal" | null, value: number) => void) => {
+      const nodes = nodesRef.current;
+      if (!nodes) return;
+      clearAlgebraTimers();
+      const bxc = b ^ c;
+      const left = a & bxc;
+      const ab = a & b;
+      const ac = a & c;
+      const right = ab ^ ac;
+      const playLv = (lv: number) => {
+        if (lv === 0) triggerLumaBurst(nodes, 0);
+        else triggerToneBurst(lv, angleForLv(lv));
+      };
+      // Left path
+      scheduleAlgebra(() => {
+        onStep("bxc", bxc);
+        playLv(bxc);
+      }, 0);
+      scheduleAlgebra(() => {
+        onStep("left", left);
+        playLv(left);
+      }, 400);
+      // Right path
+      scheduleAlgebra(() => {
+        onStep("ab", ab);
+        playLv(ab);
+      }, 1000);
+      scheduleAlgebra(() => {
+        onStep("ac", ac);
+        playLv(ac);
+      }, 1400);
+      scheduleAlgebra(() => {
+        onStep("right", right);
+        playLv(right);
+      }, 1800);
+      // Convergence
+      scheduleAlgebra(() => {
+        onStep("equal", left);
+        playLv(left);
+        playLv(right);
+      }, 2400);
+      scheduleAlgebra(() => onStep(null, -1), 2900);
+    },
+    [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
+  );
+
   return {
     initAudio,
     triggerToneBurst,
@@ -1075,5 +1294,11 @@ export function useMusicEngine({
     setLuminanceMode,
     stopAlgebra,
     setDroneMuted,
+    playComplementCanon,
+    playZigzagMelody,
+    stopZigzagMelody,
+    playPointFanoContext,
+    playExtendedHamming,
+    playDistributiveLaw,
   };
 }

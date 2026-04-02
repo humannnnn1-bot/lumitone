@@ -468,11 +468,15 @@ export function MapCanvas({
     });
   }, [mode]);
 
+  const longPressOrigin = useRef<{ x: number; y: number } | null>(null);
+
   const onPointerDown = useCallback(
     (e: React.PointerEvent) => {
       if (e.pointerType !== "touch") return;
+      longPressOrigin.current = { x: e.clientX, y: e.clientY };
       longPressTimer.current = setTimeout(() => {
         longPressTimer.current = null;
+        longPressOrigin.current = null;
         setShowSaveHint(true);
         setTimeout(() => setShowSaveHint(false), 1500);
         saveMap();
@@ -486,7 +490,18 @@ export function MapCanvas({
       clearTimeout(longPressTimer.current);
       longPressTimer.current = null;
     }
+    longPressOrigin.current = null;
   }, []);
+
+  const onPointerMoveLP = useCallback(
+    (e: React.PointerEvent) => {
+      if (!longPressOrigin.current || !longPressTimer.current) return;
+      const dx = e.clientX - longPressOrigin.current.x;
+      const dy = e.clientY - longPressOrigin.current.y;
+      if (dx * dx + dy * dy > 100) cancelLongPress(); // >10px movement cancels
+    },
+    [cancelLongPress],
+  );
 
   return (
     <div style={{ position: "relative" }}>
@@ -499,7 +514,7 @@ export function MapCanvas({
         onPointerDown={onPointerDown}
         onPointerUp={cancelLongPress}
         onPointerCancel={cancelLongPress}
-        onPointerMove={cancelLongPress}
+        onPointerMove={onPointerMoveLP}
         style={{
           width: displayW,
           height: displayH,

@@ -188,13 +188,13 @@ export const ja: Record<TranslationKey, string> = {
     "CHROMALUMの8段階ルマレベルはRGBチャンネルを3ビット2進数で符号化します \u2014 ひとつの設計選択。ここから、カラーキューブ、XOR代数、グレイコード、ハミング符号、ファノ平面のすべてが GF(2)\u00b3 の数学的帰結として現れます。",
   theory_binary_title: "バイナリレベル",
   theory_binary_desc:
-    "各レベルは3ビット数値です。ビットとチャンネルの割り当て6通りのうち、レベル番号がルマ値に対して単調増加するのはGRB（ビット2=Green, ビット1=Red, ビット0=Blue）だけ — Greenのルマ係数がRed+Blueを超えるためです（0.587 > 0.413）。設計上の選択ではなく、人間の色覚の帰結。",
+    "各レベルは3ビット数値です。ビットとチャンネルの割り当て6通りのうち、レベル番号がルマ値に対して単調増加するのはGRB（ビット2=Green, ビット1=Red, ビット0=Blue）だけ — Greenのルマ係数がRed+Blueを超えるためです（0.587 > 0.413）。設計上の選択ではなく、人間の色覚の帰結。原色の番号 {1, 2, 4} は、元・ペア和・全体和が {1, \u2026, 7} を重複なく生成する唯一の3元集合です。",
   theory_binary_color: "色",
   theory_binary_luma_formula: "Luma (BT.601): Y = 0.299R + 0.587G + 0.114B",
   theory_binary_luma_complement: "補色ルマ定理: Y\u2096 + Y\u2087\u208b\u2096 = 255（係数の和が1なら任意の係数で成立）",
   theory_zigzag_title: "ルマジグザグ",
   theory_zigzag_desc:
-    "完全飽和色（最大チャンネル=255、最小=0）は色相の回転に従い6区間のジグザグを描く。各区間で1チャンネルが変化し、傾きはBT.601係数に比例。各頂点ルマ値の水平線はジグザグと1または3点で交わる — これが等ルマ候補。最大は4（頂点間）。補色は Y=127.5 を軸に鏡像。",
+    "完全飽和色（最大チャンネル=255、最小=0）は色相の回転に従い6区間のジグザグを描く。各区間で1チャンネルが変化し、傾きはBT.601係数に比例。各頂点ルマ値の水平線はジグザグと1または3点で交わる — これが等ルマ候補。最大は4（頂点間）。任意の色相角 h で Y(h) + Y(h+180\u00b0) = 255 — 補色の輝度和は常に一定。係数の和が1なら任意の係数で成立する普遍的性質。",
   theory_dice_title: "\u30ab\u30e9\u30fc\u30c0\u30a4\u30b9",
   theory_dice_desc:
     "6つの色彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fbグレイコード隣接\u30fb色相角を同時に符号化しています。",
@@ -223,7 +223,7 @@ export const ja: Record<TranslationKey, string> = {
   theory_gray_pause: "\u23f8 停止",
   theory_xor_title: "XOR 混色",
   theory_xor_desc:
-    "XOR は GF(2)\u00b3 の基本演算 \u2014 このタブのすべての構造を定義する操作です。繰り上がりのない2進加算: 1+1 = 0（繰り上がりなし）。3原色 {G, R, B} はこのベクトル空間の標準基底であり、各レベルはそれらの一意なXOR結合です。各色 c の補色は c \u2295 7、c \u2295 (c \u2295 7) = 7 (White)。",
+    "XOR は GF(2)\u00b3 の基本演算 \u2014 このタブのすべての構造を定義する操作です。繰り上がりのない2進加算: 1+1 = 0（繰り上がりなし）。3原色 {G, R, B} はこのベクトル空間の標準基底であり、各レベルはそれらの一意なXOR結合です。各色 c の補色は c \u2295 7、c \u2295 (c \u2295 7) = 7 (White)。ビットが重ならない原色同士では整数加算がXORに一致する（1+4=5=1\u22954）。CMYではビットが重なり繰り上がりが生じる（3+5=8）が、XORは繰り上がりを捨てる（3\u22955=6）。減法混色の「7を引く」規則は、整数算術側での桁あふれ補正に他ならない。",
   theory_hamming_title: "ハミング符号",
   theory_hamming_desc:
     "パリティビット（B=1, R=2, G=4）はRGB原色。データビット（M=3, C=5, Y=6, W=7）は二次色＋白。各パリティビットは、2進表現にそのビットを含む位置を検査します。ビットを反転させてエラー検出を体験！",
@@ -502,6 +502,15 @@ export const ja: Record<TranslationKey, string> = {
   music_section_engine: "\u30bd\u30cb\u30d5\u30a3\u30b1\u30fc\u30b7\u30e7\u30f3\u30a8\u30f3\u30b8\u30f3",
   music_section_sequences: "\u30d5\u30a1\u30ce\u30b7\u30fc\u30b1\u30f3\u30b9",
   music_section_algebra: "\u4ee3\u6570\u7684\u97f3\u97ff\u5316",
+  music_complement_title: "\u88dc\u8272\u30ab\u30ce\u30f3",
+  music_complement_play: "\u25b6 \u30ab\u30ce\u30f3",
+  music_zigzag_title: "\u8f1d\u5ea6\u30b8\u30b0\u30b6\u30b0",
+  music_zigzag_play: "\u25b6 \u30b8\u30b0\u30b6\u30b0",
+  music_zigzag_stop: "\u23f9 \u30b8\u30b0\u30b6\u30b0",
+  music_pointfano_title: "\u70b9\u306e\u6587\u8108",
+  music_pointfano_play: "\u25b6 \u6587\u8108",
+  music_distrib_title: "\u5206\u914d\u6cd5\u5247",
+  music_distrib_play: "\u25b6 a\u2227(b\u2295c)",
 
   // Language switcher
   lang_switch: "EN",
