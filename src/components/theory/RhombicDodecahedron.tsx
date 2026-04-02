@@ -13,7 +13,6 @@ import {
 import { C, FS, FW, SP } from "../../tokens";
 import { S_BTN } from "../../styles";
 import { usePinReset } from "./pin-reset";
-import { useTranslation } from "../../i18n";
 
 const W = 200,
   H = 200;
@@ -372,7 +371,6 @@ interface Props {
 }
 
 export const RhombicDodecahedron = React.memo(function RhombicDodecahedron({ hlLevel, onHover }: Props) {
-  const { t } = useTranslation();
   const [pinned, setPinned] = useState<number | null>(null);
   usePinReset(setPinned);
   const [showFaces, setShowFaces] = useState(false);
