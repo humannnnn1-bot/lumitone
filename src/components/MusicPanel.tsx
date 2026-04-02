@@ -136,8 +136,10 @@ export const MusicPanel = React.memo(function MusicPanel() {
   const [hueDir, setHueDir] = useState<1 | -1 | 0>(0);
   const prevTimeRef = useRef<number>(0);
   const hueRef = useRef(hueAngle);
+  const lastHueRoundedRef = useRef(Math.round(hueAngle));
   useEffect(() => {
     hueRef.current = hueAngle;
+    lastHueRoundedRef.current = Math.round(hueAngle);
   }, [hueAngle]);
 
   useEffect(() => {
@@ -155,7 +157,12 @@ export const MusicPanel = React.memo(function MusicPanel() {
           const hd = hueSpeed * dt * hueDir;
           const next = (((hueRef.current + hd) % 360) + 360) % 360;
           hueRef.current = next;
-          setHueAngle(next);
+          // Only trigger React re-render when rounded degree changes (candidate may change)
+          const rounded = Math.round(next) % 360;
+          if (rounded !== lastHueRoundedRef.current) {
+            lastHueRoundedRef.current = rounded;
+            setHueAngle(next);
+          }
         }
       }
       prevTimeRef.current = time;
@@ -165,11 +172,6 @@ export const MusicPanel = React.memo(function MusicPanel() {
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
   }, [alphaDir, hueDir, alphaSpeed, hueSpeed]);
-
-  const handleAlphaPlay = useCallback(() => setAlphaDir((d) => (d === 1 ? 0 : 1)), []);
-  const handleAlphaReverse = useCallback(() => setAlphaDir((d) => (d === -1 ? 0 : -1)), []);
-  const handleHuePlay = useCallback(() => setHueDir((d) => (d === 1 ? 0 : 1)), []);
-  const handleHueReverse = useCallback(() => setHueDir((d) => (d === -1 ? 0 : -1)), []);
 
   // Sequencer state
   const [grayStep, setGrayStep] = useState<number | null>(null);
@@ -224,6 +226,35 @@ export const MusicPanel = React.memo(function MusicPanel() {
     originMode,
   });
 
+  // Resume drone when user interacts with LinkedViz controls
+  const resumeDrone = useCallback(() => {
+    if (droneMuted) {
+      engine.setDroneMuted(false);
+      setDroneMuted(false);
+    }
+  }, [droneMuted, engine]);
+
+  const handleAlphaPlay = useCallback(() => {
+    engine.initAudio();
+    resumeDrone();
+    setAlphaDir((d) => (d === 1 ? 0 : 1));
+  }, [engine, resumeDrone]);
+  const handleAlphaReverse = useCallback(() => {
+    engine.initAudio();
+    resumeDrone();
+    setAlphaDir((d) => (d === -1 ? 0 : -1));
+  }, [engine, resumeDrone]);
+  const handleHuePlay = useCallback(() => {
+    engine.initAudio();
+    resumeDrone();
+    setHueDir((d) => (d === 1 ? 0 : 1));
+  }, [engine, resumeDrone]);
+  const handleHueReverse = useCallback(() => {
+    engine.initAudio();
+    resumeDrone();
+    setHueDir((d) => (d === -1 ? 0 : -1));
+  }, [engine, resumeDrone]);
+
   // Stop All handler
   const handleStopAll = useCallback(() => {
     engine.stopGrayMelody?.();
@@ -265,14 +296,6 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setLuminanceMode("symmetric");
     setGl32Perm([0, 1, 2, 3, 4, 5, 6, 7]);
   }, [handleStopAll, engine]);
-
-  // Resume drone when user interacts with LinkedViz controls
-  const resumeDrone = useCallback(() => {
-    if (droneMuted) {
-      engine.setDroneMuted(false);
-      setDroneMuted(false);
-    }
-  }, [droneMuted, engine]);
 
   // Handlers
   const handleHueChange = useCallback(

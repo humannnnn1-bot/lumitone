@@ -166,20 +166,25 @@ export function buildColorLUT(cc: number[]): [number, number, number][] {
   });
 }
 
-/** Find the candidate index in LEVEL_CANDIDATES[level] closest to the given hue angle. */
-export function findClosestCandidate(level: number, hueAngle: number): number {
-  const candidates = LEVEL_CANDIDATES[level];
-  if (candidates.length <= 1) return 0;
-  if (candidates[0].angle < 0) return 0; // achromatic (black/white)
-  let best = 0,
-    bestDist = Infinity;
-  for (let i = 0; i < candidates.length; i++) {
-    const diff = Math.abs(candidates[i].angle - hueAngle);
-    const d = Math.min(diff, 360 - diff);
-    if (d < bestDist) {
-      bestDist = d;
-      best = i;
+/** Pre-computed lookup table: CANDIDATE_LUT[level][degree] → candidate index */
+const CANDIDATE_LUT: number[][] = LEVEL_CANDIDATES.map((cands) => {
+  if (cands.length <= 1 || cands[0].angle < 0) return Array(360).fill(0);
+  return Array.from({ length: 360 }, (_, deg) => {
+    let best = 0,
+      bestDist = Infinity;
+    for (let i = 0; i < cands.length; i++) {
+      const diff = Math.abs(cands[i].angle - deg);
+      const d = Math.min(diff, 360 - diff);
+      if (d < bestDist) {
+        bestDist = d;
+        best = i;
+      }
     }
-  }
-  return best;
+    return best;
+  });
+});
+
+/** Find the candidate index in LEVEL_CANDIDATES[level] closest to the given hue angle. O(1) lookup. */
+export function findClosestCandidate(level: number, hueAngle: number): number {
+  return CANDIDATE_LUT[level][Math.round(((hueAngle % 360) + 360) % 360) % 360];
 }
