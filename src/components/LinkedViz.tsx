@@ -25,6 +25,8 @@ interface LinkedVizProps {
   onAlpha7Change?: (a: number) => void;
   /** Optional scale mode buttons to render above the interval ratio display */
   scaleButtons?: React.ReactNode;
+  /** Callback when L0/L7 origin mode changes */
+  onOriginModeChange?: (mode: 0 | 7) => void;
 }
 
 /* ── Layout constants ── */
@@ -303,9 +305,17 @@ export const LinkedViz = React.memo(function LinkedViz({
   onAlpha0Change,
   alpha7: alpha7Prop,
   onAlpha7Change,
+  onOriginModeChange,
 }: LinkedVizProps) {
   const { t } = useTranslation();
-  const [mode, setMode] = useState<0 | 7>(0);
+  const [mode, setModeInternal] = useState<0 | 7>(0);
+  const setMode = useCallback(
+    (m: 0 | 7) => {
+      setModeInternal(m);
+      onOriginModeChange?.(m);
+    },
+    [onOriginModeChange],
+  );
   const [alpha0Internal, setAlpha0Internal] = useState(0);
   const [alpha7Internal, setAlpha7Internal] = useState(0);
   const alpha0 = alpha0Prop ?? alpha0Internal;
