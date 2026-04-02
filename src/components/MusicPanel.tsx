@@ -128,6 +128,8 @@ export const MusicPanel = React.memo(function MusicPanel() {
   // LinkedViz alpha state (lifted here for audio engine access)
   const [alpha0, setAlpha0] = useState(0);
   const [alpha7, setAlpha7] = useState(0);
+  const [originMode, setOriginMode] = useState<0 | 7>(0);
+  const [droneMuted, setDroneMuted] = useState(false);
 
   // Auto-rotation state
   const [alphaDir, setAlphaDir] = useState<1 | -1 | 0>(0);
@@ -219,6 +221,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
     panEnabled,
     hoveredFanoLine,
     luminanceMode,
+    originMode,
   });
 
   // Stop All handler
@@ -239,11 +242,15 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setDualPhase(null);
     setGray3Code(null);
     setCayleyCol(-1);
+    engine.setDroneMuted(true);
+    setDroneMuted(true);
   }, [engine]);
 
   // Reset Defaults handler
   const handleResetDefaults = useCallback(() => {
     handleStopAll();
+    engine.setDroneMuted(false);
+    setDroneMuted(false);
     setHueAngle(0);
     setDirectCandidates(new Map());
     setVolume(0.7);
@@ -257,21 +264,31 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setRhythmTempo(120);
     setLuminanceMode("symmetric");
     setGl32Perm([0, 1, 2, 3, 4, 5, 6, 7]);
-  }, [handleStopAll]);
+  }, [handleStopAll, engine]);
+
+  // Resume drone when user interacts with LinkedViz controls
+  const resumeDrone = useCallback(() => {
+    if (droneMuted) {
+      engine.setDroneMuted(false);
+      setDroneMuted(false);
+    }
+  }, [droneMuted, engine]);
 
   // Handlers
   const handleHueChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       engine.initAudio();
+      resumeDrone();
       setHueAngle(Number(e.target.value));
       setDirectCandidates(new Map());
     },
-    [engine],
+    [engine, resumeDrone],
   );
 
   const handleAlphaBarChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       engine.initAudio();
+      resumeDrone();
       const v = Number(e.target.value);
       setAlpha0(v);
       setAlpha7(v);
@@ -656,16 +673,29 @@ export const MusicPanel = React.memo(function MusicPanel() {
           <LinkedViz
             hueAngle={hueAngle}
             brushLevel={0}
-            onHueAngleChange={setHueAngle}
+            onHueAngleChange={(a) => {
+              resumeDrone();
+              setHueAngle(a);
+            }}
             hoveredCandidate={hoveredCandidate}
             onHoverCandidate={setHoveredCandidate}
             directCandidates={directCandidates}
             hideLegend
             scaleMode={scaleMode}
             alpha0={alpha0}
-            onAlpha0Change={setAlpha0}
+            onAlpha0Change={(a) => {
+              resumeDrone();
+              setAlpha0(a);
+            }}
             alpha7={alpha7}
-            onAlpha7Change={setAlpha7}
+            onAlpha7Change={(a) => {
+              resumeDrone();
+              setAlpha7(a);
+            }}
+            onOriginModeChange={(m) => {
+              resumeDrone();
+              setOriginMode(m);
+            }}
           />
         </div>
 
@@ -684,6 +714,10 @@ export const MusicPanel = React.memo(function MusicPanel() {
                   } else {
                     preMuteVolumeRef.current = volume;
                     setMuted(true);
+                  }
+                  if (droneMuted) {
+                    engine.setDroneMuted(false);
+                    setDroneMuted(false);
                   }
                 }}
                 style={{

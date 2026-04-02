@@ -22,6 +22,7 @@ interface MusicEngineParams {
   panEnabled: boolean;
   hoveredFanoLine: number | null; // 0-6 or null
   luminanceMode: "symmetric" | "luminance";
+  originMode: 0 | 7;
 }
 
 interface MusicEngineReturn {
@@ -43,6 +44,7 @@ interface MusicEngineReturn {
   applyGL32Transform: (gen: "A" | "B", onPerm?: (perm: number[]) => void) => void;
   setLuminanceMode: (mode: "symmetric" | "luminance") => void;
   stopAlgebra: () => void;
+  setDroneMuted: (muted: boolean) => void;
 }
 
 /* ── Constants ── */
@@ -296,8 +298,13 @@ function applyParams(
   panEnabled: boolean,
   hoveredFanoLine: number | null,
   luminanceMode: "symmetric" | "luminance" = "symmetric",
+  originMode: 0 | 7 = 0,
+  droneMuted = false,
 ) {
   const now = nodes.ctx.currentTime;
+
+  // Active alpha: use alpha0 in L0 mode, alpha7 in L7 mode
+  const activeAlpha = originMode === 0 ? alpha0 : alpha7;
 
   // Phase modulation factor: |cos(deltaAlpha/2)|
   const delta = (((alpha0 - alpha7) % 360) + 360) % 360;
@@ -318,14 +325,17 @@ function applyParams(
     const lvData = levels.find((l) => l.lv === lv);
     if (!lvData) continue;
 
-    // Frequency — alpha0 rotates pitch mapping around the hue wheel
-    const rotatedAngle = lvData.angle + alpha0;
+    // Frequency — active alpha rotates pitch mapping around the hue wheel
+    const rotatedAngle = lvData.angle + activeAlpha;
     nodes.oscs[i].frequency.setTargetAtTime(angleToFreq(rotatedAngle, scaleMode), now, RAMP_TC);
 
     // Gain — hover logic with Fano line boost
+    // L0 mode: brighter levels are louder (gray/255)
+    // L7 mode: darker levels are louder (1 - gray/255), matching the inverted radius
     const gainScale =
       luminanceMode === "luminance" && BT601_LUMINANCE[lv] !== undefined ? (BT601_LUMINANCE[lv] / BT601_MAX) * GAIN_SCALE : GAIN_SCALE;
-    const baseGain = (lvData.gray / 255) * gainScale;
+    const grayNorm = originMode === 0 ? lvData.gray / 255 : 1 - lvData.gray / 255;
+    const baseGain = grayNorm * gainScale;
     let targetGain: number;
 
     if (hoveredLv !== null) {
@@ -347,19 +357,30 @@ function applyParams(
     }
 
     const tc = hoveredLv !== null || fanoBoostSet !== null ? DUCK_TC : RAMP_TC;
-    nodes.gains[i].gain.setTargetAtTime(targetGain, now, tc);
+    // When drone is muted, only play hovered level or Fano line members
+    let finalGain: number;
+    if (droneMuted) {
+      const isHoveredLevel = hoveredLv !== null && hoveredLv === lv;
+      const isFanoMember = fanoBoostSet !== null && fanoBoostSet.has(lv);
+      finalGain = isHoveredLevel || isFanoMember ? baseGain * HOVER_BOOST : 0;
+    } else {
+      finalGain = targetGain;
+    }
+    nodes.gains[i].gain.setTargetAtTime(finalGain, now, tc);
 
     // Stereo pan
     const panValue = panEnabled ? Math.cos((lvData.angle * Math.PI) / 180) : 0;
     nodes.panners[i].pan.setTargetAtTime(panValue, now, RAMP_TC);
   }
 
-  // L7 noise
-  let noiseTarget = NOISE_GAIN * phaseFactor;
+  // L7 noise — in L7 mode, L7 (white) is at center (small radius), so reduce noise
+  const noiseBase = originMode === 0 ? NOISE_GAIN : NOISE_GAIN * 0.1;
+  let noiseTarget = noiseBase * phaseFactor;
   if (hoveredLv === 7) noiseTarget = 0.03;
   else if (hoveredLv !== null) noiseTarget = 0.001;
   else if (fanoBoostSet !== null) noiseTarget = 0.001;
-  nodes.noiseGain.gain.setTargetAtTime(noiseTarget, now, DUCK_TC);
+  const finalNoise = droneMuted ? (hoveredLv === 7 ? 0.03 : 0) : noiseTarget;
+  nodes.noiseGain.gain.setTargetAtTime(finalNoise, now, DUCK_TC);
 
   // FM synthesis: update modulator parameters if enabled
   if (fmEnabled && nodes.fmOscs.length > 0) {
@@ -372,7 +393,7 @@ function applyParams(
         pairIdx++;
         continue;
       }
-      nodes.fmOscs[pairIdx].frequency.setTargetAtTime(angleToFreq(modData.angle + alpha0, scaleMode), now, RAMP_TC);
+      nodes.fmOscs[pairIdx].frequency.setTargetAtTime(angleToFreq(modData.angle + activeAlpha, scaleMode), now, RAMP_TC);
       const modIndex = (Math.abs(carrierData.gray - modData.gray) / 255) * 400;
       nodes.fmGains[pairIdx].gain.setTargetAtTime(modIndex, now, RAMP_TC);
       pairIdx++;
@@ -393,6 +414,7 @@ export function useMusicEngine({
   panEnabled,
   hoveredFanoLine,
   luminanceMode,
+  originMode,
 }: MusicEngineParams): MusicEngineReturn {
   const nodesRef = useRef<AudioNodes | null>(null);
   const grayIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -401,6 +423,7 @@ export function useMusicEngine({
   const gray3IntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cayleyIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const gl32PermRef = useRef<number[]>([1, 2, 3, 4, 5, 6, 7]); // identity permutation
+  const droneMutedRef = useRef(false);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
 
   // Keep latest params in refs so callbacks can access them
@@ -415,6 +438,7 @@ export function useMusicEngine({
     panEnabled,
     hoveredFanoLine,
     luminanceMode,
+    originMode,
   });
   paramsRef.current = {
     levels,
@@ -427,6 +451,7 @@ export function useMusicEngine({
     panEnabled,
     hoveredFanoLine,
     luminanceMode,
+    originMode,
   };
 
   /* ── Init ── */
@@ -461,6 +486,8 @@ export function useMusicEngine({
       p.panEnabled,
       p.hoveredFanoLine,
       p.luminanceMode,
+      p.originMode,
+      droneMutedRef.current,
     );
   }, []);
 
@@ -529,8 +556,10 @@ export function useMusicEngine({
       panEnabled,
       hoveredFanoLine,
       luminanceMode,
+      originMode,
+      droneMutedRef.current,
     );
-  }, [enabled, levels, hoveredLv, alpha0, alpha7, volume, scaleMode, fmEnabled, panEnabled, hoveredFanoLine, luminanceMode]);
+  }, [enabled, levels, hoveredLv, alpha0, alpha7, volume, scaleMode, fmEnabled, panEnabled, hoveredFanoLine, luminanceMode, originMode]);
 
   /* ── Tone Burst ── */
   const triggerToneBurst = useCallback((_lv: number, angle: number) => {
@@ -655,7 +684,8 @@ export function useMusicEngine({
   const angleForLv = useCallback((lv: number): number => {
     const p = paramsRef.current;
     const d = p.levels.find((l) => l.lv === lv);
-    return d?.angle ?? 0;
+    const activeAlpha = p.originMode === 0 ? p.alpha0 : p.alpha7;
+    return (d?.angle ?? 0) + activeAlpha;
   }, []);
 
   /* ── Helper: schedule a timeout and track it ── */
@@ -972,7 +1002,8 @@ export function useMusicEngine({
       const targetLv = newPerm[i]; // osc[i] now gets the frequency of level targetLv
       const lvData = p.levels.find((l) => l.lv === targetLv);
       if (lvData) {
-        nodes.oscs[i].frequency.setTargetAtTime(angleToFreq(lvData.angle, p.scaleMode), now, RAMP_TC);
+        const activeAlpha = p.originMode === 0 ? p.alpha0 : p.alpha7;
+        nodes.oscs[i].frequency.setTargetAtTime(angleToFreq(lvData.angle + activeAlpha, p.scaleMode), now, RAMP_TC);
       }
     }
 
@@ -997,6 +1028,30 @@ export function useMusicEngine({
       p.panEnabled,
       p.hoveredFanoLine,
       mode,
+      p.originMode,
+      droneMutedRef.current,
+    );
+  }, []);
+
+  /* ── 11. setDroneMuted ── */
+  const setDroneMuted = useCallback((muted: boolean) => {
+    droneMutedRef.current = muted;
+    if (!nodesRef.current) return;
+    const p = paramsRef.current;
+    applyParams(
+      nodesRef.current,
+      p.levels,
+      p.hoveredLv,
+      p.alpha0,
+      p.alpha7,
+      p.volume,
+      p.scaleMode,
+      p.fmEnabled,
+      p.panEnabled,
+      p.hoveredFanoLine,
+      p.luminanceMode,
+      p.originMode,
+      muted,
     );
   }, []);
 
@@ -1019,5 +1074,6 @@ export function useMusicEngine({
     applyGL32Transform,
     setLuminanceMode,
     stopAlgebra,
+    setDroneMuted,
   };
 }

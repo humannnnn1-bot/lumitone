@@ -32,7 +32,7 @@ import { TheoryPanel } from "./components/TheoryPanel";
 import { MusicPanel } from "./components/MusicPanel";
 import { useTranslation } from "./i18n";
 
-const APP_VERSION = "5.0.0";
+const APP_VERSION = "5.0.2";
 
 /* ═══════════════════════════════════════════
    LAYOUT STYLE CONSTANTS
