@@ -205,6 +205,10 @@ export const ConnectionsSummary = React.memo(function ConnectionsSummary() {
         <p className="theory-conn-card-detail" style={{ margin: `${SP.sm}px 0 0`, color: C.textDimmer, fontSize: FS.xs }}>
           {t("theory_conn_boundary")}
         </p>
+        <hr style={{ border: "none", borderTop: `1px solid ${C.border}`, margin: `${SP.md}px 0` }} />
+        <p style={{ margin: `0 0 2px`, color: C.textDimmer, fontSize: FS.xs }}>{t("theory_conn_168_decomp")}</p>
+        <p style={{ margin: `0 0 2px`, color: C.textDimmer, fontSize: FS.xs }}>{t("theory_conn_e8_chain")}</p>
+        <p style={{ margin: 0, color: C.textDimmer, fontSize: FS.xs }}>{t("theory_conn_5fold")}</p>
       </div>
 
       {/* Closing tagline */}

@@ -151,6 +151,93 @@ export function isBackEdgeWhite(a: number, b: number): boolean {
   return a === 7 || b === 7;
 }
 
+/* ── Octahedron (dual of cube) geometry ──── */
+
+const OCTA_CX = 150,
+  OCTA_CY = 150;
+const OCTA_SCALE = 100;
+
+/**
+ * 6 chromatic colors as cross-polytope vertices.
+ * Axis assignment follows hue-wheel convention (Red = top, clockwise = R→Y→G→C→B→M):
+ *   R(2)=up, C(5)=down  (vertical axis)
+ *   Y(6)=upper-right, B(1)=lower-left  (right diagonal)
+ *   M(3)=upper-left, G(4)=lower-right  (left diagonal)
+ * Complement pairs remain antipodal on each axis.
+ */
+export const OCTA_POINTS: Record<number, { x: number; y: number }> = {
+  2: { x: OCTA_CX + OCTA_SCALE * ISO_G.dx, y: OCTA_CY + OCTA_SCALE * ISO_G.dy }, // Red = top
+  5: { x: OCTA_CX - OCTA_SCALE * ISO_G.dx, y: OCTA_CY - OCTA_SCALE * ISO_G.dy }, // Cyan = bottom
+  4: { x: OCTA_CX + OCTA_SCALE * ISO_R.dx, y: OCTA_CY + OCTA_SCALE * ISO_R.dy }, // Green = lower-right
+  3: { x: OCTA_CX - OCTA_SCALE * ISO_R.dx, y: OCTA_CY - OCTA_SCALE * ISO_R.dy }, // Magenta = upper-left
+  1: { x: OCTA_CX + OCTA_SCALE * ISO_B.dx, y: OCTA_CY + OCTA_SCALE * ISO_B.dy }, // Blue = lower-left
+  6: { x: OCTA_CX - OCTA_SCALE * ISO_B.dx, y: OCTA_CY - OCTA_SCALE * ISO_B.dy }, // Yellow = upper-right
+};
+
+/** 3 complement axes: R↔C, G↔M, B↔Y */
+export const OCTA_COMPLEMENT_AXES: [number, number][] = [
+  [2, 5],
+  [4, 3],
+  [1, 6],
+];
+
+/** 12 octahedron edges = all non-complement chromatic pairs */
+export const OCTA_EDGES: [number, number][] = [
+  [1, 2],
+  [1, 3],
+  [1, 4],
+  [1, 5],
+  [2, 3],
+  [2, 4],
+  [2, 6],
+  [3, 5],
+  [3, 6],
+  [4, 5],
+  [4, 6],
+  [5, 6],
+];
+
+/** 8 octahedron faces — each octant maps to one GF(2)^3 color.
+ *  Sign convention: vertex lv is on the + side of its axis if it's a primary (weight 1),
+ *  and on the − side if it's a secondary (weight 2).
+ *  For each axis i, the octant sign determines bit i of the face color. */
+export const OCTA_FACES: { verts: [number, number, number]; color: number }[] = [
+  { verts: [2, 4, 1], color: 7 }, // (+R,+G,+B) = White
+  { verts: [2, 4, 6], color: 6 }, // (+R,+G,−B) = Yellow
+  { verts: [2, 3, 1], color: 3 }, // (+R,−G,+B) = Magenta
+  { verts: [2, 3, 6], color: 2 }, // (+R,−G,−B) = Red
+  { verts: [5, 4, 1], color: 5 }, // (−R,+G,+B) = Cyan
+  { verts: [5, 4, 6], color: 4 }, // (−R,+G,−B) = Green
+  { verts: [5, 3, 1], color: 1 }, // (−R,−G,+B) = Blue
+  { verts: [5, 3, 6], color: 0 }, // (−R,−G,−B) = Black
+];
+
+/* ── Inscribed Tetrahedra (T0 / T1) ──────── */
+
+/** T0 = even-weight vectors = Klein four-group V₄ under XOR */
+export const TETRA_T0 = [0, 3, 5, 6] as const;
+/** T1 = odd-weight vectors = coset of V₄ */
+export const TETRA_T1 = [1, 2, 4, 7] as const;
+
+/** Edges of the T0 tetrahedron inscribed in the cube */
+export const TETRA_T0_EDGES: [number, number][] = [
+  [0, 3],
+  [0, 5],
+  [0, 6],
+  [3, 5],
+  [3, 6],
+  [5, 6],
+];
+/** Edges of the T1 tetrahedron inscribed in the cube */
+export const TETRA_T1_EDGES: [number, number][] = [
+  [1, 2],
+  [1, 4],
+  [1, 7],
+  [2, 4],
+  [2, 7],
+  [4, 7],
+];
+
 /* ── Gray Code Hexagon geometry ──────────── */
 
 const GRAY_CX = 150,

@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { THEORY_LEVELS, FANO_LINES, FANO_LINE_CATEGORIES, FANO_LINE_ENDPOINTS, FANO_POINTS, FANO_CIRCLE } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
+import { usePinReset } from "./pin-reset";
 import { S_BTN } from "../../styles";
 import { useTranslation } from "../../i18n";
 
@@ -44,6 +45,7 @@ interface Props {
 export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Props) {
   const { t } = useTranslation();
   const [pinned, setPinned] = useState<number | null>(null);
+  usePinReset(setPinned);
   const [lineFilter, setLineFilter] = useState<LineFilter>("all");
   const [cmyMode, setCmyMode] = useState(false);
   const [animT, setAnimT] = useState(0); // 0=normal, 0.5=triangle attempt, 1=collapsed

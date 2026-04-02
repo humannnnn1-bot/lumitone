@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { THEORY_LEVELS, CUBE_EDGES, CUBE_POINTS, GRAY_PATH, edgeChannel, isBackEdge, GRAY_TOGGLES } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
+import { usePinReset } from "./pin-reset";
 import { S_BTN } from "../../styles";
 import { useTranslation } from "../../i18n";
 
@@ -39,6 +40,7 @@ interface Props {
 export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Props) {
   const { t } = useTranslation();
   const [pinned, setPinned] = useState<number | null>(null);
+  usePinReset(setPinned);
   const [equatorMode, setEquatorMode] = useState(false);
   const [showComplements, setShowComplements] = useState(false);
   const [animT, setAnimT] = useState(0); // 0 = cube, 1 = hexagon
@@ -94,7 +96,10 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
   // Interpolated positions
   const getPos = (lv: number) => {
     const cube = CUBE_POINTS[lv];
-    if (lv === 0 || lv === 7) return { x: cube.x, y: cube.y }; // Black/White stay
+    if (lv === 0 || lv === 7) {
+      // Black/White move toward center in equator mode
+      return { x: lerp(cube.x, 150, animT), y: lerp(cube.y, 150, animT) };
+    }
     const hex = HEX_TARGETS[lv];
     return { x: lerp(cube.x, hex.x, animT), y: lerp(cube.y, hex.y, animT) };
   };
