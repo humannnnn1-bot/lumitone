@@ -1,6 +1,7 @@
 import React, { useCallback, useState } from "react";
-import { THEORY_LEVELS } from "./theory-data";
+import { THEORY_LEVELS, CUBE_EDGES, CUBE_POINTS, TETRA_T0, TETRA_T1, TETRA_T0_EDGES, TETRA_T1_EDGES } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
+import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
 
 interface Props {
@@ -49,21 +50,34 @@ const PAIRS: [number, number][] = [
 
 /* ── Mini isometric cube geometry ──────── */
 
-const M_EDGE = 26;
+const M_EDGE = 24;
 const M_COS30 = Math.cos(Math.PI / 6);
-const M_U = { dx: 0, dy: -M_EDGE };
-const M_R = { dx: M_COS30 * M_EDGE, dy: 0.5 * M_EDGE };
-const M_L = { dx: -M_COS30 * M_EDGE, dy: 0.5 * M_EDGE };
-const M_VW = 62;
-const M_VH = 62;
-const M_OX = M_VW / 2;
-const M_OY = M_VH / 2 + 5;
+const M_SIN30 = 0.5;
 
-// Precomputed face polygon points (O is front vertex at center)
+// Standard isometric projection: front vertex at bottom, 3 edges go upward.
+// A = vertical edge (up), B = back-right (up-right), C = back-left (up-left)
+const M_A = { dx: 0, dy: -M_EDGE };
+const M_B = { dx: M_COS30 * M_EDGE, dy: -M_SIN30 * M_EDGE };
+const M_C = { dx: -M_COS30 * M_EDGE, dy: -M_SIN30 * M_EDGE };
+
+const M_VW = 62;
+const M_VH = 68;
+const M_OX = M_VW / 2;
+const M_OY = M_VH - 6; // front vertex near bottom
+
 const fp = (dx: number, dy: number) => `${(M_OX + dx).toFixed(1)},${(M_OY + dy).toFixed(1)}`;
-const FACE_T = [fp(M_U.dx, M_U.dy), fp(M_U.dx + M_R.dx, M_U.dy + M_R.dy), fp(0, 0), fp(M_U.dx + M_L.dx, M_U.dy + M_L.dy)].join(" ");
-const FACE_R = [fp(0, 0), fp(M_R.dx, M_R.dy), fp(M_U.dx + M_R.dx, M_U.dy + M_R.dy), fp(M_U.dx, M_U.dy)].join(" ");
-const FACE_L = [fp(0, 0), fp(M_L.dx, M_L.dy), fp(M_U.dx + M_L.dx, M_U.dy + M_L.dy), fp(M_U.dx, M_U.dy)].join(" ");
+
+// Top face (lid): O+A, O+A+B, O+A+B+C, O+A+C — diamond at the top
+const FACE_T = [
+  fp(M_A.dx, M_A.dy),
+  fp(M_A.dx + M_B.dx, M_A.dy + M_B.dy),
+  fp(M_A.dx + M_B.dx + M_C.dx, M_A.dy + M_B.dy + M_C.dy),
+  fp(M_A.dx + M_C.dx, M_A.dy + M_C.dy),
+].join(" ");
+// Left face: O, O+A, O+A+C, O+C — parallelogram on the left
+const FACE_L = [fp(0, 0), fp(M_A.dx, M_A.dy), fp(M_A.dx + M_C.dx, M_A.dy + M_C.dy), fp(M_C.dx, M_C.dy)].join(" ");
+// Right face: O, O+B, O+A+B, O+A — parallelogram on the right
+const FACE_R = [fp(0, 0), fp(M_B.dx, M_B.dy), fp(M_A.dx + M_B.dx, M_A.dy + M_B.dy), fp(M_A.dx, M_A.dy)].join(" ");
 
 // Color abbreviations
 const ABBR: Record<number, string> = { 1: "B", 2: "R", 3: "M", 4: "G", 5: "C", 6: "Y" };
@@ -82,17 +96,19 @@ const VIEW_ROWS: [DieView, DieView][] = [
     { top: 4, left: 1, right: 2, type: "identity" }, // RGB
     { top: 6, left: 5, right: 3, type: "identity" }, // CMY
   ],
+  // De Morgan dual pairs: each row's ⊕ and ∧ are related by complement (a⊕b=c ↔ a'∧b'=c')
+  // Outputs form complement pairs: Y↔B, C↔R, M↔G. Additive column follows color wheel: Y→C→M.
   [
-    { top: 6, left: 2, right: 4, type: "additive" }, // R+G=Y
-    { top: 2, left: 3, right: 6, type: "subtractive" }, // M∧Y=R
+    { top: 6, left: 2, right: 4, type: "additive" }, // R⊕G=Y
+    { top: 1, left: 5, right: 3, type: "subtractive" }, // C∧M=B  (De Morgan dual: R'=C, G'=M, Y'=B)
   ],
   [
-    { top: 3, left: 2, right: 1, type: "additive" }, // R+B=M
-    { top: 4, left: 5, right: 6, type: "subtractive" }, // C∧Y=G
+    { top: 5, left: 4, right: 1, type: "additive" }, // G⊕B=C
+    { top: 2, left: 3, right: 6, type: "subtractive" }, // M∧Y=R  (De Morgan dual: G'=M, B'=Y, C'=R)
   ],
   [
-    { top: 5, left: 4, right: 1, type: "additive" }, // G+B=C
-    { top: 1, left: 5, right: 3, type: "subtractive" }, // C∧M=B
+    { top: 3, left: 2, right: 1, type: "additive" }, // R⊕B=M
+    { top: 4, left: 5, right: 6, type: "subtractive" }, // C∧Y=G  (De Morgan dual: R'=C, B'=Y, M'=G)
   ],
 ];
 
@@ -109,10 +125,12 @@ function MiniCube({
   onLeave: () => void;
   onTap: (lv: number) => void;
 }) {
+  // Draw order: top face first (furthest back), then side faces in front.
+  // Note: viewing from above mirrors left/right, so FACE_L shows view.right and vice versa.
   const faces = [
-    { pts: FACE_L, lv: view.left },
-    { pts: FACE_R, lv: view.right },
     { pts: FACE_T, lv: view.top },
+    { pts: FACE_L, lv: view.right },
+    { pts: FACE_R, lv: view.left },
   ];
 
   const isOutput = (lv: number) => view.type !== "identity" && lv === view.top;
@@ -144,10 +162,10 @@ function MiniCube({
               <polygon
                 points={pts}
                 fill={info.color}
-                fillOpacity={dim ? 0.08 : output ? 0.6 : active ? 0.5 : 0.35}
-                stroke={output ? "#fff" : info.color}
-                strokeWidth={output ? 1.5 : active ? 1.5 : 0.8}
-                strokeOpacity={dim ? 0.15 : output ? 0.8 : 0.5}
+                fillOpacity={dim ? 0.15 : 1}
+                stroke={dim ? C.textDimmer : "#000"}
+                strokeWidth={output ? 1.5 : active ? 1.5 : 1.2}
+                strokeOpacity={dim ? 0.2 : 1}
                 strokeLinejoin="round"
               />
             </g>
@@ -155,25 +173,28 @@ function MiniCube({
         })}
         {/* Level numbers on each face */}
         {[
-          { lv: view.top, x: M_OX, y: M_OY - M_EDGE * 0.5 },
-          { lv: view.left, x: M_OX - M_COS30 * M_EDGE * 0.45, y: M_OY + M_EDGE * 0.15 },
-          { lv: view.right, x: M_OX + M_COS30 * M_EDGE * 0.45, y: M_OY + M_EDGE * 0.15 },
-        ].map(({ lv, x, y }) => (
-          <text
-            key={`n${lv}`}
-            x={x}
-            y={y}
-            textAnchor="middle"
-            dominantBaseline="central"
-            fontSize={9}
-            fontWeight={900}
-            fontFamily="monospace"
-            fill={lv >= 4 ? "#000" : "#fff"}
-            opacity={0.9}
-          >
-            {lv}
-          </text>
-        ))}
+          { lv: view.top, x: M_OX, y: M_OY + M_A.dy + (M_B.dy + M_C.dy) / 2 },
+          { lv: view.right, x: M_OX + M_C.dx / 2, y: M_OY + (M_A.dy + M_C.dy) / 2 },
+          { lv: view.left, x: M_OX + M_B.dx / 2, y: M_OY + (M_A.dy + M_B.dy) / 2 },
+        ].map(({ lv, x, y }) => {
+          const isDim = hl !== null && !viewLevels.includes(hl);
+          return (
+            <text
+              key={`n${lv}`}
+              x={x}
+              y={y}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={9}
+              fontWeight={900}
+              fontFamily="monospace"
+              fill={isDim ? C.textDimmer : lv >= 4 ? "#000" : "#fff"}
+              opacity={isDim ? 0.3 : 0.9}
+            >
+              {lv}
+            </text>
+          );
+        })}
       </svg>
       {/* Label */}
       <div className="theory-annotation" style={{ fontSize: 9, fontFamily: "monospace", textAlign: "center", lineHeight: 1 }}>
@@ -201,9 +222,161 @@ function MiniCube({
   );
 }
 
+/* ── Mini tetrahedron inscribed in ghost cube ── */
+
+const MT_W = 160,
+  MT_H = 160;
+const MT_CX = MT_W / 2,
+  MT_CY = MT_H / 2;
+
+/* Uniform rescaling: compute bounding box of all 8 cube points, then scale to fit */
+const _cpVals = Object.values(CUBE_POINTS);
+const _cpMinX = Math.min(..._cpVals.map((p) => p.x));
+const _cpMaxX = Math.max(..._cpVals.map((p) => p.x));
+const _cpMinY = Math.min(..._cpVals.map((p) => p.y));
+const _cpMaxY = Math.max(..._cpVals.map((p) => p.y));
+const _cpCX = (_cpMinX + _cpMaxX) / 2;
+const _cpCY = (_cpMinY + _cpMaxY) / 2;
+const _cpSpan = Math.max(_cpMaxX - _cpMinX, _cpMaxY - _cpMinY);
+const MT_FIT = (MT_W - 40) / _cpSpan; // 40px padding for vertex labels
+
+function mtPt(lv: number): { x: number; y: number } {
+  const p = CUBE_POINTS[lv];
+  return {
+    x: MT_CX + (p.x - _cpCX) * MT_FIT,
+    y: MT_CY + (p.y - _cpCY) * MT_FIT,
+  };
+}
+
+/** Build the 4 triangular faces from 4 vertices (all C(4,2)=6 edges → 4 faces) */
+function tetraFaces(verts: readonly number[]): [number, number, number][] {
+  const faces: [number, number, number][] = [];
+  for (let i = 0; i < verts.length; i++)
+    for (let j = i + 1; j < verts.length; j++) for (let k = j + 1; k < verts.length; k++) faces.push([verts[i], verts[j], verts[k]]);
+  return faces;
+}
+
+function MiniTetra({
+  verts,
+  edges,
+  label,
+  hl,
+  onEnter,
+  onLeave,
+}: {
+  verts: readonly number[];
+  edges: [number, number][];
+  label: string;
+  hl: number | null;
+  onEnter: (lv: number) => void;
+  onLeave: () => void;
+}) {
+  const faces = tetraFaces(verts);
+  // For each face, find the opposite (4th) vertex: XOR of 3 face verts
+  const faceColor = (f: [number, number, number]) => f[0] ^ f[1] ^ f[2];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
+      <svg viewBox={`0 0 ${MT_W} ${MT_H}`} style={{ width: MT_W, height: MT_H }}>
+        {/* Ghost cube edges (dashed, to show inscribed relationship) */}
+        {CUBE_EDGES.map(([a, b], i) => (
+          <line
+            key={`gc${i}`}
+            x1={mtPt(a).x}
+            y1={mtPt(a).y}
+            x2={mtPt(b).x}
+            y2={mtPt(b).y}
+            stroke={C.textDimmer}
+            strokeWidth={0.6}
+            strokeDasharray="3 2"
+            opacity={0.25}
+          />
+        ))}
+        {/* Ghost vertices (the 4 non-tetrahedron cube vertices as small dots) */}
+        {[0, 1, 2, 3, 4, 5, 6, 7]
+          .filter((lv) => !verts.includes(lv))
+          .map((lv) => {
+            const p = mtPt(lv);
+            return <circle key={`gv${lv}`} cx={p.x} cy={p.y} r={2.5} fill={C.textDimmer} opacity={0.25} />;
+          })}
+        {/* Tetrahedron faces (filled triangles) */}
+        {faces.map((f, i) => {
+          const fc = faceColor(f);
+          const info = THEORY_LEVELS[fc];
+          const pts = f.map((v) => `${mtPt(v).x},${mtPt(v).y}`).join(" ");
+          return (
+            <polygon
+              key={`tf${i}`}
+              points={pts}
+              fill={info.color}
+              fillOpacity={0.12}
+              stroke={info.color}
+              strokeWidth={0.5}
+              strokeOpacity={0.2}
+              strokeLinejoin="round"
+            />
+          );
+        })}
+        {/* Tetrahedron edges */}
+        {edges.map(([a, b], i) => {
+          const active = hl === a || hl === b;
+          return (
+            <line
+              key={`te${i}`}
+              x1={mtPt(a).x}
+              y1={mtPt(a).y}
+              x2={mtPt(b).x}
+              y2={mtPt(b).y}
+              stroke={active ? "#fff" : "rgba(255,255,255,0.6)"}
+              strokeWidth={active ? 2 : 1.2}
+              opacity={active ? 0.9 : 0.5}
+            />
+          );
+        })}
+        {/* Vertices */}
+        {verts.map((lv) => {
+          const p = mtPt(lv);
+          const info = THEORY_LEVELS[lv];
+          const active = hl === lv;
+          return (
+            <g key={`tv${lv}`} onMouseEnter={() => onEnter(lv)} onMouseLeave={onLeave} style={{ cursor: "pointer" }}>
+              <circle cx={p.x} cy={p.y} r={12} fill="transparent" />
+              <circle
+                cx={p.x}
+                cy={p.y}
+                r={9}
+                fill={info.color}
+                fillOpacity={active ? 0.8 : 0.45}
+                stroke={active ? "#fff" : info.color}
+                strokeWidth={active ? 2 : 1}
+                strokeOpacity={0.8}
+              />
+              <text
+                x={p.x}
+                y={p.y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={FS.xs}
+                fontWeight={900}
+                fontFamily="monospace"
+                fill={lv >= 4 ? "#000" : "#fff"}
+                opacity={0.95}
+              >
+                {lv}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+      <span style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer }}>{label}</span>
+    </div>
+  );
+}
+
 export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Props) {
   const { t } = useTranslation();
   const [pinned, setPinned] = useState<number | null>(null);
+  usePinReset(setPinned);
 
   const enter = useCallback((lv: number) => onHover(lv), [onHover]);
   const leave = useCallback(() => onHover(null), [onHover]);
@@ -396,10 +569,35 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
         {/* Footer annotation */}
         <p
           className="theory-annotation"
-          style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}
+          style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center", lineHeight: 1.6 }}
         >
           {"\u2295"} = XOR (GF(2){"\u00b3"}) | {"\u2227"} = AND (Boolean)
+          <br />
+          De Morgan: a{"\u2295"}b=c {"\u2194"} a{"\u2032"}
+          {"\u2227"}b{"\u2032"}=c{"\u2032"} (x{"\u2032"}=x{"\u2295"}7)
         </p>
+      </div>
+
+      {/* T0/T1 Tetrahedra — two inscribed tetrahedra in the cube */}
+      <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.accentBright, margin: 0, fontWeight: FW.bold }}
+      >
+        {t("theory_dice_tetra")}
+      </p>
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
+        <div style={{ display: "flex", gap: SP.xl, justifyContent: "center" }}>
+          <MiniTetra verts={TETRA_T0} edges={TETRA_T0_EDGES} label={t("theory_dice_tetra_t0")} hl={hl} onEnter={enter} onLeave={leave} />
+          <MiniTetra verts={TETRA_T1} edges={TETRA_T1_EDGES} label={t("theory_dice_tetra_t1")} hl={hl} onEnter={enter} onLeave={leave} />
+        </div>
+        <div style={{ maxWidth: 300, textAlign: "center" }}>
+          <p className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textMuted, margin: `0 0 2px` }}>
+            {t("theory_dice_tetra_subgroup")}
+          </p>
+          <p className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, margin: 0 }}>
+            {t("theory_dice_tetra_face_xor")}
+          </p>
+        </div>
       </div>
     </div>
   );

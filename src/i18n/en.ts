@@ -292,6 +292,26 @@ export const en = {
   theory_polar_additive: "Additive (from Black)",
   theory_polar_subtractive: "Subtractive (from White)",
   theory_polar_hint: "Click primaries or secondaries to mix",
+
+  // Octahedron (chromatic cross-polytope)
+  theory_octa_title: "Chromatic Octahedron",
+  theory_octa_desc:
+    "Dual of the color cube. 6 vertices = 6 chromatic colors (primaries on +axis, CMY on \u2212axis), 8 faces = 8 GF(2)\u00b3 elements (each octant maps to one color). 3 complement axes R\u2194C, G\u2194M, B\u2194Y connect antipodal vertices. The face-adjacency graph is Q\u2083 \u2014 the color cube itself.",
+  theory_octa_axes: "Complement axes",
+
+  // ColorDice tetrahedra
+  theory_dice_tetra: "T0/T1 Tetrahedra",
+  theory_dice_tetra_t0: "T0: even weight",
+  theory_dice_tetra_t1: "T1: odd weight",
+  theory_dice_tetra_subgroup: "T0 = {Black, M, C, Y} = Klein four-group V\u2084 under XOR",
+  theory_dice_tetra_face_xor: "Face theorem: XOR of 3 face vertices = the opposite vertex",
+
+  // Connection enhancements
+  theory_conn_168_decomp: "|GL(3,2)| = 168 = 7 (Fano pts) \u00d7 24 (stabilizer S\u2084 per pt = octahedral rotation group)",
+  theory_conn_e8_chain:
+    "[8,4,4] ext. Hamming \u2192 Construction A \u2192 E\u2088 lattice \u2192 Gosset polytope 4\u2082\u2081 (240 vertices): canonical chain from 8 colors to densest 8D packing",
+  theory_conn_5fold: "GL(3,2) has no element of order 5 \u2192 icosahedral symmetry lies outside the chromatic framework",
+
   theory_fano_cmy_collapse: "CMY line",
   theory_fano_cmy_eq: "M\u2295C\u2295Y = 0 \u2192 collinear!",
   theory_fano_cmy_why: "M=G\u2032 C=R\u2032 \u2192 M\u2295C = G\u2295R = Y (complement mirror)",

@@ -292,6 +292,28 @@ export const ja: Record<TranslationKey, string> = {
   theory_polar_additive: "\u52a0\u6cd5\uff08Black\u8d77\u70b9\uff09",
   theory_polar_subtractive: "\u6e1b\u6cd5\uff08White\u8d77\u70b9\uff09",
   theory_polar_hint: "\u539f\u8272\u307e\u305f\u306f\u4e8c\u6b21\u8272\u3092\u30af\u30ea\u30c3\u30af\u3057\u3066\u6df7\u8272",
+
+  // Octahedron (chromatic cross-polytope)
+  theory_octa_title: "色相八面体",
+  theory_octa_desc:
+    "色立方体の双対。6頂点 = 6色相色（原色は+軸、CMYは−軸）、8面 = 8色（各八分空間が1つのGF(2)\u00b3元に対応）。3本の補色軸 R\u2194C, G\u2194M, B\u2194Y が対頂点を結ぶ。面隣接グラフは立方体グラフQ\u2083そのもの。",
+  theory_octa_axes: "補色軸",
+
+  // ColorDice tetrahedra
+  theory_dice_tetra: "T0/T1 四面体",
+  theory_dice_tetra_t0: "T0: 偶数重み",
+  theory_dice_tetra_t1: "T1: 奇数重み",
+  theory_dice_tetra_subgroup: "T0 = {Black, M, C, Y} = XOR下のKlein四群 V\u2084",
+  theory_dice_tetra_face_xor: "面定理: 面の3頂点の XOR = 対頂点の色",
+
+  // Connection enhancements
+  theory_conn_168_decomp:
+    "|GL(3,2)| = 168 = 7(Fano\u70b9) \u00d7 24(\u5404\u70b9\u306e\u5b89\u5b9a\u5316\u7fa4 S\u2084 = \u516b\u9762\u4f53\u56de\u8ee2\u7fa4)",
+  theory_conn_e8_chain:
+    "[8,4,4] \u62e1\u5f35Hamming \u2192 Construction A \u2192 E\u2088\u683c\u5b50 \u2192 Gosset\u591a\u9762\u4f53 4\u2082\u2081(240\u9802\u70b9): 8\u8272\u304b\u30898\u6b21\u5143\u6700\u5bc6\u5145\u586b\u3078\u306e\u6b63\u6e96\u9023\u93c8",
+  theory_conn_5fold:
+    "GL(3,2)\u306f\u4f4d\u6570\u0035\u306e\u5143\u3092\u6301\u305f\u306a\u3044 \u2192 \u6b63\u4e8c\u5341\u9762\u4f53\u5bfe\u79f0\u306f\u8272\u5f69\u7406\u8ad6\u306e\u69cb\u9020\u5916",
+
   theory_fano_cmy_collapse: "CMY\u5171\u7dda",
   theory_fano_cmy_eq: "M\u2295C\u2295Y = 0 \u2192 共線！",
   theory_fano_cmy_why: "M=G\u2032 C=R\u2032 \u2192 M\u2295C = G\u2295R = Y（補色の鏡像）",
