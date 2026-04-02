@@ -439,13 +439,15 @@ function applyParams(
     nodes.panners[i].pan.setTargetAtTime(panValue, now, RAMP_TC);
   }
 
-  // L7 noise — in L7 mode, L7 (white) is at center (small radius), so reduce noise
-  const noiseBase = originMode === 0 ? NOISE_GAIN : NOISE_GAIN * 0.1;
+  // L7 noise — gain follows wave graph radius: L0-origin → gray/255 = 1.0, L7-origin → 1-gray/255 = 0
+  const l7Gray = 255; // White
+  const l7Radius = originMode === 0 ? l7Gray / 255 : 1 - l7Gray / 255;
+  const noiseBase = NOISE_GAIN * l7Radius;
   let noiseTarget = noiseBase * phaseFactor;
-  if (hoveredLv === 7) noiseTarget = 0.03;
-  else if (hoveredLv !== null) noiseTarget = 0.001;
-  else if (fanoBoostSet !== null) noiseTarget = 0.001;
-  const finalNoise = droneMuted ? (hoveredLv === 7 ? 0.03 : 0) : noiseTarget;
+  if (hoveredLv === 7) noiseTarget = noiseBase * HOVER_BOOST;
+  else if (hoveredLv !== null) noiseTarget = noiseBase * HOVER_DUCK;
+  else if (fanoBoostSet !== null) noiseTarget = noiseBase * HOVER_DUCK;
+  const finalNoise = droneMuted ? (hoveredLv === 7 ? noiseBase * HOVER_BOOST : 0) : noiseTarget;
   nodes.noiseGain.gain.setTargetAtTime(finalNoise, now, DUCK_TC);
 
   // FM synthesis: update modulator parameters if enabled
@@ -637,9 +639,16 @@ export function useMusicEngine({
   }, [enabled, levels, hoveredLv, alpha0, alpha7, volume, scaleMode, fmEnabled, panEnabled, hoveredFanoLine, luminanceMode, originMode]);
 
   /* ── Tone Burst ── */
-  const triggerToneBurst = useCallback((_lv: number, angle: number) => {
+  const triggerToneBurst = useCallback((lv: number, angle: number) => {
     const nodes = nodesRef.current;
     if (!nodes) return;
+
+    // Achromatic levels (angle=-1): use luma-based frequency instead of hue-based
+    if (angle < 0) {
+      triggerLumaBurst(nodes, LUMA_VALUES[lv] ?? 0);
+      return;
+    }
+
     const ctx = nodes.ctx;
     const mode = paramsRef.current.scaleMode;
 

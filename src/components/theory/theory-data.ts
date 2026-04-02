@@ -157,6 +157,11 @@ const OCTA_CX = 150,
   OCTA_CY = 150;
 const OCTA_SCALE = 100;
 
+// Normalized isometric axes (equal length) for regular octahedron
+const OCTA_G = { dx: ISO_G.dx / 1.2, dy: ISO_G.dy / 1.2 }; // magnitude 1.0
+const OCTA_R = { dx: ISO_R.dx, dy: ISO_R.dy }; // already magnitude 1.0
+const OCTA_B = { dx: ISO_B.dx, dy: ISO_B.dy }; // already magnitude 1.0
+
 /**
  * 6 chromatic colors as cross-polytope vertices.
  * Axis assignment follows hue-wheel convention (Red = top, clockwise = R→Y→G→C→B→M):
@@ -164,14 +169,15 @@ const OCTA_SCALE = 100;
  *   Y(6)=upper-right, B(1)=lower-left  (right diagonal)
  *   M(3)=upper-left, G(4)=lower-right  (left diagonal)
  * Complement pairs remain antipodal on each axis.
+ * Uses normalized axes (equal length) so the octahedron is regular.
  */
 export const OCTA_POINTS: Record<number, { x: number; y: number }> = {
-  2: { x: OCTA_CX + OCTA_SCALE * ISO_G.dx, y: OCTA_CY + OCTA_SCALE * ISO_G.dy }, // Red = top
-  5: { x: OCTA_CX - OCTA_SCALE * ISO_G.dx, y: OCTA_CY - OCTA_SCALE * ISO_G.dy }, // Cyan = bottom
-  4: { x: OCTA_CX + OCTA_SCALE * ISO_R.dx, y: OCTA_CY + OCTA_SCALE * ISO_R.dy }, // Green = lower-right
-  3: { x: OCTA_CX - OCTA_SCALE * ISO_R.dx, y: OCTA_CY - OCTA_SCALE * ISO_R.dy }, // Magenta = upper-left
-  1: { x: OCTA_CX + OCTA_SCALE * ISO_B.dx, y: OCTA_CY + OCTA_SCALE * ISO_B.dy }, // Blue = lower-left
-  6: { x: OCTA_CX - OCTA_SCALE * ISO_B.dx, y: OCTA_CY - OCTA_SCALE * ISO_B.dy }, // Yellow = upper-right
+  2: { x: OCTA_CX + OCTA_SCALE * OCTA_G.dx, y: OCTA_CY + OCTA_SCALE * OCTA_G.dy }, // Red = top
+  5: { x: OCTA_CX - OCTA_SCALE * OCTA_G.dx, y: OCTA_CY - OCTA_SCALE * OCTA_G.dy }, // Cyan = bottom
+  4: { x: OCTA_CX + OCTA_SCALE * OCTA_R.dx, y: OCTA_CY + OCTA_SCALE * OCTA_R.dy }, // Green = lower-right
+  3: { x: OCTA_CX - OCTA_SCALE * OCTA_R.dx, y: OCTA_CY - OCTA_SCALE * OCTA_R.dy }, // Magenta = upper-left
+  1: { x: OCTA_CX + OCTA_SCALE * OCTA_B.dx, y: OCTA_CY + OCTA_SCALE * OCTA_B.dy }, // Blue = lower-left
+  6: { x: OCTA_CX - OCTA_SCALE * OCTA_B.dx, y: OCTA_CY - OCTA_SCALE * OCTA_B.dy }, // Yellow = upper-right
 };
 
 /** 3 complement axes: R↔C, G↔M, B↔Y */
@@ -324,6 +330,19 @@ for (const axis of ["G", "R", "B"] as const) {
   }
 }
 
+/** White-pole cuboctahedron vertices: same topology, positions from CUBE_POINTS_WHITE */
+export const CUBOCTA_VERTICES_WHITE: CuboctaVertex[] = CUBE_EDGES.map(([a, b]) => {
+  const pa = CUBE_POINTS_WHITE[a],
+    pb = CUBE_POINTS_WHITE[b];
+  return {
+    x: (pa.x + pb.x) / 2,
+    y: (pa.y + pb.y) / 2,
+    lv0: a,
+    lv1: b,
+    midColor: midColor(a, b),
+  };
+});
+
 /** Cuboctahedron edges: two cuboctahedron vertices (edge midpoints) are connected
  *  if their original cube edges share a vertex and flip different bits */
 export const CUBOCTA_EDGES: [number, number][] = [];
@@ -381,6 +400,27 @@ for (const axis of ["G", "R", "B"] as const) {
     const sign = val === 1 ? 1 : -1;
     const label = val === 1 ? `+${axis}` : `−${axis}`;
     RHOMBIC_OCTA_VERTICES.push({
+      x: RHOMBIC_CENTER.x + dx * RHOMBIC_SCALE,
+      y: RHOMBIC_CENTER.y + dy * RHOMBIC_SCALE,
+      axis,
+      sign: sign as 1 | -1,
+      label,
+    });
+  }
+}
+
+/** White-pole rhombic octa vertices: same topology, positions from CUBE_POINTS_WHITE */
+export const RHOMBIC_OCTA_VERTICES_WHITE: RhombicOctaVertex[] = [];
+for (const axis of ["G", "R", "B"] as const) {
+  for (const val of [0, 1] as const) {
+    const verts = cubeVerticesOnFace(axis, val);
+    const avgX = verts.reduce((s, v) => s + CUBE_POINTS_WHITE[v].x, 0) / 4;
+    const avgY = verts.reduce((s, v) => s + CUBE_POINTS_WHITE[v].y, 0) / 4;
+    const dx = avgX - RHOMBIC_CENTER.x;
+    const dy = avgY - RHOMBIC_CENTER.y;
+    const sign = val === 1 ? 1 : -1;
+    const label = val === 1 ? `+${axis}` : `−${axis}`;
+    RHOMBIC_OCTA_VERTICES_WHITE.push({
       x: RHOMBIC_CENTER.x + dx * RHOMBIC_SCALE,
       y: RHOMBIC_CENTER.y + dy * RHOMBIC_SCALE,
       axis,

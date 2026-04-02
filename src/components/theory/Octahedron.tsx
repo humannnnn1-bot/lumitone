@@ -40,6 +40,30 @@ function isFrontFace(f: (typeof OCTA_FACES)[number]): boolean {
   return crossZ(OCTA_POINTS[f.verts[0]], OCTA_POINTS[f.verts[1]], OCTA_POINTS[f.verts[2]]) > 0;
 }
 
+/** Back-edge set: an edge is "back" if both adjacent faces are back-facing */
+const OCTA_BACK_EDGES = new Set<string>();
+{
+  const edgeKey = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+  const edgeFaces = new Map<string, (typeof OCTA_FACES)[number][]>();
+  for (const f of OCTA_FACES) {
+    const vs = f.verts;
+    for (let i = 0; i < 3; i++) {
+      const k = edgeKey(vs[i], vs[(i + 1) % 3]);
+      if (!edgeFaces.has(k)) edgeFaces.set(k, []);
+      edgeFaces.get(k)!.push(f);
+    }
+  }
+  for (const [k, faces] of edgeFaces) {
+    if (faces.length === 2 && !isFrontFace(faces[0]) && !isFrontFace(faces[1])) {
+      OCTA_BACK_EDGES.add(k);
+    }
+  }
+}
+
+function isOctaBackEdge(a: number, b: number): boolean {
+  return OCTA_BACK_EDGES.has(a < b ? `${a}-${b}` : `${b}-${a}`);
+}
+
 interface Props {
   hlLevel: number | null;
   onHover: (lv: number | null) => void;
@@ -141,6 +165,7 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
         {OCTA_EDGES.map(([a, b], ei) => {
           const active = hlEdgeSet.has(ei);
           const dim = anyHl && !active;
+          const back = isOctaBackEdge(a, b);
           return (
             <line
               key={`e-${ei}`}
@@ -150,6 +175,7 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
               y2={OCTA_POINTS[b].y}
               stroke={active ? "#fff" : C.textDimmer}
               strokeWidth={active ? 1.8 : 0.8}
+              strokeDasharray={back && !active ? "3,3" : undefined}
               opacity={dim ? 0.12 : active ? 0.85 : 0.35}
             />
           );

@@ -103,21 +103,21 @@ interface DieView {
 // Rows: [left, right] pairs
 const VIEW_ROWS: [DieView, DieView][] = [
   [
-    { top: 4, left: 1, right: 2, type: "identity" }, // RGB
+    { top: 4, left: 2, right: 1, type: "identity" }, // RGB
     { top: 6, left: 5, right: 3, type: "identity" }, // CMY
   ],
   // De Morgan dual pairs: each row's ⊕ and ∧ are related by complement (a⊕b=c ↔ a'∧b'=c')
   // Outputs form complement pairs: Y↔B, C↔R, M↔G. Additive column follows color wheel: Y→C→M.
   [
     { top: 6, left: 2, right: 4, type: "additive" }, // R⊕G=Y
-    { top: 1, left: 5, right: 3, type: "subtractive" }, // C∧M=B  (De Morgan dual: R'=C, G'=M, Y'=B)
+    { top: 1, left: 3, right: 5, type: "subtractive" }, // M∧C=B  (De Morgan dual: R'=C, G'=M, Y'=B)
   ],
   [
     { top: 5, left: 4, right: 1, type: "additive" }, // G⊕B=C
-    { top: 2, left: 3, right: 6, type: "subtractive" }, // M∧Y=R  (De Morgan dual: G'=M, B'=Y, C'=R)
+    { top: 2, left: 6, right: 3, type: "subtractive" }, // Y∧M=R  (De Morgan dual: G'=M, B'=Y, C'=R)
   ],
   [
-    { top: 3, left: 2, right: 1, type: "additive" }, // R⊕B=M
+    { top: 3, left: 1, right: 2, type: "additive" }, // B⊕R=M
     { top: 4, left: 5, right: 6, type: "subtractive" }, // C∧Y=G  (De Morgan dual: R'=C, B'=Y, M'=G)
   ],
 ];
@@ -401,7 +401,7 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
     [onHover],
   );
 
-  const hl = hlLevel !== null && hlLevel >= 1 && hlLevel <= 6 ? hlLevel : pinned;
+  const hl = hlLevel !== null && hlLevel >= 0 && hlLevel <= 7 ? hlLevel : pinned;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
