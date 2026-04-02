@@ -1,6 +1,6 @@
 {
   "name": "chromalum",
-  "version": "5.2.0",
+  "version": "5.1.1",
   "private": true,
   "type": "module",
   "scripts": {
