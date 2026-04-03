@@ -302,9 +302,8 @@ export const ja: Record<TranslationKey, string> = {
   theory_octa_desc:
     "色立方体の双対。6頂点 = 6色相色（原色は+軸、CMYは−軸）、8面 = 8色（各八分空間が1つのGF(2)\u00b3元に対応）。3本の補色軸 R\u2194C, G\u2194M, B\u2194Y が対頂点を結ぶ。面隣接グラフは立方体グラフQ\u2083そのもの。",
   theory_octa_axes: "補色軸",
-  theory_octa_net_gray: "Gray符号",
-  theory_octa_net_gray_desc:
-    "Q₃上のハミルトン巡回をGrayコード順に配列。チャネル遷移は回文 B,R,B,G,B,R,B。閉鎖トグルG（G→K）で巡回完成。連鎖可能：同一帯が端同士で接続、周期 [B,R,B,G,B,R,B,G]。T₀ = 全△、T₁ = 全▽。",
+  theory_octa_nets: "正八面体の展開図",
+  theory_octa_nets_desc: "4種の正八面体展開図。補色ペア（XOR 7）が対面に配置: K\u2194W, B\u2194Y, R\u2194C, M\u2194G。",
 
   // K₈ three-factor decomposition (ColorCube extension)
   theory_cube_k8_annotation: "K₈ = Q₃ ∪ (K₄⊔K₄) ∪ M₄　度数: 3+3+1=7",

@@ -302,9 +302,9 @@ export const en = {
   theory_octa_desc:
     "Dual of the color cube. 6 vertices = 6 chromatic colors (primaries on +axis, CMY on \u2212axis), 8 faces = 8 GF(2)\u00b3 elements (each octant maps to one color). 3 complement axes R\u2194C, G\u2194M, B\u2194Y connect antipodal vertices. The face-adjacency graph is Q\u2083 \u2014 the color cube itself.",
   theory_octa_axes: "Complement axes",
-  theory_octa_net_gray: "Gray code",
-  theory_octa_net_gray_desc:
-    "Hamiltonian cycle on Q\u2083 in Gray code order. Channel toggles form palindrome B,R,B,G,B,R,B. Closing toggle G completes the cycle (G\u2192K). Chainable: identical strips connect end-to-end, period [B,R,B,G,B,R,B,G]. T\u2080 = all \u25b3, T\u2081 = all \u25bd.",
+  theory_octa_nets: "Octahedron nets",
+  theory_octa_nets_desc:
+    "4 valid octahedron nets. Complement pairs (XOR 7) are placed on opposite faces: K\u2194W, B\u2194Y, R\u2194C, M\u2194G.",
 
   // K₈ three-factor decomposition (ColorCube extension)
   theory_cube_k8_annotation: "K₈ = Q₃ ∪ (K₄⊔K₄) ∪ M₄  degrees: 3+3+1=7",

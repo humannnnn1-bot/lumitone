@@ -436,7 +436,7 @@ export const TetraDecomposition = React.memo(function TetraDecomposition({ hlLev
       >
         {t("theory_dice_trunc")}
       </p>
-      <OctaNet mode="gray" hl={hl} onEnter={enter} onLeave={leave} t={t} />
+      <OctaNet hl={hl} onEnter={enter} onLeave={leave} t={t} />
 
       {/* Truncated tetrahedron flower net */}
       <p
