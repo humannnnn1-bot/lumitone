@@ -327,8 +327,9 @@ export const en = {
     "The cube\u2019s 8 vertices split into two complementary tetrahedra: T0 (even Hamming weight) and T1 (odd weight). T0 = {Black, M, C, Y} forms the Klein four-group V\u2084 under XOR. Truncating T0 yields 8 colored faces \u2014 4 triangles (T0) and 4 hexagons (T1). The 4 missing edges are the complement pairs {v, v\u22957}.",
 
   // Truncated tetrahedron labels
-  theory_dice_trunc: "Truncation",
-  theory_dice_trunc_annotation: "Dual graph = Q₃ ∪ K₄(T1)  missing edges = 4 complement pairs {v, v⊕7}",
+  theory_dice_trunc: "Octahedron net",
+  theory_dice_trunc_annotation:
+    "8 faces in Gray code order. Adjacent = Hamming dist 1 (1 channel flip). Channel sequence B,R,B,G,B,R,B is a palindrome",
 
   // AG(3,2) affine planes (Connections extension)
   theory_conn_ag32: "AG(3,2) Affine Planes",
@@ -345,8 +346,8 @@ export const en = {
   theory_tetra_star_net: "Star nets",
   theory_tetra_star_t0: "Black center + CMY = subtractive prototype",
   theory_tetra_star_t1: "White center + RGB = additive prototype",
-  theory_trunc_net: "Complement separation",
-  theory_trunc_net_desc: "Each \u25b3 is NOT adjacent to its complement \u2b21 \u2014 4 complement pairs maximally separated.",
+  theory_trunc_net: "Opposite faces",
+  theory_trunc_net_desc: "Octahedron opposite faces = complement pairs (a\u2295b=7). 4 pairs maximally separated.",
 
   // Stella Octangula
   theory_stella_title: "Stella Octangula",

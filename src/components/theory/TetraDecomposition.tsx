@@ -7,7 +7,6 @@ import {
   TETRA_T1,
   TETRA_T0_EDGES,
   TETRA_T1_EDGES,
-  TRUNC_TETRA_FACES,
   TRUNC_MISSING_EDGES,
 } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
@@ -206,25 +205,25 @@ function StarNet({
   // Center triangle (pointing up)
   const centerPts = `${cx - STAR_S / 2},${cy + STAR_TH / 3} ${cx},${cy - (2 * STAR_TH) / 3} ${cx + STAR_S / 2},${cy + STAR_TH / 3}`;
 
-  // 3 surrounding triangles (pointing outward from each edge of center)
+  // 3 surrounding equilateral triangles — each shares a vertex with center
   const surroundData = [
-    // top: shares top edge of center, pointing up further
+    // top: vertex-touches center's top vertex B, points down
     {
       pts: `${cx - STAR_S / 2},${cy - (2 * STAR_TH) / 3 - STAR_TH} ${cx},${cy - (2 * STAR_TH) / 3} ${cx + STAR_S / 2},${cy - (2 * STAR_TH) / 3 - STAR_TH}`,
       lx: cx,
-      ly: cy - (2 * STAR_TH) / 3 - STAR_TH * 0.4,
+      ly: cy - (4 * STAR_TH) / 3,
     },
-    // bottom-left
+    // bottom-left: vertex-touches center's bottom-left vertex A, points down
     {
-      pts: `${cx - STAR_S},${cy + STAR_TH / 3} ${cx - STAR_S / 2},${cy + STAR_TH / 3} ${cx - STAR_S / 2 - STAR_S / 2},${cy + STAR_TH / 3 + STAR_TH}`,
-      lx: cx - STAR_S * 0.65,
-      ly: cy + STAR_TH / 3 + STAR_TH * 0.4,
+      pts: `${cx - (3 * STAR_S) / 2},${cy + STAR_TH / 3} ${cx - STAR_S / 2},${cy + STAR_TH / 3} ${cx - STAR_S},${cy + STAR_TH / 3 + STAR_TH}`,
+      lx: cx - STAR_S,
+      ly: cy + (2 * STAR_TH) / 3,
     },
-    // bottom-right
+    // bottom-right: vertex-touches center's bottom-right vertex C, points down
     {
-      pts: `${cx + STAR_S / 2},${cy + STAR_TH / 3} ${cx + STAR_S},${cy + STAR_TH / 3} ${cx + STAR_S / 2 + STAR_S / 2},${cy + STAR_TH / 3 + STAR_TH}`,
-      lx: cx + STAR_S * 0.65,
-      ly: cy + STAR_TH / 3 + STAR_TH * 0.4,
+      pts: `${cx + STAR_S / 2},${cy + STAR_TH / 3} ${cx + (3 * STAR_S) / 2},${cy + STAR_TH / 3} ${cx + STAR_S},${cy + STAR_TH / 3 + STAR_TH}`,
+      lx: cx + STAR_S,
+      ly: cy + (2 * STAR_TH) / 3,
     },
   ];
 
@@ -261,7 +260,7 @@ function StarNet({
                 fill={centerColor === 0 ? "#888" : centerColor >= 4 ? "#000" : "#fff"}
                 opacity={dim ? 0.2 : 0.9}
               >
-                {info.name[0]}
+                {info.short}
               </text>
             </g>
           );
@@ -295,7 +294,7 @@ function StarNet({
                 fill={sc >= 4 ? "#000" : "#fff"}
                 opacity={dim ? 0.2 : 0.9}
               >
-                {info.name[0]}
+                {info.short}
               </text>
             </g>
           );
@@ -306,144 +305,122 @@ function StarNet({
   );
 }
 
-/* ── Truncated tetrahedron flower net ── */
-const FLOWER_W = 240,
-  FLOWER_H = 200;
+/* ── Octahedron Gray code strip net ──
+   8 faces in Gray code order: [0,1,3,2,6,7,5,4]
+   Channel toggles: B,R,B,G,B,R,B (palindrome)
+   Adjacent faces = Hamming distance 1. Complement pairs = opposite faces. ── */
 
-function TruncFlowerNet({ hl, onEnter, onLeave }: { hl: number | null; onEnter: (lv: number) => void; onLeave: () => void }) {
-  const cx = FLOWER_W / 2,
-    cy = FLOWER_H / 2;
-  const hexR = 22; // hexagon "radius" (center to vertex)
-  const triR = 14; // triangle size
-  const ringR = 50; // distance from center to ring items
+const ON_S = 36; // triangle side length
+const ON_TH = (ON_S * Math.sqrt(3)) / 2; // triangle height
+const ON_SEQ = [0, 1, 3, 2, 6, 7, 5, 4]; // Gray code face order
+const ON_CH = ["B", "R", "B", "G", "B", "R", "B"]; // channel toggles
+const ON_CH_COLORS: Record<string, string> = { G: "#00ff00", R: "#ff0000", B: "#0000ff" };
+const ON_W = 8 * (ON_S / 2) + ON_S + 20; // total width with padding
+const ON_H = ON_TH + 30; // height with room for labels
+const ON_SX = (ON_W - 8 * (ON_S / 2)) / 2; // start X to center
+const ON_SY = 8; // start Y
 
-  // Layout: center = hex W(7), ring alternates hex and tri
-  // Hex positions: 7(center), 1(B), 2(R), 4(G) at 120° intervals
-  // Tri positions: 3(M), 5(C), 6(Y) between hexagons, 0(K) outside
-  const hexCenter = { color: 7, x: cx, y: cy };
-  const hexRing = [
-    { color: 1, angle: -Math.PI / 2 }, // Blue (top)
-    { color: 2, angle: -Math.PI / 2 + (2 * Math.PI) / 3 }, // Red (bottom-left)
-    { color: 4, angle: -Math.PI / 2 + (4 * Math.PI) / 3 }, // Green (bottom-right)
-  ];
-  const triRing = [
-    { color: 3, angle: -Math.PI / 2 + Math.PI / 3 }, // Magenta (between B and R)
-    { color: 5, angle: -Math.PI / 2 + Math.PI }, // Cyan (between R and G)
-    { color: 6, angle: -Math.PI / 2 + (5 * Math.PI) / 3 }, // Yellow (between G and B)
-  ];
-  // Black triangle at outer edge (opposite to White center)
-  const triOuter = { color: 0, x: cx, y: cy + ringR + 32 };
+/* ── Complement pairs: 4 pairs shown side by side ── */
+const PAIR_W = 56,
+  PAIR_H = 90;
 
-  function hexPoints(px: number, py: number, r: number): string {
-    return Array.from({ length: 6 }, (_, i) => {
-      const a = -Math.PI / 6 + (i * Math.PI) / 3;
-      return `${px + r * Math.cos(a)},${py + r * Math.sin(a)}`;
-    }).join(" ");
-  }
+function ComplementPairs({ hl, onEnter, onLeave }: { hl: number | null; onEnter: (lv: number) => void; onLeave: () => void }) {
+  const cx = PAIR_W / 2;
+  const topY = 16;
+  const botY = 58;
+  const shapeR = 14;
 
-  function triPoints(px: number, py: number, r: number, pointUp: boolean): string {
-    if (pointUp) {
-      return `${px},${py - r} ${px - r * 0.866},${py + r * 0.5} ${px + r * 0.866},${py + r * 0.5}`;
-    }
+  function triPts(px: number, py: number, r: number, up: boolean): string {
+    if (up) return `${px},${py - r} ${px - r * 0.866},${py + r * 0.5} ${px + r * 0.866},${py + r * 0.5}`;
     return `${px - r * 0.866},${py - r * 0.5} ${px + r * 0.866},${py - r * 0.5} ${px},${py + r}`;
   }
 
-  function renderFace(color: number, pts: string, lx: number, ly: number, isHex: boolean) {
-    const info = THEORY_LEVELS[color];
-    const active = hl === color;
-    const dim = hl !== null && !active;
-    return (
-      <g key={`fl-${color}`} onMouseEnter={() => onEnter(color)} onMouseLeave={onLeave} style={{ cursor: "default" }}>
-        <polygon
-          points={pts}
-          fill={color === 0 ? C.bgRoot : info.color}
-          fillOpacity={active ? 0.5 : dim ? 0.08 : 0.25}
-          stroke={active ? "#fff" : info.color}
-          strokeWidth={active ? 1.5 : 0.8}
-          strokeOpacity={dim ? 0.15 : 0.7}
-          strokeLinejoin="round"
-        />
-        <text
-          x={lx}
-          y={ly}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize={9}
-          fontWeight={700}
-          fontFamily="monospace"
-          fill={color === 0 || color === 1 ? "#fff" : color === 7 ? "#000" : info.color}
-          opacity={dim ? 0.2 : 0.9}
-        >
-          {isHex ? "⬡" : "△"}
-          {info.name[0]}
-        </text>
-      </g>
-    );
-  }
-
   return (
-    <svg viewBox={`0 0 ${FLOWER_W} ${FLOWER_H}`} style={{ width: "100%", maxWidth: FLOWER_W }}>
-      {/* Complement pair indicators (dashed lines showing NON-adjacency) */}
-      <line
-        x1={triOuter.x}
-        y1={triOuter.y - triR * 0.5}
-        x2={cx}
-        y2={cy + hexR * 0.5}
-        stroke="rgba(255,255,255,0.15)"
-        strokeWidth={0.8}
-        strokeDasharray="3,3"
-      />
+    <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", flexWrap: "wrap" }}>
+      {TRUNC_MISSING_EDGES.map(([colorA, colorB]) => {
+        const infoA = THEORY_LEVELS[colorA];
+        const infoB = THEORY_LEVELS[colorB];
+        const activeA = hl === colorA;
+        const activeB = hl === colorB;
+        const anyActive = hl !== null;
+        const dimA = anyActive && !activeA;
+        const dimB = anyActive && !activeB;
 
-      {hexRing.map((h) => {
-        const hx = cx + ringR * Math.cos(h.angle);
-        const hy = cy + ringR * Math.sin(h.angle);
-        // Find complement triangle
-        const comp = triRing.find((t) => (t.color ^ h.color) === 7);
-        if (comp) {
-          const tx = cx + (ringR + 4) * Math.cos(comp.angle);
-          const ty = cy + (ringR + 4) * Math.sin(comp.angle);
-          return (
+        return (
+          <svg key={`cp-${colorA}`} viewBox={`0 0 ${PAIR_W} ${PAIR_H}`} style={{ width: PAIR_W, height: PAIR_H }}>
+            {/* Top face (pointing up) */}
+            <g onMouseEnter={() => onEnter(colorA)} onMouseLeave={onLeave} style={{ cursor: "default" }}>
+              <polygon
+                points={triPts(cx, topY, shapeR, true)}
+                fill={colorA === 0 ? C.bgRoot : infoA.color}
+                fillOpacity={activeA ? 0.5 : dimA ? 0.08 : 0.25}
+                stroke={activeA ? "#fff" : infoA.color}
+                strokeWidth={activeA ? 1.5 : 0.8}
+                strokeOpacity={dimA ? 0.15 : 0.7}
+                strokeLinejoin="round"
+              />
+              <text
+                x={cx}
+                y={topY + 2}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={9}
+                fontWeight={700}
+                fontFamily="monospace"
+                fill={colorA === 0 ? "#888" : colorA >= 4 ? "#000" : "#fff"}
+                opacity={dimA ? 0.2 : 0.9}
+              >
+                {infoA.short}
+              </text>
+            </g>
+
+            {/* Dashed line = non-adjacent (opposite faces) */}
             <line
-              key={`cp-${h.color}`}
-              x1={hx}
-              y1={hy}
-              x2={tx}
-              y2={ty}
-              stroke="rgba(255,255,255,0.15)"
-              strokeWidth={0.8}
+              x1={cx}
+              y1={topY + shapeR + 2}
+              x2={cx}
+              y2={botY - shapeR - 1}
+              stroke="rgba(255,255,255,0.3)"
+              strokeWidth={1}
               strokeDasharray="3,3"
             />
-          );
-        }
-        return null;
+
+            {/* Bottom face (pointing down) */}
+            <g onMouseEnter={() => onEnter(colorB)} onMouseLeave={onLeave} style={{ cursor: "default" }}>
+              <polygon
+                points={triPts(cx, botY, shapeR, false)}
+                fill={infoB.color}
+                fillOpacity={activeB ? 0.5 : dimB ? 0.08 : 0.25}
+                stroke={activeB ? "#fff" : infoB.color}
+                strokeWidth={activeB ? 1.5 : 0.8}
+                strokeOpacity={dimB ? 0.15 : 0.7}
+                strokeLinejoin="round"
+              />
+              <text
+                x={cx}
+                y={botY}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={9}
+                fontWeight={700}
+                fontFamily="monospace"
+                fill={colorB === 7 ? "#000" : colorB === 1 ? "#fff" : infoB.color}
+                opacity={dimB ? 0.2 : 0.9}
+              >
+                {infoB.short}
+              </text>
+            </g>
+
+            {/* XOR equation */}
+            <text x={cx} y={PAIR_H - 4} textAnchor="middle" fontSize={7} fontFamily="monospace" fill={C.textDimmer}>
+              {colorA}
+              {"\u2295"}
+              {colorB}=7
+            </text>
+          </svg>
+        );
       })}
-
-      {/* Center hexagon (White) */}
-      {renderFace(hexCenter.color, hexPoints(hexCenter.x, hexCenter.y, hexR), hexCenter.x, hexCenter.y, true)}
-
-      {/* Ring hexagons (B, R, G) */}
-      {hexRing.map((h) => {
-        const hx = cx + ringR * Math.cos(h.angle);
-        const hy = cy + ringR * Math.sin(h.angle);
-        return renderFace(h.color, hexPoints(hx, hy, hexR * 0.8), hx, hy, true);
-      })}
-
-      {/* Ring triangles (M, C, Y) */}
-      {triRing.map((t) => {
-        const tx = cx + (ringR + 4) * Math.cos(t.angle);
-        const ty = cy + (ringR + 4) * Math.sin(t.angle);
-        const pointOut = t.angle > 0 && t.angle < Math.PI;
-        return renderFace(t.color, triPoints(tx, ty, triR, !pointOut), tx, ty, false);
-      })}
-
-      {/* Outer triangle (Black) */}
-      {renderFace(triOuter.color, triPoints(triOuter.x, triOuter.y, triR, false), triOuter.x, triOuter.y, false)}
-
-      {/* Legend */}
-      <text x={FLOWER_W - 8} y={12} textAnchor="end" fontSize={7} fontFamily="monospace" fill={C.textDimmer}>
-        {"--- = "}補色非隣接
-      </text>
-    </svg>
+    </div>
   );
 }
 
@@ -498,98 +475,98 @@ export const TetraDecomposition = React.memo(function TetraDecomposition({ hlLev
         <StarNet verts={TETRA_T1} label={t("theory_tetra_star_t1")} hl={hl} onEnter={enter} onLeave={leave} />
       </div>
 
-      {/* Truncated Tetrahedron: 8 faces = T0 (triangles) + T1 (hexagons) */}
+      {/* Truncated Tetrahedron flower net */}
       <p
         className="theory-annotation"
         style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.accentBright, margin: 0, fontWeight: FW.bold }}
       >
         {t("theory_dice_trunc")}
       </p>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
-        {/* 8 colored face blocks: 4 triangles (T0) + 4 hexagons (T1) */}
-        <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center", maxWidth: 320 }}>
-          {TRUNC_TETRA_FACES.map((face, i) => {
-            const info = THEORY_LEVELS[face.color];
-            const isActive = hl === face.color;
-            const isDim = hl !== null && !isActive;
-            const shape = face.type === "tri" ? "△" : "⬡";
-            const group = face.type === "tri" ? "T0" : "T1";
-            return (
-              <div
-                key={`ttf${i}`}
-                onMouseEnter={() => enter(face.color)}
-                onMouseLeave={leave}
-                style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  alignItems: "center",
-                  gap: 2,
-                  opacity: isDim ? 0.25 : 1,
-                  cursor: "default",
-                }}
+      <svg viewBox={`0 0 ${ON_W} ${ON_H}`} style={{ width: "100%", maxWidth: ON_W }}>
+        {/* 8 triangular faces in Gray code zigzag */}
+        {ON_SEQ.map((color, i) => {
+          const info = THEORY_LEVELS[color];
+          const isUp = i % 2 === 0;
+          const bx = ON_SX + i * (ON_S / 2);
+          const x0 = bx,
+            x1 = bx + ON_S / 2,
+            x2 = bx + ON_S;
+          const pts = isUp
+            ? `${x0},${ON_SY + ON_TH} ${x1},${ON_SY} ${x2},${ON_SY + ON_TH}`
+            : `${x0},${ON_SY} ${x1},${ON_SY + ON_TH} ${x2},${ON_SY}`;
+          const ly = isUp ? ON_SY + ON_TH * 0.62 : ON_SY + ON_TH * 0.38;
+          const active = hl === color;
+          const dim = hl !== null && !active;
+          return (
+            <g key={`on${i}`} onMouseEnter={() => enter(color)} onMouseLeave={leave} style={{ cursor: "default" }}>
+              <polygon
+                points={pts}
+                fill={color === 0 ? C.bgRoot : info.color}
+                fillOpacity={active ? 0.5 : dim ? 0.08 : 0.25}
+                stroke={active ? "#fff" : info.color}
+                strokeWidth={active ? 1.5 : 0.8}
+                strokeOpacity={dim ? 0.15 : 0.7}
+                strokeLinejoin="round"
+              />
+              <text
+                x={x1}
+                y={ly - 4}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={10}
+                fontWeight={900}
+                fontFamily="monospace"
+                fill={color === 0 || color === 1 ? "#fff" : color === 7 ? "#000" : info.color}
+                opacity={dim ? 0.2 : 0.95}
               >
-                <div
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: face.type === "tri" ? 0 : 6,
-                    clipPath: face.type === "tri" ? "polygon(50% 0%, 0% 100%, 100% 100%)" : undefined,
-                    background: face.color === 0 ? C.bgRoot : info.color,
-                    border: isActive ? "2px solid #fff" : `1px solid ${info.color}`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: FS.md,
-                      fontWeight: 900,
-                      fontFamily: "monospace",
-                      color: face.color >= 4 ? "#000" : "#fff",
-                      marginTop: face.type === "tri" ? 8 : 0,
-                    }}
-                  >
-                    {face.color}
-                  </span>
-                </div>
-                <span style={{ fontSize: 7, fontFamily: "monospace", color: C.textDimmer }}>
-                  {shape} {group}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Missing edges: 4 complement pairs */}
-        <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>
-          {TRUNC_MISSING_EDGES.map(([a, b]) => {
-            const infoA = THEORY_LEVELS[a];
-            const infoB = THEORY_LEVELS[b];
-            return (
-              <span key={`me${a}${b}`} className="theory-annotation" style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer }}>
-                <span style={{ color: infoA.color === "#000000" ? "#666" : infoA.color }}>{a}</span>
-                {" ✕ "}
-                <span style={{ color: infoB.color }}>{b}</span>
-              </span>
-            );
-          })}
-        </div>
-        <p
-          className="theory-annotation"
-          style={{
-            fontSize: FS.xs,
-            fontFamily: "monospace",
-            color: C.textDimmer,
-            margin: 0,
-            textAlign: "center",
-            maxWidth: 300,
-            lineHeight: 1.5,
-          }}
-        >
-          {t("theory_dice_trunc_annotation")}
-        </p>
-      </div>
+                {info.short}
+              </text>
+              <text
+                x={x1}
+                y={ly + 6}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={7}
+                fontFamily="monospace"
+                fill={color === 0 ? "#555" : color >= 4 ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.5)"}
+                opacity={dim ? 0.1 : 0.7}
+              >
+                {info.bits.join("")}
+              </text>
+            </g>
+          );
+        })}
+        {/* Channel toggle labels between triangles */}
+        {ON_CH.map((ch, i) => (
+          <text
+            key={`oc${i}`}
+            x={ON_SX + (i + 1) * (ON_S / 2)}
+            y={ON_SY + ON_TH + 14}
+            textAnchor="middle"
+            fontSize={8}
+            fontFamily="monospace"
+            fontWeight={700}
+            fill={ON_CH_COLORS[ch]}
+            opacity={0.75}
+          >
+            {ch}
+          </text>
+        ))}
+      </svg>
+      <p
+        className="theory-annotation"
+        style={{
+          fontSize: FS.xs,
+          fontFamily: "monospace",
+          color: C.textDimmer,
+          margin: 0,
+          textAlign: "center",
+          maxWidth: 340,
+          lineHeight: 1.5,
+        }}
+      >
+        {t("theory_dice_trunc_annotation")}
+      </p>
 
       {/* Truncated tetrahedron flower net */}
       <p
@@ -598,7 +575,7 @@ export const TetraDecomposition = React.memo(function TetraDecomposition({ hlLev
       >
         {t("theory_trunc_net")}
       </p>
-      <TruncFlowerNet hl={hl} onEnter={enter} onLeave={leave} />
+      <ComplementPairs hl={hl} onEnter={enter} onLeave={leave} />
       <p
         className="theory-annotation"
         style={{ fontSize: FS.xxs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center", maxWidth: 300 }}

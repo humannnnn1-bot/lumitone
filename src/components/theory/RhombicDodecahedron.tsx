@@ -220,9 +220,9 @@ function RhombicView({
                   fill={chColor}
                   opacity={0.9}
                 >
-                  {THEORY_LEVELS[f.cubeVerts[0]].name[0]}
+                  {THEORY_LEVELS[f.cubeVerts[0]].short}
                   {"\u2194"}
-                  {THEORY_LEVELS[f.cubeVerts[1]].name[0]}
+                  {THEORY_LEVELS[f.cubeVerts[1]].short}
                 </text>
               )}
             </g>

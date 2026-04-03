@@ -327,8 +327,8 @@ export const ja: Record<TranslationKey, string> = {
     "立方体の8頂点は相補的な2つの四面体に分かれます: T0（偶数ハミング重み）とT1（奇数重み）。T0 = {Black, M, C, Y} はXOR下でKlein四群V\u2084を形成。T0を切頂すると8色の面 \u2014 4三角形（T0）と4六角形（T1）\u2014 が得られます。欠落4辺は補色対 {v, v\u22957} です。",
 
   // Truncated tetrahedron labels
-  theory_dice_trunc: "切頂",
-  theory_dice_trunc_annotation: "双対グラフ = Q₃ ∪ K₄(T1)　欠落辺 = 4補色対 {v, v⊕7}",
+  theory_dice_trunc: "正八面体の展開図",
+  theory_dice_trunc_annotation: "Gray code順に8面を展開。隣接面=ハミング距離1(1ch反転)。チャネル列 B,R,B,G,B,R,B は回文",
 
   // AG(3,2) affine planes (Connections extension)
   theory_conn_ag32: "AG(3,2) アフィン平面",
@@ -345,8 +345,8 @@ export const ja: Record<TranslationKey, string> = {
   theory_tetra_star_net: "星型展開図",
   theory_tetra_star_t0: "Black中心 + CMY = 減法混色の原型",
   theory_tetra_star_t1: "White中心 + RGB = 加法混色の原型",
-  theory_trunc_net: "補色分離図",
-  theory_trunc_net_desc: "各△は自身の補色⬡に非隣接 — 4組の補色対が空間的に最大分離。",
+  theory_trunc_net: "補色対面",
+  theory_trunc_net_desc: "正八面体の対面 = 補色対(a⊕b=7)。4組の対面が空間的に最大分離。",
 
   // Stella Octangula
   theory_stella_title: "星形八面体",

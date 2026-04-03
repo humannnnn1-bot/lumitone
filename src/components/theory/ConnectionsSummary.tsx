@@ -262,7 +262,7 @@ export const ConnectionsSummary = React.memo(function ConnectionsSummary() {
                   </div>
                   <span style={{ color: C.textDimmer, marginLeft: 4 }}>
                     ← L{fi + 1}:{"{"}
-                    {line.map((p) => THEORY_LEVELS[p].name[0]).join(",")}
+                    {line.map((p) => THEORY_LEVELS[p].short).join(",")}
                     {"}"}
                   </span>
                 </div>

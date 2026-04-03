@@ -5,20 +5,21 @@
 export interface TheoryLevel {
   lv: number;
   name: string;
+  short: string; // single-letter abbreviation (K for Black to avoid clash with Blue's B)
   bits: [number, number, number]; // [G, R, B]
   color: string;
   hamming: string; // P1/P2/P4 for parity, D1-D4 for data, "—" for 0/7
 }
 
 export const THEORY_LEVELS: TheoryLevel[] = [
-  { lv: 0, name: "Black", bits: [0, 0, 0], color: "#000000", hamming: "—" },
-  { lv: 1, name: "Blue", bits: [0, 0, 1], color: "#0000ff", hamming: "P1" },
-  { lv: 2, name: "Red", bits: [0, 1, 0], color: "#ff0000", hamming: "P2" },
-  { lv: 3, name: "Magenta", bits: [0, 1, 1], color: "#ff00ff", hamming: "D1" },
-  { lv: 4, name: "Green", bits: [1, 0, 0], color: "#00ff00", hamming: "P4" },
-  { lv: 5, name: "Cyan", bits: [1, 0, 1], color: "#00ffff", hamming: "D2" },
-  { lv: 6, name: "Yellow", bits: [1, 1, 0], color: "#ffff00", hamming: "D3" },
-  { lv: 7, name: "White", bits: [1, 1, 1], color: "#ffffff", hamming: "D4" },
+  { lv: 0, name: "Black", short: "K", bits: [0, 0, 0], color: "#000000", hamming: "—" },
+  { lv: 1, name: "Blue", short: "B", bits: [0, 0, 1], color: "#0000ff", hamming: "P1" },
+  { lv: 2, name: "Red", short: "R", bits: [0, 1, 0], color: "#ff0000", hamming: "P2" },
+  { lv: 3, name: "Magenta", short: "M", bits: [0, 1, 1], color: "#ff00ff", hamming: "D1" },
+  { lv: 4, name: "Green", short: "G", bits: [1, 0, 0], color: "#00ff00", hamming: "P4" },
+  { lv: 5, name: "Cyan", short: "C", bits: [1, 0, 1], color: "#00ffff", hamming: "D2" },
+  { lv: 6, name: "Yellow", short: "Y", bits: [1, 1, 0], color: "#ffff00", hamming: "D3" },
+  { lv: 7, name: "White", short: "W", bits: [1, 1, 1], color: "#ffffff", hamming: "D4" },
 ];
 
 /** 7 Fano plane lines — each [a, b, c] satisfies a XOR b = c */

@@ -271,7 +271,7 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
                   fontFamily="monospace"
                   fill="rgba(255,255,255,0.4)"
                 >
-                  {THEORY_LEVELS[a].name[0]}\u2194{THEORY_LEVELS[b].name[0]}
+                  {THEORY_LEVELS[a].short}\u2194{THEORY_LEVELS[b].short}
                 </text>
               </g>
             );
@@ -388,7 +388,7 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
                     fill={color === 0 || color === 1 ? "#fff" : color === 7 ? "#000" : info.color}
                     opacity={dim ? 0.2 : 0.9}
                   >
-                    {info.name[0]}
+                    {info.short}
                   </text>
                 </g>
               );

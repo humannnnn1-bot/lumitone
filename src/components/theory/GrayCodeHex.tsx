@@ -181,7 +181,7 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
                     fill={info.color}
                     opacity={0.8}
                   >
-                    {info.name.charAt(0)}
+                    {info.short}
                   </text>
                 );
               })()}
