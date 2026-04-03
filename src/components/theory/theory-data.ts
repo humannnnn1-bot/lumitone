@@ -118,9 +118,10 @@ export const FANO_LINE_ENDPOINTS: [number, number][] = [
 const ISO_CX = 150,
   ISO_CY = 140;
 const ISO_SCALE = 70;
-// Isometric axes: G=up, R=down-right, B=down-left
-const ISO_G = { dx: 0, dy: -1.2 };
-const ISO_R = { dx: Math.cos(Math.PI / 6), dy: Math.sin(Math.PI / 6) };
+// Isometric axes: R=up, G=down-right, B=down-left
+// R-up matches color wheel convention (Red=0°) and produces standard hue order clockwise
+const ISO_R = { dx: 0, dy: -1.2 };
+const ISO_G = { dx: Math.cos(Math.PI / 6), dy: Math.sin(Math.PI / 6) };
 const ISO_B = { dx: -Math.cos(Math.PI / 6), dy: Math.sin(Math.PI / 6) };
 
 export const CUBE_POINTS: Record<number, { x: number; y: number }> = {};
@@ -158,24 +159,25 @@ const OCTA_CX = 150,
 const OCTA_SCALE = 100;
 
 // Normalized isometric axes (equal length) for regular octahedron
-const OCTA_G = { dx: ISO_G.dx / 1.2, dy: ISO_G.dy / 1.2 }; // magnitude 1.0
-const OCTA_R = { dx: ISO_R.dx, dy: ISO_R.dy }; // already magnitude 1.0
+// ISO_R has magnitude 1.2 (up axis), ISO_G and ISO_B have magnitude 1.0
+const OCTA_R = { dx: ISO_R.dx / 1.2, dy: ISO_R.dy / 1.2 }; // normalize to 1.0
+const OCTA_G = { dx: ISO_G.dx, dy: ISO_G.dy }; // already magnitude 1.0
 const OCTA_B = { dx: ISO_B.dx, dy: ISO_B.dy }; // already magnitude 1.0
 
 /**
  * 6 chromatic colors as cross-polytope vertices.
  * Axis assignment follows hue-wheel convention (Red = top, clockwise = R→Y→G→C→B→M):
- *   R(2)=up, C(5)=down  (vertical axis)
- *   Y(6)=upper-right, B(1)=lower-left  (right diagonal)
- *   M(3)=upper-left, G(4)=lower-right  (left diagonal)
+ *   R(2)=up, C(5)=down  (vertical axis — OCTA_R)
+ *   Y(6)=upper-right, B(1)=lower-left  (right diagonal — OCTA_B)
+ *   G(4)=lower-right, M(3)=upper-left  (left diagonal — OCTA_G)
  * Complement pairs remain antipodal on each axis.
  * Uses normalized axes (equal length) so the octahedron is regular.
  */
 export const OCTA_POINTS: Record<number, { x: number; y: number }> = {
-  2: { x: OCTA_CX + OCTA_SCALE * OCTA_G.dx, y: OCTA_CY + OCTA_SCALE * OCTA_G.dy }, // Red = top
-  5: { x: OCTA_CX - OCTA_SCALE * OCTA_G.dx, y: OCTA_CY - OCTA_SCALE * OCTA_G.dy }, // Cyan = bottom
-  4: { x: OCTA_CX + OCTA_SCALE * OCTA_R.dx, y: OCTA_CY + OCTA_SCALE * OCTA_R.dy }, // Green = lower-right
-  3: { x: OCTA_CX - OCTA_SCALE * OCTA_R.dx, y: OCTA_CY - OCTA_SCALE * OCTA_R.dy }, // Magenta = upper-left
+  2: { x: OCTA_CX + OCTA_SCALE * OCTA_R.dx, y: OCTA_CY + OCTA_SCALE * OCTA_R.dy }, // Red = top
+  5: { x: OCTA_CX - OCTA_SCALE * OCTA_R.dx, y: OCTA_CY - OCTA_SCALE * OCTA_R.dy }, // Cyan = bottom
+  4: { x: OCTA_CX + OCTA_SCALE * OCTA_G.dx, y: OCTA_CY + OCTA_SCALE * OCTA_G.dy }, // Green = lower-right
+  3: { x: OCTA_CX - OCTA_SCALE * OCTA_G.dx, y: OCTA_CY - OCTA_SCALE * OCTA_G.dy }, // Magenta = upper-left
   1: { x: OCTA_CX + OCTA_SCALE * OCTA_B.dx, y: OCTA_CY + OCTA_SCALE * OCTA_B.dy }, // Blue = lower-left
   6: { x: OCTA_CX - OCTA_SCALE * OCTA_B.dx, y: OCTA_CY - OCTA_SCALE * OCTA_B.dy }, // Yellow = upper-right
 };

@@ -10,20 +10,74 @@ const W = 300,
 const DOT_R = 13;
 const CY = 150;
 
-/* ── z-ordering helpers ── */
+/* ── 3D lighting model ── */
 
-/** Cross product of 2D vectors (p1-p0) × (p2-p0) — positive = CCW in SVG coords */
-function crossZ(p0: { x: number; y: number }, p1: { x: number; y: number }, p2: { x: number; y: number }): number {
-  return (p1.x - p0.x) * (p2.y - p0.y) - (p1.y - p0.y) * (p2.x - p0.x);
+// 3D coordinates of octahedron vertices (unit cross-polytope on R/G/B axes).
+// Slightly tilted from pure axis-alignment to avoid edge-on faces.
+// The tilt gives a "generic" viewpoint where all 4 front faces are clearly visible
+// and the silhouette forms a proper hexagon instead of a degenerate quadrilateral.
+const TILT = 0.18; // small forward tilt on B axis
+const OCTA_3D: Record<number, [number, number, number]> = {
+  2: [0, 1, 0], // Red = +R axis
+  5: [0, -1, 0], // Cyan = -R axis
+  4: [1, 0, TILT], // Green = +G axis, slightly forward
+  3: [-1, 0, TILT], // Magenta = -G axis, slightly forward
+  1: [0, 0, 1], // Blue = +B axis
+  6: [0, 0, -1], // Yellow = -B axis
+};
+
+// Light direction: from upper-left-front, normalized
+const LIGHT_DIR: [number, number, number] = (() => {
+  const lx = -0.4,
+    ly = 0.7,
+    lz = 0.6;
+  const len = Math.sqrt(lx * lx + ly * ly + lz * lz);
+  return [lx / len, ly / len, lz / len];
+})();
+
+/** Compute face normal (outward) and diffuse lighting for a face */
+function faceLighting(verts: readonly [number, number, number]): { isFront: boolean; diffuse: number } {
+  const [a, b, c] = verts;
+  const p0 = OCTA_3D[a],
+    p1 = OCTA_3D[b],
+    p2 = OCTA_3D[c];
+  // Edge vectors
+  const e1: [number, number, number] = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]];
+  const e2: [number, number, number] = [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]];
+  // Cross product (face normal)
+  const nx = e1[1] * e2[2] - e1[2] * e2[1];
+  const ny = e1[2] * e2[0] - e1[0] * e2[2];
+  const nz = e1[0] * e2[1] - e1[1] * e2[0];
+  const nLen = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+  // Ensure outward-pointing: normal should point away from origin (dot with centroid > 0)
+  const cx = (p0[0] + p1[0] + p2[0]) / 3;
+  const cy = (p0[1] + p1[1] + p2[1]) / 3;
+  const cz = (p0[2] + p1[2] + p2[2]) / 3;
+  const outSign = nx * cx + ny * cy + nz * cz > 0 ? 1 : -1;
+  const nnx = (outSign * nx) / nLen;
+  const nny = (outSign * ny) / nLen;
+  const nnz = (outSign * nz) / nLen;
+  // Is front-facing? Check if normal has positive z component (toward viewer in isometric)
+  const isFront = nnz > 0;
+  // Diffuse = dot(normal, light), clamped to [0,1] with ambient
+  const dot = nnx * LIGHT_DIR[0] + nny * LIGHT_DIR[1] + nnz * LIGHT_DIR[2];
+  const ambient = 0.15;
+  const diffuse = ambient + (1 - ambient) * Math.max(0, dot);
+  return { isFront, diffuse };
 }
 
-/** Sort faces back-to-front: faces with negative cross product (CW winding in SVG) are back-facing */
+// Precompute lighting for all faces
+const FACE_LIGHTING = OCTA_FACES.map((f) => faceLighting(f.verts));
+
+/** Sort faces back-to-front using 3D face-centroid depth (z component) */
 function sortedFaces() {
-  return [...OCTA_FACES].sort((a, b) => {
-    const cA = crossZ(OCTA_POINTS[a.verts[0]], OCTA_POINTS[a.verts[1]], OCTA_POINTS[a.verts[2]]);
-    const cB = crossZ(OCTA_POINTS[b.verts[0]], OCTA_POINTS[b.verts[1]], OCTA_POINTS[b.verts[2]]);
-    return cA - cB; // negative (back) first, positive (front) last
+  const indexed = OCTA_FACES.map((f, i) => ({ f, i }));
+  indexed.sort((a, b) => {
+    const zA = FACE_LIGHTING[a.i].diffuse;
+    const zB = FACE_LIGHTING[b.i].diffuse;
+    return zA - zB; // dimmer (back) first, brighter (front) last
   });
+  return indexed.map(({ f, i }) => ({ ...f, origIdx: i }));
 }
 
 const SORTED_FACES = sortedFaces();
@@ -37,7 +91,8 @@ function centroid(verts: readonly [number, number, number]): { x: number; y: num
 }
 
 function isFrontFace(f: (typeof OCTA_FACES)[number]): boolean {
-  return crossZ(OCTA_POINTS[f.verts[0]], OCTA_POINTS[f.verts[1]], OCTA_POINTS[f.verts[2]]) > 0;
+  const idx = OCTA_FACES.indexOf(f);
+  return idx >= 0 ? FACE_LIGHTING[idx].isFront : false;
 }
 
 /** Back-edge set: an edge is "back" if both adjacent faces are back-facing */
@@ -113,19 +168,23 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg, width: "100%" }}>
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W }} role="img" aria-label={t("theory_octa_title")}>
-        {/* Faces — sorted back to front */}
-        {SORTED_FACES.map((f, fi) => {
-          const isFront = isFrontFace(f);
-          const faceActive = hlFace === f.color || hlFaceSet.has(OCTA_FACES.indexOf(f));
+        {/* Faces — sorted back to front with diffuse lighting */}
+        {SORTED_FACES.map((sf, fi) => {
+          const lighting = FACE_LIGHTING[sf.origIdx];
+          const faceActive = hlFace === sf.color || hlFaceSet.has(sf.origIdx);
           const faceDim = anyHl && !faceActive;
-          const info = THEORY_LEVELS[f.color];
-          const pts = f.verts.map((v) => `${OCTA_POINTS[v].x},${OCTA_POINTS[v].y}`).join(" ");
-          const ctr = centroid(f.verts);
+          const info = THEORY_LEVELS[sf.color];
+          const pts = sf.verts.map((v) => `${OCTA_POINTS[v].x},${OCTA_POINTS[v].y}`).join(" ");
+          const ctr = centroid(sf.verts);
+
+          // Diffuse lighting drives face opacity: bright faces 0.30, dim faces 0.05
+          const baseOpacity = 0.05 + lighting.diffuse * 0.28;
+          const baseStrokeOpacity = 0.08 + lighting.diffuse * 0.3;
 
           return (
             <g
               key={`face-${fi}`}
-              onMouseEnter={() => setHlFace(f.color)}
+              onMouseEnter={() => setHlFace(sf.color)}
               onMouseLeave={() => setHlFace(null)}
               style={{ cursor: "default" }}
             >
@@ -135,14 +194,14 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
               <polygon
                 points={pts}
                 fill={info.color}
-                fillOpacity={faceActive ? 0.35 : faceDim ? 0.04 : isFront ? 0.15 : 0.06}
+                fillOpacity={faceActive ? 0.4 : faceDim ? 0.03 : baseOpacity}
                 stroke={info.color}
                 strokeWidth={faceActive ? 1.5 : 0.5}
-                strokeOpacity={faceActive ? 0.8 : faceDim ? 0.08 : isFront ? 0.3 : 0.12}
+                strokeOpacity={faceActive ? 0.8 : faceDim ? 0.06 : baseStrokeOpacity}
                 strokeLinejoin="round"
               />
               {/* Face label on hover */}
-              {hlFace === f.color && (
+              {hlFace === sf.color && (
                 <text
                   x={ctr.x}
                   y={ctr.y}
@@ -151,7 +210,7 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
                   fontSize={FS.xs}
                   fontFamily="monospace"
                   fontWeight={FW.bold}
-                  fill={f.color === 0 || f.color === 1 ? "#fff" : info.color}
+                  fill={sf.color === 0 || sf.color === 1 ? "#fff" : info.color}
                   opacity={0.9}
                 >
                   {info.name}

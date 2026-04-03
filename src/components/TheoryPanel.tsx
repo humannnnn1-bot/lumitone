@@ -14,6 +14,7 @@ import { Octahedron } from "./theory/Octahedron";
 import { Cuboctahedron } from "./theory/Cuboctahedron";
 import { RhombicDodecahedron } from "./theory/RhombicDodecahedron";
 import { LuminanceZigzag } from "./theory/LuminanceZigzag";
+import { TetraDecomposition } from "./theory/TetraDecomposition";
 import { ConnectionsSummary } from "./theory/ConnectionsSummary";
 
 const S_SECTION: React.CSSProperties = {
@@ -128,78 +129,98 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
         <hr style={S_DIVIDER} />
 
+        {/* §1 Binary Levels */}
         <Section title={t("theory_binary_title")} desc={t("theory_binary_desc")}>
           <BinaryTable hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
+        {/* §2 Luma Zigzag */}
         <Section title={t("theory_zigzag_title")} desc={t("theory_zigzag_desc")}>
           <LuminanceZigzag hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
+        {/* §3 XOR Mixing */}
         <Section title={t("theory_xor_title")} desc={t("theory_xor_desc")}>
           <XorDemo hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
+        {/* §4 Color Die */}
         <Section title={t("theory_dice_title")} desc={t("theory_dice_desc")}>
           <ColorDice hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
+        {/* §5 Color Cube */}
         <Section title={t("theory_cube_title")} desc={t("theory_cube_desc")}>
           <ColorCube hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
+        {/* §6 Polar Views */}
         <Section title={t("theory_polar_title")} desc={t("theory_polar_desc")}>
           <PolarCubes hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
-        <Section title={t("theory_octa_title")} desc={t("theory_octa_desc")}>
-          <Octahedron hlLevel={hlLevel} onHover={onHover} />
-        </Section>
-
-        <hr style={S_DIVIDER} />
-
-        <Section title={t("theory_cubocta_title")} desc={t("theory_cubocta_desc")}>
-          <Cuboctahedron hlLevel={hlLevel} onHover={onHover} />
-        </Section>
-
-        <hr style={S_DIVIDER} />
-
-        <Section title={t("theory_rhombic_title")} desc={t("theory_rhombic_desc")}>
-          <RhombicDodecahedron hlLevel={hlLevel} onHover={onHover} />
-        </Section>
-
-        <hr style={S_DIVIDER} />
-
+        {/* §7 Gray Code Cycle */}
         <Section title={t("theory_gray_title")} desc={t("theory_gray_desc")}>
           <GrayCodeHex hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
+        {/* §8 Fano Plane */}
         <Section title={t("theory_fano_title")} desc={t("theory_fano_desc")}>
           <FanoPlane hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
+        {/* §9 Hamming Code */}
         <Section title={t("theory_hamming_title")} desc={t("theory_hamming_desc")}>
           <HammingDiagram hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
+        {/* §10 Chromatic Octahedron */}
+        <Section title={t("theory_octa_title")} desc={t("theory_octa_desc")}>
+          <Octahedron hlLevel={hlLevel} onHover={onHover} />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
+        {/* §11 Cuboctahedron */}
+        <Section title={t("theory_cubocta_title")} desc={t("theory_cubocta_desc")}>
+          <Cuboctahedron hlLevel={hlLevel} onHover={onHover} />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
+        {/* §12 Rhombic Dodecahedron */}
+        <Section title={t("theory_rhombic_title")} desc={t("theory_rhombic_desc")}>
+          <RhombicDodecahedron hlLevel={hlLevel} onHover={onHover} />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
+        {/* §13 Tetrahedra & Truncation */}
+        <Section title={t("theory_tetra_title")} desc={t("theory_tetra_desc")}>
+          <TetraDecomposition hlLevel={hlLevel} onHover={onHover} />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
+        {/* §14 Connections */}
         <Section title={t("theory_connections_title")} desc={t("theory_connections_desc")}>
           <ConnectionsSummary />
         </Section>

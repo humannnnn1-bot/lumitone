@@ -197,7 +197,7 @@ export const en = {
     "Fully saturated colors (max channel = 255, min = 0) trace a 6-segment zigzag as hue rotates. Each segment toggles one channel; the slope is proportional to its BT.601 coefficient. Horizontal lines at each vertex luma value intersect the zigzag at 1 or 3 points \u2014 these are the equal-luma candidates. The maximum is 4 (between vertices). For any hue angle h, Y(h) + Y(h+180\u00b0) = 255 \u2014 complementary colors always sum to the same luma. This is universal for any coefficients summing to 1.",
   theory_dice_title: "Color Die",
   theory_dice_desc:
-    "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule. This is a universal theorem: for any positive luma coefficients with no ties, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7. The staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, Gray code adjacency, and hue angle simultaneously.",
+    "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule. This is a universal theorem: for any positive luma coefficients with no ties, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7. The staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously.",
   theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
   theory_dice_net: "Net",
   theory_dice_views: "Cube Views",
@@ -236,7 +236,7 @@ export const en = {
   theory_hamming_correct: "Correct \u2713",
   theory_connections_title: "Connections",
   theory_connections_desc:
-    "GF(2)\u00b3 yields three constructions: Cube (Cayley graph), Fano plane (projectivization), and Hamming code (parity-check kernel). XOR (addition) and AND (multiplication) coexist as the two operations of a Boolean ring, linked by the distributive law a \u2227 (b \u2295 c) = (a \u2227 b) \u2295 (a \u2227 c). The Gray code cycle \u2014 the unique Hamiltonian cycle on the chromatic hexagon \u2014 is simultaneously the hue wheel, the die-face adjacency, and the equatorial belt of the Cayley graph.",
+    "GF(2)\u00b3 yields three constructions: Cube (Cayley graph), Fano plane (projectivization), and Hamming code (parity-check kernel). XOR and AND form a Boolean ring (see Polar Views). The Gray code cycle \u2014 the unique Hamiltonian cycle on the chromatic hexagon \u2014 is simultaneously the hue wheel, the die-face adjacency, and the equatorial belt of the Cayley graph.",
   theory_conn_center_1: "8 Levels",
   theory_conn_center_2: "GF(2)\u00b3",
   theory_conn_gf23: "GF(2)\u00b3",
@@ -266,7 +266,7 @@ export const en = {
   theory_conn_cube_hamming: "Cube \u2194 Hamming",
   theory_conn_cube_hamming_hook: "The 3 parity checks slice the cube along coordinate hyperplanes, localizing errors by coordinate.",
   theory_conn_cube_hamming_detail: "P1 \u2192 bit 0, P2 \u2192 bit 1, P4 \u2192 bit 2. Syndrome = error position in GF(2)\u00b3.",
-  theory_conn_source: "GF(2)\u00b3 is the common algebraic source.",
+  theory_conn_source: "Four constructions, one source",
   theory_conn_fano_role: "Fano = PG(2,2), the projective plane over GF(2)",
   theory_conn_cube_role: "Cube = Cayley graph of (GF(2)\u00b3, \u2295) with generators {G, R, B}",
   theory_conn_hamming_role: "Hamming = parity-check matrix with GF(2)\u00b3\\{0} as columns",
@@ -314,7 +314,12 @@ export const en = {
     "Dual of the cuboctahedron. 14 vertices = 8 colors (cube-type) + 6 coordinate axes (octahedron-type, 3 complement axes × 2 directions). 12 rhombic faces = 12 Hamming-distance-1 transitions. 24 edges = 24 point-hyperplane incidences of AG(3,2). Voronoi cell of FCC lattice, corresponding to even-weight subgroup {K,C,M,Y}.",
   theory_rhombic_faces: "Faces",
 
-  // Truncated tetrahedron (ColorDice extension)
+  // Tetrahedra & Truncation (split from ColorDice)
+  theory_tetra_title: "Tetrahedra & Truncation",
+  theory_tetra_desc:
+    "The cube\u2019s 8 vertices split into two complementary tetrahedra: T0 (even Hamming weight) and T1 (odd weight). T0 = {Black, M, C, Y} forms the Klein four-group V\u2084 under XOR. Truncating T0 yields 8 colored faces \u2014 4 triangles (T0) and 4 hexagons (T1). The 4 missing edges are the complement pairs {v, v\u22957}.",
+
+  // Truncated tetrahedron labels
   theory_dice_trunc: "Truncation",
   theory_dice_trunc_annotation: "Dual graph = Q₃ ∪ K₄(T1)  missing edges = 4 complement pairs {v, v⊕7}",
 

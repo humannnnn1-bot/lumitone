@@ -197,7 +197,7 @@ export const ja: Record<TranslationKey, string> = {
     "完全飽和色（最大チャンネル=255、最小=0）は色相の回転に従い6区間のジグザグを描く。各区間で1チャンネルが変化し、傾きはBT.601係数に比例。各頂点ルマ値の水平線はジグザグと1または3点で交わる — これが等ルマ候補。最大は4（頂点間）。任意の色相角 h で Y(h) + Y(h+180\u00b0) = 255 — 補色の輝度和は常に一定。係数の和が1なら任意の係数で成立する普遍的性質。",
   theory_dice_title: "\u30ab\u30e9\u30fc\u30c0\u30a4\u30b9",
   theory_dice_desc:
-    "6つの色彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fbグレイコード隣接\u30fb色相角を同時に符号化しています。",
+    "6つの色彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。",
   theory_dice_hint:
     "6\u9762 \u2192 8\u9802\u70b9: Black (0) \u3068 White (7) \u3092\u52a0\u3048\u308b\u3068\u30ab\u30e9\u30fc\u30ad\u30e5\u30fc\u30d6\u306b",
   theory_dice_net: "\u5c55\u958b\u56f3",
@@ -237,7 +237,7 @@ export const ja: Record<TranslationKey, string> = {
   theory_hamming_correct: "訂正 \u2713",
   theory_connections_title: "連関",
   theory_connections_desc:
-    "GF(2)\u00b3 \u304b\u30893\u3064\u306e\u69cb\u6210\u304c\u5c0e\u51fa\u3055\u308c\u307e\u3059: Cube\uff08\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5\uff09\u3001Fano\u5e73\u9762\uff08\u5c04\u5f71\u5316\uff09\u3001Hamming\u7b26\u53f7\uff08\u691c\u67fb\u884c\u5217\u306e\u6838\uff09\u3002XOR\uff08\u52a0\u6cd5\uff09\u3068AND\uff08\u4e57\u6cd5\uff09\u306fBoolean\u74b0\u306e2\u3064\u306e\u6f14\u7b97\u3068\u3057\u3066\u5171\u5b58\u3057\u3001\u5206\u914d\u6cd5\u5247 a \u2227 (b \u2295 c) = (a \u2227 b) \u2295 (a \u2227 c) \u3067\u7d50\u3070\u308c\u307e\u3059\u3002\u8272\u5f69\u516d\u89d2\u5f62\u4e0a\u306e\u552f\u4e00\u306e\u30cf\u30df\u30eb\u30c8\u30f3\u9589\u8def\u3067\u3042\u308b\u30b0\u30ec\u30a4\u30b3\u30fc\u30c9\u5de1\u56de\u306f\u3001\u8272\u76f8\u74b0\u30fb\u30c0\u30a4\u30b9\u9762\u96a3\u63a5\u30fb\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5\u306e\u8d64\u9053\u5e2f\u3068\u540c\u6642\u306b\u4e00\u81f4\u3057\u307e\u3059\u3002",
+    "GF(2)\u00b3 \u304b\u30893\u3064\u306e\u69cb\u6210\u304c\u5c0e\u51fa\u3055\u308c\u307e\u3059: Cube\uff08\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5\uff09\u3001Fano\u5e73\u9762\uff08\u5c04\u5f71\u5316\uff09\u3001Hamming\u7b26\u53f7\uff08\u691c\u67fb\u884c\u5217\u306e\u6838\uff09\u3002XOR\u3068AND\u306fBoolean\u74b0\u3092\u306a\u3059\uff08\u6975\u6027\u30d3\u30e5\u30fc\u53c2\u7167\uff09\u3002\u8272\u5f69\u516d\u89d2\u5f62\u4e0a\u306e\u552f\u4e00\u306e\u30cf\u30df\u30eb\u30c8\u30f3\u9589\u8def\u3067\u3042\u308b\u30b0\u30ec\u30a4\u30b3\u30fc\u30c9\u5de1\u56de\u306f\u3001\u8272\u76f8\u74b0\u30fb\u30c0\u30a4\u30b9\u9762\u96a3\u63a5\u30fb\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5\u306e\u8d64\u9053\u5e2f\u3068\u540c\u6642\u306b\u4e00\u81f4\u3057\u307e\u3059\u3002",
   theory_conn_center_1: "8レベル",
   theory_conn_center_2: "GF(2)\u00b3",
   theory_conn_gf23: "GF(2)\u00b3",
@@ -265,7 +265,7 @@ export const ja: Record<TranslationKey, string> = {
   theory_conn_cube_hamming: "Cube \u2194 Hamming",
   theory_conn_cube_hamming_hook: "3つのパリティ検査はキューブを座標超平面で切断し、座標ごとにエラー位置を特定します。",
   theory_conn_cube_hamming_detail: "P1 \u2192 ビット0、P2 \u2192 ビット1、P4 \u2192 ビット2。syndrome = GF(2)\u00b3 上のエラー座標。",
-  theory_conn_source: "GF(2)\u00b3 が共通の代数的源泉",
+  theory_conn_source: "4\u3064\u306e\u69cb\u6210\u3001\u3072\u3068\u3064\u306e\u6e90\u6cc9",
   theory_conn_fano_role: "Fano = PG(2,2)\u3001GF(2)\u4e0a\u306e\u5c04\u5f71\u5e73\u9762",
   theory_conn_cube_role:
     "Cube = (GF(2)\u00b3, \u2295) \u306e\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5\uff08\u751f\u6210\u5143 {G, R, B}\uff09",
@@ -314,7 +314,12 @@ export const ja: Record<TranslationKey, string> = {
     "立方八面体の双対。14頂点 = 8色（立方体型）+ 6座標軸（八面体型、3補色軸×2方向）。12菱形面 = 12本のHamming距離1遷移。24辺 = AG(3,2)の24点-超平面入射。FCC格子のVoronoi胞体で、偶数重み部分群{K,C,M,Y}に対応。",
   theory_rhombic_faces: "面",
 
-  // Truncated tetrahedron (ColorDice extension)
+  // Tetrahedra & Truncation (split from ColorDice)
+  theory_tetra_title: "四面体と切頂",
+  theory_tetra_desc:
+    "立方体の8頂点は相補的な2つの四面体に分かれます: T0（偶数ハミング重み）とT1（奇数重み）。T0 = {Black, M, C, Y} はXOR下でKlein四群V\u2084を形成。T0を切頂すると8色の面 \u2014 4三角形（T0）と4六角形（T1）\u2014 が得られます。欠落4辺は補色対 {v, v\u22957} です。",
+
+  // Truncated tetrahedron labels
   theory_dice_trunc: "切頂",
   theory_dice_trunc_annotation: "双対グラフ = Q₃ ∪ K₄(T1)　欠落辺 = 4補色対 {v, v⊕7}",
 
