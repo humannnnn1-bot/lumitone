@@ -306,6 +306,8 @@ export const ja: Record<TranslationKey, string> = {
 
   // Truncated tetrahedron labels
   theory_dice_trunc: "D8カラーダイス",
+  theory_d8_octa_3d: "D8カラーダイス — 3D",
+  theory_d8_octa_3d_desc: "正八面体の8面 = GF(2)³の8色。対面は補色対(a⊕b=7)。",
   // AG(3,2) affine planes (Connections extension)
   theory_conn_ag32: "AG(3,2) アフィン平面",
   theory_conn_ag32_hook: "GF(2)³の14個のアフィン平面（4元素部分集合）が7平行類を形成し、各類がFano直線に対応する。",

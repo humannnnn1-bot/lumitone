@@ -1,17 +1,20 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { TOAST_DURATION } from "../constants";
 import type { MapMode } from "../components/AnalyzePanel";
 import type { TranslationFn } from "../i18n";
 import { useSyncRef } from "./useSyncRef";
 
+const LS_TAB = "chromalum-active-tab";
+const LS_SCROLL = "chromalum-scroll-y";
+
 export function useUIState(_t: TranslationFn) {
   const [activeTab, setActiveTabRaw] = useState(() => {
-    const saved = localStorage.getItem("chromalum-active-tab");
+    const saved = localStorage.getItem(LS_TAB);
     return saved !== null ? Number(saved) : 0;
   });
   const setActiveTab = useCallback((tab: number) => {
     setActiveTabRaw(tab);
-    localStorage.setItem("chromalum-active-tab", String(tab));
+    localStorage.setItem(LS_TAB, String(tab));
   }, []);
   const [showHelp, setShowHelp] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" | "info" } | null>(null);
@@ -49,6 +52,20 @@ export function useUIState(_t: TranslationFn) {
     promptRef.current?.resolve(null);
     setPromptState(null);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  /* Persist scroll position on beforeunload, restore on mount */
+  useEffect(() => {
+    const savedY = localStorage.getItem(LS_SCROLL);
+    if (savedY !== null) {
+      const y = Number(savedY);
+      requestAnimationFrame(() => window.scrollTo(0, y));
+    }
+    const onBeforeUnload = () => {
+      localStorage.setItem(LS_SCROLL, String(window.scrollY));
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, []);
 
   return {
     activeTab,

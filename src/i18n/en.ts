@@ -307,6 +307,8 @@ export const en = {
 
   // Truncated tetrahedron labels
   theory_dice_trunc: "D8 Color Die",
+  theory_d8_octa_3d: "D8 Color Die — 3D",
+  theory_d8_octa_3d_desc: "8 octahedron faces = 8 GF(2)³ colors. Opposite faces are complement pairs (a⊕b=7).",
   // AG(3,2) affine planes (Connections extension)
   theory_conn_ag32: "AG(3,2) Affine Planes",
   theory_conn_ag32_hook: "The 14 affine planes of GF(2)³ (4-element subsets) form 7 parallel classes, each corresponding to a Fano line.",

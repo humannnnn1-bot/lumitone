@@ -13,6 +13,7 @@ import { C, FS, FW, SP } from "../../tokens";
 import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
 import { OctaNet } from "./Octahedron";
+import { D8Octahedron } from "./D8Octahedron";
 
 interface Props {
   hlLevel: number | null;
@@ -428,6 +429,21 @@ export const TetraDecomposition = React.memo(function TetraDecomposition({ hlLev
         <TetraNet verts={TETRA_T0} label={t("theory_tetra_star_t0")} hl={hl} onEnter={enter} onLeave={leave} />
         <TetraNet verts={TETRA_T1} label={t("theory_tetra_star_t1")} hl={hl} onEnter={enter} onLeave={leave} />
       </div>
+
+      {/* D8 Color Die — 3D octahedron with face coloring */}
+      <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.accentBright, margin: 0, fontWeight: FW.bold }}
+      >
+        {t("theory_d8_octa_3d")}
+      </p>
+      <D8Octahedron hl={hl} onEnter={enter} onLeave={leave} />
+      <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xxs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center", maxWidth: 300 }}
+      >
+        {t("theory_d8_octa_3d_desc")}
+      </p>
 
       {/* D8 Color Die — Gray code strip net */}
       <p
