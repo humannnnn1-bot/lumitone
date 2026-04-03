@@ -199,8 +199,6 @@ export const en = {
   theory_dice_desc:
     "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule. This is a universal theorem: for any positive luma coefficients with no ties, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7. The staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously. Among the 11 cube nets, only this staircase arranges faces in hue-circle order. The octahedron has a dual Gray-code strip net; both share 384 spanning trees (dual matroid theorem).",
   theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
-  theory_dice_net: "Net",
-  theory_dice_views: "Cube Views",
   theory_dice_additive_col: "Additive (\u2295)",
   theory_dice_subtractive_col: "Subtractive (\u2227)",
   theory_fano_title: "Fano Plane",
@@ -237,9 +235,6 @@ export const en = {
   theory_connections_title: "Connections",
   theory_connections_desc:
     "GF(2)\u00b3 yields three constructions: Cube (Cayley graph), Fano plane (projectivization), and Hamming code (parity-check kernel). XOR and AND form a Boolean ring (see Polar Views). The Gray code cycle \u2014 the unique Hamiltonian cycle on the chromatic hexagon \u2014 is simultaneously the hue wheel, the die-face adjacency, and the equatorial belt of the Cayley graph.",
-  theory_conn_center_1: "8 Levels",
-  theory_conn_center_2: "GF(2)\u00b3",
-  theory_conn_gf23: "GF(2)\u00b3",
   theory_conn_fano: "Fano",
   theory_conn_cube: "Cube",
   theory_conn_gray: "Gray",
@@ -282,14 +277,12 @@ export const en = {
   theory_conn_edge_codewords: "codewords",
   theory_conn_edge_checks: "parity",
   theory_xor_complement: "Complement: {0} \u2295 7 = {1}",
-  theory_xor_cayley: "Cayley Table",
   theory_xor_cayley_aria: "XOR Cayley table",
   theory_pin_hint: "Hover to highlight \u00b7 Click to pin",
   theory_fano_show_primary: "Primary",
   theory_fano_show_complement: "Complement",
   theory_fano_show_secondary: "CMY",
   theory_fano_show_all: "All",
-  theory_binary_hamming_toggle: "Hamming",
   theory_polar_title: "Polar Views",
   theory_polar_desc:
     "The same cube seen from opposite vertices: from Black, add primaries (XOR \u2014 ring addition); from White, apply filters (AND \u2014 ring multiplication). These are the two operations of a Boolean ring on GF(2)\u00b3, connected by the distributive law. The complement map (XOR 7) swaps the two perspectives via De Morgan.",
@@ -307,20 +300,6 @@ export const en = {
     "4 valid octahedron nets. Complement pairs (XOR 7) are placed on opposite faces: K\u2194W, B\u2194Y, R\u2194C, M\u2194G.",
 
   // K₈ three-factor decomposition (ColorCube extension)
-  theory_cube_k8_annotation: "K₈ = Q₃ ∪ (K₄⊔K₄) ∪ M₄  degrees: 3+3+1=7",
-
-  // Cuboctahedron (rectified cube)
-  theory_cubocta_title: "Cuboctahedron",
-  theory_cubocta_desc:
-    "Rectification of the color cube (vertices at edge midpoints). 12 vertices = 12 Q\u2083 edges = adjacent-color midpoints. 14 faces = 8 triangles (8 colors) + 6 squares (3 coordinate hyperplanes \u00d7 2). Face-adjacency is bipartite: triangles only touch squares, and neither type is self-adjacent. Triangle v is adjacent to the 3 squares determined by v\u2019s bit values. Rotation group S\u2084 acts regularly on 24 edges.",
-  theory_cubocta_faces: "Faces",
-
-  // Rhombic Dodecahedron (dual of cuboctahedron)
-  theory_rhombic_title: "Rhombic Dodecahedron",
-  theory_rhombic_desc:
-    "Dual of the cuboctahedron. 14 vertices = 8 colors (cube-type) + 6 coordinate axes (octahedron-type, 3 complement axes × 2 directions). 12 rhombic faces = 12 Hamming-distance-1 transitions. 24 edges = 24 point-hyperplane incidences of AG(3,2). Voronoi cell of FCC lattice, corresponding to even-weight subgroup {K,C,M,Y}.",
-  theory_rhombic_faces: "Faces",
-
   // Tetrahedra & Truncation (split from ColorDice)
   theory_tetra_title: "Tetrahedra & Truncation",
   theory_tetra_desc:
@@ -328,9 +307,6 @@ export const en = {
 
   // Truncated tetrahedron labels
   theory_dice_trunc: "D8 Color Die",
-  theory_dice_trunc_annotation:
-    "8 faces in Gray code order. Adjacent = Hamming dist 1 (1 channel flip). Channel sequence B,R,B,G,B,R,B is a palindrome",
-
   // AG(3,2) affine planes (Connections extension)
   theory_conn_ag32: "AG(3,2) Affine Planes",
   theory_conn_ag32_hook: "The 14 affine planes of GF(2)³ (4-element subsets) form 7 parallel classes, each corresponding to a Fano line.",
@@ -356,7 +332,6 @@ export const en = {
   theory_stella_compound: "Compound",
   theory_stella_k8: "K\u2088",
   theory_stella_annotation: "T0 \u222a T1 compound = first stellation of the octahedron \u2014 each edge is a 2-channel flip",
-  theory_stella_k8_label: "K\u2088 = Q\u2083(12) + \u2606(12) + M\u2084(4) = 28",
   theory_stella_k8_degree: "Degrees: 3 + 3 + 1 = 7 = deg(K\u2088)",
 
   // Connection enhancements

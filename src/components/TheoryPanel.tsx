@@ -205,14 +205,14 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
         <hr style={S_DIVIDER} />
 
-        {/* §14 Stella Octangula */}
+        {/* §12 Stella Octangula */}
         <Section title={t("theory_stella_title")} desc={t("theory_stella_desc")}>
           <StellaOctangula hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
-        {/* §15 Connections */}
+        {/* §13 Connections */}
         <Section title={t("theory_connections_title")} desc={t("theory_connections_desc")}>
           <ConnectionsSummary />
         </Section>

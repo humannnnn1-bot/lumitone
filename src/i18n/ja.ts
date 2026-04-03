@@ -200,8 +200,6 @@ export const ja: Record<TranslationKey, string> = {
     "6つの色彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。11種の立方体展開図のうち、この階段型のみが色相環順に面を配列します。八面体にはGrayコード帯状展開図が双対として存在し、両者の全域木の総数は384本で一致します（双対Matroid定理）。",
   theory_dice_hint:
     "6\u9762 \u2192 8\u9802\u70b9: Black (0) \u3068 White (7) \u3092\u52a0\u3048\u308b\u3068\u30ab\u30e9\u30fc\u30ad\u30e5\u30fc\u30d6\u306b",
-  theory_dice_net: "\u5c55\u958b\u56f3",
-  theory_dice_views: "\u30ad\u30e5\u30fc\u30d6\u30d3\u30e5\u30fc",
   theory_dice_additive_col: "\u52a0\u6cd5 (\u2295)",
   theory_dice_subtractive_col: "\u6e1b\u6cd5 (\u2227)",
   theory_fano_title: "ファノ平面",
@@ -238,9 +236,6 @@ export const ja: Record<TranslationKey, string> = {
   theory_connections_title: "連関",
   theory_connections_desc:
     "GF(2)\u00b3 \u304b\u30893\u3064\u306e\u69cb\u6210\u304c\u5c0e\u51fa\u3055\u308c\u307e\u3059: Cube\uff08\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5\uff09\u3001Fano\u5e73\u9762\uff08\u5c04\u5f71\u5316\uff09\u3001Hamming\u7b26\u53f7\uff08\u691c\u67fb\u884c\u5217\u306e\u6838\uff09\u3002XOR\u3068AND\u306fBoolean\u74b0\u3092\u306a\u3059\uff08\u6975\u6027\u30d3\u30e5\u30fc\u53c2\u7167\uff09\u3002\u8272\u5f69\u516d\u89d2\u5f62\u4e0a\u306e\u552f\u4e00\u306e\u30cf\u30df\u30eb\u30c8\u30f3\u9589\u8def\u3067\u3042\u308b\u30b0\u30ec\u30a4\u30b3\u30fc\u30c9\u5de1\u56de\u306f\u3001\u8272\u76f8\u74b0\u30fb\u30c0\u30a4\u30b9\u9762\u96a3\u63a5\u30fb\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5\u306e\u8d64\u9053\u5e2f\u3068\u540c\u6642\u306b\u4e00\u81f4\u3057\u307e\u3059\u3002",
-  theory_conn_center_1: "8レベル",
-  theory_conn_center_2: "GF(2)\u00b3",
-  theory_conn_gf23: "GF(2)\u00b3",
   theory_conn_fano: "Fano",
   theory_conn_cube: "Cube",
   theory_conn_gray: "Gray",
@@ -282,14 +277,12 @@ export const ja: Record<TranslationKey, string> = {
   theory_conn_edge_codewords: "\u7b26\u53f7\u8a9e",
   theory_conn_edge_checks: "\u30d1\u30ea\u30c6\u30a3",
   theory_xor_complement: "補色: {0} \u2295 7 = {1}",
-  theory_xor_cayley: "\u30b1\u30a4\u30ea\u30fc\u8868",
   theory_xor_cayley_aria: "XOR \u30b1\u30a4\u30ea\u30fc\u8868",
   theory_pin_hint: "\u30db\u30d0\u30fc\u3067\u30cf\u30a4\u30e9\u30a4\u30c8 \u00b7 \u30af\u30ea\u30c3\u30af\u3067\u56fa\u5b9a",
   theory_fano_show_primary: "原色",
   theory_fano_show_complement: "補色",
   theory_fano_show_secondary: "CMY",
   theory_fano_show_all: "全て",
-  theory_binary_hamming_toggle: "Hamming",
   theory_polar_title: "\u6975\u6027\u30d3\u30e5\u30fc",
   theory_polar_desc:
     "\u540c\u3058\u7acb\u65b9\u4f53\u3092\u5bfe\u9802\u70b9\u304b\u3089\u898b\u308b: Black\u304b\u3089\u306f\u539f\u8272\u3092\u52a0\u7b97(XOR \u2014 \u74b0\u306e\u52a0\u6cd5)\u3001White\u304b\u3089\u306f\u30d5\u30a3\u30eb\u30bf\u3092\u9069\u7528(AND \u2014 \u74b0\u306e\u4e57\u6cd5)\u3002GF(2)\u00b3 \u4e0a\u306eBoolean\u74b0\u306e2\u3064\u306e\u6f14\u7b97\u3067\u3042\u308a\u3001\u5206\u914d\u6cd5\u5247\u3067\u7d50\u3070\u308c\u308b\u3002\u88dc\u8272\u5199\u50cf(XOR 7)\u304cDe Morgan\u3092\u4ecb\u3057\u30662\u3064\u306e\u8996\u70b9\u3092\u5165\u308c\u66ff\u3048\u308b\u3002",
@@ -306,20 +299,6 @@ export const ja: Record<TranslationKey, string> = {
   theory_octa_nets_desc: "4種の正八面体展開図。補色ペア（XOR 7）が対面に配置: K\u2194W, B\u2194Y, R\u2194C, M\u2194G。",
 
   // K₈ three-factor decomposition (ColorCube extension)
-  theory_cube_k8_annotation: "K₈ = Q₃ ∪ (K₄⊔K₄) ∪ M₄　度数: 3+3+1=7",
-
-  // Cuboctahedron (rectified cube)
-  theory_cubocta_title: "立方八面体",
-  theory_cubocta_desc:
-    "色立方体の整流（各辺の中点を頂点とする）。12頂点 = 12本のQ₃辺 = 隣接色の中間色。14面 = 8三角形（8色）+ 6正方形（3座標超平面×2）。面隣接は二部グラフ: 三角形は正方形にのみ隣接し、正方形同士も三角形同士も隣接しない。三角形vが隣接する正方形はvの各ビット値が決定する3つの座標超平面。回転群S₄が24辺に正則に作用する。",
-  theory_cubocta_faces: "面",
-
-  // Rhombic Dodecahedron (dual of cuboctahedron)
-  theory_rhombic_title: "菱形十二面体",
-  theory_rhombic_desc:
-    "立方八面体の双対。14頂点 = 8色（立方体型）+ 6座標軸（八面体型、3補色軸×2方向）。12菱形面 = 12本のHamming距離1遷移。24辺 = AG(3,2)の24点-超平面入射。FCC格子のVoronoi胞体で、偶数重み部分群{K,C,M,Y}に対応。",
-  theory_rhombic_faces: "面",
-
   // Tetrahedra & Truncation (split from ColorDice)
   theory_tetra_title: "四面体と切頂",
   theory_tetra_desc:
@@ -327,8 +306,6 @@ export const ja: Record<TranslationKey, string> = {
 
   // Truncated tetrahedron labels
   theory_dice_trunc: "D8カラーダイス",
-  theory_dice_trunc_annotation: "Gray code順に8面を展開。隣接面=ハミング距離1(1ch反転)。チャネル列 B,R,B,G,B,R,B は回文",
-
   // AG(3,2) affine planes (Connections extension)
   theory_conn_ag32: "AG(3,2) アフィン平面",
   theory_conn_ag32_hook: "GF(2)³の14個のアフィン平面（4元素部分集合）が7平行類を形成し、各類がFano直線に対応する。",
@@ -354,7 +331,6 @@ export const ja: Record<TranslationKey, string> = {
   theory_stella_compound: "合成",
   theory_stella_k8: "K₈",
   theory_stella_annotation: "T0 ∪ T1 合成 = 八面体の第一星形化 — 各辺は2チャネル同時切替",
-  theory_stella_k8_label: "K₈ = Q₃(12) + ☆(12) + M₄(4) = 28",
   theory_stella_k8_degree: "度数: 3 + 3 + 1 = 7 = deg(K₈)",
 
   // Connection enhancements
