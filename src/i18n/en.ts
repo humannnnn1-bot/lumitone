@@ -197,7 +197,7 @@ export const en = {
     "Fully saturated colors (max channel = 255, min = 0) trace a 6-segment zigzag as hue rotates. Each segment toggles one channel; the slope is proportional to its BT.601 coefficient. Horizontal lines at each vertex luma value intersect the zigzag at 1 or 3 points \u2014 these are the equal-luma candidates. The maximum is 4 (between vertices). For any hue angle h, Y(h) + Y(h+180\u00b0) = 255 \u2014 complementary colors always sum to the same luma. This is universal for any coefficients summing to 1.",
   theory_dice_title: "Color Die",
   theory_dice_desc:
-    "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule. This is a universal theorem: for any positive luma coefficients with no ties, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7. The staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously.",
+    "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule. This is a universal theorem: for any positive luma coefficients with no ties, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7. The staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously. Among the 11 cube nets, only this staircase arranges faces in hue-circle order. The octahedron has a dual Gray-code strip net; both share 384 spanning trees (dual matroid theorem).",
   theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
   theory_dice_net: "Net",
   theory_dice_views: "Cube Views",
@@ -270,7 +270,11 @@ export const en = {
   theory_conn_fano_role: "Fano = PG(2,2), the projective plane over GF(2)",
   theory_conn_cube_role: "Cube = Cayley graph of (GF(2)\u00b3, \u2295) with generators {G, R, B}",
   theory_conn_hamming_role: "Hamming = parity-check matrix with GF(2)\u00b3\\{0} as columns",
-  theory_conn_gray_role: "Gray = Hamiltonian cycle on the chromatic equator = hue wheel = die-face adjacency",
+  theory_conn_gray_role:
+    "Gray = Hamiltonian cycle on chromatic equator = hue wheel = die-face adjacency. The hue circle R\u2192Y\u2192G\u2192C\u2192B\u2192M is simultaneously: (1) Hamilton cycle on Q\u2083 chromatic vertices, (2) Hamilton cycle on octahedron vertex graph, (3) Hamilton cycle on cube face-adjacency (= octahedral graph). Channel toggles G,R,B repeat with period 3. Gray code extension K\u2192B\u2192M\u2192R\u2192Y\u2192W\u2192C\u2192G is the full Q\u2083 Hamilton cycle with palindrome channels B,R,B,G,B,R,B.",
+  theory_conn_polyhedra: "Polyhedra network",
+  theory_conn_polyhedra_desc:
+    "All polyhedra in \u00a710\u2013\u00a713 are connected by geometric operations preserving the Hamming 3-layer structure (d=1: edges, d=2: stella, d=3: complements).",
   theory_conn_extended: "Adding Black as overall parity bit yields the [8,4,4] extended Hamming code over all 8 levels",
   theory_conn_boundary:
     "GL(3,2) \u2245 PSL(2,7) (order 168) is the full automorphism group of PG(2,2). Only its S\u2083 subgroup (6 channel permutations) preserves chromatic meaning. Complement \u03c3(v) = v \u2295 (1,1,1) is a translation in AG(3,2), not a linear map in GL(3,2) \u2014 it sends W\u21a6K, which lies outside PG(2,2). GF(8) multiplication and 12+ color extensions lie outside this framework.",
@@ -298,6 +302,9 @@ export const en = {
   theory_octa_desc:
     "Dual of the color cube. 6 vertices = 6 chromatic colors (primaries on +axis, CMY on \u2212axis), 8 faces = 8 GF(2)\u00b3 elements (each octant maps to one color). 3 complement axes R\u2194C, G\u2194M, B\u2194Y connect antipodal vertices. The face-adjacency graph is Q\u2083 \u2014 the color cube itself.",
   theory_octa_axes: "Complement axes",
+  theory_octa_net: "Net",
+  theory_octa_net_desc:
+    "Since the face-adjacency graph is Q\u2083, octahedron nets correspond 1-to-1 with spanning trees of Q\u2083. This strip net arranges 8 faces in Gray code order \u2014 channel toggles form a palindrome B,R,B,G,B,R,B. Dual to the Color Dice\u2019s hue-circle net; both have 384 spanning trees (dual matroid theorem).",
 
   // K₈ three-factor decomposition (ColorCube extension)
   theory_cube_k8_annotation: "K₈ = Q₃ ∪ (K₄⊔K₄) ∪ M₄  degrees: 3+3+1=7",
@@ -305,7 +312,7 @@ export const en = {
   // Cuboctahedron (rectified cube)
   theory_cubocta_title: "Cuboctahedron",
   theory_cubocta_desc:
-    "Rectification of the color cube (vertices at edge midpoints). 12 vertices = 12 Q₃ edges = adjacent-color midpoints. 14 faces = 8 triangles (8 colors) + 6 squares (3 coordinate hyperplanes × 2). Geometric realization of the color-transition space. Rotation group S₄ acts regularly on 24 edges.",
+    "Rectification of the color cube (vertices at edge midpoints). 12 vertices = 12 Q\u2083 edges = adjacent-color midpoints. 14 faces = 8 triangles (8 colors) + 6 squares (3 coordinate hyperplanes \u00d7 2). Face-adjacency is bipartite: triangles only touch squares, and neither type is self-adjacent. Triangle v is adjacent to the 3 squares determined by v\u2019s bit values. Rotation group S\u2084 acts regularly on 24 edges.",
   theory_cubocta_faces: "Faces",
 
   // Rhombic Dodecahedron (dual of cuboctahedron)
@@ -335,6 +342,21 @@ export const en = {
   theory_dice_tetra_t1: "T1: odd weight",
   theory_dice_tetra_subgroup: "T0 = {Black, M, C, Y} = Klein four-group V\u2084 under XOR",
   theory_dice_tetra_face_xor: "Face theorem: XOR of 3 face vertices = the opposite vertex",
+  theory_tetra_star_net: "Star nets",
+  theory_tetra_star_t0: "Black center + CMY = subtractive prototype",
+  theory_tetra_star_t1: "White center + RGB = additive prototype",
+  theory_trunc_net: "Complement separation",
+  theory_trunc_net_desc: "Each \u25b3 is NOT adjacent to its complement \u2b21 \u2014 4 complement pairs maximally separated.",
+
+  // Stella Octangula
+  theory_stella_title: "Stella Octangula",
+  theory_stella_desc:
+    "Compounding tetrahedra T0 and T1 yields the Stella Octangula — also the first stellation of the octahedron. All 12 edges have Hamming distance 2, representing simultaneous 2-channel flips. This is the core of the K\u2088 three-factor decomposition: distance 1 + 2 + 3 = 12 + 12 + 4 = 28 edges.",
+  theory_stella_compound: "Compound",
+  theory_stella_k8: "K\u2088",
+  theory_stella_annotation: "T0 \u222a T1 compound = first stellation of the octahedron \u2014 each edge is a 2-channel flip",
+  theory_stella_k8_label: "K\u2088 = Q\u2083(12) + \u2606(12) + M\u2084(4) = 28",
+  theory_stella_k8_degree: "Degrees: 3 + 3 + 1 = 7 = deg(K\u2088)",
 
   // Connection enhancements
   theory_conn_168_decomp: "|GL(3,2)| = 168 = 7 (Fano pts) \u00d7 24 (stabilizer S\u2084 per pt = octahedral rotation group)",

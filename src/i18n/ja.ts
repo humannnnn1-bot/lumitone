@@ -197,7 +197,7 @@ export const ja: Record<TranslationKey, string> = {
     "完全飽和色（最大チャンネル=255、最小=0）は色相の回転に従い6区間のジグザグを描く。各区間で1チャンネルが変化し、傾きはBT.601係数に比例。各頂点ルマ値の水平線はジグザグと1または3点で交わる — これが等ルマ候補。最大は4（頂点間）。任意の色相角 h で Y(h) + Y(h+180\u00b0) = 255 — 補色の輝度和は常に一定。係数の和が1なら任意の係数で成立する普遍的性質。",
   theory_dice_title: "\u30ab\u30e9\u30fc\u30c0\u30a4\u30b9",
   theory_dice_desc:
-    "6つの色彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。",
+    "6つの色彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。11種の立方体展開図のうち、この階段型のみが色相環順に面を配列します。八面体にはGrayコード帯状展開図が双対として存在し、両者の全域木の総数は384本で一致します（双対Matroid定理）。",
   theory_dice_hint:
     "6\u9762 \u2192 8\u9802\u70b9: Black (0) \u3068 White (7) \u3092\u52a0\u3048\u308b\u3068\u30ab\u30e9\u30fc\u30ad\u30e5\u30fc\u30d6\u306b",
   theory_dice_net: "\u5c55\u958b\u56f3",
@@ -270,7 +270,11 @@ export const ja: Record<TranslationKey, string> = {
   theory_conn_cube_role:
     "Cube = (GF(2)\u00b3, \u2295) \u306e\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5\uff08\u751f\u6210\u5143 {G, R, B}\uff09",
   theory_conn_hamming_role: "Hamming = GF(2)\u00b3\\{0}\u3092\u5217\u306b\u6301\u3064\u691c\u67fb\u884c\u5217",
-  theory_conn_gray_role: "Gray = 色彩赤道上のハミルトン閉路 = 色相環 = ダイス面隣接",
+  theory_conn_gray_role:
+    "Gray = 色彩赤道上のハミルトン閉路 = 色相環 = ダイス面隣接。色相環 R→Y→G→C→B→M は同時に: (1) Q₃有彩色頂点のHamilton閉路, (2) 八面体頂点グラフのHamilton閉路, (3) 立方体面隣接グラフ(=八面体グラフ)のHamilton閉路。チャネル遷移 G,R,B は周期3で回転。Grayコード拡張 K→B→M→R→Y→W→C→G は回文チャネル列 B,R,B,G,B,R,B を持つQ₃のHamilton閉路。",
+  theory_conn_polyhedra: "多面体変換ネットワーク",
+  theory_conn_polyhedra_desc:
+    "§10–§13の多面体は幾何学的操作で連鎖し、Hamming距離の3層構造（d=1: 辺、d=2: 星形辺、d=3: 補色対角）を保存します。",
   theory_conn_extended: "Black を全体パリティビットとして追加すると [8,4,4] 拡張ハミング符号になる",
   theory_conn_boundary:
     "GL(3,2) \u2245 PSL(2,7)\uff08\u4f4d\u6570168\uff09\u306f PG(2,2) \u306e\u5b8c\u5168\u81ea\u5df1\u540c\u578b\u7fa4\u3002\u305d\u306e\u3046\u3061\u8272\u5f69\u7684\u306b\u6709\u610f\u306a\u306e\u306f S\u2083\uff08\u30c1\u30e3\u30f3\u30cd\u30eb\u7f6e\u63db6\u901a\u308a\uff09\u306e\u307f\u3002\u88dc\u8272 \u03c3(v) = v \u2295 (1,1,1) \u306f AG(3,2) \u306e\u5e73\u884c\u79fb\u52d5\u3067\u3042\u308a GL(3,2) \u306e\u7dda\u5f62\u5199\u50cf\u3067\u306f\u306a\u3044 \u2014 W\u21a6K \u3092\u9001\u308a PG(2,2) \u3092\u96e2\u308c\u308b\u3002GF(8) \u306e\u4e57\u6cd5\u69cb\u9020\u306812\u8272\u4ee5\u4e0a\u3078\u306e\u62e1\u5f35\u306f\u3053\u306e\u67a0\u7d44\u307f\u306e\u5916\u3002",
@@ -298,6 +302,9 @@ export const ja: Record<TranslationKey, string> = {
   theory_octa_desc:
     "色立方体の双対。6頂点 = 6色相色（原色は+軸、CMYは−軸）、8面 = 8色（各八分空間が1つのGF(2)\u00b3元に対応）。3本の補色軸 R\u2194C, G\u2194M, B\u2194Y が対頂点を結ぶ。面隣接グラフは立方体グラフQ\u2083そのもの。",
   theory_octa_axes: "補色軸",
+  theory_octa_net: "展開図",
+  theory_octa_net_desc:
+    "面隣接グラフがQ₃であるため、八面体の展開図はQ₃の全域木と一対一に対応します。帯状展開図はGrayコード順に面を配列し — チャネル遷移は回文 B,R,B,G,B,R,B — カラーダイスの色相環展開図と双対関係にあります。両者の全域木の総数は384本で一致（双対Matroid定理）。",
 
   // K₈ three-factor decomposition (ColorCube extension)
   theory_cube_k8_annotation: "K₈ = Q₃ ∪ (K₄⊔K₄) ∪ M₄　度数: 3+3+1=7",
@@ -305,7 +312,7 @@ export const ja: Record<TranslationKey, string> = {
   // Cuboctahedron (rectified cube)
   theory_cubocta_title: "立方八面体",
   theory_cubocta_desc:
-    "色立方体の整流（各辺の中点を頂点とする）。12頂点 = 12本のQ₃辺 = 隣接色の中間色。14面 = 8三角形（8色）+ 6正方形（3座標超平面×2）。色遷移空間の幾何学的実現。回転群S₄が24辺に正則に作用する。",
+    "色立方体の整流（各辺の中点を頂点とする）。12頂点 = 12本のQ₃辺 = 隣接色の中間色。14面 = 8三角形（8色）+ 6正方形（3座標超平面×2）。面隣接は二部グラフ: 三角形は正方形にのみ隣接し、正方形同士も三角形同士も隣接しない。三角形vが隣接する正方形はvの各ビット値が決定する3つの座標超平面。回転群S₄が24辺に正則に作用する。",
   theory_cubocta_faces: "面",
 
   // Rhombic Dodecahedron (dual of cuboctahedron)
@@ -335,6 +342,21 @@ export const ja: Record<TranslationKey, string> = {
   theory_dice_tetra_t1: "T1: 奇数重み",
   theory_dice_tetra_subgroup: "T0 = {Black, M, C, Y} = XOR下のKlein四群 V\u2084",
   theory_dice_tetra_face_xor: "面定理: 面の3頂点の XOR = 対頂点の色",
+  theory_tetra_star_net: "星型展開図",
+  theory_tetra_star_t0: "Black中心 + CMY = 減法混色の原型",
+  theory_tetra_star_t1: "White中心 + RGB = 加法混色の原型",
+  theory_trunc_net: "補色分離図",
+  theory_trunc_net_desc: "各△は自身の補色⬡に非隣接 — 4組の補色対が空間的に最大分離。",
+
+  // Stella Octangula
+  theory_stella_title: "星形八面体",
+  theory_stella_desc:
+    "T0とT1の2つの四面体を合成すると星形八面体（Stella Octangula）が得られます。これは八面体の第一星形化でもあります。12本の辺はすべてハミング距離2 — 2チャネルの同時切替を表します。K₈完全グラフの三因子分解（距離1 + 距離2 + 距離3 = 12 + 12 + 4 = 28辺）の中核をなす構造です。",
+  theory_stella_compound: "合成",
+  theory_stella_k8: "K₈",
+  theory_stella_annotation: "T0 ∪ T1 合成 = 八面体の第一星形化 — 各辺は2チャネル同時切替",
+  theory_stella_k8_label: "K₈ = Q₃(12) + ☆(12) + M₄(4) = 28",
+  theory_stella_k8_degree: "度数: 3 + 3 + 1 = 7 = deg(K₈)",
 
   // Connection enhancements
   theory_conn_168_decomp:

@@ -275,6 +275,124 @@ export const ConnectionsSummary = React.memo(function ConnectionsSummary() {
         </div>
       </div>
 
+      {/* Part E: Polyhedra transformation network */}
+      <div className="theory-conn-card" style={{ ...S_CARD, borderColor: "#90b090" }}>
+        <div className="theory-conn-card-header" style={{ ...S_CARD_HEADER, color: "#90b090" }}>
+          <span>{t("theory_conn_polyhedra")}</span>
+        </div>
+        <div className="theory-conn-card-body" style={S_CARD_BODY}>
+          <svg viewBox="0 0 360 195" style={{ width: "100%", maxWidth: 360 }}>
+            {/* Node positions */}
+            {(() => {
+              const nodes = [
+                { id: "cube", label: "立方体 Q₃", x: 60, y: 30, color: "#ffa060" },
+                { id: "octa", label: "八面体", x: 300, y: 30, color: "#60ffa0" },
+                { id: "tetra", label: "T₀/T₁", x: 60, y: 100, color: "#ffcc60" },
+                { id: "trunc", label: "切頂四面体", x: 60, y: 160, color: "#ccaa60" },
+                { id: "cubocta", label: "立方八面体", x: 200, y: 100, color: "#60aaff" },
+                { id: "rhombic", label: "菱形十二面体", x: 310, y: 160, color: "#aa80ff" },
+              ];
+              const edges = [
+                { from: "cube", to: "octa", label: "双対", dash: false, bidirectional: true },
+                { from: "cube", to: "tetra", label: "頂点交替", dash: true, bidirectional: false },
+                { from: "tetra", to: "trunc", label: "切頂(T₀)", dash: true, bidirectional: false },
+                { from: "cube", to: "cubocta", label: "整流化", dash: true, bidirectional: false },
+                { from: "octa", to: "cubocta", label: "整流化", dash: true, bidirectional: false },
+                { from: "cubocta", to: "rhombic", label: "双対", dash: false, bidirectional: true },
+              ];
+              const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]));
+              return (
+                <>
+                  {edges.map((e, i) => {
+                    const from = nodeMap[e.from],
+                      to = nodeMap[e.to];
+                    const mx = (from.x + to.x) / 2,
+                      my = (from.y + to.y) / 2;
+                    const dx = to.x - from.x,
+                      dy = to.y - from.y;
+                    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const perpX = (-dy / len) * 8,
+                      perpY = (dx / len) * 8;
+                    return (
+                      <g key={`pe-${i}`}>
+                        <line
+                          x1={from.x}
+                          y1={from.y}
+                          x2={to.x}
+                          y2={to.y}
+                          stroke="rgba(255,255,255,0.25)"
+                          strokeWidth={1}
+                          strokeDasharray={e.dash ? "4,3" : undefined}
+                          markerEnd={!e.bidirectional ? "url(#arrowPoly)" : undefined}
+                        />
+                        {e.bidirectional && (
+                          <text
+                            x={mx + perpX}
+                            y={my + perpY}
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fontSize={8}
+                            fontFamily="monospace"
+                            fill="rgba(255,255,255,0.5)"
+                          >
+                            ↔
+                          </text>
+                        )}
+                        <text
+                          x={mx + perpX * (e.bidirectional ? 2.2 : 1)}
+                          y={my + perpY * (e.bidirectional ? 2.2 : 1)}
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          fontSize={7}
+                          fontFamily="monospace"
+                          fill="rgba(255,255,255,0.45)"
+                        >
+                          {e.label}
+                        </text>
+                      </g>
+                    );
+                  })}
+                  <defs>
+                    <marker id="arrowPoly" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
+                      <path d="M0,0 L6,2 L0,4" fill="rgba(255,255,255,0.3)" />
+                    </marker>
+                  </defs>
+                  {nodes.map((n) => (
+                    <g key={`pn-${n.id}`}>
+                      <rect
+                        x={n.x - 42}
+                        y={n.y - 10}
+                        width={84}
+                        height={20}
+                        rx={4}
+                        fill="rgba(0,0,0,0.5)"
+                        stroke={n.color}
+                        strokeWidth={1}
+                      />
+                      <text
+                        x={n.x}
+                        y={n.y}
+                        textAnchor="middle"
+                        dominantBaseline="central"
+                        fontSize={8}
+                        fontFamily="monospace"
+                        fill={n.color}
+                        fontWeight={700}
+                      >
+                        {n.label}
+                      </text>
+                    </g>
+                  ))}
+                </>
+              );
+            })()}
+          </svg>
+          <p className="theory-conn-card-detail" style={{ color: C.textDimmer, margin: `${SP.sm}px 0 0`, fontSize: FS.xs }}>
+            {t("theory_conn_polyhedra_desc")}
+          </p>
+        </div>
+      </div>
+
       {/* Closing tagline */}
       <div className="theory-conn-footer" style={{ textAlign: "center" }}>
         <p style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textMuted, margin: 0 }}>{t("theory_conn_conclusion_1")}</p>

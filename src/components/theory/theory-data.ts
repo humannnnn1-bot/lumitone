@@ -267,6 +267,47 @@ export const COMPLEMENT_EDGES: [number, number][] = [
   [3, 4],
 ];
 
+/* ── Stella Octangula face & 3D geometry ──
+   Compound of T0 and T1 tetrahedra = first stellation of octahedron.
+   8 vertices (all cube), 12 edges (STELLA_EDGES), 8 triangular faces.  */
+
+export interface StellaFace {
+  verts: [number, number, number];
+  color: number; // XOR of 3 vertices = opposite vertex
+  tetra: 0 | 1;
+}
+
+export const STELLA_FACES: StellaFace[] = [
+  // T0 faces (even-weight tetrahedron)
+  { verts: [0, 3, 5], color: 6, tetra: 0 },
+  { verts: [0, 3, 6], color: 5, tetra: 0 },
+  { verts: [0, 5, 6], color: 3, tetra: 0 },
+  { verts: [3, 5, 6], color: 0, tetra: 0 },
+  // T1 faces (odd-weight tetrahedron)
+  { verts: [1, 2, 4], color: 7, tetra: 1 },
+  { verts: [1, 2, 7], color: 4, tetra: 1 },
+  { verts: [1, 4, 7], color: 2, tetra: 1 },
+  { verts: [2, 4, 7], color: 1, tetra: 1 },
+];
+
+/** 3D coordinates of cube vertices in unit cube [G, R, B] */
+export const STELLA_3D: Record<number, [number, number, number]> = {};
+for (let i = 0; i < 8; i++) {
+  STELLA_3D[i] = [(i >> 2) & 1, (i >> 1) & 1, i & 1];
+}
+
+const CH_NAMES = ["B", "R", "G"] as const;
+
+/** Return the two channel names that flip for a Hamming-distance-2 edge */
+export function stellaEdgeChannels(a: number, b: number): [string, string] {
+  const d = a ^ b;
+  const chs: string[] = [];
+  for (let bit = 0; bit < 3; bit++) {
+    if ((d >> bit) & 1) chs.push(CH_NAMES[bit]);
+  }
+  return chs as [string, string];
+}
+
 /* ── Cuboctahedron (rectified cube) geometry ──
    12 vertices = midpoints of 12 cube edges
    14 faces = 8 triangles (one per cube vertex) + 6 squares (one per cube face)  */

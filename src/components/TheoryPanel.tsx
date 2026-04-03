@@ -15,6 +15,7 @@ import { Cuboctahedron } from "./theory/Cuboctahedron";
 import { RhombicDodecahedron } from "./theory/RhombicDodecahedron";
 import { LuminanceZigzag } from "./theory/LuminanceZigzag";
 import { TetraDecomposition } from "./theory/TetraDecomposition";
+import { StellaOctangula } from "./theory/StellaOctangula";
 import { ConnectionsSummary } from "./theory/ConnectionsSummary";
 
 const S_SECTION: React.CSSProperties = {
@@ -220,7 +221,14 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
         <hr style={S_DIVIDER} />
 
-        {/* §14 Connections */}
+        {/* §14 Stella Octangula */}
+        <Section title={t("theory_stella_title")} desc={t("theory_stella_desc")}>
+          <StellaOctangula hlLevel={hlLevel} onHover={onHover} />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
+        {/* §15 Connections */}
         <Section title={t("theory_connections_title")} desc={t("theory_connections_desc")}>
           <ConnectionsSummary />
         </Section>

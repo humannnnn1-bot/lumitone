@@ -10,6 +10,17 @@ const W = 300,
 const DOT_R = 13;
 const CY = 150;
 
+/* ── Gray code strip net (8 triangular faces in zigzag) ── */
+const GRAY_CODE_SEQ = [0, 1, 3, 2, 6, 7, 5, 4]; // face colors in Gray code order
+const GRAY_CHANNELS = ["B", "R", "B", "G", "B", "R", "B"]; // channel toggles (palindrome)
+const GRAY_CH_COLORS: Record<string, string> = { G: "#00ff00", R: "#ff0000", B: "#0000ff" };
+const NET_W = 300,
+  NET_H = 90;
+const TRI_S = 32; // triangle side length
+const TRI_H_VAL = (TRI_S * Math.sqrt(3)) / 2; // triangle height
+const NET_START_X = (NET_W - (8 * TRI_S) / 2) / 2; // center the strip
+const NET_START_Y = (NET_H - TRI_H_VAL) / 2 + 4;
+
 /* ── 3D lighting model ── */
 
 // 3D coordinates of octahedron vertices (unit cross-polytope on R/G/B axes).
@@ -129,6 +140,7 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
   const [pinned, setPinned] = useState<number | null>(null);
   usePinReset(setPinned);
   const [showAxes, setShowAxes] = useState(false);
+  const [showNet, setShowNet] = useState(false);
   const [hlFace, setHlFace] = useState<number | null>(null);
 
   const hl = hlLevel !== null && hlLevel >= 1 && hlLevel <= 6 ? hlLevel : pinned;
@@ -327,8 +339,101 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
         })}
       </svg>
 
+      {/* Gray code strip net */}
+      {showNet && (
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
+          <svg viewBox={`0 0 ${NET_W} ${NET_H}`} style={{ width: "100%", maxWidth: NET_W }} role="img" aria-label={t("theory_octa_net")}>
+            {GRAY_CODE_SEQ.map((color, i) => {
+              const info = THEORY_LEVELS[color];
+              const isUp = i % 2 === 0; // even index = pointing up
+              const baseX = NET_START_X + i * (TRI_S / 2);
+              const x0 = baseX;
+              const x1 = baseX + TRI_S / 2;
+              const x2 = baseX + TRI_S;
+              let pts: string;
+              let labelY: number;
+              if (isUp) {
+                pts = `${x0},${NET_START_Y + TRI_H_VAL} ${x1},${NET_START_Y} ${x2},${NET_START_Y + TRI_H_VAL}`;
+                labelY = NET_START_Y + TRI_H_VAL * 0.62;
+              } else {
+                pts = `${x0},${NET_START_Y} ${x1},${NET_START_Y + TRI_H_VAL} ${x2},${NET_START_Y}`;
+                labelY = NET_START_Y + TRI_H_VAL * 0.38;
+              }
+              const active = hl === color;
+              const dim = hl !== null && !active;
+              return (
+                <g
+                  key={`net-${i}`}
+                  onMouseEnter={() => onEnter(color >= 1 && color <= 6 ? color : color === 0 ? 0 : 7)}
+                  onMouseLeave={onLeave}
+                  style={{ cursor: "default" }}
+                >
+                  <polygon
+                    points={pts}
+                    fill={color === 0 ? C.bgRoot : info.color}
+                    fillOpacity={active ? 0.5 : dim ? 0.08 : 0.25}
+                    stroke={active ? "#fff" : info.color}
+                    strokeWidth={active ? 1.5 : 0.8}
+                    strokeOpacity={dim ? 0.15 : 0.7}
+                    strokeLinejoin="round"
+                  />
+                  <text
+                    x={x1}
+                    y={labelY}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize={9}
+                    fontWeight={700}
+                    fontFamily="monospace"
+                    fill={color === 0 || color === 1 ? "#fff" : color === 7 ? "#000" : info.color}
+                    opacity={dim ? 0.2 : 0.9}
+                  >
+                    {info.name[0]}
+                  </text>
+                </g>
+              );
+            })}
+            {/* Channel toggle labels between triangles */}
+            {GRAY_CHANNELS.map((ch, i) => {
+              const x = NET_START_X + (i + 1) * (TRI_S / 2);
+              return (
+                <text
+                  key={`ch-${i}`}
+                  x={x}
+                  y={NET_START_Y + TRI_H_VAL + 14}
+                  textAnchor="middle"
+                  fontSize={7}
+                  fontFamily="monospace"
+                  fontWeight={700}
+                  fill={GRAY_CH_COLORS[ch]}
+                  opacity={0.7}
+                >
+                  {ch}
+                </text>
+              );
+            })}
+          </svg>
+          <p
+            className="theory-annotation"
+            style={{ fontSize: FS.xxs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center", maxWidth: 300 }}
+          >
+            {t("theory_octa_net_desc")}
+          </p>
+        </div>
+      )}
+
       {/* Toggle buttons */}
       <div style={{ display: "flex", gap: SP.md, flexWrap: "wrap", justifyContent: "center" }}>
+        <button
+          style={{
+            ...S_BTN,
+            borderColor: showNet ? C.accentBright : C.border,
+            color: showNet ? C.accentBright : C.textMuted,
+          }}
+          onClick={() => setShowNet((v) => !v)}
+        >
+          {t("theory_octa_net")}
+        </button>
         <button
           style={{
             ...S_BTN,
