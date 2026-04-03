@@ -195,7 +195,7 @@ export const ja: Record<TranslationKey, string> = {
   theory_zigzag_title: "ルマジグザグ",
   theory_zigzag_desc:
     "完全飽和色（最大チャンネル=255、最小=0）は色相の回転に従い6区間のジグザグを描く。各区間で1チャンネルが変化し、傾きはBT.601係数に比例。各頂点ルマ値の水平線はジグザグと1または3点で交わる — これが等ルマ候補。最大は4（頂点間）。任意の色相角 h で Y(h) + Y(h+180\u00b0) = 255 — 補色の輝度和は常に一定。係数の和が1なら任意の係数で成立する普遍的性質。",
-  theory_dice_title: "\u30ab\u30e9\u30fc\u30c0\u30a4\u30b9",
+  theory_dice_title: "D6\u30ab\u30e9\u30fc\u30c0\u30a4\u30b9",
   theory_dice_desc:
     "6つの色彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。11種の立方体展開図のうち、この階段型のみが色相環順に面を配列します。八面体にはGrayコード帯状展開図が双対として存在し、両者の全域木の総数は384本で一致します（双対Matroid定理）。",
   theory_dice_hint:
@@ -298,13 +298,13 @@ export const ja: Record<TranslationKey, string> = {
   theory_polar_hint: "\u539f\u8272\u307e\u305f\u306f\u4e8c\u6b21\u8272\u3092\u30af\u30ea\u30c3\u30af\u3057\u3066\u6df7\u8272",
 
   // Octahedron (chromatic cross-polytope)
-  theory_octa_title: "色相八面体",
+  theory_octa_title: "カラーダイヤ",
   theory_octa_desc:
     "色立方体の双対。6頂点 = 6色相色（原色は+軸、CMYは−軸）、8面 = 8色（各八分空間が1つのGF(2)\u00b3元に対応）。3本の補色軸 R\u2194C, G\u2194M, B\u2194Y が対頂点を結ぶ。面隣接グラフは立方体グラフQ\u2083そのもの。",
   theory_octa_axes: "補色軸",
-  theory_octa_net: "展開図",
-  theory_octa_net_desc:
-    "面隣接グラフがQ₃であるため、八面体の展開図はQ₃の全域木と一対一に対応します。帯状展開図はGrayコード順に面を配列し — チャネル遷移は回文 B,R,B,G,B,R,B — カラーダイスの色相環展開図と双対関係にあります。両者の全域木の総数は384本で一致（双対Matroid定理）。",
+  theory_octa_net_gray: "Gray符号",
+  theory_octa_net_gray_desc:
+    "Q₃上のハミルトン巡回をGrayコード順に配列。チャネル遷移は回文 B,R,B,G,B,R,B。閉鎖トグルG（G→K）で巡回完成。連鎖可能：同一帯が端同士で接続、周期 [B,R,B,G,B,R,B,G]。T₀ = 全△、T₁ = 全▽。",
 
   // K₈ three-factor decomposition (ColorCube extension)
   theory_cube_k8_annotation: "K₈ = Q₃ ∪ (K₄⊔K₄) ∪ M₄　度数: 3+3+1=7",
@@ -327,7 +327,7 @@ export const ja: Record<TranslationKey, string> = {
     "立方体の8頂点は相補的な2つの四面体に分かれます: T0（偶数ハミング重み）とT1（奇数重み）。T0 = {Black, M, C, Y} はXOR下でKlein四群V\u2084を形成。T0を切頂すると8色の面 \u2014 4三角形（T0）と4六角形（T1）\u2014 が得られます。欠落4辺は補色対 {v, v\u22957} です。",
 
   // Truncated tetrahedron labels
-  theory_dice_trunc: "正八面体の展開図",
+  theory_dice_trunc: "D8カラーダイス",
   theory_dice_trunc_annotation: "Gray code順に8面を展開。隣接面=ハミング距離1(1ch反転)。チャネル列 B,R,B,G,B,R,B は回文",
 
   // AG(3,2) affine planes (Connections extension)
@@ -342,7 +342,7 @@ export const ja: Record<TranslationKey, string> = {
   theory_dice_tetra_t1: "T1: 奇数重み",
   theory_dice_tetra_subgroup: "T0 = {Black, M, C, Y} = XOR下のKlein四群 V\u2084",
   theory_dice_tetra_face_xor: "面定理: 面の3頂点の XOR = 対頂点の色",
-  theory_tetra_star_net: "星型展開図",
+  theory_tetra_star_net: "展開図",
   theory_tetra_star_t0: "Black中心 + CMY = 減法混色の原型",
   theory_tetra_star_t1: "White中心 + RGB = 加法混色の原型",
   theory_trunc_net: "補色対面",

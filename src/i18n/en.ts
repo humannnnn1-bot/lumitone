@@ -195,7 +195,7 @@ export const en = {
   theory_zigzag_title: "Luma Zigzag",
   theory_zigzag_desc:
     "Fully saturated colors (max channel = 255, min = 0) trace a 6-segment zigzag as hue rotates. Each segment toggles one channel; the slope is proportional to its BT.601 coefficient. Horizontal lines at each vertex luma value intersect the zigzag at 1 or 3 points \u2014 these are the equal-luma candidates. The maximum is 4 (between vertices). For any hue angle h, Y(h) + Y(h+180\u00b0) = 255 \u2014 complementary colors always sum to the same luma. This is universal for any coefficients summing to 1.",
-  theory_dice_title: "Color Die",
+  theory_dice_title: "D6 Color Die",
   theory_dice_desc:
     "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule. This is a universal theorem: for any positive luma coefficients with no ties, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7. The staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously. Among the 11 cube nets, only this staircase arranges faces in hue-circle order. The octahedron has a dual Gray-code strip net; both share 384 spanning trees (dual matroid theorem).",
   theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
@@ -298,13 +298,13 @@ export const en = {
   theory_polar_hint: "Click primaries or secondaries to mix",
 
   // Octahedron (chromatic cross-polytope)
-  theory_octa_title: "Chromatic Octahedron",
+  theory_octa_title: "Color Diamond",
   theory_octa_desc:
     "Dual of the color cube. 6 vertices = 6 chromatic colors (primaries on +axis, CMY on \u2212axis), 8 faces = 8 GF(2)\u00b3 elements (each octant maps to one color). 3 complement axes R\u2194C, G\u2194M, B\u2194Y connect antipodal vertices. The face-adjacency graph is Q\u2083 \u2014 the color cube itself.",
   theory_octa_axes: "Complement axes",
-  theory_octa_net: "Net",
-  theory_octa_net_desc:
-    "Since the face-adjacency graph is Q\u2083, octahedron nets correspond 1-to-1 with spanning trees of Q\u2083. This strip net arranges 8 faces in Gray code order \u2014 channel toggles form a palindrome B,R,B,G,B,R,B. Dual to the Color Dice\u2019s hue-circle net; both have 384 spanning trees (dual matroid theorem).",
+  theory_octa_net_gray: "Gray code",
+  theory_octa_net_gray_desc:
+    "Hamiltonian cycle on Q\u2083 in Gray code order. Channel toggles form palindrome B,R,B,G,B,R,B. Closing toggle G completes the cycle (G\u2192K). Chainable: identical strips connect end-to-end, period [B,R,B,G,B,R,B,G]. T\u2080 = all \u25b3, T\u2081 = all \u25bd.",
 
   // K₈ three-factor decomposition (ColorCube extension)
   theory_cube_k8_annotation: "K₈ = Q₃ ∪ (K₄⊔K₄) ∪ M₄  degrees: 3+3+1=7",
@@ -327,7 +327,7 @@ export const en = {
     "The cube\u2019s 8 vertices split into two complementary tetrahedra: T0 (even Hamming weight) and T1 (odd weight). T0 = {Black, M, C, Y} forms the Klein four-group V\u2084 under XOR. Truncating T0 yields 8 colored faces \u2014 4 triangles (T0) and 4 hexagons (T1). The 4 missing edges are the complement pairs {v, v\u22957}.",
 
   // Truncated tetrahedron labels
-  theory_dice_trunc: "Octahedron net",
+  theory_dice_trunc: "D8 Color Die",
   theory_dice_trunc_annotation:
     "8 faces in Gray code order. Adjacent = Hamming dist 1 (1 channel flip). Channel sequence B,R,B,G,B,R,B is a palindrome",
 
@@ -343,7 +343,7 @@ export const en = {
   theory_dice_tetra_t1: "T1: odd weight",
   theory_dice_tetra_subgroup: "T0 = {Black, M, C, Y} = Klein four-group V\u2084 under XOR",
   theory_dice_tetra_face_xor: "Face theorem: XOR of 3 face vertices = the opposite vertex",
-  theory_tetra_star_net: "Star nets",
+  theory_tetra_star_net: "Nets",
   theory_tetra_star_t0: "Black center + CMY = subtractive prototype",
   theory_tetra_star_t1: "White center + RGB = additive prototype",
   theory_trunc_net: "Opposite faces",

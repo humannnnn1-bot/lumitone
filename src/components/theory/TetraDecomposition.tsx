@@ -12,6 +12,7 @@ import {
 import { C, FS, FW, SP } from "../../tokens";
 import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
+import { OctaNet } from "./Octahedron";
 
 interface Props {
   hlLevel: number | null;
@@ -170,12 +171,19 @@ function MiniTetra({
 }
 
 /* ── Star net for tetrahedron: 1 center face + 3 surrounding ── */
-const STAR_W = 120,
-  STAR_H = 110;
-const STAR_S = 30; // triangle side
-const STAR_TH = (STAR_S * Math.sqrt(3)) / 2;
+/* ── Tetrahedron net: 4 triangles forming one big equilateral triangle ──
+   Layout (2 rows × 3 cols in triangular grid):
+     Row 0:       △ (top face)
+     Row 1:  △    ▽    △   (left, center inverted, right)
+   Center ▽ = achromatic face (K for T0, W for T1).
+   3 surrounding △ faces share edges with center, forming a big △. */
 
-function StarNet({
+const TNET_S = 36;
+const TNET_TH = (TNET_S * Math.sqrt(3)) / 2;
+const TNET_W = 120;
+const TNET_H = 90;
+
+function TetraNet({
   verts,
   label,
   hl,
@@ -190,59 +198,54 @@ function StarNet({
 }) {
   const faces = tetraFaces(verts);
   const faceColor = (f: [number, number, number]) => f[0] ^ f[1] ^ f[2];
-  // Center face: T0 → Black(0), T1 → White(7).
-  // T0={0,3,5,6}: face {3,5,6} has color 3⊕5⊕6=0 (Black). Surround: M(3),C(5),Y(6).
-  // T1={1,2,4,7}: face {1,2,4} has color 1⊕2⊕4=7 (White). Surround: R(2),G(4),B(1).
-  // Select center by achromatic color (0 or 7):
   const achromaticColor = verts.includes(0) ? 0 : 7;
   const centerFaceIdx = faces.findIndex((f) => faceColor(f) === achromaticColor);
   const centerColor = faceColor(faces[centerFaceIdx]);
   const surroundFaces = faces.filter((_, i) => i !== centerFaceIdx);
-
-  const cx = STAR_W / 2,
-    cy = STAR_H / 2 - 2;
-
-  // Center triangle (pointing up)
-  const centerPts = `${cx - STAR_S / 2},${cy + STAR_TH / 3} ${cx},${cy - (2 * STAR_TH) / 3} ${cx + STAR_S / 2},${cy + STAR_TH / 3}`;
-
-  // 3 surrounding equilateral triangles — each shares a vertex with center
-  const surroundData = [
-    // top: vertex-touches center's top vertex B, points down
-    {
-      pts: `${cx - STAR_S / 2},${cy - (2 * STAR_TH) / 3 - STAR_TH} ${cx},${cy - (2 * STAR_TH) / 3} ${cx + STAR_S / 2},${cy - (2 * STAR_TH) / 3 - STAR_TH}`,
-      lx: cx,
-      ly: cy - (4 * STAR_TH) / 3,
-    },
-    // bottom-left: vertex-touches center's bottom-left vertex A, points down
-    {
-      pts: `${cx - (3 * STAR_S) / 2},${cy + STAR_TH / 3} ${cx - STAR_S / 2},${cy + STAR_TH / 3} ${cx - STAR_S},${cy + STAR_TH / 3 + STAR_TH}`,
-      lx: cx - STAR_S,
-      ly: cy + (2 * STAR_TH) / 3,
-    },
-    // bottom-right: vertex-touches center's bottom-right vertex C, points down
-    {
-      pts: `${cx + STAR_S / 2},${cy + STAR_TH / 3} ${cx + (3 * STAR_S) / 2},${cy + STAR_TH / 3} ${cx + STAR_S},${cy + STAR_TH / 3 + STAR_TH}`,
-      lx: cx + STAR_S,
-      ly: cy + (2 * STAR_TH) / 3,
-    },
-  ];
-
-  // Sort surround faces to match positions (top, bottom-left, bottom-right) by their color
   const sortedSurround = [...surroundFaces].sort((a, b) => faceColor(a) - faceColor(b));
+
+  const hS = TNET_S / 2;
+  const ox = (TNET_W - 3 * hS) / 2; // center the 3-column grid
+  const oy = 6;
+
+  // Triangle vertex computation (same grid system as OctaNet)
+  const tri = (col: number, row: number, up: boolean) => {
+    const bx = ox + col * hS;
+    const by = oy + row * TNET_TH;
+    if (up) {
+      return {
+        pts: `${bx},${by + TNET_TH} ${bx + hS},${by} ${bx + 2 * hS},${by + TNET_TH}`,
+        lx: bx + hS,
+        ly: by + TNET_TH * 0.62,
+      };
+    }
+    return {
+      pts: `${bx},${by} ${bx + hS},${by + TNET_TH} ${bx + 2 * hS},${by}`,
+      lx: bx + hS,
+      ly: by + TNET_TH * 0.38,
+    };
+  };
+
+  // 4 faces: top △, bottom-left △, center ▽, bottom-right △
+  const layout: { pts: string; lx: number; ly: number; color: number }[] = [
+    { ...tri(1, 0, true), color: faceColor(sortedSurround[0]) }, // top
+    { ...tri(0, 1, true), color: faceColor(sortedSurround[1]) }, // bottom-left
+    { ...tri(1, 1, false), color: centerColor }, // center ▽
+    { ...tri(2, 1, true), color: faceColor(sortedSurround[2]) }, // bottom-right
+  ];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-      <svg viewBox={`0 0 ${STAR_W} ${STAR_H}`} style={{ width: STAR_W, height: STAR_H }}>
-        {/* Center face */}
-        {(() => {
-          const info = THEORY_LEVELS[centerColor];
-          const active = hl === centerColor;
+      <svg viewBox={`0 0 ${TNET_W} ${TNET_H}`} style={{ width: TNET_W, height: TNET_H }}>
+        {layout.map((face, i) => {
+          const info = THEORY_LEVELS[face.color];
+          const active = hl === face.color;
           const dim = hl !== null && !active;
           return (
-            <g onMouseEnter={() => onEnter(centerColor)} onMouseLeave={onLeave} style={{ cursor: "default" }}>
+            <g key={`tn-${i}`} onMouseEnter={() => onEnter(face.color)} onMouseLeave={onLeave} style={{ cursor: "default" }}>
               <polygon
-                points={centerPts}
-                fill={centerColor === 0 ? C.bgRoot : info.color}
+                points={face.pts}
+                fill={face.color === 0 ? C.bgRoot : info.color}
                 fillOpacity={active ? 0.5 : dim ? 0.08 : 0.3}
                 stroke={active ? "#fff" : info.color}
                 strokeWidth={active ? 1.5 : 0.8}
@@ -250,48 +253,14 @@ function StarNet({
                 strokeLinejoin="round"
               />
               <text
-                x={cx}
-                y={cy}
+                x={face.lx}
+                y={face.ly}
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={10}
                 fontWeight={700}
                 fontFamily="monospace"
-                fill={centerColor === 0 ? "#888" : centerColor >= 4 ? "#000" : "#fff"}
-                opacity={dim ? 0.2 : 0.9}
-              >
-                {info.short}
-              </text>
-            </g>
-          );
-        })()}
-        {/* Surrounding faces */}
-        {sortedSurround.map((sf, i) => {
-          const sc = faceColor(sf);
-          const info = THEORY_LEVELS[sc];
-          const active = hl === sc;
-          const dim = hl !== null && !active;
-          const d = surroundData[i];
-          return (
-            <g key={`sf-${i}`} onMouseEnter={() => onEnter(sc)} onMouseLeave={onLeave} style={{ cursor: "default" }}>
-              <polygon
-                points={d.pts}
-                fill={info.color}
-                fillOpacity={active ? 0.5 : dim ? 0.08 : 0.3}
-                stroke={active ? "#fff" : info.color}
-                strokeWidth={active ? 1.5 : 0.8}
-                strokeOpacity={dim ? 0.15 : 0.7}
-                strokeLinejoin="round"
-              />
-              <text
-                x={d.lx}
-                y={d.ly}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={10}
-                fontWeight={700}
-                fontFamily="monospace"
-                fill={sc >= 4 ? "#000" : "#fff"}
+                fill={face.color === 0 ? "#888" : face.color >= 4 ? "#000" : "#fff"}
                 opacity={dim ? 0.2 : 0.9}
               >
                 {info.short}
@@ -300,25 +269,10 @@ function StarNet({
           );
         })}
       </svg>
-      <span style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, textAlign: "center", maxWidth: STAR_W }}>{label}</span>
+      <span style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, textAlign: "center", maxWidth: TNET_W }}>{label}</span>
     </div>
   );
 }
-
-/* ── Octahedron Gray code strip net ──
-   8 faces in Gray code order: [0,1,3,2,6,7,5,4]
-   Channel toggles: B,R,B,G,B,R,B (palindrome)
-   Adjacent faces = Hamming distance 1. Complement pairs = opposite faces. ── */
-
-const ON_S = 36; // triangle side length
-const ON_TH = (ON_S * Math.sqrt(3)) / 2; // triangle height
-const ON_SEQ = [0, 1, 3, 2, 6, 7, 5, 4]; // Gray code face order
-const ON_CH = ["B", "R", "B", "G", "B", "R", "B"]; // channel toggles
-const ON_CH_COLORS: Record<string, string> = { G: "#00ff00", R: "#ff0000", B: "#0000ff" };
-const ON_W = 8 * (ON_S / 2) + ON_S + 20; // total width with padding
-const ON_H = ON_TH + 30; // height with room for labels
-const ON_SX = (ON_W - 8 * (ON_S / 2)) / 2; // start X to center
-const ON_SY = 8; // start Y
 
 /* ── Complement pairs: 4 pairs shown side by side ── */
 const PAIR_W = 56,
@@ -471,102 +425,18 @@ export const TetraDecomposition = React.memo(function TetraDecomposition({ hlLev
         {t("theory_tetra_star_net")}
       </p>
       <div style={{ display: "flex", gap: SP.xl, justifyContent: "center", flexWrap: "wrap" }}>
-        <StarNet verts={TETRA_T0} label={t("theory_tetra_star_t0")} hl={hl} onEnter={enter} onLeave={leave} />
-        <StarNet verts={TETRA_T1} label={t("theory_tetra_star_t1")} hl={hl} onEnter={enter} onLeave={leave} />
+        <TetraNet verts={TETRA_T0} label={t("theory_tetra_star_t0")} hl={hl} onEnter={enter} onLeave={leave} />
+        <TetraNet verts={TETRA_T1} label={t("theory_tetra_star_t1")} hl={hl} onEnter={enter} onLeave={leave} />
       </div>
 
-      {/* Truncated Tetrahedron flower net */}
+      {/* D8 Color Die — Gray code strip net */}
       <p
         className="theory-annotation"
         style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.accentBright, margin: 0, fontWeight: FW.bold }}
       >
         {t("theory_dice_trunc")}
       </p>
-      <svg viewBox={`0 0 ${ON_W} ${ON_H}`} style={{ width: "100%", maxWidth: ON_W }}>
-        {/* 8 triangular faces in Gray code zigzag */}
-        {ON_SEQ.map((color, i) => {
-          const info = THEORY_LEVELS[color];
-          const isUp = i % 2 === 0;
-          const bx = ON_SX + i * (ON_S / 2);
-          const x0 = bx,
-            x1 = bx + ON_S / 2,
-            x2 = bx + ON_S;
-          const pts = isUp
-            ? `${x0},${ON_SY + ON_TH} ${x1},${ON_SY} ${x2},${ON_SY + ON_TH}`
-            : `${x0},${ON_SY} ${x1},${ON_SY + ON_TH} ${x2},${ON_SY}`;
-          const ly = isUp ? ON_SY + ON_TH * 0.62 : ON_SY + ON_TH * 0.38;
-          const active = hl === color;
-          const dim = hl !== null && !active;
-          return (
-            <g key={`on${i}`} onMouseEnter={() => enter(color)} onMouseLeave={leave} style={{ cursor: "default" }}>
-              <polygon
-                points={pts}
-                fill={color === 0 ? C.bgRoot : info.color}
-                fillOpacity={active ? 0.5 : dim ? 0.08 : 0.25}
-                stroke={active ? "#fff" : info.color}
-                strokeWidth={active ? 1.5 : 0.8}
-                strokeOpacity={dim ? 0.15 : 0.7}
-                strokeLinejoin="round"
-              />
-              <text
-                x={x1}
-                y={ly - 4}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={10}
-                fontWeight={900}
-                fontFamily="monospace"
-                fill={color === 0 || color === 1 ? "#fff" : color === 7 ? "#000" : info.color}
-                opacity={dim ? 0.2 : 0.95}
-              >
-                {info.short}
-              </text>
-              <text
-                x={x1}
-                y={ly + 6}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={7}
-                fontFamily="monospace"
-                fill={color === 0 ? "#555" : color >= 4 ? "rgba(0,0,0,0.45)" : "rgba(255,255,255,0.5)"}
-                opacity={dim ? 0.1 : 0.7}
-              >
-                {info.bits.join("")}
-              </text>
-            </g>
-          );
-        })}
-        {/* Channel toggle labels between triangles */}
-        {ON_CH.map((ch, i) => (
-          <text
-            key={`oc${i}`}
-            x={ON_SX + (i + 1) * (ON_S / 2)}
-            y={ON_SY + ON_TH + 14}
-            textAnchor="middle"
-            fontSize={8}
-            fontFamily="monospace"
-            fontWeight={700}
-            fill={ON_CH_COLORS[ch]}
-            opacity={0.75}
-          >
-            {ch}
-          </text>
-        ))}
-      </svg>
-      <p
-        className="theory-annotation"
-        style={{
-          fontSize: FS.xs,
-          fontFamily: "monospace",
-          color: C.textDimmer,
-          margin: 0,
-          textAlign: "center",
-          maxWidth: 340,
-          lineHeight: 1.5,
-        }}
-      >
-        {t("theory_dice_trunc_annotation")}
-      </p>
+      <OctaNet mode="gray" hl={hl} onEnter={enter} onLeave={leave} t={t} />
 
       {/* Truncated tetrahedron flower net */}
       <p

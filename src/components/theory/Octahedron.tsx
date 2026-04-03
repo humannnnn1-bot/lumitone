@@ -10,16 +10,53 @@ const W = 300,
 const DOT_R = 13;
 const CY = 150;
 
-/* ── Gray code strip net (8 triangular faces in zigzag) ── */
-const GRAY_CODE_SEQ = [0, 1, 3, 2, 6, 7, 5, 4]; // face colors in Gray code order
-const GRAY_CHANNELS = ["B", "R", "B", "G", "B", "R", "B"]; // channel toggles (palindrome)
-const GRAY_CH_COLORS: Record<string, string> = { G: "#00ff00", R: "#ff0000", B: "#0000ff" };
-const NET_W = 300,
-  NET_H = 90;
+/* ── Net shared constants ── */
 const TRI_S = 32; // triangle side length
 const TRI_H_VAL = (TRI_S * Math.sqrt(3)) / 2; // triangle height
-const NET_START_X = (NET_W - (8 * TRI_S) / 2) / 2; // center the strip
-const NET_START_Y = (NET_H - TRI_H_VAL) / 2 + 4;
+const CH_COLORS: Record<string, string> = { G: "#00ff00", R: "#ff0000", B: "#0000ff" };
+
+interface NetTriangle {
+  color: number;
+  col: number;
+  row: number;
+  up: boolean;
+}
+
+/* ── Gray Code Strip (Hamiltonian cycle on Q₃) ──
+   Sequence: K─B─M─R─Y─W─C─G  toggles B,R,B,G,B,R,B (palindrome)
+   T₀ = all △ faces {K,M,Y,C}, T₁ = all ▽ faces {B,R,W,G}.
+   Stella octangula visible as alternating up/down parity. */
+
+const GRAY_NET: NetTriangle[] = [
+  { color: 0, col: 0, row: 0, up: true }, // K △
+  { color: 1, col: 1, row: 0, up: false }, // B ▽
+  { color: 3, col: 2, row: 0, up: true }, // M △
+  { color: 2, col: 3, row: 0, up: false }, // R ▽
+  { color: 6, col: 4, row: 0, up: true }, // Y △
+  { color: 7, col: 5, row: 0, up: false }, // W ▽
+  { color: 5, col: 6, row: 0, up: true }, // C △
+  { color: 4, col: 7, row: 0, up: false }, // G ▽
+];
+
+const GRAY_CHANNELS: { x: number; y: number; ch: string }[] = [
+  { x: 0.5, y: 0, ch: "B" },
+  { x: 1.5, y: 0, ch: "R" },
+  { x: 2.5, y: 0, ch: "B" },
+  { x: 3.5, y: 0, ch: "G" },
+  { x: 4.5, y: 0, ch: "B" },
+  { x: 5.5, y: 0, ch: "R" },
+  { x: 6.5, y: 0, ch: "B" },
+];
+
+const GRAY_COMP_PAIRS: [number, number][] = [
+  [0, 7],
+  [1, 6],
+  [2, 5],
+  [3, 4],
+];
+
+const GRAY_W = 300;
+const GRAY_H = 80;
 
 /* ── 3D lighting model ── */
 
@@ -130,6 +167,172 @@ function isOctaBackEdge(a: number, b: number): boolean {
   return OCTA_BACK_EDGES.has(a < b ? `${a}-${b}` : `${b}-${a}`);
 }
 
+/* ── Generic net renderer ── */
+
+/** Compute triangle vertices in SVG coordinates from grid position */
+function triPoints(col: number, row: number, up: boolean, originX: number, originY: number): { pts: string; cx: number; cy: number } {
+  const halfS = TRI_S / 2;
+  // Each column occupies halfS width. Each row occupies TRI_H_VAL height.
+  const baseX = originX + col * halfS;
+  const baseY = originY + row * TRI_H_VAL;
+  let pts: string;
+  let cy: number;
+  if (up) {
+    // △: flat edge at bottom, apex at top
+    pts = `${baseX},${baseY + TRI_H_VAL} ${baseX + halfS},${baseY} ${baseX + halfS * 2},${baseY + TRI_H_VAL}`;
+    cy = baseY + TRI_H_VAL * 0.62;
+  } else {
+    // ▽: flat edge at top, apex at bottom
+    pts = `${baseX},${baseY} ${baseX + halfS},${baseY + TRI_H_VAL} ${baseX + halfS * 2},${baseY}`;
+    cy = baseY + TRI_H_VAL * 0.38;
+  }
+  return { pts, cx: baseX + halfS, cy };
+}
+
+interface OctaNetProps {
+  mode: "gray";
+  hl: number | null;
+  onEnter: (lv: number) => void;
+  onLeave: () => void;
+  t: (key: string) => string;
+}
+
+export const OctaNet = React.memo(function OctaNet({ hl, onEnter, onLeave, t }: OctaNetProps) {
+  const faces = GRAY_NET;
+  const channels = GRAY_CHANNELS;
+  const compPairs = GRAY_COMP_PAIRS;
+  const svgW = GRAY_W;
+  const svgH = GRAY_H;
+  const descKey = "theory_octa_net_gray_desc";
+
+  // Compute origin to center the net
+  const minCol = Math.min(...faces.map((f) => f.col));
+  const maxCol = Math.max(...faces.map((f) => f.col));
+  const minRow = Math.min(...faces.map((f) => f.row));
+  const maxRow = Math.max(...faces.map((f) => f.row));
+  const netPixelW = (maxCol - minCol + 2) * (TRI_S / 2);
+  const netPixelH = (maxRow - minRow + 1) * TRI_H_VAL;
+  const originX = (svgW - netPixelW) / 2 - minCol * (TRI_S / 2);
+  const originY = (svgH - netPixelH) / 2 - minRow * TRI_H_VAL - 2;
+
+  // Build a map from color → centroid for complement connectors
+  const colorCentroids = new Map<number, { cx: number; cy: number }>();
+  for (const f of faces) {
+    const { cx, cy } = triPoints(f.col, f.row, f.up, originX, originY);
+    colorCentroids.set(f.color, { cx, cy });
+  }
+
+  // Highlight complement
+  const hlComp = hl !== null ? hl ^ 7 : null;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
+      <svg viewBox={`0 0 ${svgW} ${svgH}`} style={{ width: "100%", maxWidth: svgW }} role="img" aria-label={t("theory_octa_net_gray")}>
+        {/* Complement pair dashed connectors */}
+        {compPairs.map(([a, b]) => {
+          const ca = colorCentroids.get(a);
+          const cb = colorCentroids.get(b);
+          if (!ca || !cb) return null;
+          const pairActive = hl === a || hl === b;
+          const pairDim = hl !== null && !pairActive;
+          return (
+            <line
+              key={`comp-${a}-${b}`}
+              x1={ca.cx}
+              y1={ca.cy}
+              x2={cb.cx}
+              y2={cb.cy}
+              stroke={pairActive ? "#fff" : C.textDimmer}
+              strokeWidth={pairActive ? 1.2 : 0.6}
+              strokeDasharray="3 3"
+              opacity={pairDim ? 0.08 : pairActive ? 0.5 : 0.2}
+            />
+          );
+        })}
+
+        {/* Triangular faces */}
+        {faces.map((f, i) => {
+          const info = THEORY_LEVELS[f.color];
+          const { pts, cx, cy } = triPoints(f.col, f.row, f.up, originX, originY);
+          const active = hl === f.color || hlComp === f.color;
+          const dim = hl !== null && !active;
+          const isComp = hlComp === f.color;
+          return (
+            <g
+              key={`nf-${i}`}
+              onMouseEnter={() => onEnter(f.color >= 1 && f.color <= 6 ? f.color : f.color === 0 ? 0 : 7)}
+              onMouseLeave={onLeave}
+              style={{ cursor: "default" }}
+            >
+              <polygon
+                points={pts}
+                fill={f.color === 0 ? C.bgRoot : info.color}
+                fillOpacity={active ? 0.5 : dim ? 0.08 : 0.25}
+                stroke={isComp ? "#fff" : active ? "#fff" : info.color}
+                strokeWidth={active ? 1.5 : 0.8}
+                strokeOpacity={dim ? 0.15 : 0.7}
+                strokeDasharray={isComp ? "3 2" : "none"}
+                strokeLinejoin="round"
+              />
+              <text
+                x={cx}
+                y={cy}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={9}
+                fontWeight={700}
+                fontFamily="monospace"
+                fill={f.color === 0 || f.color === 1 ? "#fff" : f.color === 7 ? "#000" : info.color}
+                opacity={dim ? 0.2 : 0.9}
+              >
+                {info.short}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Channel toggle labels */}
+        {channels.map((ch, i) => {
+          const halfS = TRI_S / 2;
+          let tx: number, ty: number;
+          if (ch.y % 1 !== 0) {
+            // Vertical channel (between rows)
+            tx = originX + ch.x * halfS + halfS;
+            ty = originY + ch.y * TRI_H_VAL + TRI_H_VAL * 0.5;
+            // Offset to the right to avoid overlapping the triangle
+            tx += 14;
+          } else {
+            // Horizontal channel (between columns in same row)
+            tx = originX + ch.x * halfS + halfS;
+            ty = originY + ch.y * TRI_H_VAL + TRI_H_VAL + 14;
+          }
+          return (
+            <text
+              key={`ch-${i}`}
+              x={tx}
+              y={ty}
+              textAnchor="middle"
+              fontSize={7}
+              fontFamily="monospace"
+              fontWeight={700}
+              fill={CH_COLORS[ch.ch]}
+              opacity={0.7}
+            >
+              {ch.ch}
+            </text>
+          );
+        })}
+      </svg>
+      <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xxs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center", maxWidth: 300 }}
+      >
+        {t(descKey)}
+      </p>
+    </div>
+  );
+});
+
 interface Props {
   hlLevel: number | null;
   onHover: (lv: number | null) => void;
@@ -140,7 +343,6 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
   const [pinned, setPinned] = useState<number | null>(null);
   usePinReset(setPinned);
   const [showAxes, setShowAxes] = useState(false);
-  const [showNet, setShowNet] = useState(false);
   const [hlFace, setHlFace] = useState<number | null>(null);
 
   const hl = hlLevel !== null && hlLevel >= 1 && hlLevel <= 6 ? hlLevel : pinned;
@@ -339,101 +541,8 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
         })}
       </svg>
 
-      {/* Gray code strip net */}
-      {showNet && (
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
-          <svg viewBox={`0 0 ${NET_W} ${NET_H}`} style={{ width: "100%", maxWidth: NET_W }} role="img" aria-label={t("theory_octa_net")}>
-            {GRAY_CODE_SEQ.map((color, i) => {
-              const info = THEORY_LEVELS[color];
-              const isUp = i % 2 === 0; // even index = pointing up
-              const baseX = NET_START_X + i * (TRI_S / 2);
-              const x0 = baseX;
-              const x1 = baseX + TRI_S / 2;
-              const x2 = baseX + TRI_S;
-              let pts: string;
-              let labelY: number;
-              if (isUp) {
-                pts = `${x0},${NET_START_Y + TRI_H_VAL} ${x1},${NET_START_Y} ${x2},${NET_START_Y + TRI_H_VAL}`;
-                labelY = NET_START_Y + TRI_H_VAL * 0.62;
-              } else {
-                pts = `${x0},${NET_START_Y} ${x1},${NET_START_Y + TRI_H_VAL} ${x2},${NET_START_Y}`;
-                labelY = NET_START_Y + TRI_H_VAL * 0.38;
-              }
-              const active = hl === color;
-              const dim = hl !== null && !active;
-              return (
-                <g
-                  key={`net-${i}`}
-                  onMouseEnter={() => onEnter(color >= 1 && color <= 6 ? color : color === 0 ? 0 : 7)}
-                  onMouseLeave={onLeave}
-                  style={{ cursor: "default" }}
-                >
-                  <polygon
-                    points={pts}
-                    fill={color === 0 ? C.bgRoot : info.color}
-                    fillOpacity={active ? 0.5 : dim ? 0.08 : 0.25}
-                    stroke={active ? "#fff" : info.color}
-                    strokeWidth={active ? 1.5 : 0.8}
-                    strokeOpacity={dim ? 0.15 : 0.7}
-                    strokeLinejoin="round"
-                  />
-                  <text
-                    x={x1}
-                    y={labelY}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fontSize={9}
-                    fontWeight={700}
-                    fontFamily="monospace"
-                    fill={color === 0 || color === 1 ? "#fff" : color === 7 ? "#000" : info.color}
-                    opacity={dim ? 0.2 : 0.9}
-                  >
-                    {info.short}
-                  </text>
-                </g>
-              );
-            })}
-            {/* Channel toggle labels between triangles */}
-            {GRAY_CHANNELS.map((ch, i) => {
-              const x = NET_START_X + (i + 1) * (TRI_S / 2);
-              return (
-                <text
-                  key={`ch-${i}`}
-                  x={x}
-                  y={NET_START_Y + TRI_H_VAL + 14}
-                  textAnchor="middle"
-                  fontSize={7}
-                  fontFamily="monospace"
-                  fontWeight={700}
-                  fill={GRAY_CH_COLORS[ch]}
-                  opacity={0.7}
-                >
-                  {ch}
-                </text>
-              );
-            })}
-          </svg>
-          <p
-            className="theory-annotation"
-            style={{ fontSize: FS.xxs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center", maxWidth: 300 }}
-          >
-            {t("theory_octa_net_desc")}
-          </p>
-        </div>
-      )}
-
       {/* Toggle buttons */}
       <div style={{ display: "flex", gap: SP.md, flexWrap: "wrap", justifyContent: "center" }}>
-        <button
-          style={{
-            ...S_BTN,
-            borderColor: showNet ? C.accentBright : C.border,
-            color: showNet ? C.accentBright : C.textMuted,
-          }}
-          onClick={() => setShowNet((v) => !v)}
-        >
-          {t("theory_octa_net")}
-        </button>
         <button
           style={{
             ...S_BTN,
