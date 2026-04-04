@@ -150,7 +150,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
           const cat = FANO_LINE_CATEGORIES[li];
           const baseOpacity = dim ? 0.12 : active ? 0.9 : 0.3;
           const strokeColor = cat === "primary" ? "#80a0ff" : cat === "complement" ? "#ffa060" : "#60ffa0";
-          const strokeDash = cat === "primary" ? "none" : cat === "complement" ? "6,4" : "2,3";
+          const strokeDash = "none";
           const isCmyLine = li === 6; // The CMY circle/line
           const finalOpacity = isCmyLine ? baseOpacity : baseOpacity * lineOpacityMul;
 
@@ -244,12 +244,23 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
               x: (FANO_POINTS[line[0]].x + FANO_POINTS[line[1]].x + FANO_POINTS[line[2]].x) / 3,
               y: (FANO_POINTS[line[0]].y + FANO_POINTS[line[1]].y + FANO_POINTS[line[2]].y) / 3,
             };
-            const dx = mid.x - FANO_CIRCLE.cx,
-              dy = mid.y - FANO_CIRCLE.cy;
-            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-            const ox = mid.x + (dx / dist) * 32,
-              oy = mid.y + (dy / dist) * 32;
+            // For complement lines (through center 7), use midpoint of the two non-7 endpoints
             const cat = FANO_LINE_CATEGORIES[li];
+            const isComplement = cat === "complement";
+            const nonCenter = line.filter((p) => p !== 7);
+            const anchor =
+              isComplement && nonCenter.length === 2
+                ? {
+                    x: (FANO_POINTS[nonCenter[0]].x + FANO_POINTS[nonCenter[1]].x) / 2,
+                    y: (FANO_POINTS[nonCenter[0]].y + FANO_POINTS[nonCenter[1]].y) / 2,
+                  }
+                : mid;
+            const dx = anchor.x - FANO_CIRCLE.cx,
+              dy = anchor.y - FANO_CIRCLE.cy;
+            const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            const push = 32;
+            const ox = anchor.x + (dx / dist) * push,
+              oy = anchor.y + (dy / dist) * push;
             const labelColor = cat === "primary" ? "#80a0ff" : cat === "complement" ? "#ffa060" : "#60ffa0";
             const mixLabel = `${COLOR_NAMES[line[0]]} + ${COLOR_NAMES[line[1]]} = ${COLOR_NAMES[line[2]]}`;
             return (
@@ -312,7 +323,9 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
           const dim = hl !== null && !active;
           const isCmy = [3, 5, 6].includes(lv);
           const isRgbOrW = [1, 2, 4, 7].includes(lv);
-          const pointOpacity = isCmyAnimating && isRgbOrW ? rgbOpacity : 1;
+          // Dim node 7 when CMY closure line (li=6) is highlighted, so equation label is readable
+          const cmyLineActive = hlLines.includes(6) && isLineVisible(6);
+          const pointOpacity = isCmyAnimating && isRgbOrW ? rgbOpacity : lv === 7 && cmyLineActive ? 0.25 : 1;
           const pointR = isCmyAnimating && isCmy ? DOT_R + animT * 2 : DOT_R;
           return (
             <g
@@ -392,8 +405,8 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
         <div style={{ display: "flex", gap: SP.xl, justifyContent: "center", flexWrap: "wrap" }}>
           {[
             { label: t("theory_fano_primary"), color: "#80a0ff", dash: "none" },
-            { label: t("theory_fano_complement"), color: "#ffa060", dash: "6,4" },
-            { label: t("theory_fano_secondary"), color: "#60ffa0", dash: "2,3" },
+            { label: t("theory_fano_complement"), color: "#ffa060", dash: "none" },
+            { label: t("theory_fano_secondary"), color: "#60ffa0", dash: "none" },
           ].map((item, i) => (
             <span
               key={"lg" + i}

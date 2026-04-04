@@ -194,10 +194,10 @@ export const ja: Record<TranslationKey, string> = {
   theory_binary_luma_complement: "補色ルマ定理: Y\u2096 + Y\u2087\u208b\u2096 = 255（係数の和が1なら任意の係数で成立）",
   theory_zigzag_title: "ルマジグザグ",
   theory_zigzag_desc:
-    "完全飽和色（最大チャンネル=255、最小=0）は色相の回転に従い6区間のジグザグを描く。各区間で1チャンネルが変化し、傾きはBT.601係数に比例。各頂点ルマ値の水平線はジグザグと1または3点で交わる — これが等ルマ候補。最大は4（頂点間）。任意の色相角 h で Y(h) + Y(h+180\u00b0) = 255 — 補色の輝度和は常に一定。係数の和が1なら任意の係数で成立する普遍的性質。",
+    "完全飽和色（最大チャンネル=255、最小=0）は色相の回転に従い6区間のジグザグを描きます。各区間で1チャンネルが変化し、傾きはBT.601係数に比例します。各頂点ルマ値の水平線はジグザグと1点または3点で交わり、その交点が等ルマ候補です。頂点間では最大4点。任意の色相角 h で Y(h) + Y(h+180\u00b0) = 255、すなわち補色のルマ和は常に一定です（補色ルマ定理）。",
   theory_dice_title: "D6\u30ab\u30e9\u30fc\u30c0\u30a4\u30b9",
   theory_dice_desc:
-    "6つの色彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。11種の立方体展開図のうち、この階段型のみが色相環順に面を配列します。八面体にはGrayコード帯状展開図が双対として存在し、両者の全域木の総数は384本で一致します（双対Matroid定理）。",
+    "6つの有彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。11種の立方体展開図のうち、この階段型のみが色相環順に面を配列します。",
   theory_dice_hint:
     "6\u9762 \u2192 8\u9802\u70b9: Black (0) \u3068 White (7) \u3092\u52a0\u3048\u308b\u3068\u30ab\u30e9\u30fc\u30ad\u30e5\u30fc\u30d6\u306b",
   theory_dice_additive_col: "\u52a0\u6cd5 (\u2295)",
@@ -214,17 +214,17 @@ export const ja: Record<TranslationKey, string> = {
     "8レベルは3次元立方体（RGB軸）の頂点です。各辺は1チャンネルの切り替え。BlackとWhiteを両極とし、6色彩頂点が赤道帯を形成します \u2014 重み1の原色層と重み2の二次色層。「赤道」ボタンでアニメーション表示。",
   theory_gray_title: "グレイコード巡回",
   theory_gray_desc:
-    "6色彩頂点はK\u2083,\u2083（原色\u2194二次色）から補色ペア3組を除いた構造 — ちょうど六角形になり、他の辺は存在しません。この唯一の巡回路は1ステップごとに1チャンネルを切り替え: G \u2192 R \u2192 B、カラーホイールと同じ順序。各辺は原色ファノ線上にあり、3本の線を各2回ずつ使います。補色は常にこの六角形上で対蹠（距離3）\u2014 ダイスの対面の和が7になる幾何学的理由です。",
+    "6色彩頂点はK\u2083,\u2083（原色\u2194二次色）から補色ペア3組を除いた構造 — ちょうど六角形になり、他の辺は存在しません。この唯一の巡回路は1ステップごとに1チャンネルを切り替え: G \u2192 R \u2192 B、カラーホイールと同じ順序。各辺は原色三つ組線（次節で詳述）上にあり、3本の線を各2回ずつ使います。補色は常にこの六角形上で対蹠（距離3）\u2014 ダイスの対面の和が7になる幾何学的理由です。",
   theory_gray_toggle: "トグル: {0}",
   theory_gray_cw: "\u21bb 時計回り",
   theory_gray_ccw: "\u21ba 反時計回り",
   theory_gray_pause: "\u23f8 停止",
   theory_xor_title: "XOR 混色",
   theory_xor_desc:
-    "XOR は GF(2)\u00b3 の基本演算 \u2014 このタブのすべての構造を定義する操作です。繰り上がりのない2進加算: 1+1 = 0（繰り上がりなし）。3原色 {G, R, B} はこのベクトル空間の標準基底であり、各レベルはそれらの一意なXOR結合です。各色 c の補色は c \u2295 7、c \u2295 (c \u2295 7) = 7 (White)。ビットが重ならない原色同士では整数加算がXORに一致する（1+4=5=1\u22954）。CMYではビットが重なり繰り上がりが生じる（3+5=8）が、XORは繰り上がりを捨てる（3\u22955=6）。減法混色の「7を引く」規則は、整数算術側での桁あふれ補正に他ならない。",
+    "XOR は GF(2)\u00b3 の基本演算であり、このタブのすべての構造を定義する操作です。繰り上がりのない2進加算で、1 + 1 = 0 となります。3原色 {G, R, B} はこのベクトル空間の標準基底であり、各レベルはそれらの一意なXOR結合です。各色 c の補色は c \u2295 7 であり、c \u2295 (c \u2295 7) = 7 (White) となります。ビットが重ならない原色同士では整数加算がXORに一致します（1+4 = 5 = 1\u22954）。一方CMYではビットが重なり繰り上がりが生じますが（3+5 = 8）、XORはこの繰り上がりを捨てます（3\u22955 = 6）。減法混色の「7を引く」規則は、整数算術側での桁あふれ補正です。",
   theory_hamming_title: "ハミング符号",
   theory_hamming_desc:
-    "パリティビット（B=1, R=2, G=4）はRGB原色。データビット（M=3, C=5, Y=6, W=7）は二次色＋白。各パリティビットは、2進表現にそのビットを含む位置を検査します。ビットを反転させてエラー検出を体験！",
+    "パリティビット（B=1, R=2, G=4）はRGB原色。データビット（M=3, C=5, Y=6, W=7）は二次色＋白。各パリティビットは、2進表現にそのビットを含む位置を検査します。ビットを反転させてエラー検出を体験できます。",
   theory_hamming_parity: "パリティ",
   theory_hamming_checks: "検査対象",
   theory_hamming_flip: "\u8272\u3092\u30af\u30ea\u30c3\u30af\u3057\u3066\u53cd\u8ee2",
@@ -235,7 +235,7 @@ export const ja: Record<TranslationKey, string> = {
   theory_hamming_correct: "訂正 \u2713",
   theory_connections_title: "連関",
   theory_connections_desc:
-    "GF(2)\u00b3 \u304b\u30893\u3064\u306e\u69cb\u6210\u304c\u5c0e\u51fa\u3055\u308c\u307e\u3059: Cube\uff08\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5\uff09\u3001Fano\u5e73\u9762\uff08\u5c04\u5f71\u5316\uff09\u3001Hamming\u7b26\u53f7\uff08\u691c\u67fb\u884c\u5217\u306e\u6838\uff09\u3002XOR\u3068AND\u306fBoolean\u74b0\u3092\u306a\u3059\uff08\u6975\u6027\u30d3\u30e5\u30fc\u53c2\u7167\uff09\u3002\u8272\u5f69\u516d\u89d2\u5f62\u4e0a\u306e\u552f\u4e00\u306e\u30cf\u30df\u30eb\u30c8\u30f3\u9589\u8def\u3067\u3042\u308b\u30b0\u30ec\u30a4\u30b3\u30fc\u30c9\u5de1\u56de\u306f\u3001\u8272\u76f8\u74b0\u30fb\u30c0\u30a4\u30b9\u9762\u96a3\u63a5\u30fb\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5\u306e\u8d64\u9053\u5e2f\u3068\u540c\u6642\u306b\u4e00\u81f4\u3057\u307e\u3059\u3002",
+    "GF(2)\u00b3 というひとつのベクトル空間から、複数の数学的構成が現れます。射影幾何（ファノ平面）と符号理論（ハミング符号）は本質的に同じ入射構造の二つの読み方であり、ケイリーグラフ（立方体）がその幾何的実現を与えます。さらにグレイコード巡回やブール環が加わり、すべてが GF(2)\u00b3 を共通の源泉として結ばれています。",
   theory_conn_fano: "Fano",
   theory_conn_cube: "Cube",
   theory_conn_gray: "Gray",
@@ -245,34 +245,49 @@ export const ja: Record<TranslationKey, string> = {
   theory_conn_edge_adj: "隣接",
   theory_conn_edge_cycle: "巡回",
   theory_conn_edge_parity: "パリティ",
-  theory_cube_equator: "\u8d64\u9053\u30ea\u30f3\u30b0",
+  theory_cube_equator: "\u8d64\u9053\u5e2f",
   theory_cube_complements: "補色対角",
-  theory_conn_conclusion_1: "ひとつのベクトル空間からの3つの構成",
+  theory_conn_conclusion_1: "ひとつのベクトル空間、複数の構成",
   theory_conn_conclusion_2: "GF(2)\u00b3 \u2014 共通の代数的源泉",
   theory_conn_cube_fano: "Cube \u2194 Fano",
   theory_conn_cube_fano_hook:
     "ファノ平面の7本の線は GF(2)\u00b3 の7つの2次元部分空間 \u2014 Black(0)を通るキューブの平面断面に対応します。",
   theory_conn_cube_fano_detail:
     "座標平面3つ \u2192 原色線、対角平面3つ \u2192 補色線、反対角平面1つ \u2192 CMY閉包。各々4頂点（Black含む）を含み非零3点。",
-  theory_conn_fano_hamming: "Fano \u2194 Hamming",
-  theory_conn_fano_hamming_hook: "ファノ線 {a, b, c}（a\u2295b\u2295c = 0）は、ハミング(7,4)の重み3符号語です（d\u2098\u1d62\u2099 = 3）。",
+  theory_conn_fano_hamming: "Fano \u2245 Hamming — 同一構造の二面",
+  theory_conn_fano_hamming_hook:
+    "ファノ平面の点-直線入射行列はハミング(7,4)のパリティ検査行列そのものです。ファノ線 {a, b, c}（a\u2295b\u2295c = 0）は重み3符号語であり（d\u2098\u1d62\u2099 = 3）、二つの理論は同じ構造の異なる読み方です。",
   theory_conn_fano_hamming_detail: "7本の線 = 7つの重み3符号語。重み分布: [1, 0, 0, 7, 7, 0, 0, 1] = 全16符号語。",
   theory_conn_cube_hamming: "Cube \u2194 Hamming",
   theory_conn_cube_hamming_hook: "3つのパリティ検査はキューブを座標超平面で切断し、座標ごとにエラー位置を特定します。",
   theory_conn_cube_hamming_detail: "P1 \u2192 ビット0、P2 \u2192 ビット1、P4 \u2192 ビット2。syndrome = GF(2)\u00b3 上のエラー座標。",
-  theory_conn_source: "4\u3064\u306e\u69cb\u6210\u3001\u3072\u3068\u3064\u306e\u6e90\u6cc9",
+  theory_conn_source: "複数の視点、ひとつの源泉",
   theory_conn_fano_role: "Fano = PG(2,2)\u3001GF(2)\u4e0a\u306e\u5c04\u5f71\u5e73\u9762",
   theory_conn_cube_role:
     "Cube = (GF(2)\u00b3, \u2295) \u306e\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5\uff08\u751f\u6210\u5143 {G, R, B}\uff09",
   theory_conn_hamming_role: "Hamming = GF(2)\u00b3\\{0}\u3092\u5217\u306b\u6301\u3064\u691c\u67fb\u884c\u5217",
   theory_conn_gray_role:
-    "Gray = 色彩赤道上のハミルトン閉路 = 色相環 = ダイス面隣接。色相環 R→Y→G→C→B→M は同時に: (1) Q₃有彩色頂点のHamilton閉路, (2) 八面体頂点グラフのHamilton閉路, (3) 立方体面隣接グラフ(=八面体グラフ)のHamilton閉路。チャネル遷移 G,R,B は周期3で回転。Grayコード拡張 K→B→M→R→Y→W→C→G は回文チャネル列 B,R,B,G,B,R,B を持つQ₃のHamilton閉路。",
+    "Gray = 色彩赤道上のハミルトン閉路 = 色相環 = ダイス面隣接。色相環 R→Y→G→C→B→M は同時に: (1) Q₃有彩色頂点のハミルトン閉路, (2) 八面体頂点グラフのハミルトン閉路, (3) 立方体面隣接グラフ(=八面体グラフ)のハミルトン閉路。チャンネル遷移 G,R,B は周期3で回転。グレイコード拡張 K→B→M→R→Y→W→C→G は回文チャンネル列 B,R,B,G,B,R,B を持つQ₃のハミルトン閉路。",
   theory_conn_polyhedra: "多面体変換ネットワーク",
   theory_conn_polyhedra_desc:
-    "§10–§13の多面体は幾何学的操作で連鎖し、Hamming距離の3層構造（d=1: 辺、d=2: 星形辺、d=3: 補色対角）を保存します。",
+    "§10–§13の多面体は幾何学的操作で連鎖し、ハミング距離の3層構造（d=1: 辺、d=2: 星形辺、d=3: 補色対角）を保存します。八面体にはグレイコード帯状展開図が双対として存在し、立方体・八面体の全域木の総数は共に384本（双対マトロイド定理）。",
   theory_conn_extended: "Black を全体パリティビットとして追加すると [8,4,4] 拡張ハミング符号になる",
   theory_conn_boundary:
     "GL(3,2) \u2245 PSL(2,7)\uff08\u4f4d\u6570168\uff09\u306f PG(2,2) \u306e\u5b8c\u5168\u81ea\u5df1\u540c\u578b\u7fa4\u3002\u305d\u306e\u3046\u3061\u8272\u5f69\u7684\u306b\u6709\u610f\u306a\u306e\u306f S\u2083\uff08\u30c1\u30e3\u30f3\u30cd\u30eb\u7f6e\u63db6\u901a\u308a\uff09\u306e\u307f\u3002\u88dc\u8272 \u03c3(v) = v \u2295 (1,1,1) \u306f AG(3,2) \u306e\u5e73\u884c\u79fb\u52d5\u3067\u3042\u308a GL(3,2) \u306e\u7dda\u5f62\u5199\u50cf\u3067\u306f\u306a\u3044 \u2014 W\u21a6K \u3092\u9001\u308a PG(2,2) \u3092\u96e2\u308c\u308b\u3002GF(8) \u306e\u4e57\u6cd5\u69cb\u9020\u306812\u8272\u4ee5\u4e0a\u3078\u306e\u62e1\u5f35\u306f\u3053\u306e\u67a0\u7d44\u307f\u306e\u5916\u3002",
+  theory_conn_cube_geometry: "Cube — 幾何的実現",
+  theory_conn_cube_geometry_hook:
+    "ファノ平面の7線はキューブのBlackを通る7つの平面断面に対応し、3つのパリティ検査はキューブを座標超平面で切断してエラー位置を特定します。射影幾何と符号理論は、立方体という共通の幾何学を通じて結ばれています。",
+  theory_conn_cube_geometry_detail:
+    "座標平面3つ → 原色線、対角平面3つ → 補色線、反対角平面1つ → CMY閉包。P1 → ビット0、P2 → ビット1、P4 → ビット2。syndrome = GF(2)³ 上のエラー座標。",
+  theory_conn_gray_card: "Gray code — ハミルトン閉路",
+  theory_conn_gray_hook:
+    "色相環 R→Y→G→C→B→M は Q₃有彩色頂点のハミルトン閉路であり、八面体頂点グラフのハミルトン閉路でもあります。チャンネル遷移 G,R,B は周期3で回転します。",
+  theory_conn_gray_detail: "グレイコード拡張 K→B→M→R→Y→W→C→G は回文チャンネル列 B,R,B,G,B,R,B を持つQ₃のハミルトン閉路です。",
+  theory_conn_boolean: "ブール環 — 加法と乗法",
+  theory_conn_boolean_hook:
+    "GF(2)³ 上の XOR（加法）と AND（乗法）はブール環をなします。Blackからの加法的混色とWhiteからの減法的混色は、補色写像 σ(v) = v ⊕ (1,1,1) がド・モルガンの法則を介して入れ替えます（極性ビュー参照）。",
+  theory_conn_boolean_role: "ブール環 = (GF(2)³, ⊕, ∧)、極性ビューの代数的基盤",
+  theory_conn_boundary_title: "この枠組みの限界",
   theory_conn_edge_subspaces: "\u90e8\u5206\u7a7a\u9593",
   theory_conn_edge_codewords: "\u7b26\u53f7\u8a9e",
   theory_conn_edge_checks: "\u30d1\u30ea\u30c6\u30a3",
@@ -285,7 +300,7 @@ export const ja: Record<TranslationKey, string> = {
   theory_fano_show_all: "全て",
   theory_polar_title: "\u6975\u6027\u30d3\u30e5\u30fc",
   theory_polar_desc:
-    "\u540c\u3058\u7acb\u65b9\u4f53\u3092\u5bfe\u9802\u70b9\u304b\u3089\u898b\u308b: Black\u304b\u3089\u306f\u539f\u8272\u3092\u52a0\u7b97(XOR \u2014 \u74b0\u306e\u52a0\u6cd5)\u3001White\u304b\u3089\u306f\u30d5\u30a3\u30eb\u30bf\u3092\u9069\u7528(AND \u2014 \u74b0\u306e\u4e57\u6cd5)\u3002GF(2)\u00b3 \u4e0a\u306eBoolean\u74b0\u306e2\u3064\u306e\u6f14\u7b97\u3067\u3042\u308a\u3001\u5206\u914d\u6cd5\u5247\u3067\u7d50\u3070\u308c\u308b\u3002\u88dc\u8272\u5199\u50cf(XOR 7)\u304cDe Morgan\u3092\u4ecb\u3057\u30662\u3064\u306e\u8996\u70b9\u3092\u5165\u308c\u66ff\u3048\u308b\u3002",
+    "\u540c\u3058\u7acb\u65b9\u4f53\u3092\u5bfe\u9802\u70b9\u304b\u3089\u898b\u307e\u3059: Black\u304b\u3089\u306f\u539f\u8272\u3092\u52a0\u6cd5\u3057\uff08XOR \u2014 \u74b0\u306e\u52a0\u6cd5\uff09\u3001White\u304b\u3089\u306f\u30d5\u30a3\u30eb\u30bf\u3092\u9069\u7528\u3057\u307e\u3059\uff08AND \u2014 \u74b0\u306e\u4e57\u6cd5\uff09\u3002GF(2)\u00b3 \u4e0a\u306e\u30d6\u30fc\u30eb\u74b0\u306e2\u3064\u306e\u6f14\u7b97\u3067\u3042\u308a\u3001\u5206\u914d\u6cd5\u5247\u3067\u7d50\u3070\u308c\u3066\u3044\u307e\u3059\u3002\u88dc\u8272\u5199\u50cf\uff08XOR 7\uff09\u304c\u30c9\u30fb\u30e2\u30eb\u30ac\u30f3\u306e\u6cd5\u5247\u3092\u4ecb\u3057\u30662\u3064\u306e\u8996\u70b9\u3092\u5165\u308c\u66ff\u3048\u307e\u3059\u3002",
   theory_polar_additive: "\u52a0\u6cd5\uff08Black\u8d77\u70b9\uff09",
   theory_polar_subtractive: "\u6e1b\u6cd5\uff08White\u8d77\u70b9\uff09",
   theory_polar_hint: "\u539f\u8272\u307e\u305f\u306f\u4e8c\u6b21\u8272\u3092\u30af\u30ea\u30c3\u30af\u3057\u3066\u6df7\u8272",
@@ -293,7 +308,7 @@ export const ja: Record<TranslationKey, string> = {
   // Octahedron (chromatic cross-polytope)
   theory_octa_title: "カラーダイヤ",
   theory_octa_desc:
-    "色立方体の双対。6頂点 = 6色相色（原色は+軸、CMYは−軸）、8面 = 8色（各八分空間が1つのGF(2)\u00b3元に対応）。3本の補色軸 R\u2194C, G\u2194M, B\u2194Y が対頂点を結ぶ。面隣接グラフは立方体グラフQ\u2083そのもの。",
+    "色立方体の双対。6頂点 = 6有彩色（原色は+軸、CMYは−軸）、8面 = 8色（各八分空間が1つのGF(2)\u00b3元に対応）。3本の補色軸 R\u2194C, G\u2194M, B\u2194Y が対頂点を結ぶ。面隣接グラフは立方体グラフQ\u2083そのもの。",
   theory_octa_axes: "補色軸",
   theory_octa_nets: "正八面体の展開図",
   theory_octa_nets_desc: "1-6-1展開図。T0(▽)=K,M,C,Y / T1(△)=B,R,G,W。補色ペア（XOR 7）が対面: K↔W, B↔Y, R↔C, G↔M。",
@@ -302,25 +317,25 @@ export const ja: Record<TranslationKey, string> = {
   // Tetrahedra & Truncation (split from ColorDice)
   theory_tetra_title: "四面体と切頂",
   theory_tetra_desc:
-    "立方体の8頂点は相補的な2つの四面体に分かれます: T0（偶数ハミング重み）とT1（奇数重み）。T0 = {Black, M, C, Y} はXOR下でKlein四群V\u2084を形成。T0を切頂すると8色の面 \u2014 4三角形（T0）と4六角形（T1）\u2014 が得られます。欠落4辺は補色対 {v, v\u22957} です。",
+    "立方体の8頂点は相補的な2つの四面体に分かれます: T0（偶数ハミング重み）とT1（奇数重み）。T0 = {Black, M, C, Y} はXOR下でクライン四群V\u2084を形成。T0を切頂すると8色の面 \u2014 4三角形（T0）と4六角形（T1）\u2014 が得られます。欠落4辺は補色対 {v, v\u22957} です。",
 
   // Truncated tetrahedron labels
-  theory_dice_trunc: "D8カラーダイス",
-  theory_d8_octa_3d: "D8カラーダイス — 3D",
+  theory_dice_trunc: "D8カラーダイス展開図",
+  theory_d8_octa_3d: "D8カラーダイス",
   theory_d8_octa_3d_desc: "正八面体の8面 = GF(2)³の8色。対面は補色対(a⊕b=7)。",
   // AG(3,2) affine planes (Connections extension)
   theory_conn_ag32: "AG(3,2) アフィン平面",
-  theory_conn_ag32_hook: "GF(2)³の14個のアフィン平面（4元素部分集合）が7平行類を形成し、各類がFano直線に対応する。",
+  theory_conn_ag32_hook: "GF(2)³の14個のアフィン平面（4元素部分集合）が7平行類を形成し、各類がファノ直線に対応する。",
   theory_conn_ag32_detail:
-    "14平面 = 7部分空間（0を含む）+ 7剰余類。7平行類 ↔ 7 Fano直線（全単射）。注：立方八面体の14面との対応は偶然の数値一致（7+7 ≠ 8+6の分割不一致、AGL(3,2)→O_hの非自明準同型なし）。",
+    "14平面 = 7部分空間（0を含む）+ 7剰余類。7平行類 ↔ 7 ファノ直線（全単射）。注：立方八面体の14面との対応は偶然の数値一致（7+7 ≠ 8+6の分割不一致、AGL(3,2)→O_hの非自明準同型なし）。",
 
   // ColorDice tetrahedra
   theory_dice_tetra: "T0/T1 四面体",
   theory_dice_tetra_t0: "T0: 偶数重み",
   theory_dice_tetra_t1: "T1: 奇数重み",
-  theory_dice_tetra_subgroup: "T0 = {Black, M, C, Y} = XOR下のKlein四群 V\u2084",
+  theory_dice_tetra_subgroup: "T0 = {Black, M, C, Y} = XOR下のクライン四群 V\u2084",
   theory_dice_tetra_face_xor: "面定理: 面の3頂点の XOR = 対頂点の色",
-  theory_tetra_star_net: "展開図",
+  theory_tetra_star_net: "T0/T1 四面体の展開図",
   theory_tetra_star_t0: "Black中心 + CMY = 減法混色の原型",
   theory_tetra_star_t1: "White中心 + RGB = 加法混色の原型",
   theory_trunc_net: "補色対面",
@@ -329,17 +344,17 @@ export const ja: Record<TranslationKey, string> = {
   // Stella Octangula
   theory_stella_title: "星形八面体",
   theory_stella_desc:
-    "T0とT1の2つの四面体を合成すると星形八面体（Stella Octangula）が得られます。これは八面体の第一星形化でもあります。12本の辺はすべてハミング距離2 — 2チャネルの同時切替を表します。K₈完全グラフの三因子分解（距離1 + 距離2 + 距離3 = 12 + 12 + 4 = 28辺）の中核をなす構造です。",
+    "T0とT1の2つの四面体を合成すると星形八面体（Stella Octangula）が得られます。これは八面体の第一星形化でもあります。12本の辺はすべてハミング距離2 — 2チャンネルの同時切替を表します。完全グラフK₈の三因子分解（距離1 + 距離2 + 距離3 = 12 + 12 + 4 = 28辺）の中核をなす構造です。",
   theory_stella_compound: "合成",
   theory_stella_k8: "K₈",
-  theory_stella_annotation: "T0 ∪ T1 合成 = 八面体の第一星形化 — 各辺は2チャネル同時切替",
+  theory_stella_annotation: "T0 ∪ T1 合成 = 八面体の第一星形化 — 各辺は2チャンネル同時切替",
   theory_stella_k8_degree: "度数: 3 + 3 + 1 = 7 = deg(K₈)",
 
   // Connection enhancements
   theory_conn_168_decomp:
-    "|GL(3,2)| = 168 = 7(Fano\u70b9) \u00d7 24(\u5404\u70b9\u306e\u5b89\u5b9a\u5316\u7fa4 S\u2084 = \u516b\u9762\u4f53\u56de\u8ee2\u7fa4)",
+    "|GL(3,2)| = 168 = 7(\u30d5\u30a1\u30ce\u70b9) \u00d7 24(\u5404\u70b9\u306e\u5b89\u5b9a\u5316\u7fa4 S\u2084 = \u516b\u9762\u4f53\u56de\u8ee2\u7fa4)",
   theory_conn_e8_chain:
-    "[8,4,4] \u62e1\u5f35Hamming \u2192 Construction A \u2192 E\u2088\u683c\u5b50 \u2192 Gosset\u591a\u9762\u4f53 4\u2082\u2081(240\u9802\u70b9): 8\u8272\u304b\u30898\u6b21\u5143\u6700\u5bc6\u5145\u586b\u3078\u306e\u6b63\u6e96\u9023\u93c8",
+    "[8,4,4] \u62e1\u5f35\u30cf\u30df\u30f3\u30b0 \u2192 Construction A \u2192 E\u2088\u683c\u5b50 \u2192 \u30b4\u30bb\u30c3\u30c8\u591a\u9762\u4f53 4\u2082\u2081(240\u9802\u70b9): 8\u8272\u304b\u30898\u6b21\u5143\u6700\u5bc6\u5145\u586b\u3078\u306e\u6b63\u6e96\u9023\u93c8",
   theory_conn_5fold:
     "GL(3,2)\u306f\u4f4d\u6570\u0035\u306e\u5143\u3092\u6301\u305f\u306a\u3044 \u2192 \u6b63\u4e8c\u5341\u9762\u4f53\u5bfe\u79f0\u306f\u8272\u5f69\u7406\u8ad6\u306e\u69cb\u9020\u5916",
 

@@ -56,7 +56,7 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W }} role="img" aria-label={t("theory_gray_title")}>
+      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: 240 }} role="img" aria-label={t("theory_gray_title")}>
         {/* Edges */}
         {GRAY_PATH.map((lv, i) => {
           const nLv = GRAY_PATH[(i + 1) % 6];

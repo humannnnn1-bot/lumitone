@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
-import { THEORY_LEVELS, OCTA_POINTS, OCTA_EDGES, OCTA_FACES, OCTA_COMPLEMENT_AXES } from "./theory-data";
+import { THEORY_LEVELS, OCTA_POINTS, OCTA_EDGES, OCTA_FACES, OCTA_COMPLEMENT_AXES, TRUNC_MISSING_EDGES } from "./theory-data";
+import { D8Octahedron } from "./D8Octahedron";
 import { C, FS, FW, SP } from "../../tokens";
 import { S_BTN } from "../../styles";
 import { usePinReset } from "./pin-reset";
@@ -660,6 +661,103 @@ export const OctaNet = React.memo(function OctaNet({ hl, onEnter, onLeave, t }: 
   );
 });
 
+/* ── Complement pairs: 4 pairs shown side by side ── */
+const PAIR_W = 72,
+  PAIR_H = 110;
+
+function ComplementPairs({ hl, onEnter, onLeave }: { hl: number | null; onEnter: (lv: number) => void; onLeave: () => void }) {
+  const cx = PAIR_W / 2;
+  const topY = 20;
+  const botY = 72;
+  const shapeR = 18;
+
+  function triPts(px: number, py: number, r: number, up: boolean): string {
+    if (up) return `${px},${py - r} ${px - r * 0.866},${py + r * 0.5} ${px + r * 0.866},${py + r * 0.5}`;
+    return `${px - r * 0.866},${py - r * 0.5} ${px + r * 0.866},${py - r * 0.5} ${px},${py + r}`;
+  }
+
+  return (
+    <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", flexWrap: "wrap" }}>
+      {TRUNC_MISSING_EDGES.map(([colorA, colorB]) => {
+        const infoA = THEORY_LEVELS[colorA];
+        const infoB = THEORY_LEVELS[colorB];
+        const activeA = hl === colorA;
+        const activeB = hl === colorB;
+        const anyActive = hl !== null;
+        const dimA = anyActive && !activeA;
+        const dimB = anyActive && !activeB;
+
+        return (
+          <svg key={`cp-${colorA}`} viewBox={`0 0 ${PAIR_W} ${PAIR_H}`} style={{ width: PAIR_W, height: PAIR_H }}>
+            <g onMouseEnter={() => onEnter(colorA)} onMouseLeave={onLeave} style={{ cursor: "default" }}>
+              <polygon
+                points={triPts(cx, topY, shapeR, true)}
+                fill={colorA === 0 ? C.bgRoot : infoA.color}
+                fillOpacity={activeA ? 0.5 : dimA ? 0.08 : 0.25}
+                stroke={activeA ? "#fff" : infoA.color}
+                strokeWidth={activeA ? 1.5 : 0.8}
+                strokeOpacity={dimA ? 0.15 : 0.7}
+                strokeLinejoin="round"
+              />
+              <text
+                x={cx}
+                y={topY + 2}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={11}
+                fontWeight={700}
+                fontFamily="monospace"
+                fill={colorA === 0 ? "#888" : colorA >= 4 ? "#000" : "#fff"}
+                opacity={dimA ? 0.2 : 0.9}
+              >
+                {infoA.short}
+              </text>
+            </g>
+            <line
+              x1={cx}
+              y1={topY + shapeR + 2}
+              x2={cx}
+              y2={botY - shapeR - 1}
+              stroke="rgba(255,255,255,0.3)"
+              strokeWidth={1}
+              strokeDasharray="3,3"
+            />
+            <g onMouseEnter={() => onEnter(colorB)} onMouseLeave={onLeave} style={{ cursor: "default" }}>
+              <polygon
+                points={triPts(cx, botY, shapeR, false)}
+                fill={infoB.color}
+                fillOpacity={activeB ? 0.5 : dimB ? 0.08 : 0.25}
+                stroke={activeB ? "#fff" : infoB.color}
+                strokeWidth={activeB ? 1.5 : 0.8}
+                strokeOpacity={dimB ? 0.15 : 0.7}
+                strokeLinejoin="round"
+              />
+              <text
+                x={cx}
+                y={botY}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={11}
+                fontWeight={700}
+                fontFamily="monospace"
+                fill={colorB === 7 ? "#000" : colorB === 1 ? "#fff" : infoB.color}
+                opacity={dimB ? 0.2 : 0.9}
+              >
+                {infoB.short}
+              </text>
+            </g>
+            <text x={cx} y={PAIR_H - 6} textAnchor="middle" fontSize={9} fontFamily="monospace" fill={C.textDimmer}>
+              {colorA}
+              {"\u2295"}
+              {colorB}=7
+            </text>
+          </svg>
+        );
+      })}
+    </div>
+  );
+}
+
 interface Props {
   hlLevel: number | null;
   onHover: (lv: number | null) => void;
@@ -673,6 +771,8 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
   const [hlFace, setHlFace] = useState<number | null>(null);
 
   const hl = hlLevel !== null && hlLevel >= 1 && hlLevel <= 6 ? hlLevel : pinned;
+  // Wider range for D8/ComplementPairs (includes Black=0 and White=7)
+  const hlWide = hlLevel !== null && hlLevel >= 0 && hlLevel <= 7 ? hlLevel : pinned;
 
   // Edges adjacent to highlighted vertex
   const hlEdgeSet = new Set<number>();
@@ -740,6 +840,45 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
           {t("theory_octa_axes")}
         </button>
       </div>
+
+      {/* D8 Color Die — 3D octahedron with face coloring */}
+      <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.accentBright, margin: 0, fontWeight: FW.bold }}
+      >
+        {t("theory_d8_octa_3d")}
+      </p>
+      <D8Octahedron hl={hlWide} onEnter={onEnter} onLeave={onLeave} />
+      <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center", maxWidth: 300 }}
+      >
+        {t("theory_d8_octa_3d_desc")}
+      </p>
+
+      {/* D8 Color Die — net */}
+      <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.accentBright, margin: 0, fontWeight: FW.bold }}
+      >
+        {t("theory_dice_trunc")}
+      </p>
+      <OctaNet hl={hlWide} onEnter={onEnter} onLeave={onLeave} t={t} />
+
+      {/* Complement pairs */}
+      <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.accentBright, margin: 0, fontWeight: FW.bold }}
+      >
+        {t("theory_trunc_net")}
+      </p>
+      <ComplementPairs hl={hlWide} onEnter={onEnter} onLeave={onLeave} />
+      <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center", maxWidth: 300 }}
+      >
+        {t("theory_trunc_net_desc")}
+      </p>
     </div>
   );
 });

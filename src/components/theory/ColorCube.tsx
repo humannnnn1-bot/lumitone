@@ -6,7 +6,7 @@ import { S_BTN } from "../../styles";
 import { useTranslation } from "../../i18n";
 
 const W = 300,
-  H = 300;
+  H = 250;
 const DOT_R = 14;
 
 function edgesOf(v: number): number[] {
@@ -71,7 +71,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W }} role="img" aria-label={t("theory_cube_title")}>
+      <svg viewBox={`0 25 ${W} ${H}`} style={{ width: "100%", maxWidth: W }} role="img" aria-label={t("theory_cube_title")}>
         {/* Equator path (toggle overlay) */}
         {equatorMode && (
           <path d={equatorPath} fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.40)" strokeWidth={1.5} strokeDasharray="4,3" />
