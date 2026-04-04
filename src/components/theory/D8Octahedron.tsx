@@ -2,29 +2,59 @@ import React from "react";
 import { THEORY_LEVELS, OCTA_POINTS, OCTA_EDGES, OCTA_FACES } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
 
-/* ── 3D lighting model (same as Octahedron.tsx) ── */
+/* ── 3D geometry: same rotation as Color Diamond (Octahedron.tsx) ── */
 
-const TILT = 0.18;
-const OCTA_3D: Record<number, [number, number, number]> = {
-  2: [0, 1, 0], // Red = +R axis
-  5: [0, -1, 0], // Cyan = -R axis
-  4: [1, 0, TILT], // Green = +G axis
-  3: [-1, 0, TILT], // Magenta = -G axis
-  1: [0, 0, 1], // Blue = +B axis
-  6: [0, 0, -1], // Yellow = -B axis
+/** Base octahedron vertices (unit cross-polytope) */
+const BASE_3D: Record<number, [number, number, number]> = {
+  2: [0, 1, 0], // Red = +y
+  5: [0, -1, 0], // Cyan = -y
+  4: [1, 0, 0], // Green = +x
+  3: [-1, 0, 0], // Magenta = -x
+  1: [0, 0, 1], // Blue = +z
+  6: [0, 0, -1], // Yellow = -z
 };
 
-/* Back view: negate z to rotate 180° around the vertical axis */
-const OCTA_3D_BACK: Record<number, [number, number, number]> = {
-  2: [0, 1, 0],
-  5: [0, -1, 0],
-  4: [1, 0, -TILT],
-  3: [-1, 0, -TILT],
-  1: [0, 0, -1],
-  6: [0, 0, 1],
-};
+/** Rodrigues rotation: rotate vector v around unit axis k by angle θ */
+function rodrigues(v: [number, number, number], k: [number, number, number], theta: number): [number, number, number] {
+  const c = Math.cos(theta),
+    s = Math.sin(theta),
+    t = 1 - c;
+  const d = k[0] * v[0] + k[1] * v[1] + k[2] * v[2];
+  const kxv: [number, number, number] = [k[1] * v[2] - k[2] * v[1], k[2] * v[0] - k[0] * v[2], k[0] * v[1] - k[1] * v[0]];
+  return [v[0] * c + kxv[0] * s + k[0] * d * t, v[1] * c + kxv[1] * s + k[1] * d * t, v[2] * c + kxv[2] * s + k[2] * d * t];
+}
 
-/* Back view 2D: mirror x around center (CX=150) */
+function rotateAll(
+  coords: Record<number, [number, number, number]>,
+  k: [number, number, number],
+  theta: number,
+): Record<number, [number, number, number]> {
+  const result: Record<number, [number, number, number]> = {};
+  for (const key of Object.keys(coords)) {
+    result[Number(key)] = rodrigues(coords[Number(key)], k, theta);
+  }
+  return result;
+}
+
+function flipXZ(coords: Record<number, [number, number, number]>): Record<number, [number, number, number]> {
+  const result: Record<number, [number, number, number]> = {};
+  for (const key of Object.keys(coords)) {
+    const [x, y, z] = coords[Number(key)];
+    result[Number(key)] = [-x, y, -z];
+  }
+  return result;
+}
+
+const SQ2 = Math.sqrt(2);
+const ALIGN_AXIS: [number, number, number] = [1 / SQ2, -1 / SQ2, 0];
+const ALIGN_ANGLE = Math.acos(1 / Math.sqrt(3)) * 0.45; // ~25° bias toward RGB face
+
+/* Front: RGB (White) face forward — 3D for lighting only */
+const OCTA_3D_FRONT = rotateAll(BASE_3D, ALIGN_AXIS, ALIGN_ANGLE);
+/* Back: CMY (Black) face forward */
+const OCTA_3D_BACK = flipXZ(OCTA_3D_FRONT);
+
+/* 2D points: regular hexagonal silhouette */
 const OCTA_POINTS_BACK: Record<number, { x: number; y: number }> = {};
 for (const k of [1, 2, 3, 4, 5, 6]) {
   OCTA_POINTS_BACK[k] = { x: 300 - OCTA_POINTS[k].x, y: OCTA_POINTS[k].y };
@@ -105,7 +135,7 @@ function computeView(octa3d: Record<number, [number, number, number]>, points: R
   return { faceLighting, sortedFaces, backEdges, points };
 }
 
-const VIEW_FRONT = computeView(OCTA_3D, OCTA_POINTS);
+const VIEW_FRONT = computeView(OCTA_3D_FRONT, OCTA_POINTS);
 const VIEW_BACK = computeView(OCTA_3D_BACK, OCTA_POINTS_BACK);
 
 /* ── Text fill: white for dark faces (0-3), black for light faces (4-7) ── */
@@ -130,7 +160,7 @@ function OctaView({
   onEnter: (lv: number) => void;
   onLeave: () => void;
 }) {
-  const { faceLighting, sortedFaces, backEdges, points } = view;
+  const { sortedFaces, points } = view;
 
   function centroid2d(verts: readonly [number, number, number]): { x: number; y: number } {
     const p0 = points[verts[0]],
@@ -139,15 +169,10 @@ function OctaView({
     return { x: (p0.x + p1.x + p2.x) / 3, y: (p0.y + p1.y + p2.y) / 3 };
   }
 
-  function isBack(a: number, b: number): boolean {
-    return backEdges.has(a < b ? `${a}-${b}` : `${b}-${a}`);
-  }
-
   return (
     <svg viewBox="0 0 300 300" style={{ width: "100%", maxWidth: 200 }} role="img">
-      {/* Faces — sorted back to front */}
+      {/* Faces — uniform opacity (no lighting) */}
       {sortedFaces.map((sf, fi) => {
-        const lighting = faceLighting[sf.origIdx];
         const info = THEORY_LEVELS[sf.color];
         const pts = sf.verts.map((v) => `${points[v].x},${points[v].y}`).join(" ");
         const ctr = centroid2d(sf.verts);
@@ -158,17 +183,8 @@ function OctaView({
         const dim = anyHl && !active;
 
         const fillColor = sf.color === 0 ? C.bgRoot : info.color;
-
-        let fillOpacity: number;
-        let strokeOpacity: number;
-        if (lighting.isFront) {
-          fillOpacity = active ? 0.55 : dim ? 0.06 : 0.35 + lighting.diffuse * 0.35;
-          strokeOpacity = active ? 0.9 : dim ? 0.08 : 0.15 + lighting.diffuse * 0.4;
-        } else {
-          fillOpacity = active ? 0.3 : dim ? 0.02 : 0.05 + lighting.diffuse * 0.05;
-          strokeOpacity = active ? 0.5 : dim ? 0.04 : 0.08;
-        }
-
+        const fillOpacity = active ? 0.5 : dim ? 0.04 : 0.3;
+        const strokeOp = active ? 0.9 : dim ? 0.06 : 0.4;
         const strokeColor = isComp ? "#fff" : active ? "#fff" : info.color;
         const strokeW = active ? 1.8 : 0.5;
         const strokeDash = isComp ? "4 2" : "none";
@@ -182,7 +198,7 @@ function OctaView({
               fillOpacity={fillOpacity}
               stroke={strokeColor}
               strokeWidth={strokeW}
-              strokeOpacity={strokeOpacity}
+              strokeOpacity={strokeOp}
               strokeDasharray={strokeDash}
               strokeLinejoin="round"
             />
@@ -195,7 +211,7 @@ function OctaView({
               fontFamily="monospace"
               fontWeight={FW.bold}
               fill={labelFill(sf.color)}
-              opacity={dim ? 0.15 : lighting.isFront ? 0.9 : 0.4}
+              opacity={dim ? 0.15 : 0.9}
             >
               {info.short}
             </text>
@@ -203,9 +219,8 @@ function OctaView({
         );
       })}
 
-      {/* Edges */}
+      {/* Edges — uniform style */}
       {OCTA_EDGES.map(([a, b], ei) => {
-        const back = isBack(a, b);
         const edgeActive =
           anyHl &&
           OCTA_FACES.some(
@@ -225,8 +240,7 @@ function OctaView({
             y2={points[b].y}
             stroke={edgeActive ? "#fff" : C.textDimmer}
             strokeWidth={edgeActive ? 1.5 : 0.8}
-            strokeDasharray={back && !edgeActive ? "3,3" : undefined}
-            opacity={dim ? 0.1 : edgeActive ? 0.8 : back ? 0.2 : 0.35}
+            opacity={dim ? 0.1 : edgeActive ? 0.8 : 0.35}
           />
         );
       })}
