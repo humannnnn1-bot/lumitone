@@ -17,7 +17,6 @@ import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
 
 const VW = 240; // per-view width
-const VH = 180; // per-view height (cropped)
 const VR = 7;
 const HIT_R = 14;
 const CY = 150;
