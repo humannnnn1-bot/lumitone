@@ -21,56 +21,23 @@ interface NetTriangle {
   up: boolean;
 }
 
-/* ── 4 valid octahedron nets ──
-   Face adjacency graph ≅ Q₃. Complement pairs (XOR 7) on opposite faces.
-   Opposite pairs: K↔W, B↔Y, R↔C, M↔G.
-   Grid convention: △ when (col+row)%2==0, ▽ when odd. */
+/* ── 1-6-1 octahedron net ──
+   T0 (▽, even parity) = K,M,C,Y.  T1 (△, odd parity) = B,R,G,W.
+   Complement pairs (XOR 7) on opposite faces: K↔W, B↔Y, R↔C, G↔M.
+   K surrounded by RGB (light primaries), W surrounded by CMY (pigment primaries). */
 
-const OCTA_NETS: NetTriangle[][] = [
-  // Net 1 — Staircase
-  [
-    { color: 3, col: 0, row: 0, up: true }, // M △
-    { color: 0, col: 1, row: 0, up: false }, // K ▽
-    { color: 1, col: 2, row: 0, up: true }, // B △
-    { color: 2, col: 3, row: 0, up: false }, // R ▽
-    { color: 5, col: 1, row: 1, up: true }, // C △
-    { color: 4, col: 2, row: 1, up: false }, // G ▽
-    { color: 7, col: 3, row: 1, up: true }, // W △
-    { color: 6, col: 4, row: 1, up: false }, // Y ▽
-  ],
-  // Net 2 — Strip + right wing (7 in row + 1 above-right)
-  [
-    { color: 7, col: 6, row: 0, up: true }, // W △
-    { color: 0, col: 0, row: 1, up: false }, // K ▽
-    { color: 1, col: 1, row: 1, up: true }, // B △
-    { color: 3, col: 2, row: 1, up: false }, // M ▽
-    { color: 2, col: 3, row: 1, up: true }, // R △
-    { color: 6, col: 4, row: 1, up: false }, // Y ▽
-    { color: 4, col: 5, row: 1, up: true }, // G △
-    { color: 5, col: 6, row: 1, up: false }, // C ▽
-  ],
-  // Net 3 — Diagonal strip (2+4+2)
-  [
-    { color: 1, col: 2, row: 0, up: true }, // B △
-    { color: 0, col: 3, row: 0, up: false }, // K ▽
-    { color: 3, col: 2, row: 1, up: false }, // M ▽
-    { color: 2, col: 3, row: 1, up: true }, // R △
-    { color: 6, col: 4, row: 1, up: false }, // Y ▽
-    { color: 4, col: 5, row: 1, up: true }, // G △
-    { color: 7, col: 4, row: 2, up: true }, // W △
-    { color: 5, col: 5, row: 2, up: false }, // C ▽
-  ],
-  // Net 4 — Compact hexagon (2+4+2)
-  [
-    { color: 1, col: 2, row: 0, up: true }, // B △
-    { color: 5, col: 3, row: 0, up: false }, // C ▽
-    { color: 4, col: 1, row: 1, up: true }, // G △
-    { color: 0, col: 2, row: 1, up: false }, // K ▽
-    { color: 2, col: 3, row: 1, up: true }, // R △
-    { color: 3, col: 4, row: 1, up: false }, // M ▽
-    { color: 7, col: 2, row: 2, up: true }, // W △
-    { color: 6, col: 3, row: 2, up: false }, // Y ▽
-  ],
+const OCTA_NET: NetTriangle[] = [
+  // row 0 — top wing
+  { color: 4, col: 1, row: 0, up: true }, // G △
+  // row 1 — strip of 6
+  { color: 1, col: 0, row: 1, up: true }, // B △
+  { color: 0, col: 1, row: 1, up: false }, // K ▽
+  { color: 2, col: 2, row: 1, up: true }, // R △
+  { color: 6, col: 3, row: 1, up: false }, // Y ▽
+  { color: 7, col: 4, row: 1, up: true }, // W △
+  { color: 5, col: 5, row: 1, up: false }, // C ▽
+  // row 2 — bottom wing
+  { color: 3, col: 4, row: 2, up: false }, // M ▽
 ];
 
 const COMP_PAIRS: [number, number][] = [
@@ -680,14 +647,8 @@ export const OctaNet = React.memo(function OctaNet({ hl, onEnter, onLeave, t }: 
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
-      <div
-        role="img"
-        aria-label={t("theory_octa_nets")}
-        style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.sm, width: "100%", maxWidth: 340, justifyItems: "center" }}
-      >
-        {OCTA_NETS.map((faces, ni) => (
-          <SingleNet key={ni} faces={faces} hl={hl} hlComp={hlComp} onEnter={onEnter} onLeave={onLeave} />
-        ))}
+      <div role="img" aria-label={t("theory_octa_nets")}>
+        <SingleNet faces={OCTA_NET} hl={hl} hlComp={hlComp} onEnter={onEnter} onLeave={onLeave} />
       </div>
       <p
         className="theory-annotation"

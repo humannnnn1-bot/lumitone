@@ -123,6 +123,9 @@ export const MusicPanel = React.memo(function MusicPanel() {
   });
   const [hoveredCandidate, setHoveredCandidate] = useState<{ lv: number; ci: number } | null>(null);
 
+  // Track candidate indices for hue-drag tone burst
+  const prevCandidatesRef = useRef<Map<number, number>>(new Map());
+
   // Audio state — always enabled, initAudio called on first interaction
   const audioInitedRef = useRef(false);
   const ensureAudio = useCallback(() => {
@@ -579,35 +582,25 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 const isSelected = directCandidates.get(lp.lv) === ci;
                 const isSwatchHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === ci;
                 const isDimmed = hoveredCandidate !== null && !isSwatchHovered;
-                const swatchClick = isTouchDevice
-                  ? undefined
-                  : () => {
-                      const deselecting = directCandidates.get(lp.lv) === ci;
-                      setDirectCandidates((prev) => {
-                        const next = new Map(prev);
-                        if (deselecting) next.delete(lp.lv);
-                        else next.set(lp.lv, ci);
-                        return next;
-                      });
-                      setHoveredCandidate({ lv: lp.lv, ci: deselecting ? autoIdx : ci });
-                      handleBlockClick(lp.lv, cand.angle);
-                    };
+                const swatchClick = () => {
+                  setDirectCandidates((prev) => {
+                    const next = new Map(prev);
+                    next.set(lp.lv, ci);
+                    return next;
+                  });
+                };
                 return (
                   <div
                     key={ci}
-                    role={isTouchDevice ? undefined : "button"}
-                    tabIndex={isTouchDevice ? -1 : 0}
+                    role="button"
+                    tabIndex={0}
                     onClick={swatchClick}
-                    onKeyDown={
-                      isTouchDevice
-                        ? undefined
-                        : (e) => {
-                            if (e.key === "Enter" || e.key === " ") {
-                              e.preventDefault();
-                              swatchClick?.();
-                            }
-                          }
-                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        swatchClick();
+                      }
+                    }}
                     onPointerEnter={isTouchDevice ? undefined : () => setHoveredCandidate({ lv: lp.lv, ci })}
                     onPointerLeave={isTouchDevice ? undefined : () => setHoveredCandidate(null)}
                     title={`#${cand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")} ${Math.round(cand.angle)}\u00B0`}
@@ -615,7 +608,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                       width: size,
                       height: size,
                       borderRadius: R.md,
-                      cursor: isTouchDevice ? "default" : "pointer",
+                      cursor: "pointer",
                       background: `rgb(${cand.rgb.join(",")})`,
                       border: `2px solid ${isSwatchHovered || isSelected ? C.accent : C.border}`,
                       boxSizing: "border-box" as const,
@@ -689,7 +682,15 @@ export const MusicPanel = React.memo(function MusicPanel() {
                         role="button"
                         tabIndex={0}
                         onClick={() => {
-                          if (mainCand) handleBlockClick(lp.lv, mainCand.angle);
+                          if (!mainCand) return;
+                          const deselecting = directCandidates.get(lp.lv) === mainCi;
+                          setDirectCandidates((prev) => {
+                            const next = new Map(prev);
+                            if (deselecting) next.delete(lp.lv);
+                            else next.set(lp.lv, mainCi);
+                            return next;
+                          });
+                          handleBlockClick(lp.lv, mainCand.angle);
                         }}
                         onKeyDown={
                           isTouchDevice
@@ -697,7 +698,15 @@ export const MusicPanel = React.memo(function MusicPanel() {
                             : (e) => {
                                 if (e.key === "Enter" || e.key === " ") {
                                   e.preventDefault();
-                                  if (mainCand) handleBlockClick(lp.lv, mainCand.angle);
+                                  if (!mainCand) return;
+                                  const deselecting = directCandidates.get(lp.lv) === mainCi;
+                                  setDirectCandidates((prev) => {
+                                    const next = new Map(prev);
+                                    if (deselecting) next.delete(lp.lv);
+                                    else next.set(lp.lv, mainCi);
+                                    return next;
+                                  });
+                                  handleBlockClick(lp.lv, mainCand.angle);
                                 }
                               }
                         }
@@ -735,8 +744,20 @@ export const MusicPanel = React.memo(function MusicPanel() {
             hueAngle={hueAngle}
             brushLevel={0}
             onHueAngleChange={(a) => {
+              engine.initAudio();
               resumeDrone();
+              // Tone burst when candidate changes
+              for (const lv of ACTIVE_LEVELS) {
+                const ci = findClosestCandidate(lv, a);
+                const prev = prevCandidatesRef.current.get(lv);
+                if (prev !== undefined && prev !== ci) {
+                  const cand = LEVEL_CANDIDATES[lv][ci];
+                  if (cand && cand.angle >= 0) engine.triggerToneBurst(lv, cand.angle);
+                }
+                prevCandidatesRef.current.set(lv, ci);
+              }
               setHueAngle(a);
+              setDirectCandidates(new Map());
             }}
             hoveredCandidate={hoveredCandidate}
             onHoverCandidate={setHoveredCandidate}
@@ -745,11 +766,13 @@ export const MusicPanel = React.memo(function MusicPanel() {
             scaleMode={scaleMode}
             alpha0={alpha0}
             onAlpha0Change={(a) => {
+              engine.initAudio();
               resumeDrone();
               setAlpha0(a);
             }}
             alpha7={alpha7}
             onAlpha7Change={(a) => {
+              engine.initAudio();
               resumeDrone();
               setAlpha7(a);
             }}

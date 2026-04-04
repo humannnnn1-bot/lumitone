@@ -295,9 +295,8 @@ export const en = {
   theory_octa_desc:
     "Dual of the color cube. 6 vertices = 6 chromatic colors (primaries on +axis, CMY on \u2212axis), 8 faces = 8 GF(2)\u00b3 elements (each octant maps to one color). 3 complement axes R\u2194C, G\u2194M, B\u2194Y connect antipodal vertices. The face-adjacency graph is Q\u2083 \u2014 the color cube itself.",
   theory_octa_axes: "Complement axes",
-  theory_octa_nets: "Octahedron nets",
-  theory_octa_nets_desc:
-    "4 valid octahedron nets. Complement pairs (XOR 7) are placed on opposite faces: K\u2194W, B\u2194Y, R\u2194C, M\u2194G.",
+  theory_octa_nets: "Octahedron net",
+  theory_octa_nets_desc: "1-6-1 net. T0(▽)=K,M,C,Y / T1(△)=B,R,G,W. Complement pairs (XOR 7) on opposite faces: K↔W, B↔Y, R↔C, G↔M.",
 
   // K₈ three-factor decomposition (ColorCube extension)
   // Tetrahedra & Truncation (split from ColorDice)

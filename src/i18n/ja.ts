@@ -296,7 +296,7 @@ export const ja: Record<TranslationKey, string> = {
     "色立方体の双対。6頂点 = 6色相色（原色は+軸、CMYは−軸）、8面 = 8色（各八分空間が1つのGF(2)\u00b3元に対応）。3本の補色軸 R\u2194C, G\u2194M, B\u2194Y が対頂点を結ぶ。面隣接グラフは立方体グラフQ\u2083そのもの。",
   theory_octa_axes: "補色軸",
   theory_octa_nets: "正八面体の展開図",
-  theory_octa_nets_desc: "4種の正八面体展開図。補色ペア（XOR 7）が対面に配置: K\u2194W, B\u2194Y, R\u2194C, M\u2194G。",
+  theory_octa_nets_desc: "1-6-1展開図。T0(▽)=K,M,C,Y / T1(△)=B,R,G,W。補色ペア（XOR 7）が対面: K↔W, B↔Y, R↔C, G↔M。",
 
   // K₈ three-factor decomposition (ColorCube extension)
   // Tetrahedra & Truncation (split from ColorDice)
