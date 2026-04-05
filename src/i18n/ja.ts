@@ -185,46 +185,50 @@ export const ja: Record<TranslationKey, string> = {
   label_theory: "ALGEBRAIC COLOR THEORY",
   theory_title: "色彩理論",
   theory_intro:
-    "CHROMALUMの8段階ルマレベルはRGBチャンネルを3ビット2進数で符号化します \u2014 ひとつの設計選択。ここから、カラーキューブ、XOR代数、グレイコード、ハミング符号、ファノ平面のすべてが GF(2)\u00b3 の数学的帰結として現れます。",
+    "CHROMALUMの8段階ルマレベルはRGBチャンネルを3ビット2進数で符号化します \u2014 ひとつの設計選択。ここから、カラーキューブ、グレイコード、ハミング符号、ファノ平面のすべてが GF(2)\u00b3 の数学的帰結として現れます。GF(2) は最も単純な数体系です: 0 と 1 だけで、1+1=0。GF(2)\u00b3 はその3次元拡張 \u2014 8つのベクトルが8色に対応します。",
   theory_binary_title: "バイナリレベル",
   theory_binary_desc:
     "各レベルは3ビット数値です。ビットとチャンネルの割り当て6通りのうち、レベル番号がルマ値に対して単調増加するのはGRB（ビット2=Green, ビット1=Red, ビット0=Blue）だけ — Greenのルマ係数がRed+Blueを超えるためです（0.587 > 0.413）。設計上の選択ではなく、人間の色覚の帰結。原色の番号 {1, 2, 4} は、元・ペア和・全体和が {1, \u2026, 7} を重複なく生成する唯一の3元集合です。",
   theory_binary_color: "色",
   theory_binary_luma_formula: "Luma (BT.601): Y = 0.299R + 0.587G + 0.114B",
-  theory_binary_luma_complement: "補色ルマ定理: Y\u2096 + Y\u2087\u208b\u2096 = 255（係数の和が1なら任意の係数で成立）",
+  theory_binary_luma_complement: "補色ルマ定理: Y\u2096 + Y\u2087\u208b\u2096 = 255（係数の和が1であれば任意の係数で成立）",
   theory_zigzag_title: "ルマジグザグ",
   theory_zigzag_desc:
-    "完全飽和色（最大チャンネル=255、最小=0）は色相の回転に従い6区間のジグザグを描きます。各区間で1チャンネルが変化し、傾きはBT.601係数に比例します。各頂点ルマ値の水平線はジグザグと1点または3点で交わり、その交点が等ルマ候補です。頂点間では最大4点。任意の色相角 h で Y(h) + Y(h+180\u00b0) = 255、すなわち補色のルマ和は常に一定です（補色ルマ定理）。",
-  theory_dice_title: "\u516d\u9762\u30ab\u30e9\u30fc\u30c0\u30a4\u30b9",
+    "色相を回転させると明るさはどう変わるか？ 完全飽和色（最大チャンネル=255、最小=0）は色相の回転に従い6区間のジグザグを描きます。各区間で1チャンネルが変化し、傾きはBT.601係数に比例します。各頂点ルマ値の水平線はジグザグと1点または3点で交わり、その交点が等ルマ候補です。頂点間では最大4点。任意の色相角 h で Y(h) + Y(h+180\u00b0) = 255、すなわち補色のルマ和は常に一定です（補色ルマ定理）。",
+  theory_dice_title: "カラーダイス",
   theory_dice_desc:
-    "6つの有彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。11種の立方体展開図のうち、この階段型のみが色相環順に面を配列します（証明: 色相環 R→Y→G→C→B→M は5つの特定の立方体辺隣接を要求し、面グラフ上のハミルトン路を形成します。この線形順序に従う展開図はこれら5辺を折り線として使う必要があり、正八面体グラフの全域木として一意に決定されます — 全11種の網羅検証により確認）。",
+    "6つの有彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。",
+  theory_dice_desc2:
+    "これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。",
+  theory_dice_desc3:
+    "階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。11種の立方体展開図のうち、この階段型のみが色相環順に面を配列します（証明: 色相環 R→Y→G→C→B→M は5つの特定の立方体辺隣接を要求し、面グラフ上のハミルトン路を形成します。この線形順序に従う展開図はこれら5辺を折り線として使う必要があり、正八面体グラフの全域木として一意に決定されます — 全11種の網羅検証により確認）。",
   theory_dice_hint:
     "6\u9762 \u2192 8\u9802\u70b9: Black (0) \u3068 White (7) \u3092\u52a0\u3048\u308b\u3068\u30ab\u30e9\u30fc\u30ad\u30e5\u30fc\u30d6\u306b",
   theory_dice_additive_col: "\u52a0\u6cd5 (\u2295)",
   theory_dice_subtractive_col: "\u6e1b\u6cd5 (\u2227)",
   theory_fano_title: "ファノ平面",
   theory_fano_desc:
-    "7つの色彩レベルは最小の射影平面 PG(2,2)、唯一のシュタイナー三重系 S(2,3,7) を形成します。三角形で: 頂点 = RGB（原色）、辺の中点 = CMY（隣接頂点のXOR）、中心 = White（全補色線の交点）。3辺 = 加法混色、3中線 = 補色合成、内接円 = CMY閉包。各線 {a, b, c} は a \u2295 b \u2295 c = 0。",
+    "7つの色彩レベルは PG(2,2)（最小の射影平面: 7点、7線、各線3点）、唯一のシュタイナー三重系 S(2,3,7)（任意の2点がちょうど1本の線上）を形成します。三角形で: 頂点 = RGB（原色）、辺の中点 = CMY（隣接頂点のXOR）、中心 = White（全補色線の交点）。3辺 = 加法混色、3中線 = 補色合成、内接円 = CMY閉包。各線 {a, b, c} は a \u2295 b \u2295 c = 0。",
   theory_fano_xor: "{0} \u2295 {1} = {2}",
   theory_fano_primary: "原色混合",
   theory_fano_complement: "補色ペア",
   theory_fano_secondary: "CMY閉包",
   theory_cube_title: "カラーキューブ",
   theory_cube_desc:
-    "8レベルは3次元立方体（RGB軸）の頂点です。各辺は1チャンネルの切り替え。BlackとWhiteを両極とし、6色彩頂点が赤道帯を形成します \u2014 重み1の原色層と重み2の二次色層。XOR（加法）とAND（乗法）でGF(2)³はブール環をなします: Black極からは原色をXORで合成し、White極からはANDでフィルタします。ビットが重ならない入力（a ∧ b = 0）ではXOR = ORとなるため、補色写像（XOR 7）がド・モルガンの法則で2つの演算を入れ替えます: σ(a ⊕ b) = σ(a) ∧ σ(b)。",
+    "8レベルは3次元立方体（RGB軸）の頂点です。各辺は1チャンネルの切り替え。BlackとWhiteを両極とし、6色彩頂点が赤道帯を形成します \u2014 重み1の原色層と重み2の二次色層。Black極からは原色をXORで合成し（加法混色）、White極からはANDでフィルタします（減法混色）。補色写像（XOR 7）がこの2つの視点を入れ替えます。",
   theory_gray_title: "グレイコード巡回",
   theory_gray_desc:
-    "6色彩頂点はK\u2083,\u2083（原色\u2194二次色）から補色ペア3組を除いた構造 — ちょうど六角形になり、他の辺は存在しません。この唯一の巡回路は1ステップごとに1チャンネルを切り替え: G \u2192 R \u2192 B、カラーホイールと同じ順序。各辺は原色三つ組線（次節で詳述）上にあり、3本の線を各2回ずつ使います。補色は常にこの六角形上で対蹠（距離3）\u2014 ダイスの対面の和が7になる幾何学的理由です。",
+    "6つの有彩色を色相環の順に並べると、各ステップで1チャンネルだけが切り替わります: G \u2192 R \u2192 B、六角形の巡回路を形成します。構造的には、6頂点は K\u2083,\u2083（原色\u2194二次色）から補色ペア3組を除いた形 \u2014 ちょうどこの六角形だけが残り、他の辺は存在しません。各辺は原色三つ組線上にあり、3本の線を各2回ずつ使います。補色は常に対蹠（距離3）\u2014 ダイスの対面の和が7になる幾何学的理由です。",
   theory_gray_toggle: "トグル: {0}",
   theory_gray_cw: "\u21bb 時計回り",
   theory_gray_ccw: "\u21ba 反時計回り",
   theory_gray_pause: "\u23f8 停止",
   theory_xor_title: "XOR 混色",
   theory_xor_desc:
-    "XOR は GF(2)\u00b3 の基本演算であり、このタブのすべての構造を定義する操作です。繰り上がりのない2進加算で、1 + 1 = 0 となります。3原色 {G, R, B} はこのベクトル空間の標準基底であり、各レベルはそれらの一意なXOR結合です。各色 c の補色は c \u2295 7 であり、c \u2295 (c \u2295 7) = 7 (White) となります。ビットが重ならない原色同士では整数加算がXORに一致します（1+4 = 5 = 1\u22954）。一方CMYではビットが重なり繰り上がりが生じますが（3+5 = 8）、XORはこの繰り上がりを捨てます（3\u22955 = 6）。減法混色の「7を引く」規則は、整数算術側での桁あふれ補正です。",
+    "XOR はこのシステムにおける全ての色の関係を定義します。3原色 {G, R, B} が基底であり、各色はそれらの一意なXOR結合です。各色 c の補色は c \u2295 7 で、c \u2295 (c \u2295 7) = 7 (White)。算術的には、XOR は繰り上がりのない2進加算（1+1 = 0）です。原色同士では整数加算がXORに一致し（1+4 = 5 = 1\u22954）、CMYではビットが重なり繰り上がりが生じますが（3+5 = 8）、XORはこの繰り上がりを捨てます（3\u22955 = 6）。減法混色の「7を引く」規則は、整数算術側での桁あふれ補正です。",
   theory_hamming_title: "ハミング符号",
   theory_hamming_desc:
-    "パリティビット（B=1, R=2, G=4）はRGB原色。データビット（M=3, C=5, Y=6, W=7）は二次色＋白。各パリティビットは、2進表現にそのビットを含む位置を検査します。ビットを反転させてエラー検出を体験できます。",
+    "RGB原色（B=1, R=2, G=4）は2の冪 \u2014 2進表現で1ビットだけが立つため、自然なパリティ検査ビットとなります。Blue は奇数位置 {1,3,5,7} を、Red は {2,3,6,7} を、Green は {4,5,6,7} を検査します。残りの色（M=3, C=5, Y=6, W=7）がデータを運びます。いずれか1チャンネルが反転すると、失敗したパリティ検査がどのチャンネルかを特定します \u2014 syndrome は誤り位置の2進表現です。ビットを反転させてエラー検出を体験できます。",
   theory_hamming_parity: "パリティ",
   theory_hamming_checks: "検査対象",
   theory_hamming_flip: "\u8272\u3092\u30af\u30ea\u30c3\u30af\u3057\u3066\u53cd\u8ee2",
@@ -247,50 +251,22 @@ export const ja: Record<TranslationKey, string> = {
   theory_conn_edge_parity: "パリティ",
   theory_cube_equator: "\u8d64\u9053\u5e2f",
   theory_cube_complements: "補色対角",
-  theory_conn_conclusion_1: "ひとつのベクトル空間、複数の構成",
   theory_conn_conclusion_2: "GF(2)\u00b3 \u2014 共通の代数的源泉",
-  theory_conn_cube_fano: "Cube \u2194 Fano",
-  theory_conn_cube_fano_hook:
-    "ファノ平面の7本の線は GF(2)\u00b3 の7つの2次元部分空間 \u2014 Black(0)を通るキューブの平面断面に対応します。",
-  theory_conn_cube_fano_detail:
-    "座標平面3つ \u2192 原色線、対角平面3つ \u2192 補色線、反対角平面1つ \u2192 CMY閉包。各々4頂点（Black含む）を含み非零3点。",
-  theory_conn_fano_hamming: "Fano \u2245 Hamming — 同一構造の二面",
   theory_conn_fano_hamming_hook:
-    "ハミング(7,4)の 3×7 パリティ検査行列の 7 列はファノ平面の 7 点に対応し、各ファノ線 {a, b, c}（a\u2295b\u2295c = 0）は重み3符号語として現れます（d\u2098\u1d62\u2099 = 3）、射影幾何と符号理論は同一の入射構造の二つの読み方です。",
-  theory_conn_fano_hamming_detail: "7本の線 = 7つの重み3符号語。重み分布: [1, 0, 0, 7, 7, 0, 0, 1] = 全16符号語。",
-  theory_conn_cube_hamming: "Cube \u2194 Hamming",
-  theory_conn_cube_hamming_hook: "3つのパリティ検査はキューブを座標超平面で切断し、座標ごとにエラー位置を特定します。",
-  theory_conn_cube_hamming_detail: "P1 \u2192 ビット0、P2 \u2192 ビット1、P4 \u2192 ビット2。syndrome = GF(2)\u00b3 上のエラー座標。",
-  theory_conn_source: "複数の視点、ひとつの源泉",
-  theory_conn_fano_role: "Fano = PG(2,2)\u3001GF(2)\u4e0a\u306e\u5c04\u5f71\u5e73\u9762",
-  theory_conn_cube_role:
-    "Cube = (GF(2)\u00b3, \u2295) \u306e\u30b1\u30a4\u30ea\u30fc\u30b0\u30e9\u30d5\uff08\u751f\u6210\u5143 {G, R, B}\uff09",
-  theory_conn_hamming_role: "Hamming = GF(2)\u00b3\\{0}\u3092\u5217\u306b\u6301\u3064\u691c\u67fb\u884c\u5217",
-  theory_conn_gray_role:
-    "Gray = 色彩赤道上のハミルトン閉路 = 色相環 = ダイス面隣接。色相環 R→Y→G→C→B→M は同時に: (1) Q₃有彩色頂点のハミルトン閉路, (2) 八面体頂点グラフのハミルトン閉路, (3) 立方体面隣接グラフ(=八面体グラフ)のハミルトン閉路。チャンネル遷移 G,R,B は周期3で回転。グレイコード拡張 K→B→M→R→Y→W→C→G は回文チャンネル列 B,R,B,G,B,R,B を持つQ₃のハミルトン閉路。",
+    "Fano \u2245 Hamming: ファノ平面の7点はパリティ検査行列の7列に対応。射影幾何と符号理論は同一構造の二つの読み方です。",
+  theory_conn_cube_geometry_hook:
+    "立方体の幾何: ファノ平面の7線はBlack（原点）を通る立方体の7つの平面断面。3つのパリティ検査は座標超平面でエラー位置を特定します。",
+  theory_conn_gray_hook:
+    "グレイコード: 色相環 R\u2192Y\u2192G\u2192C\u2192B\u2192M は立方体の有彩色頂点と八面体頂点グラフの両方におけるハミルトン閉路です。",
+  theory_conn_boolean_hook:
+    "ブール環: XOR（加法）と AND（乗法）が双対をなし、補色写像がド・モルガンの法則で加法混色と減法混色を入れ替えます: \u03c3(a \u2295 b) = \u03c3(a) \u2227 \u03c3(b)。",
   theory_conn_polyhedra: "多面体変換ネットワーク",
   theory_conn_polyhedra_desc:
-    "§10–§13の多面体は幾何学的操作で連鎖し、ハミング距離の3層構造（d=1: 辺、d=2: 星形辺、d=3: 補色対角）を保存します。八面体にはグレイコード帯状展開図が双対として存在し、立方体・八面体の全域木の総数は共に384本（双対マトロイド定理）。",
+    "§9\u2013§10の多面体は幾何学的操作で連鎖し、ハミング距離の3層構造（d=1: 辺、d=2: 星形辺、d=3: 補色対角）を保存します。八面体にはグレイコード帯状展開図が双対として存在し、立方体・八面体の全域木の総数は共に384本（双対マトロイド定理）。",
   theory_conn_extended: "Black を全体パリティビットとして追加すると [8,4,4] 拡張ハミング符号になる",
   theory_conn_boundary:
-    "GL(3,2) \u2245 PSL(2,7)\uff08\u4f4d\u6570168\uff09\u306f PG(2,2) \u306e\u5b8c\u5168\u81ea\u5df1\u540c\u578b\u7fa4\u3002\u305d\u306e\u3046\u3061\u8272\u5f69\u7684\u306b\u6709\u610f\u306a\u306e\u306f S\u2083\uff08\u30c1\u30e3\u30f3\u30cd\u30eb\u7f6e\u63db6\u901a\u308a\uff09\u306e\u307f\u3002\u88dc\u8272 \u03c3(v) = v \u2295 (1,1,1) \u306f AG(3,2) \u306e\u5e73\u884c\u79fb\u52d5\u3067\u3042\u308a GL(3,2) \u306e\u7dda\u5f62\u5199\u50cf\u3067\u306f\u306a\u3044 \u2014 W\u21a6K \u3092\u9001\u308a PG(2,2) \u3092\u96e2\u308c\u308b\u3002GF(8) \u306e\u4e57\u6cd5\u69cb\u9020\u306812\u8272\u4ee5\u4e0a\u3078\u306e\u62e1\u5f35\u306f\u3053\u306e\u67a0\u7d44\u307f\u306e\u5916\u3002",
-  theory_conn_cube_geometry: "Cube — 幾何的実現",
-  theory_conn_cube_geometry_hook:
-    "ファノ平面の7線はキューブのBlackを通る7つの平面断面に対応し、3つのパリティ検査はキューブを座標超平面で切断してエラー位置を特定します。射影幾何と符号理論は、立方体という共通の幾何学を通じて結ばれています。",
-  theory_conn_cube_geometry_detail:
-    "座標平面3つ → 原色線、対角平面3つ → 補色線、反対角平面1つ → CMY閉包。P1 → ビット0、P2 → ビット1、P4 → ビット2。syndrome = GF(2)³ 上のエラー座標。",
-  theory_conn_gray_card: "Gray code — ハミルトン閉路",
-  theory_conn_gray_hook:
-    "色相環 R→Y→G→C→B→M は Q₃有彩色頂点のハミルトン閉路であり、八面体頂点グラフのハミルトン閉路でもあります。チャンネル遷移 G,R,B は周期3で回転します。",
-  theory_conn_gray_detail: "グレイコード拡張 K→B→M→R→Y→W→C→G は回文チャンネル列 B,R,B,G,B,R,B を持つQ₃のハミルトン閉路です。",
-  theory_conn_boolean: "ブール環 — 加法と乗法",
-  theory_conn_boolean_hook:
-    "GF(2)³ 上の XOR（加法）と AND（乗法）はブール環をなします。ビットが重ならない場合（a ∧ b = 0）、XOR = OR となるため、補色写像 σ(v) = v ⊕ (1,1,1) がド・モルガンの法則を介して加法的混色と減法的混色を入れ替えます: σ(a ⊕ b) = σ(a) ∧ σ(b)。これは全ての原色混色に適用されます（カラーキューブ参照）。",
-  theory_conn_boolean_role: "ブール環 = (GF(2)³, ⊕, ∧)、カラーキューブの代数的基盤",
-  theory_conn_boundary_title: "この枠組みの限界",
-  theory_conn_edge_subspaces: "\u90e8\u5206\u7a7a\u9593",
-  theory_conn_edge_codewords: "\u7b26\u53f7\u8a9e",
-  theory_conn_edge_checks: "\u30d1\u30ea\u30c6\u30a3",
+    "GL(3,2)（位数168）は PG(2,2) の完全自己同型群。そのうち色彩的に有意なのは S\u2083（チャンネル置換6通り）のみ。8色を超える拡張には異なる代数構造が必要です。",
+  theory_conn_boundary_title: "この枠組みの範囲",
   theory_xor_complement: "補色: {0} \u2295 7 = {1}",
   theory_xor_cayley_aria: "XOR \u30b1\u30a4\u30ea\u30fc\u8868",
   theory_pin_hint: "\u30db\u30d0\u30fc\u3067\u30cf\u30a4\u30e9\u30a4\u30c8 \u00b7 \u30af\u30ea\u30c3\u30af\u3067\u56fa\u5b9a",
@@ -302,21 +278,13 @@ export const ja: Record<TranslationKey, string> = {
   // Octahedron (chromatic cross-polytope)
   theory_octa_title: "カラーダイヤ",
   theory_octa_desc:
-    "色立方体の双対。6頂点 = 6有彩色（原色は+軸、CMYは−軸）、8面 = 8色（各八分空間が1つのGF(2)\u00b3元に対応）。3本の補色軸 R\u2194C, G\u2194M, B\u2194Y が対頂点を結ぶ。面隣接グラフは立方体グラフQ\u2083そのもの。立方体の12辺のXORは原色3種のみだが、正八面体の12辺は6有彩色すべてのXOR値を生成し、各色がちょうど2回現れる — 補色でない全ペアが第三の色に混合され、辺グラデーションの中間点として視認できる。",
+    "6有彩色とその補色対称性を最も美しく表す形です。各補色軸（R\u2194C, G\u2194M, B\u2194Y）が対頂点を結び、原色が+軸、CMYが\u2212軸に配置されます。色立方体の双対であり \u2014 6頂点が8面（各八分空間が1つのGF(2)\u00b3元）に対応し、面隣接グラフは立方体グラフQ\u2083そのものです。立方体の12辺のXOR値は原色3種のみですが、正八面体の12辺は6有彩色すべてのXOR値を生成し、各色がちょうど2回 \u2014 補色でない全ペアが第三の色に混合され、辺グラデーションの中間点として視認できます。",
   theory_octa_axes: "補色軸",
 
-  // K₈ three-factor decomposition (ColorCube extension)
-  // Tetrahedra & Truncation (split from ColorDice)
-  theory_tetra_title: "四面体と切頂",
-  theory_tetra_desc:
-    "立方体の8頂点は相補的な2つの四面体に分かれます: T0（偶数ハミング重み）とT1（奇数重み）。T0 = {Black, M, C, Y} はXOR下でクライン四群V\u2084を形成。V₄では任意の面の3頂点のXORが対頂点に等しく（a⊕b⊕c = d）、各面は対頂点の色で自然に彩色されます — 展開図で色が面に現れるのはこのためです。T0を切頂すると8色の面 \u2014 4三角形（T0）と4六角形（T1）\u2014 が得られます。欠落4辺は補色対 {v, v\u22957} です。",
-
-  // Truncated tetrahedron labels
-  // AG(3,2) affine planes (Connections extension)
-  theory_conn_ag32: "AG(3,2) アフィン平面",
-  theory_conn_ag32_hook: "GF(2)³の14個のアフィン平面（4元素部分集合）が7平行類を形成し、各類がファノ直線に対応する。",
-  theory_conn_ag32_detail:
-    "14平面 = 7部分空間（0を含む）+ 7剰余類。7平行類 ↔ 7 ファノ直線（全単射）。注：立方八面体の14面との対応は偶然の数値一致（7+7 ≠ 8+6の分割不一致、AGL(3,2)→O_hの非自明準同型なし）。",
+  // K₈ three-factor decomposition — Tetrahedra & Stella Octangula (merged)
+  theory_tetra_stella_title: "カラーテトラとカラースター",
+  theory_tetra_stella_desc:
+    "8色の全28ペアは、隣接（1チャンネル差）・対角（2チャンネル差）・補色（3チャンネル差）の3カテゴリに分かれます。この三分類が3つの幾何構造に対応します。立方体の8頂点は2つの四面体に分かれます: T0（偶数重み: Black, M, C, Y）と T1（奇数重み: B, R, G, W）。T0 はクライン四群V\u2084を形成し、各面の3頂点のXORが対頂点に等しい \u2014 面が自然に色で塗れる理由です。T0とT1を合成するとカラースター（Stella Octangula）になります。その12辺（すべて距離2）のXOR値はCMY、立方体の12辺（距離1）はRGB、4組の補色対角（距離3）はWhiteを生成。K\u2088 = 立方体 + カラースター + 補色対 が全28ペアを分割します。",
 
   // ColorDice tetrahedra
   theory_dice_tetra: "T0/T1 四面体",
@@ -325,22 +293,18 @@ export const ja: Record<TranslationKey, string> = {
   theory_dice_tetra_subgroup: "T0 = {Black, M, C, Y} = XOR下のクライン四群 V\u2084",
   theory_dice_tetra_face_xor: "面定理: 面の3頂点の XOR = 対頂点の色",
 
-  // Stella Octangula
-  theory_stella_title: "星形八面体",
-  theory_stella_desc:
-    "T0とT1の2つの四面体を合成すると星形八面体（Stella Octangula）が得られます — 八面体の第一星形化です。12本の辺はすべてハミング距離2です（3チャンネル中2つを反転するとビットパリティが保存されるため、距離2の辺はT0内またはT1内にのみ存在します）。これらの辺のXOR値は{3,5,6} = CMY（重み2の元）のみです。一方、立方体の12辺は{1,2,4} = RGB（重み1）、4組の補色対は{7} = White（重み3）を生成します。GF(2)³の計数定理により、各XOR値はちょうど4辺に現れます。この三因子分解 K₈ = 立方体 + 星形八面体 + 補色対 は、28の色ペア関係をハミング距離で分割し、辺のXOR値をハミング重みで分類します: 原色・二次色・白。",
+  // Stella Octangula (sub-labels, used within merged §10)
   theory_stella_compound: "合成",
   theory_stella_k8: "K₈",
   theory_stella_annotation: "T0 ∪ T1 合成 = 八面体の第一星形化 — 各辺は2チャンネル同時切替",
   theory_stella_k8_degree: "度数: 3 + 3 + 1 = 7 = deg(K₈)",
 
-  // Connection enhancements
-  theory_conn_168_decomp:
-    "|GL(3,2)| = 168 = 7(\u30d5\u30a1\u30ce\u70b9) \u00d7 24(\u5404\u70b9\u306e\u5b89\u5b9a\u5316\u7fa4 S\u2084 = \u516b\u9762\u4f53\u56de\u8ee2\u7fa4)",
-  theory_conn_e8_chain:
-    "[8,4,4] \u62e1\u5f35\u30cf\u30df\u30f3\u30b0 \u2192 Construction A \u2192 E\u2088\u683c\u5b50 \u2192 \u30b4\u30bb\u30c3\u30c8\u591a\u9762\u4f53 4\u2082\u2081(240\u9802\u70b9): 8\u8272\u304b\u30898\u6b21\u5143\u6700\u5bc6\u5145\u586b\u3078\u306e\u6b63\u6e96\u9023\u93c8",
-  theory_conn_5fold:
-    "GL(3,2)\u306f\u4f4d\u6570\u0035\u306e\u5143\u3092\u6301\u305f\u306a\u3044 \u2192 \u6b63\u4e8c\u5341\u9762\u4f53\u5bfe\u79f0\u306f\u8272\u5f69\u7406\u8ad6\u306e\u69cb\u9020\u5916",
+  // Section group labels
+  theory_group_foundations: "基礎",
+  theory_group_geometry: "色空間幾何",
+  theory_group_algebra: "代数構造",
+  theory_group_polyhedra: "多面体",
+  theory_group_synthesis: "総括",
 
   theory_fano_cmy_collapse: "CMY\u5171\u7dda",
   theory_fano_cmy_eq: "M\u2295C\u2295Y = 0 \u2192 共線！",

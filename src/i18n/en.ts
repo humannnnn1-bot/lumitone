@@ -185,7 +185,7 @@ export const en = {
   label_theory: "ALGEBRAIC COLOR THEORY",
   theory_title: "Color Theory",
   theory_intro:
-    "CHROMALUM\u2019s 8 luma levels encode RGB channels as 3-bit binary \u2014 a single design choice. From this, the color cube, XOR algebra, Gray codes, Hamming codes, and the Fano plane all emerge as mathematical consequences of GF(2)\u00b3.",
+    "CHROMALUM\u2019s 8 luma levels encode RGB channels as 3-bit binary \u2014 a single design choice. From this, the color cube, Gray codes, Hamming codes, and the Fano plane all emerge as mathematical consequences of GF(2)\u00b3. GF(2) is the simplest number system: just 0 and 1, where 1+1=0. GF(2)\u00b3 is its 3-dimensional extension \u2014 8 vectors corresponding to our 8 colors.",
   theory_binary_title: "Binary Levels",
   theory_binary_desc:
     "Each level is a 3-bit number. Of the 6 possible bit-to-channel assignments, only GRB (Bit 2 = Green, Bit 1 = Red, Bit 0 = Blue) makes level numbers increase monotonically with luma \u2014 because Green\u2019s luma coefficient alone exceeds Red + Blue (0.587 > 0.413). This is not a design choice but a consequence of human color vision. The primary set {1, 2, 4} is the unique 3-element subset of naturals whose elements, pairwise sums, and total sum partition {1, \u2026, 7} without overlap.",
@@ -194,36 +194,40 @@ export const en = {
   theory_binary_luma_complement: "Complement luma: Y\u2096 + Y\u2087\u208b\u2096 = 255 (universal for any coefficients summing to 1)",
   theory_zigzag_title: "Luma Zigzag",
   theory_zigzag_desc:
-    "Fully saturated colors (max channel = 255, min = 0) trace a 6-segment zigzag as hue rotates. Each segment toggles one channel; the slope is proportional to its BT.601 coefficient. Horizontal lines at each vertex luma value intersect the zigzag at 1 or 3 points \u2014 these are the equal-luma candidates. Between vertex luma values, the maximum is 4 candidates. For any hue angle h, Y(h) + Y(h+180\u00b0) = 255 \u2014 complementary colors always sum to the same luma (complement luma theorem).",
-  theory_dice_title: "D6 Color Die",
+    "How does brightness change as you rotate through hues? Fully saturated colors (max channel = 255, min = 0) trace a 6-segment zigzag as hue rotates. Each segment toggles one channel; the slope is proportional to its BT.601 coefficient. Horizontal lines at each vertex luma value intersect the zigzag at 1 or 3 points \u2014 these are the equal-luma candidates. Between vertex luma values, the maximum is 4 candidates. For any hue angle h, Y(h) + Y(h+180\u00b0) = 255 \u2014 complementary colors always sum to the same luma (complement luma theorem).",
+  theory_dice_title: "Color Die",
   theory_dice_desc:
-    "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule. This is a universal theorem: for any positive luma coefficients with no tied luma values, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7. The staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously. Among the 11 cube nets, only this staircase arranges faces in hue-wheel order (proof: the hue cycle R\u2192Y\u2192G\u2192C\u2192B\u2192M requires 5 specific cube-edge adjacencies forming a Hamiltonian path on the face graph; a net respecting this linear sequence must use exactly these 5 edges as fold-lines, which determines a unique spanning tree of the octahedron graph \u2014 verified by exhaustive check of all 11 nets).",
+    "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule.",
+  theory_dice_desc2:
+    "This is a universal theorem: for any positive luma coefficients with no tied luma values, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7.",
+  theory_dice_desc3:
+    "The staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously. Among the 11 cube nets, only this staircase arranges faces in hue-wheel order (proof: the hue cycle R\u2192Y\u2192G\u2192C\u2192B\u2192M requires 5 specific cube-edge adjacencies forming a Hamiltonian path on the face graph; a net respecting this linear sequence must use exactly these 5 edges as fold-lines, which determines a unique spanning tree of the octahedron graph \u2014 verified by exhaustive check of all 11 nets).",
   theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
   theory_dice_additive_col: "Additive (\u2295)",
   theory_dice_subtractive_col: "Subtractive (\u2227)",
   theory_fano_title: "Fano Plane",
   theory_fano_desc:
-    "The 7 chromatic levels form PG(2,2), the smallest projective plane and unique Steiner triple system S(2,3,7). In the triangle: vertices = RGB (primaries), midpoints = CMY (each is XOR of adjacent vertices), center = White (where all complement lines meet). The 3 sides are additive mixing, 3 medians are complementary pairs, and the inscribed circle is CMY closure. For any line {a, b, c}, a \u2295 b \u2295 c = 0.",
+    "The 7 chromatic levels form PG(2,2) (the smallest projective plane: 7 points, 7 lines, 3 points per line) and the unique Steiner triple system S(2,3,7) (every pair of points lies on exactly one line). In the triangle: vertices = RGB (primaries), midpoints = CMY (each is XOR of adjacent vertices), center = White (where all complement lines meet). The 3 sides are additive mixing, 3 medians are complementary pairs, and the inscribed circle is CMY closure. For any line {a, b, c}, a \u2295 b \u2295 c = 0.",
   theory_fano_xor: "{0} \u2295 {1} = {2}",
   theory_fano_primary: "Primary mixing",
   theory_fano_complement: "Complementary",
   theory_fano_secondary: "CMY closure",
   theory_cube_title: "Color Cube",
   theory_cube_desc:
-    "8 levels sit at the vertices of a 3D cube (RGB axes). Each edge toggles one channel. The 6 chromatic vertices (excluding Black and White) form an equatorial belt between the two poles \u2014 weight-1 primaries on one layer, weight-2 secondaries on the other. XOR (addition) and AND (multiplication) make GF(2)\u00b3 a Boolean ring: from the Black pole, primaries combine by XOR; from the White pole, colors filter by AND. For non-overlapping inputs (a \u2227 b = 0), XOR = OR, so the complement map (XOR 7) swaps the two operations by De Morgan: \u03c3(a \u2295 b) = \u03c3(a) \u2227 \u03c3(b).",
+    "8 levels sit at the vertices of a 3D cube (RGB axes). Each edge toggles one channel. The 6 chromatic vertices (excluding Black and White) form an equatorial belt between the two poles \u2014 weight-1 primaries on one layer, weight-2 secondaries on the other. From the Black pole, primaries combine by XOR (additive mixing); from the White pole, colors filter by AND (subtractive mixing). The complement map (XOR 7) swaps these two perspectives.",
   theory_gray_title: "Gray Code Cycle",
   theory_gray_desc:
-    "The 6 chromatic vertices form K\u2083,\u2083 (primaries \u2194 secondaries) minus the 3 complement pairs \u2014 leaving exactly a hexagon with no other edges. This unique cycle toggles one channel per step: G \u2192 R \u2192 B, matching the color wheel. Each edge lies on a primary triple line (see next section), using all 3 lines twice. Complements are always antipodal (distance 3) on this hexagon \u2014 the geometric reason die-opposite faces sum to 7.",
+    "The 6 chromatic colors arranged in hue-wheel order toggle exactly one channel per step: G \u2192 R \u2192 B, forming a hexagonal cycle. Structurally, these 6 vertices form K\u2083,\u2083 (primaries \u2194 secondaries) minus the 3 complement pairs \u2014 leaving exactly this hexagon with no other edges. Each edge lies on a primary triple line, using all 3 lines twice. Complements are always antipodal (distance 3) \u2014 the geometric reason die-opposite faces sum to 7.",
   theory_gray_toggle: "Toggle: {0}",
   theory_gray_cw: "\u21bb Clockwise",
   theory_gray_ccw: "\u21ba Counter-clockwise",
   theory_gray_pause: "\u23f8 Pause",
   theory_xor_title: "XOR Mixing",
   theory_xor_desc:
-    "XOR is the fundamental operation of GF(2)\u00b3 \u2014 it defines every structure in this tab. It is carry-free binary addition: even 1+1 gives 0, not binary 10. The three primaries {G, R, B} are the standard basis of this vector space; every level is their unique XOR combination. Each chromatic color c has a complement c \u2295 7, and c \u2295 (c \u2295 7) = 7 (White). For binary-disjoint pairs (primaries), integer addition equals XOR directly (1+4=5=1\u22954). For CMY, bits overlap and carry occurs (3+5=8), but XOR discards the carry (3\u22955=6). The \u201csubtract 7\u201d rule of subtractive mixing is exactly this carry correction in integer arithmetic.",
+    "XOR defines every color relationship in this system. The three primaries {G, R, B} are the basis: every color is their unique XOR combination, and each color c has a complement c \u2295 7 with c \u2295 (c \u2295 7) = 7 (White). Arithmetically, XOR is carry-free binary addition (1+1 = 0). For primaries, integer addition equals XOR directly (1+4 = 5 = 1\u22954). For CMY, bits overlap and carry occurs (3+5 = 8), but XOR discards the carry (3\u22955 = 6). The \u201csubtract 7\u201d rule of subtractive mixing is exactly this carry correction.",
   theory_hamming_title: "Hamming Code",
   theory_hamming_desc:
-    "Parity bits (B=1, R=2, G=4) are RGB primaries. Data bits (M=3, C=5, Y=6, W=7) are secondaries + white. Each parity bit checks positions whose binary has that bit set. Flip a bit to see error detection in action.",
+    "The RGB primaries (B=1, R=2, G=4) are exactly the powers of 2 \u2014 each has a single 1-bit, making them natural parity checks. Each primary checks all positions whose binary representation contains that bit: Blue checks odd positions {1,3,5,7}, Red checks {2,3,6,7}, Green checks {4,5,6,7}. The remaining colors (M=3, C=5, Y=6, W=7) carry data. If any single channel flips, the failed parity checks identify which one \u2014 the syndrome is the error\u2019s position in binary. Flip a bit to see error detection in action.",
   theory_hamming_parity: "Parity",
   theory_hamming_checks: "Checks",
   theory_hamming_flip: "Click a color to flip",
@@ -247,50 +251,22 @@ export const en = {
 
   theory_cube_equator: "Equatorial belt",
   theory_cube_complements: "Complements",
-  theory_conn_conclusion_1: "One vector space, multiple constructions",
   theory_conn_conclusion_2: "GF(2)\u00b3 \u2014 the common algebraic source",
-  theory_conn_cube_fano: "Cube \u2194 Fano",
-  theory_conn_cube_fano_hook:
-    "The 7 Fano lines are exactly the 7 two-dimensional subspaces of GF(2)\u00b3 \u2014 planar cross-sections of the cube through Black (0).",
-  theory_conn_cube_fano_detail:
-    "3 coordinate planes \u2192 primary lines, 3 diagonal planes \u2192 complement lines, 1 anti-diagonal plane \u2192 CMY closure. Each contains 4 vertices (including Black) with 3 non-zero.",
-  theory_conn_fano_hamming: "Fano \u2245 Hamming \u2014 two faces of one structure",
   theory_conn_fano_hamming_hook:
-    "The 7 columns of Hamming(7,4)\u2019s 3\u00d77 parity-check matrix are the 7 points of the Fano plane, and each Fano line {a, b, c} with a\u2295b\u2295c = 0 appears as a weight-3 codeword (d\u2098\u1d62\u2099 = 3). Projective geometry and coding theory are two readings of the same incidence structure.",
-  theory_conn_fano_hamming_detail: "7 lines = 7 weight-3 codewords. Weight distribution: [1, 0, 0, 7, 7, 0, 0, 1] = 16 codewords total.",
-  theory_conn_cube_hamming: "Cube \u2194 Hamming",
-  theory_conn_cube_hamming_hook: "The 3 parity checks slice the cube along coordinate hyperplanes, localizing errors by coordinate.",
-  theory_conn_cube_hamming_detail: "P1 \u2192 bit 0, P2 \u2192 bit 1, P4 \u2192 bit 2. Syndrome = error position in GF(2)\u00b3.",
-  theory_conn_source: "Multiple perspectives, one source",
-  theory_conn_fano_role: "Fano = PG(2,2), the projective plane over GF(2)",
-  theory_conn_cube_role: "Cube = Cayley graph of (GF(2)\u00b3, \u2295) with generators {G, R, B}",
-  theory_conn_hamming_role: "Hamming = parity-check matrix with GF(2)\u00b3\\{0} as columns",
-  theory_conn_gray_role:
-    "Gray = Hamiltonian cycle on chromatic equator = hue wheel = die-face adjacency. The hue circle R\u2192Y\u2192G\u2192C\u2192B\u2192M is simultaneously: (1) Hamilton cycle on Q\u2083 chromatic vertices, (2) Hamilton cycle on octahedron vertex graph, (3) Hamilton cycle on cube face-adjacency (= octahedral graph). Channel toggles G,R,B repeat with period 3. Gray code extension K\u2192B\u2192M\u2192R\u2192Y\u2192W\u2192C\u2192G is the full Q\u2083 Hamilton cycle with palindrome channels B,R,B,G,B,R,B.",
+    "Fano \u2245 Hamming: the 7 Fano points are the 7 columns of the parity-check matrix. Projective geometry and coding theory are two readings of the same structure.",
+  theory_conn_cube_geometry_hook:
+    "Cube geometry: the 7 Fano lines are planar cross-sections of the cube through Black. The 3 parity checks slice along coordinate hyperplanes to localize errors.",
+  theory_conn_gray_hook:
+    "Gray code: the hue wheel R\u2192Y\u2192G\u2192C\u2192B\u2192M is a Hamiltonian cycle on both the cube\u2019s chromatic vertices and the octahedron\u2019s vertex graph.",
+  theory_conn_boolean_hook:
+    "Boolean ring: XOR (addition) and AND (multiplication) form a dual pair. The complement map swaps additive and subtractive mixing via De Morgan\u2019s law: \u03c3(a \u2295 b) = \u03c3(a) \u2227 \u03c3(b).",
   theory_conn_polyhedra: "Polyhedra network",
   theory_conn_polyhedra_desc:
-    "All polyhedra in \u00a710\u2013\u00a713 are connected by geometric operations preserving the Hamming 3-layer structure (d=1: edges, d=2: stella, d=3: complements). The octahedron has a dual Gray-code strip net; both polyhedra share 384 spanning trees (dual matroid theorem).",
+    "All polyhedra in \u00a79\u2013\u00a710 are connected by geometric operations preserving the Hamming 3-layer structure (d=1: edges, d=2: stella, d=3: complements). The octahedron has a dual Gray-code strip net; both polyhedra share 384 spanning trees (dual matroid theorem).",
   theory_conn_extended: "Adding Black as overall parity bit yields the [8,4,4] extended Hamming code over all 8 levels",
   theory_conn_boundary:
-    "GL(3,2) \u2245 PSL(2,7) (order 168) is the full automorphism group of PG(2,2). Only its S\u2083 subgroup (6 channel permutations) preserves chromatic meaning. Complement \u03c3(v) = v \u2295 (1,1,1) is a translation in AG(3,2), not a linear map in GL(3,2) \u2014 it sends W\u21a6K, which lies outside PG(2,2). GF(8) multiplication and 12+ color extensions lie outside this framework.",
-  theory_conn_cube_geometry: "Cube \u2014 geometric realization",
-  theory_conn_cube_geometry_hook:
-    "The 7 Fano lines correspond to 7 planar cross-sections of the cube through Black, and the 3 parity checks slice along coordinate hyperplanes to localize errors. Projective geometry and coding theory are united through the shared geometry of the cube.",
-  theory_conn_cube_geometry_detail:
-    "3 coordinate planes \u2192 primary lines, 3 diagonal planes \u2192 complement lines, 1 anti-diagonal \u2192 CMY closure. P1 \u2192 bit 0, P2 \u2192 bit 1, P4 \u2192 bit 2. Syndrome = error coordinate in GF(2)\u00b3.",
-  theory_conn_gray_card: "Gray code \u2014 Hamiltonian cycle",
-  theory_conn_gray_hook:
-    "The hue wheel R\u2192Y\u2192G\u2192C\u2192B\u2192M is a Hamiltonian cycle on Q\u2083 chromatic vertices and simultaneously on the octahedron vertex graph. Channel toggles G, R, B repeat with period 3.",
-  theory_conn_gray_detail:
-    "Gray code extension K\u2192B\u2192M\u2192R\u2192Y\u2192W\u2192C\u2192G is the full Q\u2083 Hamiltonian cycle with palindrome channels B,R,B,G,B,R,B.",
-  theory_conn_boolean: "Boolean ring \u2014 addition and multiplication",
-  theory_conn_boolean_hook:
-    "XOR (addition) and AND (multiplication) on GF(2)\u00b3 form a Boolean ring. When bits do not overlap (a \u2227 b = 0), XOR equals OR, so the complement map \u03c3(v) = v \u2295 (1,1,1) swaps additive and subtractive mixing via De Morgan\u2019s law: (\u03c3a) \u2227 (\u03c3b) = \u03c3(a \u2228 b) = \u03c3(a \u2295 b). This covers all primary mixing (see Color Cube).",
-  theory_conn_boolean_role: "Boolean ring = (GF(2)\u00b3, \u2295, \u2227), algebraic basis of the Color Cube",
-  theory_conn_boundary_title: "Limits of this framework",
-  theory_conn_edge_subspaces: "subspaces",
-  theory_conn_edge_codewords: "codewords",
-  theory_conn_edge_checks: "parity",
+    "GL(3,2) (order 168) is the full automorphism group of PG(2,2); only its S\u2083 subgroup (6 channel permutations) preserves chromatic meaning. Extensions beyond 8 colors require different algebraic structures.",
+  theory_conn_boundary_title: "Scope of this framework",
   theory_xor_complement: "Complement: {0} \u2295 7 = {1}",
   theory_xor_cayley_aria: "XOR Cayley table",
   theory_pin_hint: "Hover to highlight \u00b7 Click to pin",
@@ -302,21 +278,13 @@ export const en = {
   // Octahedron (chromatic cross-polytope)
   theory_octa_title: "Color Diamond",
   theory_octa_desc:
-    "Dual of the color cube. 6 vertices = 6 chromatic colors (primaries on +axis, CMY on \u2212axis), 8 faces = 8 GF(2)\u00b3 elements (each octant maps to one color). 3 complement axes R\u2194C, G\u2194M, B\u2194Y connect antipodal vertices. The face-adjacency graph is Q\u2083 \u2014 the color cube itself. Unlike the cube (whose 12 edges yield only 3 XOR values: the primaries), the octahedron\u2019s 12 edges produce all 6 chromatic XOR values, each exactly twice \u2014 every non-complementary pair mixes to a third color visible as the edge gradient\u2019s midpoint.",
+    "The most symmetric way to display 6 chromatic colors and their complement pairs: each complement axis (R\u2194C, G\u2194M, B\u2194Y) connects antipodal vertices, with primaries on +axes and CMY on \u2212axes. This is the dual of the color cube \u2014 6 vertices become 8 faces (one per GF(2)\u00b3 element), and the face-adjacency graph is the color cube itself. Unlike the cube (whose 12 edges yield only 3 XOR values), the octahedron\u2019s 12 edges produce all 6 chromatic XOR values, each exactly twice \u2014 every non-complementary pair mixes to a third color visible as the edge gradient\u2019s midpoint.",
   theory_octa_axes: "Complement axes",
 
-  // K₈ three-factor decomposition (ColorCube extension)
-  // Tetrahedra & Truncation (split from ColorDice)
-  theory_tetra_title: "Tetrahedra & Truncation",
-  theory_tetra_desc:
-    "The cube\u2019s 8 vertices split into two complementary tetrahedra: T0 (even Hamming weight) and T1 (odd weight). T0 = {Black, M, C, Y} forms the Klein four-group V\u2084 under XOR. In V\u2084, the XOR of any face\u2019s 3 vertices equals the opposite vertex (a\u2295b\u2295c = d), so each face is naturally colored by its opposite vertex \u2014 this is why the nets show colors as faces. Truncating T0 yields 8 colored faces \u2014 4 triangles (T0) and 4 hexagons (T1). The 4 missing edges are the complement pairs {v, v\u22957}.",
-
-  // Truncated tetrahedron labels
-  // AG(3,2) affine planes (Connections extension)
-  theory_conn_ag32: "AG(3,2) Affine Planes",
-  theory_conn_ag32_hook: "The 14 affine planes of GF(2)³ (4-element subsets) form 7 parallel classes, each corresponding to a Fano line.",
-  theory_conn_ag32_detail:
-    "14 planes = 7 subspaces (containing 0) + 7 cosets. 7 parallel classes ↔ 7 Fano lines (bijection). Note: correspondence with 14 cuboctahedron faces is numerical coincidence (7+7 ≠ 8+6 splitting mismatch, no non-trivial homomorphism AGL(3,2)→O_h).",
+  // K₈ three-factor decomposition — Tetrahedra & Stella Octangula (merged)
+  theory_tetra_stella_title: "Color Tetra & Color Star",
+  theory_tetra_stella_desc:
+    "Every pair of 8 colors is adjacent (1 channel apart), diagonal (2 channels), or complementary (3 channels). This three-way classification corresponds to three geometric structures. The cube\u2019s 8 vertices split into two tetrahedra: T0 (even weight: Black, M, C, Y) and T1 (odd weight: B, R, G, W). T0 forms the Klein four-group V\u2084, where any face\u2019s 3 vertices XOR to the opposite vertex \u2014 this is why each face is naturally colored. Compounding T0 and T1 yields the Color Star (Stella Octangula). Its 12 edges (all distance 2) produce CMY as XOR values, while the cube\u2019s 12 edges (distance 1) produce RGB, and the 4 complement diagonals (distance 3) produce White. K\u2088 = Cube + Color Star + Complements partitions all 28 color-pair relationships.",
 
   // ColorDice tetrahedra
   theory_dice_tetra: "T0/T1 Tetrahedra",
@@ -325,20 +293,18 @@ export const en = {
   theory_dice_tetra_subgroup: "T0 = {Black, M, C, Y} = Klein four-group V\u2084 under XOR",
   theory_dice_tetra_face_xor: "Face theorem: XOR of 3 face vertices = the opposite vertex",
 
-  // Stella Octangula
-  theory_stella_title: "Stella Octangula",
-  theory_stella_desc:
-    "Compounding tetrahedra T0 and T1 yields the Stella Octangula \u2014 the first stellation of the octahedron. All 12 edges have Hamming distance 2 (flipping 2 of 3 channels preserves bit parity, so distance-2 edges stay within T0 or T1). The XOR values of these edges are exactly {3,5,6} = CMY (weight-2 elements), while the cube\u2019s 12 edges yield {1,2,4} = RGB (weight-1) and the 4 complement pairs yield {7} = White (weight-3). By a GF(2)\u00b3 counting theorem, each XOR value appears in exactly 4 edges. This three-factor decomposition K\u2088 = Cube + Stella + Complement partitions all 28 color-pair relationships by Hamming distance, with edge XOR values partitioned by Hamming weight: primaries, secondaries, and white.",
+  // Stella Octangula (sub-labels, used within merged §10)
   theory_stella_compound: "Compound",
   theory_stella_k8: "K\u2088",
   theory_stella_annotation: "T0 \u222a T1 compound = first stellation of the octahedron \u2014 each edge is a 2-channel flip",
   theory_stella_k8_degree: "Degrees: 3 + 3 + 1 = 7 = deg(K\u2088)",
 
-  // Connection enhancements
-  theory_conn_168_decomp: "|GL(3,2)| = 168 = 7 (Fano pts) \u00d7 24 (stabilizer S\u2084 per pt = octahedral rotation group)",
-  theory_conn_e8_chain:
-    "[8,4,4] ext. Hamming \u2192 Construction A \u2192 E\u2088 lattice \u2192 Gosset polytope 4\u2082\u2081 (240 vertices): canonical chain from 8 colors to densest 8D packing",
-  theory_conn_5fold: "GL(3,2) has no element of order 5 \u2192 icosahedral symmetry lies outside the chromatic framework",
+  // Section group labels
+  theory_group_foundations: "FOUNDATIONS",
+  theory_group_geometry: "COLOR GEOMETRY",
+  theory_group_algebra: "ALGEBRAIC STRUCTURES",
+  theory_group_polyhedra: "POLYHEDRA",
+  theory_group_synthesis: "SYNTHESIS",
 
   theory_fano_cmy_collapse: "CMY line",
   theory_fano_cmy_eq: "M\u2295C\u2295Y = 0 \u2192 collinear!",

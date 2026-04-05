@@ -382,26 +382,26 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
         </svg>
       </div>
 
-      {/* Annotation below SVG */}
-      {viewMode === "compound" && (
-        <p style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
-          {t("theory_stella_annotation")}
-        </p>
-      )}
-
-      {viewMode === "k8" && (
-        <div style={{ textAlign: "center" }}>
-          <p style={{ fontSize: FS.xxs, fontFamily: "monospace", margin: 0 }}>
-            <span style={{ color: K8_Q3_COLOR }}>Q&#x2083;(12)</span>
-            <span style={{ color: "rgba(255,255,255,0.4)" }}> + </span>
-            <span style={{ color: K8_STELLA_COLOR }}>&#x2606;(12)</span>
-            <span style={{ color: "rgba(255,255,255,0.4)" }}> + </span>
-            <span style={{ color: K8_M4_COLOR }}>M&#x2084;(4)</span>
-            <span style={{ color: "rgba(255,255,255,0.5)" }}> = 28</span>
+      {/* Annotation below SVG — fixed height to prevent layout shift on mode toggle */}
+      <div style={{ minHeight: 28, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        {viewMode === "compound" ? (
+          <p style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+            {t("theory_stella_annotation")}
           </p>
-          <p style={{ fontSize: FS.xxs, fontFamily: "monospace", color: C.textDimmer, margin: 0 }}>{t("theory_stella_k8_degree")}</p>
-        </div>
-      )}
+        ) : (
+          <div style={{ textAlign: "center" }}>
+            <p style={{ fontSize: FS.xxs, fontFamily: "monospace", margin: 0 }}>
+              <span style={{ color: K8_Q3_COLOR }}>Q&#x2083;(12)</span>
+              <span style={{ color: "rgba(255,255,255,0.4)" }}> + </span>
+              <span style={{ color: K8_STELLA_COLOR }}>&#x2606;(12)</span>
+              <span style={{ color: "rgba(255,255,255,0.4)" }}> + </span>
+              <span style={{ color: K8_M4_COLOR }}>M&#x2084;(4)</span>
+              <span style={{ color: "rgba(255,255,255,0.5)" }}> = 28</span>
+            </p>
+            <p style={{ fontSize: FS.xxs, fontFamily: "monospace", color: C.textDimmer, margin: 0 }}>{t("theory_stella_k8_degree")}</p>
+          </div>
+        )}
+      </div>
 
       {/* Toggle buttons */}
       <div style={{ display: "flex", gap: SP.md }}>

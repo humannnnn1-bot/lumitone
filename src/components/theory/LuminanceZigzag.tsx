@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import { THEORY_LEVELS } from "./theory-data";
-import { C, FW } from "../../tokens";
+import { C, FS, FW } from "../../tokens";
 import { useTranslation } from "../../i18n";
 
 /* ── Zigzag geometry ── */
@@ -97,7 +97,15 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
           strokeDasharray="6,4"
           opacity={0.4}
         />
-        <text x={ML - 4} y={yL(127.5)} textAnchor="end" dominantBaseline="central" fontSize={7} fill={C.textDimmer} fontFamily="monospace">
+        <text
+          x={ML - 4}
+          y={yL(127.5)}
+          textAnchor="end"
+          dominantBaseline="central"
+          fontSize={FS.xxs}
+          fill={C.textDimmer}
+          fontFamily="monospace"
+        >
           127.5
         </text>
 
@@ -109,7 +117,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
           x={ML + PW + 2}
           y={(yL(76.245) + yL(105.315)) / 2}
           dominantBaseline="central"
-          fontSize={7}
+          fontSize={FS.xxs}
           fill={C.textDimmer}
           fontFamily="monospace"
         >
@@ -119,7 +127,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
           x={ML + PW + 2}
           y={(yL(149.685) + yL(178.755)) / 2}
           dominantBaseline="central"
-          fontSize={7}
+          fontSize={FS.xxs}
           fill={C.textDimmer}
           fontFamily="monospace"
         >
@@ -150,7 +158,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
                 y={yL(y)}
                 textAnchor="end"
                 dominantBaseline="central"
-                fontSize={7}
+                fontSize={FS.xxs}
                 fill={isHl ? info.color : C.textDimmer}
                 fontFamily="monospace"
                 opacity={isHl ? 1 : 0.6}
@@ -181,7 +189,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
               y={(yL(hlY) + yL(compY!)) / 2}
               textAnchor="end"
               dominantBaseline="central"
-              fontSize={7}
+              fontSize={FS.xxs}
               fill={C.textMuted}
               fontFamily="monospace"
             >
@@ -219,7 +227,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
               x={mx}
               y={my + (rising ? -6 : 8)}
               textAnchor="middle"
-              fontSize={7}
+              fontSize={FS.xxs}
               fontFamily="monospace"
               fontWeight={FW.bold}
               fill={SEG_COLORS[i]}
@@ -246,7 +254,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
         {hits.map((hit, i) => (
           <g key={`hit${i}`}>
             <circle cx={xH(hit.h)} cy={yL(hlY!)} r={4} fill={hit.color} stroke="#fff" strokeWidth={1.5} />
-            <text x={xH(hit.h)} y={yL(hlY!) + 12} textAnchor="middle" fontSize={7} fill={C.textMuted} fontFamily="monospace">
+            <text x={xH(hit.h)} y={yL(hlY!) + 12} textAnchor="middle" fontSize={FS.xxs} fill={C.textMuted} fontFamily="monospace">
               {Math.round(hit.h)}°
             </text>
           </g>
@@ -261,7 +269,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
               x={xH(v.h)}
               y={MT + PH + 12}
               textAnchor="middle"
-              fontSize={8}
+              fontSize={FS.xs}
               fontFamily="monospace"
               fontWeight={FW.bold}
               fill={info.color}
@@ -287,7 +295,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
 
         {/* N count on hover */}
         {hlLevel !== null && hits.length > 0 && (
-          <text x={ML + PW / 2} y={MT + PH + MB - 2} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.textMuted}>
+          <text x={ML + PW / 2} y={MT + PH + MB - 2} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textMuted}>
             N = {hits.length} candidate{hits.length > 1 ? "s" : ""}
           </text>
         )}

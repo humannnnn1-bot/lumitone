@@ -188,13 +188,13 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
       </svg>
       <p
         className="theory-annotation"
-        style={{ fontSize: 10, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}
+        style={{ fontSize: FS.md, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}
       >
         {t("theory_binary_luma_formula")}
       </p>
       <p
         className="theory-annotation"
-        style={{ fontSize: 9, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}
+        style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}
       >
         {t("theory_binary_luma_complement")}
       </p>
