@@ -17,7 +17,7 @@ interface LinkedVizProps {
   /** Hide the legend section and show interval ratios instead */
   hideLegend?: boolean;
   /** Scale mode for interval ratio display (only shown when hideLegend) */
-  scaleMode?: "12tet" | "ji" | "octatonic";
+  scaleMode?: "12tet" | "ji" | "octatonic" | "diatonic7";
   /** Controlled alpha state (for Music tab integration) */
   alpha0?: number;
   onAlpha0Change?: (a: number) => void;
@@ -1304,12 +1304,21 @@ export const LinkedViz = React.memo(function LinkedViz({
                   ci: d?.ci,
                 });
               }
-            } else {
+            } else if (scaleMode === "octatonic") {
               title = "Octatonic Scale";
               const steps = [0, 1, 3, 4, 6, 7, 9, 10];
               const names = ["C", "C\u266f", "E\u266d", "E", "F\u266f", "G", "A", "B\u266d"];
               for (let i = 0; i < 8; i++) {
                 const next = steps[(i + 1) % 8];
+                const diff = (next - steps[i] + 12) % 12;
+                rows.push({ label: names[i], value: `${steps[i]}st  (\u0394${diff})` });
+              }
+            } else {
+              title = "Diatonic (7-note)";
+              const steps = [0, 2, 4, 5, 7, 9, 11];
+              const names = ["C", "D", "E", "F", "G", "A", "B"];
+              for (let i = 0; i < 7; i++) {
+                const next = steps[(i + 1) % 7];
                 const diff = (next - steps[i] + 12) % 12;
                 rows.push({ label: names[i], value: `${steps[i]}st  (\u0394${diff})` });
               }

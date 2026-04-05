@@ -88,6 +88,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
   const { t } = useTranslation();
   const [showHighlight, setShowHighlight] = useState(false);
   const [hoveredCandidate, setHoveredCandidate] = useState<{ lv: number; ci: number } | null>(null);
+  const [selectedLevels, setSelectedLevels] = useState<Set<number>>(new Set());
 
   // Keyboard shortcuts for zoom/pan + tool switching
   const handleKeyDown = useCallback(
@@ -227,7 +228,8 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
   const handleHueChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setHueAngle(Number(e.target.value));
-      setDirectCandidates(new Map()); // exit direct mode when hue slider is used
+      setDirectCandidates(new Map());
+      setSelectedLevels(new Set());
     },
     [setHueAngle, setDirectCandidates],
   );
@@ -564,7 +566,6 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                 const cand = cands[ci];
                 const isSelected = directCandidates.get(lp.lv) === ci;
                 const isSwatchHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === ci;
-                const isDimmed = hoveredCandidate !== null && !isSwatchHovered;
                 return (
                   <div
                     key={ci}
@@ -578,7 +579,12 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                         else next.set(lp.lv, ci);
                         return next;
                       });
-                      setHoveredCandidate({ lv: lp.lv, ci: deselecting ? autoIdx : ci });
+                      setSelectedLevels((prev) => {
+                        const next = new Set(prev);
+                        next.delete(lp.lv);
+                        return next;
+                      });
+                      setHoveredCandidate(null);
                     }}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -590,7 +596,12 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                           else next.set(lp.lv, ci);
                           return next;
                         });
-                        setHoveredCandidate({ lv: lp.lv, ci: deselecting ? autoIdx : ci });
+                        setSelectedLevels((prev) => {
+                          const next = new Set(prev);
+                          next.delete(lp.lv);
+                          return next;
+                        });
+                        setHoveredCandidate(null);
                       }
                     }}
                     onPointerEnter={() => setHoveredCandidate({ lv: lp.lv, ci })}
@@ -605,8 +616,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                       border: `2px solid ${isSwatchHovered || isSelected ? C.accent : C.border}`,
                       boxSizing: "border-box" as const,
                       boxShadow: isSwatchHovered || isSelected ? SHADOW.glow(C.accent) : "none",
-                      opacity: isDimmed ? 0.35 : 1,
-                      transition: "opacity 0.15s, box-shadow 0.15s, border-color 0.15s",
+                      transition: "box-shadow 0.15s, border-color 0.15s",
                     }}
                   />
                 );
@@ -665,50 +675,89 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                   {(() => {
                     const mainCi = currentIdx;
                     const isMainHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === mainCi;
-                    const isMainDimmed = hoveredCandidate !== null && !isMainHovered;
+                    const isSelected = selectedLevels.has(lp.lv);
                     return (
                       <div
-                        role={isDirect ? "button" : undefined}
-                        tabIndex={isDirect ? 0 : undefined}
+                        role={hasCands ? "button" : undefined}
+                        tabIndex={hasCands ? 0 : undefined}
                         onClick={
-                          isDirect
+                          hasCands
                             ? () => {
-                                setDirectCandidates((prev) => {
-                                  const next = new Map(prev);
-                                  next.delete(lp.lv);
-                                  return next;
-                                });
-                              }
-                            : undefined
-                        }
-                        onKeyDown={
-                          isDirect
-                            ? (e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  e.preventDefault();
+                                if (isSelected) {
+                                  setSelectedLevels((prev) => {
+                                    const next = new Set(prev);
+                                    next.delete(lp.lv);
+                                    return next;
+                                  });
                                   setDirectCandidates((prev) => {
                                     const next = new Map(prev);
                                     next.delete(lp.lv);
                                     return next;
                                   });
+                                } else {
+                                  setSelectedLevels((prev) => {
+                                    const next = new Set(prev);
+                                    next.add(lp.lv);
+                                    return next;
+                                  });
+                                  if (!isDirect) {
+                                    setDirectCandidates((prev) => {
+                                      const next = new Map(prev);
+                                      next.set(lp.lv, autoIdx);
+                                      return next;
+                                    });
+                                  }
+                                }
+                              }
+                            : undefined
+                        }
+                        onKeyDown={
+                          hasCands
+                            ? (e) => {
+                                if (e.key === "Enter" || e.key === " ") {
+                                  e.preventDefault();
+                                  if (isSelected) {
+                                    setSelectedLevels((prev) => {
+                                      const next = new Set(prev);
+                                      next.delete(lp.lv);
+                                      return next;
+                                    });
+                                    setDirectCandidates((prev) => {
+                                      const next = new Map(prev);
+                                      next.delete(lp.lv);
+                                      return next;
+                                    });
+                                  } else {
+                                    setSelectedLevels((prev) => {
+                                      const next = new Set(prev);
+                                      next.add(lp.lv);
+                                      return next;
+                                    });
+                                    if (!isDirect) {
+                                      setDirectCandidates((prev) => {
+                                        const next = new Map(prev);
+                                        next.set(lp.lv, autoIdx);
+                                        return next;
+                                      });
+                                    }
+                                  }
                                 }
                               }
                             : undefined
                         }
                         onPointerEnter={() => setHoveredCandidate({ lv: lp.lv, ci: mainCi })}
                         onPointerLeave={() => setHoveredCandidate(null)}
-                        title={isDirect ? t("title_reset_auto") : undefined}
+                        title={isSelected ? t("title_reset_auto") : undefined}
                         style={{
                           width: 28,
                           height: 28,
                           borderRadius: R.md,
                           background: isDirect ? `rgb(${cands[directIdx!]?.rgb.join(",")})` : lp.hex,
-                          border: `2px solid ${isMainHovered || isDirect ? C.accent : C.border}`,
+                          border: `2px solid ${isMainHovered || isSelected ? C.accent : C.border}`,
                           boxSizing: "border-box" as const,
-                          cursor: isDirect ? "pointer" : "default",
+                          cursor: hasCands ? "pointer" : "default",
                           boxShadow: isMainHovered ? SHADOW.glow(C.accent) : "none",
-                          opacity: isMainDimmed ? 0.35 : 1,
-                          transition: "opacity 0.15s, box-shadow 0.15s, border-color 0.15s",
+                          transition: "box-shadow 0.15s, border-color 0.15s",
                         }}
                       />
                     );

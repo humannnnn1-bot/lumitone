@@ -195,9 +195,9 @@ export const ja: Record<TranslationKey, string> = {
   theory_zigzag_title: "ルマジグザグ",
   theory_zigzag_desc:
     "完全飽和色（最大チャンネル=255、最小=0）は色相の回転に従い6区間のジグザグを描きます。各区間で1チャンネルが変化し、傾きはBT.601係数に比例します。各頂点ルマ値の水平線はジグザグと1点または3点で交わり、その交点が等ルマ候補です。頂点間では最大4点。任意の色相角 h で Y(h) + Y(h+180\u00b0) = 255、すなわち補色のルマ和は常に一定です（補色ルマ定理）。",
-  theory_dice_title: "D6\u30ab\u30e9\u30fc\u30c0\u30a4\u30b9",
+  theory_dice_title: "\u516d\u9762\u30ab\u30e9\u30fc\u30c0\u30a4\u30b9",
   theory_dice_desc:
-    "6つの有彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。11種の立方体展開図のうち、この階段型のみが色相環順に面を配列します。",
+    "6つの有彩色を暗い順に1\u20136と番号づけし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。階段展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。11種の立方体展開図のうち、この階段型のみが色相環順に面を配列します（証明: 色相環 R→Y→G→C→B→M は5つの特定の立方体辺隣接を要求し、面グラフ上のハミルトン路を形成します。この線形順序に従う展開図はこれら5辺を折り線として使う必要があり、正八面体グラフの全域木として一意に決定されます — 全11種の網羅検証により確認）。",
   theory_dice_hint:
     "6\u9762 \u2192 8\u9802\u70b9: Black (0) \u3068 White (7) \u3092\u52a0\u3048\u308b\u3068\u30ab\u30e9\u30fc\u30ad\u30e5\u30fc\u30d6\u306b",
   theory_dice_additive_col: "\u52a0\u6cd5 (\u2295)",
@@ -211,7 +211,7 @@ export const ja: Record<TranslationKey, string> = {
   theory_fano_secondary: "CMY閉包",
   theory_cube_title: "カラーキューブ",
   theory_cube_desc:
-    "8レベルは3次元立方体（RGB軸）の頂点です。各辺は1チャンネルの切り替え。BlackとWhiteを両極とし、6色彩頂点が赤道帯を形成します \u2014 重み1の原色層と重み2の二次色層。「赤道」ボタンでアニメーション表示。",
+    "8レベルは3次元立方体（RGB軸）の頂点です。各辺は1チャンネルの切り替え。BlackとWhiteを両極とし、6色彩頂点が赤道帯を形成します \u2014 重み1の原色層と重み2の二次色層。XOR（加法）とAND（乗法）でGF(2)³はブール環をなします: Black極からは原色をXORで合成し、White極からはANDでフィルタします。ビットが重ならない入力（a ∧ b = 0）ではXOR = ORとなるため、補色写像（XOR 7）がド・モルガンの法則で2つの演算を入れ替えます: σ(a ⊕ b) = σ(a) ∧ σ(b)。",
   theory_gray_title: "グレイコード巡回",
   theory_gray_desc:
     "6色彩頂点はK\u2083,\u2083（原色\u2194二次色）から補色ペア3組を除いた構造 — ちょうど六角形になり、他の辺は存在しません。この唯一の巡回路は1ステップごとに1チャンネルを切り替え: G \u2192 R \u2192 B、カラーホイールと同じ順序。各辺は原色三つ組線（次節で詳述）上にあり、3本の線を各2回ずつ使います。補色は常にこの六角形上で対蹠（距離3）\u2014 ダイスの対面の和が7になる幾何学的理由です。",
@@ -256,7 +256,7 @@ export const ja: Record<TranslationKey, string> = {
     "座標平面3つ \u2192 原色線、対角平面3つ \u2192 補色線、反対角平面1つ \u2192 CMY閉包。各々4頂点（Black含む）を含み非零3点。",
   theory_conn_fano_hamming: "Fano \u2245 Hamming — 同一構造の二面",
   theory_conn_fano_hamming_hook:
-    "ファノ平面の点-直線入射行列はハミング(7,4)のパリティ検査行列そのものです。ファノ線 {a, b, c}（a\u2295b\u2295c = 0）は重み3符号語であり（d\u2098\u1d62\u2099 = 3）、二つの理論は同じ構造の異なる読み方です。",
+    "ハミング(7,4)の 3×7 パリティ検査行列の 7 列はファノ平面の 7 点に対応し、各ファノ線 {a, b, c}（a\u2295b\u2295c = 0）は重み3符号語として現れます（d\u2098\u1d62\u2099 = 3）、射影幾何と符号理論は同一の入射構造の二つの読み方です。",
   theory_conn_fano_hamming_detail: "7本の線 = 7つの重み3符号語。重み分布: [1, 0, 0, 7, 7, 0, 0, 1] = 全16符号語。",
   theory_conn_cube_hamming: "Cube \u2194 Hamming",
   theory_conn_cube_hamming_hook: "3つのパリティ検査はキューブを座標超平面で切断し、座標ごとにエラー位置を特定します。",
@@ -285,8 +285,8 @@ export const ja: Record<TranslationKey, string> = {
   theory_conn_gray_detail: "グレイコード拡張 K→B→M→R→Y→W→C→G は回文チャンネル列 B,R,B,G,B,R,B を持つQ₃のハミルトン閉路です。",
   theory_conn_boolean: "ブール環 — 加法と乗法",
   theory_conn_boolean_hook:
-    "GF(2)³ 上の XOR（加法）と AND（乗法）はブール環をなします。Blackからの加法的混色とWhiteからの減法的混色は、補色写像 σ(v) = v ⊕ (1,1,1) がド・モルガンの法則を介して入れ替えます（極性ビュー参照）。",
-  theory_conn_boolean_role: "ブール環 = (GF(2)³, ⊕, ∧)、極性ビューの代数的基盤",
+    "GF(2)³ 上の XOR（加法）と AND（乗法）はブール環をなします。ビットが重ならない場合（a ∧ b = 0）、XOR = OR となるため、補色写像 σ(v) = v ⊕ (1,1,1) がド・モルガンの法則を介して加法的混色と減法的混色を入れ替えます: σ(a ⊕ b) = σ(a) ∧ σ(b)。これは全ての原色混色に適用されます（カラーキューブ参照）。",
+  theory_conn_boolean_role: "ブール環 = (GF(2)³, ⊕, ∧)、カラーキューブの代数的基盤",
   theory_conn_boundary_title: "この枠組みの限界",
   theory_conn_edge_subspaces: "\u90e8\u5206\u7a7a\u9593",
   theory_conn_edge_codewords: "\u7b26\u53f7\u8a9e",
@@ -298,31 +298,20 @@ export const ja: Record<TranslationKey, string> = {
   theory_fano_show_complement: "補色",
   theory_fano_show_secondary: "CMY",
   theory_fano_show_all: "全て",
-  theory_polar_title: "\u6975\u6027\u30d3\u30e5\u30fc",
-  theory_polar_desc:
-    "\u540c\u3058\u7acb\u65b9\u4f53\u3092\u5bfe\u9802\u70b9\u304b\u3089\u898b\u307e\u3059: Black\u304b\u3089\u306f\u539f\u8272\u3092\u52a0\u6cd5\u3057\uff08XOR \u2014 \u74b0\u306e\u52a0\u6cd5\uff09\u3001White\u304b\u3089\u306f\u30d5\u30a3\u30eb\u30bf\u3092\u9069\u7528\u3057\u307e\u3059\uff08AND \u2014 \u74b0\u306e\u4e57\u6cd5\uff09\u3002GF(2)\u00b3 \u4e0a\u306e\u30d6\u30fc\u30eb\u74b0\u306e2\u3064\u306e\u6f14\u7b97\u3067\u3042\u308a\u3001\u5206\u914d\u6cd5\u5247\u3067\u7d50\u3070\u308c\u3066\u3044\u307e\u3059\u3002\u88dc\u8272\u5199\u50cf\uff08XOR 7\uff09\u304c\u30c9\u30fb\u30e2\u30eb\u30ac\u30f3\u306e\u6cd5\u5247\u3092\u4ecb\u3057\u30662\u3064\u306e\u8996\u70b9\u3092\u5165\u308c\u66ff\u3048\u307e\u3059\u3002",
-  theory_polar_additive: "\u52a0\u6cd5\uff08Black\u8d77\u70b9\uff09",
-  theory_polar_subtractive: "\u6e1b\u6cd5\uff08White\u8d77\u70b9\uff09",
-  theory_polar_hint: "\u539f\u8272\u307e\u305f\u306f\u4e8c\u6b21\u8272\u3092\u30af\u30ea\u30c3\u30af\u3057\u3066\u6df7\u8272",
 
   // Octahedron (chromatic cross-polytope)
   theory_octa_title: "カラーダイヤ",
   theory_octa_desc:
-    "色立方体の双対。6頂点 = 6有彩色（原色は+軸、CMYは−軸）、8面 = 8色（各八分空間が1つのGF(2)\u00b3元に対応）。3本の補色軸 R\u2194C, G\u2194M, B\u2194Y が対頂点を結ぶ。面隣接グラフは立方体グラフQ\u2083そのもの。",
+    "色立方体の双対。6頂点 = 6有彩色（原色は+軸、CMYは−軸）、8面 = 8色（各八分空間が1つのGF(2)\u00b3元に対応）。3本の補色軸 R\u2194C, G\u2194M, B\u2194Y が対頂点を結ぶ。面隣接グラフは立方体グラフQ\u2083そのもの。立方体の12辺のXORは原色3種のみだが、正八面体の12辺は6有彩色すべてのXOR値を生成し、各色がちょうど2回現れる — 補色でない全ペアが第三の色に混合され、辺グラデーションの中間点として視認できる。",
   theory_octa_axes: "補色軸",
-  theory_octa_nets: "正八面体の展開図",
-  theory_octa_nets_desc: "1-6-1展開図。T0(▽)=K,M,C,Y / T1(△)=B,R,G,W。補色ペア（XOR 7）が対面: K↔W, B↔Y, R↔C, G↔M。",
 
   // K₈ three-factor decomposition (ColorCube extension)
   // Tetrahedra & Truncation (split from ColorDice)
   theory_tetra_title: "四面体と切頂",
   theory_tetra_desc:
-    "立方体の8頂点は相補的な2つの四面体に分かれます: T0（偶数ハミング重み）とT1（奇数重み）。T0 = {Black, M, C, Y} はXOR下でクライン四群V\u2084を形成。T0を切頂すると8色の面 \u2014 4三角形（T0）と4六角形（T1）\u2014 が得られます。欠落4辺は補色対 {v, v\u22957} です。",
+    "立方体の8頂点は相補的な2つの四面体に分かれます: T0（偶数ハミング重み）とT1（奇数重み）。T0 = {Black, M, C, Y} はXOR下でクライン四群V\u2084を形成。V₄では任意の面の3頂点のXORが対頂点に等しく（a⊕b⊕c = d）、各面は対頂点の色で自然に彩色されます — 展開図で色が面に現れるのはこのためです。T0を切頂すると8色の面 \u2014 4三角形（T0）と4六角形（T1）\u2014 が得られます。欠落4辺は補色対 {v, v\u22957} です。",
 
   // Truncated tetrahedron labels
-  theory_dice_trunc: "D8カラーダイス展開図",
-  theory_d8_octa_3d: "D8カラーダイス",
-  theory_d8_octa_3d_desc: "正八面体の8面 = GF(2)³の8色。対面は補色対(a⊕b=7)。",
   // AG(3,2) affine planes (Connections extension)
   theory_conn_ag32: "AG(3,2) アフィン平面",
   theory_conn_ag32_hook: "GF(2)³の14個のアフィン平面（4元素部分集合）が7平行類を形成し、各類がファノ直線に対応する。",
@@ -335,16 +324,11 @@ export const ja: Record<TranslationKey, string> = {
   theory_dice_tetra_t1: "T1: 奇数重み",
   theory_dice_tetra_subgroup: "T0 = {Black, M, C, Y} = XOR下のクライン四群 V\u2084",
   theory_dice_tetra_face_xor: "面定理: 面の3頂点の XOR = 対頂点の色",
-  theory_tetra_star_net: "T0/T1 四面体の展開図",
-  theory_tetra_star_t0: "Black中心 + CMY = 減法混色の原型",
-  theory_tetra_star_t1: "White中心 + RGB = 加法混色の原型",
-  theory_trunc_net: "補色対面",
-  theory_trunc_net_desc: "正八面体の対面 = 補色対(a⊕b=7)。4組の対面が空間的に最大分離。",
 
   // Stella Octangula
   theory_stella_title: "星形八面体",
   theory_stella_desc:
-    "T0とT1の2つの四面体を合成すると星形八面体（Stella Octangula）が得られます。これは八面体の第一星形化でもあります。12本の辺はすべてハミング距離2 — 2チャンネルの同時切替を表します。完全グラフK₈の三因子分解（距離1 + 距離2 + 距離3 = 12 + 12 + 4 = 28辺）の中核をなす構造です。",
+    "T0とT1の2つの四面体を合成すると星形八面体（Stella Octangula）が得られます — 八面体の第一星形化です。12本の辺はすべてハミング距離2です（3チャンネル中2つを反転するとビットパリティが保存されるため、距離2の辺はT0内またはT1内にのみ存在します）。これらの辺のXOR値は{3,5,6} = CMY（重み2の元）のみです。一方、立方体の12辺は{1,2,4} = RGB（重み1）、4組の補色対は{7} = White（重み3）を生成します。GF(2)³の計数定理により、各XOR値はちょうど4辺に現れます。この三因子分解 K₈ = 立方体 + 星形八面体 + 補色対 は、28の色ペア関係をハミング距離で分割し、辺のXOR値をハミング重みで分類します: 原色・二次色・白。",
   theory_stella_compound: "合成",
   theory_stella_k8: "K₈",
   theory_stella_annotation: "T0 ∪ T1 合成 = 八面体の第一星形化 — 各辺は2チャンネル同時切替",
@@ -517,6 +501,7 @@ export const ja: Record<TranslationKey, string> = {
   music_scale_12tet: "12-TET",
   music_scale_ji: "JI",
   music_scale_octatonic: "Oct",
+  music_scale_diatonic7: "Dia7",
   music_fm_toggle: "FM合成",
   music_fm_on: "FM",
   music_fm_off: "加算",

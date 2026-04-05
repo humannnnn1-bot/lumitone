@@ -8,7 +8,7 @@ export interface SonificationLevel {
   gray: number; // luminance 0-255
 }
 
-export type ScaleMode = "12tet" | "ji" | "octatonic";
+export type ScaleMode = "12tet" | "ji" | "octatonic" | "diatonic7";
 
 interface MusicEngineParams {
   enabled: boolean;
@@ -174,10 +174,16 @@ function angleToFreq(angle: number, mode: ScaleMode): number {
     }
     return BASE_FREQ * ratios[closest];
   }
-  // octatonic
-  const semitones = [0, 1, 3, 4, 6, 7, 9, 10];
+  if (mode === "octatonic") {
+    const semitones = [0, 1, 3, 4, 6, 7, 9, 10];
+    const norm = ((angle % 360) + 360) % 360;
+    const idx = Math.round((norm / 360) * 8) % 8;
+    return 261.63 * Math.pow(2, semitones[idx] / 12);
+  }
+  // diatonic7
+  const semitones = [0, 2, 4, 5, 7, 9, 11];
   const norm = ((angle % 360) + 360) % 360;
-  const idx = Math.round((norm / 360) * 8) % 8;
+  const idx = Math.round((norm / 360) * 7) % 7;
   return 261.63 * Math.pow(2, semitones[idx] / 12);
 }
 

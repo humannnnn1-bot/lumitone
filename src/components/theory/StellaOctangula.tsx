@@ -16,16 +16,9 @@ import { S_BTN } from "../../styles";
 import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
 
-const VW = 240; // per-view width
+const VW = 300; // single-view width
 const VR = 7;
 const HIT_R = 14;
-const CY = 150;
-
-/* ── Back-view 2D points (horizontal mirror) ── */
-const CUBE_POINTS_BACK: Record<number, { x: number; y: number }> = {};
-for (let k = 0; k < 8; k++) {
-  CUBE_POINTS_BACK[k] = { x: 300 - CUBE_POINTS[k].x, y: CUBE_POINTS[k].y };
-}
 
 /* ── 3D lighting (same model as Octahedron.tsx) ── */
 
@@ -38,13 +31,6 @@ const LIGHT_DIR: [number, number, number] = (() => {
 })();
 
 const CUBE_CENTER: [number, number, number] = [0.5, 0.5, 0.5];
-
-/* Back-view 3D: flip X-Z */
-const STELLA_3D_BACK: Record<number, [number, number, number]> = {};
-for (let k = 0; k < 8; k++) {
-  const [g, r, b] = STELLA_3D[k];
-  STELLA_3D_BACK[k] = [1 - g, r, 1 - b];
-}
 
 function computeFaceLighting(coords3D: Record<number, [number, number, number]>) {
   return STELLA_FACES.map((f) => {
@@ -101,9 +87,6 @@ const SORTED_FACES_F = computeSortedFaces(FACE_LIGHTING_F);
 const BACK_EDGES_F = computeBackEdges(FACE_LIGHTING_F);
 
 // Back view data
-const FACE_LIGHTING_B = computeFaceLighting(STELLA_3D_BACK);
-const SORTED_FACES_B = computeSortedFaces(FACE_LIGHTING_B);
-const BACK_EDGES_B = computeBackEdges(FACE_LIGHTING_B);
 
 const CH_COLORS: Record<string, string> = { G: "#00ff00", R: "#ff0000", B: "#0000ff" };
 
@@ -120,7 +103,6 @@ interface ViewData {
 }
 
 const VIEW_FRONT: ViewData = { pts: CUBE_POINTS, faceLighting: FACE_LIGHTING_F, sortedFaces: SORTED_FACES_F, backEdges: BACK_EDGES_F };
-const VIEW_BACK: ViewData = { pts: CUBE_POINTS_BACK, faceLighting: FACE_LIGHTING_B, sortedFaces: SORTED_FACES_B, backEdges: BACK_EDGES_B };
 
 interface Props {
   hlLevel: number | null;
@@ -228,18 +210,6 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
           >
             {lv}
           </text>
-          <text
-            x={p.x}
-            y={p.y + (p.y < CY ? -VR - 5 : VR + 8)}
-            textAnchor="middle"
-            dominantBaseline={p.y < CY ? "auto" : "hanging"}
-            fontSize={FS.xxs}
-            fontFamily="monospace"
-            fill={lv === 0 ? "#888" : info.color}
-            opacity={dim ? 0.15 : 0.7}
-          >
-            {info.name}
-          </text>
         </g>
       );
     });
@@ -287,7 +257,7 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
                 fill={sf.color === 0 || sf.color === 1 ? "#fff" : info.color}
                 opacity={0.9}
               >
-                {sf.tetra === 0 ? "T0" : "T1"}: {info.name}
+                {sf.tetra === 0 ? "T0" : "T1"}: {info.lv}
               </text>
             )}
           </g>
@@ -406,12 +376,9 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg, width: "100%" }}>
-      <div style={{ display: "flex", gap: SP.md, justifyContent: "center" }}>
+      <div style={{ display: "flex", justifyContent: "center" }}>
         <svg viewBox="40 45 220 195" style={{ width: "100%", maxWidth: VW }} role="img">
           {viewMode === "compound" ? renderCompound(VIEW_FRONT, "f") : renderK8(VIEW_FRONT, "f")}
-        </svg>
-        <svg viewBox="40 45 220 195" style={{ width: "100%", maxWidth: VW }} role="img">
-          {viewMode === "compound" ? renderCompound(VIEW_BACK, "b") : renderK8(VIEW_BACK, "b")}
         </svg>
       </div>
 

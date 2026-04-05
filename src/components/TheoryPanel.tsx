@@ -9,7 +9,6 @@ import { ColorCube } from "./theory/ColorCube";
 import { GrayCodeHex } from "./theory/GrayCodeHex";
 import { XorDemo } from "./theory/XorDemo";
 import { HammingDiagram } from "./theory/HammingDiagram";
-import { PolarCubes } from "./theory/PolarCubes";
 import { Octahedron } from "./theory/Octahedron";
 import { LuminanceZigzag } from "./theory/LuminanceZigzag";
 import { TetraDecomposition } from "./theory/TetraDecomposition";
@@ -163,14 +162,7 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
         <hr style={S_DIVIDER} />
 
-        {/* §6 Polar Views */}
-        <Section title={t("theory_polar_title")} desc={t("theory_polar_desc")}>
-          <PolarCubes hlLevel={hlLevel} onHover={onHover} />
-        </Section>
-
-        <hr style={S_DIVIDER} />
-
-        {/* §7 Gray Code Cycle */}
+        {/* §6 Gray Code Cycle */}
         <Section title={t("theory_gray_title")} desc={t("theory_gray_desc")}>
           <GrayCodeHex hlLevel={hlLevel} onHover={onHover} />
         </Section>

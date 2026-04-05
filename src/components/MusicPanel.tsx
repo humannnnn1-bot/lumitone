@@ -122,6 +122,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
     return m;
   });
   const [hoveredCandidate, setHoveredCandidate] = useState<{ lv: number; ci: number } | null>(null);
+  const [selectedLevels, setSelectedLevels] = useState<Set<number>>(new Set());
 
   // Track candidate indices for hue-drag tone burst
   const prevCandidatesRef = useRef<Map<number, number>>(new Map());
@@ -136,7 +137,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
   const [volume, setVolume] = useState(0.7);
   const [muted, setMuted] = useState(false);
   const preMuteVolumeRef = useRef(0.7);
-  const [scaleMode, setScaleMode] = useState<ScaleMode>("12tet");
+  const [scaleMode, setScaleMode] = useState<ScaleMode>("diatonic7");
   const [fmEnabled, setFmEnabled] = useState(false);
   const [panEnabled, setPanEnabled] = useState(false);
   const [alphaSpeed, setAlphaSpeed] = useState(36);
@@ -317,8 +318,9 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setDroneMuted(false);
     setHueAngle(0);
     setDirectCandidates(new Map());
+    setSelectedLevels(new Set());
     setVolume(0.7);
-    setScaleMode("12tet");
+    setScaleMode("diatonic7");
     setFmEnabled(false);
     setPanEnabled(false);
     setAlphaSpeed(36);
@@ -341,6 +343,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
       resumeDrone();
       setHueAngle(Number(e.target.value));
       setDirectCandidates(new Map());
+      setSelectedLevels(new Set());
     },
     [engine, resumeDrone],
   );
@@ -581,13 +584,18 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 const cand = cands[ci];
                 const isSelected = directCandidates.get(lp.lv) === ci;
                 const isSwatchHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === ci;
-                const isDimmed = hoveredCandidate !== null && !isSwatchHovered;
                 const swatchClick = () => {
                   setDirectCandidates((prev) => {
                     const next = new Map(prev);
                     next.set(lp.lv, ci);
                     return next;
                   });
+                  setSelectedLevels((prev) => {
+                    const next = new Set(prev);
+                    next.delete(lp.lv);
+                    return next;
+                  });
+                  setHoveredCandidate(null);
                 };
                 return (
                   <div
@@ -613,8 +621,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                       border: `2px solid ${isSwatchHovered || isSelected ? C.accent : C.border}`,
                       boxSizing: "border-box" as const,
                       boxShadow: isSwatchHovered || isSelected ? SHADOW.glow(C.accent) : "none",
-                      opacity: isDimmed ? 0.35 : 1,
-                      transition: "opacity 0.15s, box-shadow 0.15s, border-color 0.15s",
+                      transition: "box-shadow 0.15s, border-color 0.15s",
                     }}
                   />
                 );
@@ -676,20 +683,38 @@ export const MusicPanel = React.memo(function MusicPanel() {
                     const mainCi = currentIdx;
                     const mainCand = cands[mainCi];
                     const isMainHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === mainCi;
-                    const isMainDimmed = hoveredCandidate !== null && !isMainHovered;
+                    const isSelected = selectedLevels.has(lp.lv);
                     return (
                       <div
                         role="button"
                         tabIndex={0}
                         onClick={() => {
                           if (!mainCand) return;
-                          const deselecting = directCandidates.get(lp.lv) === mainCi;
-                          setDirectCandidates((prev) => {
-                            const next = new Map(prev);
-                            if (deselecting) next.delete(lp.lv);
-                            else next.set(lp.lv, mainCi);
-                            return next;
-                          });
+                          if (isSelected) {
+                            setSelectedLevels((prev) => {
+                              const next = new Set(prev);
+                              next.delete(lp.lv);
+                              return next;
+                            });
+                            setDirectCandidates((prev) => {
+                              const next = new Map(prev);
+                              next.delete(lp.lv);
+                              return next;
+                            });
+                          } else {
+                            setSelectedLevels((prev) => {
+                              const next = new Set(prev);
+                              next.add(lp.lv);
+                              return next;
+                            });
+                            if (!isDirect) {
+                              setDirectCandidates((prev) => {
+                                const next = new Map(prev);
+                                next.set(lp.lv, autoIdx);
+                                return next;
+                              });
+                            }
+                          }
                           handleBlockClick(lp.lv, mainCand.angle);
                         }}
                         onKeyDown={
@@ -699,13 +724,31 @@ export const MusicPanel = React.memo(function MusicPanel() {
                                 if (e.key === "Enter" || e.key === " ") {
                                   e.preventDefault();
                                   if (!mainCand) return;
-                                  const deselecting = directCandidates.get(lp.lv) === mainCi;
-                                  setDirectCandidates((prev) => {
-                                    const next = new Map(prev);
-                                    if (deselecting) next.delete(lp.lv);
-                                    else next.set(lp.lv, mainCi);
-                                    return next;
-                                  });
+                                  if (isSelected) {
+                                    setSelectedLevels((prev) => {
+                                      const next = new Set(prev);
+                                      next.delete(lp.lv);
+                                      return next;
+                                    });
+                                    setDirectCandidates((prev) => {
+                                      const next = new Map(prev);
+                                      next.delete(lp.lv);
+                                      return next;
+                                    });
+                                  } else {
+                                    setSelectedLevels((prev) => {
+                                      const next = new Set(prev);
+                                      next.add(lp.lv);
+                                      return next;
+                                    });
+                                    if (!isDirect) {
+                                      setDirectCandidates((prev) => {
+                                        const next = new Map(prev);
+                                        next.set(lp.lv, autoIdx);
+                                        return next;
+                                      });
+                                    }
+                                  }
                                   handleBlockClick(lp.lv, mainCand.angle);
                                 }
                               }
@@ -722,12 +765,11 @@ export const MusicPanel = React.memo(function MusicPanel() {
                           height: 28,
                           borderRadius: R.md,
                           background: isDirect ? `rgb(${cands[directIdx!]?.rgb.join(",")})` : lp.hex,
-                          border: `2px solid ${isMainHovered || isDirect ? C.accent : C.border}`,
+                          border: `2px solid ${isMainHovered || isSelected ? C.accent : C.border}`,
                           boxSizing: "border-box" as const,
                           cursor: "pointer",
                           boxShadow: isMainHovered ? SHADOW.glow(C.accent) : "none",
-                          opacity: isMainDimmed ? 0.35 : 1,
-                          transition: "opacity 0.15s, box-shadow 0.15s, border-color 0.15s",
+                          transition: "box-shadow 0.15s, border-color 0.15s",
                         }}
                       />
                     );
@@ -758,6 +800,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
               }
               setHueAngle(a);
               setDirectCandidates(new Map());
+              setSelectedLevels(new Set());
             }}
             hoveredCandidate={hoveredCandidate}
             onHoverCandidate={setHoveredCandidate}
@@ -829,7 +872,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 {t("music_panning")}
               </button>
               <span style={{ width: SP.xl }} />
-              {(["12tet", "ji", "octatonic"] as ScaleMode[]).map((m) => (
+              {(["12tet", "ji", "octatonic", "diatonic7"] as ScaleMode[]).map((m) => (
                 <button key={m} type="button" style={scaleMode === m ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => setScaleMode(m)}>
                   {t(`music_scale_${m}`)}
                 </button>
