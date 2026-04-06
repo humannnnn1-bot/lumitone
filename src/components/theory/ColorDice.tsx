@@ -244,7 +244,43 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
-      {/* Die net (staircase unfolding) */}
+      {/* 8 isometric cube views: 2 columns × 4 rows */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
+        {/* Column headers */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>
+          <div className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+            {t("theory_dice_additive_col")}
+          </div>
+          <div className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+            {t("theory_dice_subtractive_col")}
+          </div>
+        </div>
+        {/* Grid rows */}
+        {VIEW_ROWS.map(([left, right], ri) => (
+          <div key={`vr${ri}`} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>
+            <MiniCube view={left} hl={hl} onEnter={enter} onLeave={leave} onTap={onTap} />
+            <MiniCube view={right} hl={hl} onEnter={enter} onLeave={leave} onTap={onTap} />
+          </div>
+        ))}
+        {/* Footer annotation */}
+        <p
+          className="theory-annotation"
+          style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center", lineHeight: 1.6 }}
+        >
+          {"\u2295"} = XOR (GF(2){"\u00b3"}) | {"\u2227"} = AND (Boolean)
+          <br />
+          De Morgan: a{"\u2295"}b=c {"\u2194"} a{"\u2032"}
+          {"\u2227"}b{"\u2032"}=c{"\u2032"} (x{"\u2032"}=x{"\u2295"}7)
+        </p>
+      </div>
+
+      {/* Die net description + staircase unfolding */}
+      <p
+        className="theory-desc"
+        style={{ fontSize: 13, fontFamily: "monospace", color: C.textMuted, textAlign: "left", maxWidth: 480, lineHeight: 1.6, margin: 0 }}
+      >
+        {t("theory_dice_desc3")}
+      </p>
       <svg viewBox={`0 0 ${NET_W} ${NET_H}`} style={{ width: "100%", maxWidth: NET_W }} role="img" aria-label={t("theory_dice_title")}>
         {NET_COMP_PAIRS.map(([a, b]) => {
           const fa = NET_FACES.find((f) => f.lv === a)!;
@@ -396,36 +432,6 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
       >
         {t("theory_dice_hint")}
       </p>
-
-      {/* 8 isometric cube views: 2 columns × 4 rows */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
-        {/* Column headers */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>
-          <div className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
-            {t("theory_dice_additive_col")}
-          </div>
-          <div className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
-            {t("theory_dice_subtractive_col")}
-          </div>
-        </div>
-        {/* Grid rows */}
-        {VIEW_ROWS.map(([left, right], ri) => (
-          <div key={`vr${ri}`} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>
-            <MiniCube view={left} hl={hl} onEnter={enter} onLeave={leave} onTap={onTap} />
-            <MiniCube view={right} hl={hl} onEnter={enter} onLeave={leave} onTap={onTap} />
-          </div>
-        ))}
-        {/* Footer annotation */}
-        <p
-          className="theory-annotation"
-          style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center", lineHeight: 1.6 }}
-        >
-          {"\u2295"} = XOR (GF(2){"\u00b3"}) | {"\u2227"} = AND (Boolean)
-          <br />
-          De Morgan: a{"\u2295"}b=c {"\u2194"} a{"\u2032"}
-          {"\u2227"}b{"\u2032"}=c{"\u2032"} (x{"\u2032"}=x{"\u2295"}7)
-        </p>
-      </div>
     </div>
   );
 });

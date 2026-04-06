@@ -201,7 +201,7 @@ export const en = {
   theory_dice_desc2:
     "This is a universal theorem: for any positive luma coefficients with no tied luma values, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7.",
   theory_dice_desc3:
-    "The staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously. Among the 11 cube nets, only this staircase arranges faces in hue-wheel order (proof: the hue cycle R\u2192Y\u2192G\u2192C\u2192B\u2192M requires 5 specific cube-edge adjacencies forming a Hamiltonian path on the face graph; a net respecting this linear sequence must use exactly these 5 edges as fold-lines, which determines a unique spanning tree of the octahedron graph \u2014 verified by exhaustive check of all 11 nets).",
+    "The 2-2-2 staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously. Among the 11 cube nets, only this staircase arranges faces in hue-wheel order (proof: the hue cycle R\u2192Y\u2192G\u2192C\u2192B\u2192M requires 5 specific cube-edge adjacencies forming a Hamiltonian path on the face graph; a net respecting this linear sequence must use exactly these 5 edges as fold-lines, which determines a unique spanning tree of the octahedron graph \u2014 verified by exhaustive check of all 11 nets).",
   theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
   theory_dice_additive_col: "Additive (\u2295)",
   theory_dice_subtractive_col: "Subtractive (\u2227)",

@@ -297,6 +297,53 @@ for (let i = 0; i < 8; i++) {
   STELLA_3D[i] = [(i >> 2) & 1, (i >> 1) & 1, i & 1];
 }
 
+/** Depth along (1,1,1) body diagonal = popcount of level (0–3) */
+export function vertexDepth(lv: number): number {
+  return ((lv >> 2) & 1) + ((lv >> 1) & 1) + (lv & 1);
+}
+
+/** Scale a base radius by depth: nearer vertices (higher depth) are larger.
+ *  factor = 1 + (depth − 1.5) × scale / 1.5
+ *  With default scale 0.3: depth 0→0.7, 1→0.9, 2→1.1, 3→1.3 */
+export function vertexRadius(lv: number, baseR: number, scale = 0.3): number {
+  return baseR * (1 + ((vertexDepth(lv) - 1.5) * scale) / 1.5);
+}
+
+/* ── Shared 3D lighting ── */
+
+const LIGHT_DIR: [number, number, number] = (() => {
+  const lx = -0.4,
+    ly = 0.7,
+    lz = 0.6;
+  const len = Math.sqrt(lx * lx + ly * ly + lz * lz);
+  return [lx / len, ly / len, lz / len];
+})();
+
+const CUBE_CENTER: [number, number, number] = [0.5, 0.5, 0.5];
+
+/** Compute diffuse lighting for a triangular face given its 3 vertex indices.
+ *  Returns 0..1 where higher = brighter (facing the light). */
+export function faceDiffuse(a: number, b: number, c: number): number {
+  const p0 = STELLA_3D[a],
+    p1 = STELLA_3D[b],
+    p2 = STELLA_3D[c];
+  const e1: [number, number, number] = [p1[0] - p0[0], p1[1] - p0[1], p1[2] - p0[2]];
+  const e2: [number, number, number] = [p2[0] - p0[0], p2[1] - p0[1], p2[2] - p0[2]];
+  const nx = e1[1] * e2[2] - e1[2] * e2[1];
+  const ny = e1[2] * e2[0] - e1[0] * e2[2];
+  const nz = e1[0] * e2[1] - e1[1] * e2[0];
+  const nLen = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+  const cx = (p0[0] + p1[0] + p2[0]) / 3 - CUBE_CENTER[0];
+  const cy = (p0[1] + p1[1] + p2[1]) / 3 - CUBE_CENTER[1];
+  const cz = (p0[2] + p1[2] + p2[2]) / 3 - CUBE_CENTER[2];
+  const outSign = nx * cx + ny * cy + nz * cz > 0 ? 1 : -1;
+  const nnx = (outSign * nx) / nLen;
+  const nny = (outSign * ny) / nLen;
+  const nnz = (outSign * nz) / nLen;
+  const dot = nnx * LIGHT_DIR[0] + nny * LIGHT_DIR[1] + nnz * LIGHT_DIR[2];
+  return 0.15 + 0.85 * Math.max(0, dot);
+}
+
 const CH_NAMES = ["B", "R", "G"] as const;
 
 /** Return the two channel names that flip for a Hamming-distance-2 edge */

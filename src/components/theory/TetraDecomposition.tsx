@@ -1,5 +1,15 @@
 import React, { useCallback, useState } from "react";
-import { THEORY_LEVELS, CUBE_EDGES, CUBE_POINTS, TETRA_T0, TETRA_T1, TETRA_T0_EDGES, TETRA_T1_EDGES } from "./theory-data";
+import {
+  THEORY_LEVELS,
+  CUBE_EDGES,
+  CUBE_POINTS,
+  TETRA_T0,
+  TETRA_T1,
+  TETRA_T0_EDGES,
+  TETRA_T1_EDGES,
+  vertexRadius,
+  faceDiffuse,
+} from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
 import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
@@ -86,20 +96,21 @@ function MiniTetra({
             const p = mtPt(lv);
             return <circle key={`gv${lv}`} cx={p.x} cy={p.y} r={2.5} fill={C.textDimmer} opacity={0.25} />;
           })}
-        {/* Tetrahedron faces (filled triangles) */}
+        {/* Tetrahedron faces (filled triangles with diffuse lighting) */}
         {faces.map((f, i) => {
           const fc = faceColor(f);
           const info = THEORY_LEVELS[fc];
           const pts = f.map((v) => `${mtPt(v).x},${mtPt(v).y}`).join(" ");
+          const d = faceDiffuse(f[0], f[1], f[2]);
           return (
             <polygon
               key={`tf${i}`}
               points={pts}
               fill={info.color}
-              fillOpacity={0.12}
+              fillOpacity={0.04 + d * 0.2}
               stroke={info.color}
               strokeWidth={0.5}
-              strokeOpacity={0.2}
+              strokeOpacity={0.1 + d * 0.3}
               strokeLinejoin="round"
             />
           );
@@ -125,13 +136,15 @@ function MiniTetra({
           const p = mtPt(lv);
           const info = THEORY_LEVELS[lv];
           const active = hl === lv;
+          const r = vertexRadius(lv, 11);
+          const hitR = vertexRadius(lv, 16);
           return (
             <g key={`tv${lv}`} onMouseEnter={() => onEnter(lv)} onMouseLeave={onLeave} style={{ cursor: "pointer" }}>
-              <circle cx={p.x} cy={p.y} r={16} fill="transparent" />
+              <circle cx={p.x} cy={p.y} r={hitR} fill="transparent" />
               <circle
                 cx={p.x}
                 cy={p.y}
-                r={11}
+                r={r}
                 fill={info.color}
                 fillOpacity={active ? 0.8 : 0.45}
                 stroke={active ? "#fff" : info.color}

@@ -10,6 +10,8 @@ import {
   TETRA_T0,
   TETRA_T1,
   stellaEdgeChannels,
+  vertexRadius,
+  vertexDepth,
 } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
 import { S_BTN } from "../../styles";
@@ -50,7 +52,7 @@ function computeFaceLighting(coords3D: Record<number, [number, number, number]>)
     const nnx = (outSign * nx) / nLen;
     const nny = (outSign * ny) / nLen;
     const nnz = (outSign * nz) / nLen;
-    const isFront = nnz > 0;
+    const isFront = nnx + nny + nnz > 0; // viewing along (1,1,1) body diagonal
     const dot = nnx * LIGHT_DIR[0] + nny * LIGHT_DIR[1] + nnz * LIGHT_DIR[2];
     const diffuse = 0.15 + 0.85 * Math.max(0, dot);
     return { isFront, diffuse };
@@ -77,13 +79,18 @@ function computeBackEdges(lighting: { isFront: boolean }[]) {
   return result;
 }
 
-function computeSortedFaces(lighting: { diffuse: number }[]) {
-  return STELLA_FACES.map((f, i) => ({ ...f, origIdx: i })).sort((a, b) => lighting[a.origIdx].diffuse - lighting[b.origIdx].diffuse);
+/** Sort faces far-to-near by centroid depth along (1,1,1) (painter's algorithm) */
+function computeSortedFaces() {
+  return STELLA_FACES.map((f, i) => {
+    const [a, b, c] = f.verts;
+    const depth = vertexDepth(a) + vertexDepth(b) + vertexDepth(c); // sum of popcount = 3× centroid·(1,1,1)
+    return { ...f, origIdx: i, depth };
+  }).sort((a, b) => a.depth - b.depth);
 }
 
 // Front view data
 const FACE_LIGHTING_F = computeFaceLighting(STELLA_3D);
-const SORTED_FACES_F = computeSortedFaces(FACE_LIGHTING_F);
+const SORTED_FACES_F = computeSortedFaces();
 const BACK_EDGES_F = computeBackEdges(FACE_LIGHTING_F);
 
 // Back view data
@@ -176,6 +183,9 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
       const sameTetra = hl !== null && ((t0.includes(hl) && t0.includes(lv)) || (t1.includes(hl) && t1.includes(lv)));
       const neighbour = sameTetra && lv !== hl;
 
+      const r = vertexRadius(lv, VR);
+      const hitR = vertexRadius(lv, HIT_R);
+
       return (
         <g
           key={`${viewId}-v-${lv}`}
@@ -184,12 +194,12 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
           onClick={() => onTap(lv)}
           style={{ cursor: "pointer" }}
         >
-          <circle cx={p.x} cy={p.y} r={HIT_R} fill="transparent" />
-          {neighbour && <circle cx={p.x} cy={p.y} r={VR + 4} fill="none" stroke="#fff" strokeWidth={0.8} strokeOpacity={0.3} />}
+          <circle cx={p.x} cy={p.y} r={hitR} fill="transparent" />
+          {neighbour && <circle cx={p.x} cy={p.y} r={r + 4} fill="none" stroke="#fff" strokeWidth={0.8} strokeOpacity={0.3} />}
           <circle
             cx={p.x}
             cy={p.y}
-            r={VR}
+            r={r}
             fill={lv === 0 ? C.bgRoot : info.color}
             fillOpacity={active ? 0.85 : dim ? 0.15 : 0.6}
             stroke={isComplement ? "#fff" : active ? "#fff" : lv === 0 ? "#666" : info.color}

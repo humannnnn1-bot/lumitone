@@ -157,7 +157,7 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
         <hr style={S_DIVIDER} />
 
         {/* §3 Color Die */}
-        <Section title={t("theory_dice_title")} desc={[t("theory_dice_desc"), t("theory_dice_desc2"), t("theory_dice_desc3")]}>
+        <Section title={t("theory_dice_title")} desc={[t("theory_dice_desc"), t("theory_dice_desc2")]}>
           <ColorDice hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
