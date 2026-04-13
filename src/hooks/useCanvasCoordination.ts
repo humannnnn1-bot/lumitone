@@ -39,7 +39,6 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): CanvasCo
     () => () => {
       if (drawing.cursorRafRef.current) cancelAnimationFrame(drawing.cursorRafRef.current);
       if (glazeDrawing.cursorRafRef.current) cancelAnimationFrame(glazeDrawing.cursorRafRef.current);
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- cleanup-only effect, refs are stable
     },
     [],
   );
@@ -58,7 +57,7 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): CanvasCo
       if (p) p.removeEventListener("wheel", onWheel, wheelOpts);
       if (g) g.removeEventListener("wheel", onWheel, wheelOpts);
     };
-  }, [onWheel, srcWrapRef, prvWrapRef, glazeWrapRef]);
+  }, [onWheel, srcWrapRef, prvWrapRef, glazeWrapRef, activeTab]);
 
   const renderGlazeCanvas = useCallback(() => {
     const gp = glazePrvRef.current;
