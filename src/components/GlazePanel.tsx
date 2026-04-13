@@ -387,7 +387,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
         </div>
         <div className="panel-sidebar">
           {/* Tools */}
-          <div role="radiogroup" aria-label={t("aria_glaze_tools")} style={{ display: "flex", gap: SP.xs, justifyContent: "center" }}>
+          <div role="radiogroup" aria-label={t("aria_glaze_tools")} style={{ display: "flex", gap: SP.lg, justifyContent: "center" }}>
             {GLAZE_TOOLS.map((gt) => (
               <button
                 key={gt.id}
@@ -406,7 +406,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
           </div>
 
           {/* Undo/Redo + Zoom */}
-          <div style={{ display: "flex", gap: SP.md, alignItems: "center", justifyContent: "center", marginTop: SP.lg }}>
+          <div style={{ display: "flex", gap: SP.lg, alignItems: "center", justifyContent: "center", marginTop: SP.lg }}>
             <button style={S_BTN} onClick={undo} title={t("title_undo")}>
               {t("btn_undo")}
             </button>
@@ -414,7 +414,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
               {t("btn_redo")}
             </button>
             <button
-              style={S_BTN}
+              style={{ ...S_BTN, marginLeft: SP.lg }}
               onClick={handleZoomReset}
               title={t("title_zoom_reset")}
               aria-label={t("aria_zoom_reset", Math.round(zoom * 100))}
