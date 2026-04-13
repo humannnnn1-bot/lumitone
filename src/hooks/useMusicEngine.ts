@@ -213,7 +213,7 @@ function createNoiseBuffer(ctx: AudioContext): AudioBuffer {
 
 function buildAudioGraph(ctx: AudioContext): AudioNodes {
   const master = ctx.createGain();
-  master.gain.value = 0.6;
+  master.gain.value = 0.8;
 
   const analyser = ctx.createAnalyser();
   analyser.fftSize = 2048;
@@ -384,7 +384,7 @@ function applyParams(
   const phaseFactor = Math.abs(Math.cos(deltaRad));
 
   // Master volume
-  nodes.master.gain.setTargetAtTime(volume * 0.6, now, RAMP_TC);
+  nodes.master.gain.setTargetAtTime(volume * 0.8, now, RAMP_TC);
 
   // Determine which levels are boosted by Fano line hover
   let fanoBoostSet: Set<number> | null = null;

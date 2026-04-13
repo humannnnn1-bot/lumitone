@@ -141,6 +141,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
   const [fmEnabled, setFmEnabled] = useState(false);
   const [panEnabled, setPanEnabled] = useState(false);
   const [alphaSpeed, setAlphaSpeed] = useState(36);
+  const [phaseSpeed, setPhaseSpeed] = useState(0);
   const [hueSpeed, setHueSpeed] = useState(36);
   const [hoveredFanoLine, setHoveredFanoLine] = useState<number | null>(null);
 
@@ -162,16 +163,17 @@ export const MusicPanel = React.memo(function MusicPanel() {
   }, [hueAngle]);
 
   useEffect(() => {
-    if (alphaDir === 0 && hueDir === 0) return;
+    if (alphaDir === 0 && hueDir === 0 && phaseSpeed === 0) return;
     let rafId: number;
     const tick = (time: number) => {
       if (prevTimeRef.current) {
         const dt = (time - prevTimeRef.current) / 1000;
-        if (alphaDir !== 0) {
-          const ad = alphaSpeed * dt * alphaDir;
-          setAlpha0((a) => (((a + ad) % 360) + 360) % 360);
-          setAlpha7((a) => (((a + ad) % 360) + 360) % 360);
-        }
+        const base = alphaDir !== 0 ? alphaSpeed * dt * alphaDir : 0;
+        const drift = phaseSpeed * dt;
+        const a0d = base + (originMode === 0 ? drift : 0);
+        const a7d = base + (originMode === 7 ? drift : 0);
+        if (a0d !== 0) setAlpha0((a) => (((a + a0d) % 360) + 360) % 360);
+        if (a7d !== 0) setAlpha7((a) => (((a + a7d) % 360) + 360) % 360);
         if (hueDir !== 0) {
           const hd = hueSpeed * dt * hueDir;
           const next = (((hueRef.current + hd) % 360) + 360) % 360;
@@ -190,7 +192,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
     prevTimeRef.current = 0;
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [alphaDir, hueDir, alphaSpeed, hueSpeed]);
+  }, [alphaDir, hueDir, alphaSpeed, phaseSpeed, hueSpeed, originMode]);
 
   // Sequencer state
   const [grayStep, setGrayStep] = useState<number | null>(null);
@@ -324,6 +326,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setFmEnabled(false);
     setPanEnabled(false);
     setAlphaSpeed(36);
+    setPhaseSpeed(0);
     setHueSpeed(36);
     setAlpha0(0);
     setAlpha7(0);
@@ -582,7 +585,6 @@ export const MusicPanel = React.memo(function MusicPanel() {
 
               const makeSwatch = (ci: number, size: number) => {
                 const cand = cands[ci];
-                const isSelected = directCandidates.get(lp.lv) === ci;
                 const isSwatchHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === ci;
                 const swatchClick = () => {
                   setDirectCandidates((prev) => {
@@ -618,9 +620,9 @@ export const MusicPanel = React.memo(function MusicPanel() {
                       borderRadius: R.md,
                       cursor: "pointer",
                       background: `rgb(${cand.rgb.join(",")})`,
-                      border: `2px solid ${isSwatchHovered || isSelected ? C.accent : C.border}`,
+                      border: `2px solid ${C.border}`,
                       boxSizing: "border-box" as const,
-                      boxShadow: isSwatchHovered || isSelected ? SHADOW.glow(C.accent) : "none",
+                      boxShadow: isSwatchHovered ? SHADOW.glow(C.accent) : "none",
                       transition: "box-shadow 0.15s, border-color 0.15s",
                     }}
                   />
@@ -690,31 +692,12 @@ export const MusicPanel = React.memo(function MusicPanel() {
                         tabIndex={0}
                         onClick={() => {
                           if (!mainCand) return;
-                          if (isSelected) {
-                            setSelectedLevels((prev) => {
-                              const next = new Set(prev);
-                              next.delete(lp.lv);
-                              return next;
-                            });
-                            setDirectCandidates((prev) => {
-                              const next = new Map(prev);
-                              next.delete(lp.lv);
-                              return next;
-                            });
-                          } else {
-                            setSelectedLevels((prev) => {
-                              const next = new Set(prev);
-                              next.add(lp.lv);
-                              return next;
-                            });
-                            if (!isDirect) {
-                              setDirectCandidates((prev) => {
-                                const next = new Map(prev);
-                                next.set(lp.lv, autoIdx);
-                                return next;
-                              });
-                            }
-                          }
+                          setSelectedLevels((prev) => {
+                            const next = new Set(prev);
+                            if (isSelected) next.delete(lp.lv);
+                            else next.add(lp.lv);
+                            return next;
+                          });
                           handleBlockClick(lp.lv, mainCand.angle);
                         }}
                         onKeyDown={
@@ -724,31 +707,12 @@ export const MusicPanel = React.memo(function MusicPanel() {
                                 if (e.key === "Enter" || e.key === " ") {
                                   e.preventDefault();
                                   if (!mainCand) return;
-                                  if (isSelected) {
-                                    setSelectedLevels((prev) => {
-                                      const next = new Set(prev);
-                                      next.delete(lp.lv);
-                                      return next;
-                                    });
-                                    setDirectCandidates((prev) => {
-                                      const next = new Map(prev);
-                                      next.delete(lp.lv);
-                                      return next;
-                                    });
-                                  } else {
-                                    setSelectedLevels((prev) => {
-                                      const next = new Set(prev);
-                                      next.add(lp.lv);
-                                      return next;
-                                    });
-                                    if (!isDirect) {
-                                      setDirectCandidates((prev) => {
-                                        const next = new Map(prev);
-                                        next.set(lp.lv, autoIdx);
-                                        return next;
-                                      });
-                                    }
-                                  }
+                                  setSelectedLevels((prev) => {
+                                    const next = new Set(prev);
+                                    if (isSelected) next.delete(lp.lv);
+                                    else next.add(lp.lv);
+                                    return next;
+                                  });
                                   handleBlockClick(lp.lv, mainCand.angle);
                                 }
                               }
@@ -832,32 +796,6 @@ export const MusicPanel = React.memo(function MusicPanel() {
           <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, width: "100%" }}>
             {/* Control buttons — grouped with spacing */}
             <div style={{ display: "flex", justifyContent: "center", gap: SP.sm, width: "100%", flexWrap: "wrap" }}>
-              <button
-                type="button"
-                onClick={() => {
-                  if (muted) {
-                    setMuted(false);
-                    setVolume(preMuteVolumeRef.current);
-                  } else {
-                    preMuteVolumeRef.current = volume;
-                    setMuted(true);
-                  }
-                  if (droneMuted) {
-                    engine.setDroneMuted(false);
-                    setDroneMuted(false);
-                  }
-                }}
-                style={{
-                  ...S_BTN_SM,
-                  opacity: muted ? 0.5 : 1,
-                }}
-                aria-label={muted ? "Unmute" : "Mute"}
-                title={muted ? "Unmute" : "Mute"}
-              >
-                {muted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
-                {t("music_mute")}
-              </button>
-              <span style={{ width: SP.md }} />
               <button type="button" style={{ ...S_BTN_SM, borderColor: C.error, color: C.error }} onClick={handleStopAll}>
                 {t("music_stop_all")}
               </button>
@@ -872,7 +810,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 {t("music_panning")}
               </button>
               <span style={{ width: SP.xl }} />
-              {(["12tet", "ji", "octatonic", "diatonic7"] as ScaleMode[]).map((m) => (
+              {(["ji", "diatonic7", "octatonic", "12tet"] as ScaleMode[]).map((m) => (
                 <button key={m} type="button" style={scaleMode === m ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => setScaleMode(m)}>
                   {t(`music_scale_${m}`)}
                 </button>
@@ -936,8 +874,43 @@ export const MusicPanel = React.memo(function MusicPanel() {
               />
               <span style={{ fontSize: FS.lg, color: C.textDim, fontVariantNumeric: "tabular-nums", width: 42 }}>{alphaSpeed}&deg;/s</span>
             </div>
+            {/* Phase drift (Δω — dual-origin beat frequency) */}
+            <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
+              <span style={{ ...S_LABEL, minWidth: 36 + SP.sm + 36, textAlign: "center" }}>{t("music_phase_drift")}</span>
+              <input
+                type="range"
+                min={0}
+                max={72}
+                value={phaseSpeed}
+                onChange={(e) => setPhaseSpeed(Number(e.target.value))}
+                aria-label={t("music_phase_drift")}
+                style={{ flex: 1, minWidth: 60 }}
+              />
+              <span style={{ fontSize: FS.lg, color: C.textDim, fontVariantNumeric: "tabular-nums", width: 42 }}>{phaseSpeed}&deg;/s</span>
+            </div>
             {/* Volume (bottom — global setting) */}
             <div style={{ display: "flex", gap: SP.sm, alignItems: "center", justifyContent: "center" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  if (muted) {
+                    setMuted(false);
+                    setVolume(preMuteVolumeRef.current);
+                  } else {
+                    preMuteVolumeRef.current = volume;
+                    setMuted(true);
+                  }
+                  if (droneMuted) {
+                    engine.setDroneMuted(false);
+                    setDroneMuted(false);
+                  }
+                }}
+                style={{ ...(muted ? S_BTN_SM_ACTIVE : S_BTN_SM), minWidth: 36 }}
+                aria-label={muted ? "Unmute" : "Mute"}
+                title={muted ? "Unmute" : "Mute"}
+              >
+                {muted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
+              </button>
               <span style={S_LABEL}>{t("music_volume")}</span>
               <input
                 type="range"

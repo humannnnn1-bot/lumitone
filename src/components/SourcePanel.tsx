@@ -261,7 +261,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: SP.md, flexWrap: "wrap", justifyContent: "center", marginTop: SP["2xl"] }}>
+          <div style={{ display: "flex", gap: SP.lg, flexWrap: "wrap", justifyContent: "center", marginTop: SP["2xl"] }}>
             <button
               onClick={undo}
               disabled={!state.undoStack.length}
@@ -281,7 +281,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             <button
               onClick={handleZoomReset}
               onContextMenu={handleZoomPixelPerfect}
-              style={{ ...S_BTN, lineHeight: 1, gap: SP.xs }}
+              style={{ ...S_BTN, lineHeight: 1, gap: SP.xs, marginLeft: SP.lg }}
               title={`${t("title_zoom_reset")} (${t("title_zoom_pixel")})`}
               aria-label={t("aria_zoom_reset", Math.round(zoom * 100))}
             >
