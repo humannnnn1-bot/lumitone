@@ -32,6 +32,7 @@ interface SourcePanelProps {
   requestFilename: (defaultValue: string) => Promise<string | null>;
   panZoomMode: boolean;
   setPanZoomMode: React.Dispatch<React.SetStateAction<boolean>>;
+  handleMiddleDown: (e: React.PointerEvent) => void;
   onPinchDown: (e: React.PointerEvent) => void;
   onPinchMove: (e: React.PointerEvent) => void;
   onPinchUp: (e: React.PointerEvent) => void;
@@ -60,6 +61,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
     requestFilename,
     panZoomMode,
     setPanZoomMode,
+    handleMiddleDown,
     onPinchDown,
     onPinchMove,
     onPinchUp,
@@ -70,6 +72,16 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
   const { t } = useTranslation();
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => e.preventDefault(), []);
+  const handlePointerDown = useCallback(
+    (e: React.PointerEvent) => {
+      if (e.button === 1) {
+        handleMiddleDown(e);
+        return;
+      }
+      (panZoomMode ? onPinchDown : onDown)(e);
+    },
+    [handleMiddleDown, panZoomMode, onPinchDown, onDown],
+  );
   const handleZoomReset = useCallback(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
@@ -189,7 +201,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
                 cursor: panZoomMode ? "grab" : canvasCursor,
                 touchAction: "none",
               }}
-              onPointerDown={panZoomMode ? onPinchDown : onDown}
+              onPointerDown={handlePointerDown}
               onPointerMove={panZoomMode ? onPinchMove : onMove}
               onPointerUp={panZoomMode ? onPinchUp : onUp}
               onPointerLeave={panZoomMode ? onPinchUp : onPointerLeave}

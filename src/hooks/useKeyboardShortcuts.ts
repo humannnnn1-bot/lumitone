@@ -22,6 +22,7 @@ export interface KeyboardShortcutDeps {
   setZoom: React.Dispatch<React.SetStateAction<number>>;
   onSave: () => void;
   onSaveAs: () => void;
+  activeTab: number;
 }
 
 interface KeyCommand {
@@ -49,6 +50,7 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps) {
     setZoom,
     onSave,
     onSaveAs,
+    activeTab,
   } = deps;
 
   useEffect(() => {
@@ -203,8 +205,10 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps) {
         }
       }
 
-      // Level keys 0-7 (no ctrl)
+      // Level keys 0-7 (no ctrl) — skip on Music tab (1-6) and Hex tab (2-5)
       if (!isCtrl && key >= "0" && key <= "7") {
+        if (activeTab === 7 && key >= "1" && key <= "6") return;
+        if (activeTab === 2 && key >= "2" && key <= "5") return;
         setBrushLevel(+key);
         announce(t("announce_level", key, LEVEL_INFO[+key].name));
         return;

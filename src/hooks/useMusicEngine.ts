@@ -498,7 +498,7 @@ export function useMusicEngine({
   const zigzagIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cayleyIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const gl32PermRef = useRef<number[]>([1, 2, 3, 4, 5, 6, 7]); // identity permutation
-  const droneMutedRef = useRef(false);
+  const droneMutedRef = useRef(true);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
 
   // Keep latest params in refs so callbacks can access them

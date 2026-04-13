@@ -7,24 +7,32 @@ export interface ExportResult {
   saveGlaze: (name: string) => void;
 }
 
-/** Download a canvas element as PNG via a temporary anchor. */
+/** Download a canvas element as PNG. Uses Web Share API on mobile, falls back to anchor download. */
 function downloadCanvas(
   canvas: HTMLCanvasElement,
   name: string,
   showToast: (message: string, type: "error" | "success" | "info") => void,
   t: import("../i18n").TranslationFn,
 ): void {
-  const u = canvas.toDataURL("image/png");
-  if (!u || u === "data:,") {
-    showToast(t("toast_image_gen_failed"), "error");
-    return;
-  }
-  const a = document.createElement("a");
-  a.href = u;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
+  canvas.toBlob((blob) => {
+    if (!blob) {
+      showToast(t("toast_image_gen_failed"), "error");
+      return;
+    }
+    const file = new File([blob], name, { type: "image/png" });
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      navigator.share({ files: [file] }).catch(() => {});
+    } else {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  }, "image/png");
 }
 
 /** Render color preview to a temporary off-screen canvas. */

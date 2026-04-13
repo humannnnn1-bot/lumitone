@@ -165,7 +165,11 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
         onPinchDown(e);
         return;
       }
-      if (e.button === 1 || panZoom.spaceRef.current) {
+      if (e.button === 1) {
+        panZoom.handleMiddleDown(e);
+        return;
+      }
+      if (panZoom.spaceRef.current) {
         e.preventDefault();
         panZoom.startPan(e);
         return;

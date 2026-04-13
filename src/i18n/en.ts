@@ -125,8 +125,18 @@ export const en = {
   help_dblclick_level_key: "Double-click level",
   help_zoom_pixel: "Pixel-perfect zoom",
   help_zoom_pixel_key: "Right-click zoom btn",
+  help_pan_combined_key: "Space / Mid-click drag",
+  help_save_as_combined_key: "Ctrl+Shift+S / R-click save",
   help_save_custom: "Save with custom filename",
   help_save_custom_key: "Right-click save btn",
+  help_middle_pan: "Pan",
+  help_middle_pan_key: "Middle-click drag",
+  help_middle_reset: "Reset zoom & pan",
+  help_middle_reset_key: "Middle-click x2",
+  help_arrow_pan: "Pan (canvas focused)",
+  help_arrow_pan_key: "Arrow keys",
+  help_drop_image: "Load image",
+  help_drop_image_key: "Drag & drop",
 
   // App - toast messages
   toast_restore_failed: "Failed to restore saved data",

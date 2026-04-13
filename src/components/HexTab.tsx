@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect } from "react";
 import { S_BTN } from "../styles";
 import { LEVEL_CANDIDATES } from "../color-engine";
 import { rgbStr } from "../utils";
@@ -48,6 +48,19 @@ export const HexTab = React.memo(function HexTab(props: HexTabProps) {
   } = props;
 
   const hasLocked = useMemo(() => locked.some(Boolean), [locked]);
+
+  // Keyboard 2-5: cycle candidate color for that level
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const k = e.key;
+      if (k >= "2" && k <= "5") {
+        ccDispatch({ type: "cycle_color", lv: +k, dir: 1 });
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [ccDispatch]);
 
   return (
     <div style={S_FLEX_COL_CENTER}>

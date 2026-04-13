@@ -41,6 +41,7 @@ function makeArgs() {
     setZoom,
     onSave,
     onSaveAs,
+    activeTab: 0,
   };
 
   return {

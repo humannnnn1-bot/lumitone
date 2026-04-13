@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useExport } from "../hooks/useExport";
 import type { CanvasData } from "../types";
@@ -28,12 +28,30 @@ function setup(cvs?: CanvasData, colorLUT?: [number, number, number][]) {
   return renderHook(() => useExport(cvs ?? makeCvs(), colorLUT ?? [[0, 0, 0]], mockShowToast, noopT as import("../i18n").TranslationFn));
 }
 
+/** Create a fake canvas whose toBlob calls back synchronously. */
+function fakeCanvasWithBlob(blob: Blob | null) {
+  return {
+    toBlob: vi.fn((cb: BlobCallback) => cb(blob)),
+  } as unknown as HTMLCanvasElement;
+}
+
 /* ── Tests ──────────────────────────────────────────────────── */
 describe("useExport", () => {
+  const origShare = navigator.share;
+  const origCanShare = navigator.canShare;
+
   beforeEach(() => {
     vi.restoreAllMocks();
     mockShowToast.mockClear();
     mockRenderBuf.mockClear();
+    // Default: no Web Share API
+    Object.defineProperty(navigator, "share", { value: undefined, writable: true, configurable: true });
+    Object.defineProperty(navigator, "canShare", { value: undefined, writable: true, configurable: true });
+  });
+
+  afterAll(() => {
+    Object.defineProperty(navigator, "share", { value: origShare, writable: true, configurable: true });
+    Object.defineProperty(navigator, "canShare", { value: origCanShare, writable: true, configurable: true });
   });
 
   /* ---------- saveColor ---------- */
@@ -42,20 +60,18 @@ describe("useExport", () => {
     it("falls back to renderBuf when canvas ref is null", () => {
       const { result } = setup();
       const ref = { current: null } as React.RefObject<HTMLCanvasElement | null>;
-      // Should not throw; falls back to off-screen render via renderBuf
       vi.spyOn(document.body, "appendChild").mockReturnValue(null as unknown as Node);
       vi.spyOn(document.body, "removeChild").mockReturnValue(null as unknown as Node);
       result.current.saveColor(ref, "test.png");
       expect(mockRenderBuf).toHaveBeenCalledTimes(1);
     });
 
-    it("calls canvas.toDataURL with image/png", () => {
+    it("calls canvas.toBlob with image/png", () => {
       const { result } = setup();
-      const mockToDataURL = vi.fn().mockReturnValue("data:image/png;base64,abc123");
-      const fakeCanvas = { toDataURL: mockToDataURL } as unknown as HTMLCanvasElement;
-      const ref = { current: fakeCanvas } as React.RefObject<HTMLCanvasElement | null>;
+      const blob = new Blob(["x"], { type: "image/png" });
+      const canvas = fakeCanvasWithBlob(blob);
+      const ref = { current: canvas } as React.RefObject<HTMLCanvasElement | null>;
 
-      // Mock anchor element
       const mockAnchor = { href: "", download: "", click: vi.fn() } as unknown as HTMLAnchorElement;
       vi.spyOn(document, "createElement").mockReturnValue(mockAnchor as unknown as HTMLElement);
       vi.spyOn(document.body, "appendChild").mockReturnValue(mockAnchor as unknown as Node);
@@ -63,48 +79,59 @@ describe("useExport", () => {
 
       result.current.saveColor(ref, "test.png");
 
-      expect(mockToDataURL).toHaveBeenCalledWith("image/png");
+      expect(canvas.toBlob).toHaveBeenCalledWith(expect.any(Function), "image/png");
     });
 
-    it("shows error toast if toDataURL returns empty string", () => {
+    it("shows error toast if toBlob returns null", () => {
       const { result } = setup();
-      const fakeCanvas = { toDataURL: vi.fn().mockReturnValue("") } as unknown as HTMLCanvasElement;
-      const ref = { current: fakeCanvas } as React.RefObject<HTMLCanvasElement | null>;
+      const canvas = fakeCanvasWithBlob(null);
+      const ref = { current: canvas } as React.RefObject<HTMLCanvasElement | null>;
 
       result.current.saveColor(ref, "test.png");
 
       expect(mockShowToast).toHaveBeenCalledWith("toast_image_gen_failed", "error");
     });
 
-    it("shows error toast if toDataURL returns 'data:,'", () => {
+    it("creates anchor download when Web Share API is unavailable", () => {
       const { result } = setup();
-      const fakeCanvas = { toDataURL: vi.fn().mockReturnValue("data:,") } as unknown as HTMLCanvasElement;
-      const ref = { current: fakeCanvas } as React.RefObject<HTMLCanvasElement | null>;
+      const blob = new Blob(["x"], { type: "image/png" });
+      const canvas = fakeCanvasWithBlob(blob);
+      const ref = { current: canvas } as React.RefObject<HTMLCanvasElement | null>;
 
-      result.current.saveColor(ref, "test.png");
-
-      expect(mockShowToast).toHaveBeenCalledWith("toast_image_gen_failed", "error");
-    });
-
-    it("creates anchor, sets href/download, clicks, and removes from DOM", () => {
-      const { result } = setup();
-      const dataUrl = "data:image/png;base64,abc123";
-      const fakeCanvas = { toDataURL: vi.fn().mockReturnValue(dataUrl) } as unknown as HTMLCanvasElement;
-      const ref = { current: fakeCanvas } as React.RefObject<HTMLCanvasElement | null>;
+      const fakeUrl = "blob:http://localhost/fake";
+      vi.spyOn(URL, "createObjectURL").mockReturnValue(fakeUrl);
+      vi.spyOn(URL, "revokeObjectURL").mockReturnValue();
 
       const mockAnchor = { href: "", download: "", click: vi.fn() } as unknown as HTMLAnchorElement;
-      const spyCreate = vi.spyOn(document, "createElement").mockReturnValue(mockAnchor as unknown as HTMLElement);
-      const spyAppend = vi.spyOn(document.body, "appendChild").mockReturnValue(mockAnchor as unknown as Node);
-      const spyRemove = vi.spyOn(document.body, "removeChild").mockReturnValue(mockAnchor as unknown as Node);
+      vi.spyOn(document, "createElement").mockReturnValue(mockAnchor as unknown as HTMLElement);
+      vi.spyOn(document.body, "appendChild").mockReturnValue(mockAnchor as unknown as Node);
+      vi.spyOn(document.body, "removeChild").mockReturnValue(mockAnchor as unknown as Node);
 
       result.current.saveColor(ref, "my-art.png");
 
-      expect(spyCreate).toHaveBeenCalledWith("a");
-      expect(mockAnchor.href).toBe(dataUrl);
+      expect(document.createElement).toHaveBeenCalledWith("a");
+      expect(mockAnchor.href).toBe(fakeUrl);
       expect(mockAnchor.download).toBe("my-art.png");
-      expect(spyAppend).toHaveBeenCalledWith(mockAnchor);
       expect(mockAnchor.click).toHaveBeenCalled();
-      expect(spyRemove).toHaveBeenCalledWith(mockAnchor);
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith(fakeUrl);
+    });
+
+    it("uses navigator.share when available", () => {
+      const mockShare = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "share", { value: mockShare, writable: true, configurable: true });
+      Object.defineProperty(navigator, "canShare", { value: () => true, writable: true, configurable: true });
+
+      const { result } = setup();
+      const blob = new Blob(["x"], { type: "image/png" });
+      const canvas = fakeCanvasWithBlob(blob);
+      const ref = { current: canvas } as React.RefObject<HTMLCanvasElement | null>;
+
+      result.current.saveColor(ref, "shared.png");
+
+      expect(mockShare).toHaveBeenCalledTimes(1);
+      const arg = mockShare.mock.calls[0][0];
+      expect(arg.files).toHaveLength(1);
+      expect(arg.files[0].name).toBe("shared.png");
     });
   });
 
@@ -115,20 +142,18 @@ describe("useExport", () => {
       const cvs = makeCvs(16, 12);
       const { result } = setup(cvs);
 
-      // saveGlaze creates a canvas internally then calls saveColor which creates an anchor
       vi.spyOn(document.body, "appendChild").mockReturnValue(null as unknown as Node);
       vi.spyOn(document.body, "removeChild").mockReturnValue(null as unknown as Node);
 
       result.current.saveGlaze("glaze.png");
 
-      // renderBuf is called with the correct dimensions
       expect(mockRenderBuf).toHaveBeenCalledTimes(1);
       const args = mockRenderBuf.mock.calls[0];
       expect(args[1]).toBe(16); // w
       expect(args[2]).toBe(12); // h
     });
 
-    it("calls renderBuf then saveColor", () => {
+    it("calls renderBuf then downloadCanvas", () => {
       const cvs = makeCvs(8, 8);
       const colorLUT: [number, number, number][] = [[255, 0, 0]];
       const { result } = setup(cvs, colorLUT);

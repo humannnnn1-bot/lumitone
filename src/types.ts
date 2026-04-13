@@ -108,6 +108,7 @@ export interface PanZoomHandlers {
   spaceRef: React.MutableRefObject<boolean>;
   panningRef: React.MutableRefObject<boolean>;
   startPan: (e: React.PointerEvent) => void;
+  handleMiddleDown: (e: React.PointerEvent) => void;
   movePan: (e: React.PointerEvent) => void;
   endPan: () => void;
 }

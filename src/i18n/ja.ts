@@ -125,8 +125,18 @@ export const ja: Record<TranslationKey, string> = {
   help_dblclick_level_key: "レベルダブルクリック",
   help_zoom_pixel: "ピクセル等倍ズーム",
   help_zoom_pixel_key: "ズームボタン右クリック",
+  help_pan_combined_key: "Space / 中クリック+ドラッグ",
+  help_save_as_combined_key: "Ctrl+Shift+S / 保存右クリック",
   help_save_custom: "カスタムファイル名で保存",
   help_save_custom_key: "保存ボタン右クリック",
+  help_middle_pan: "パン",
+  help_middle_pan_key: "中クリック+ドラッグ",
+  help_middle_reset: "ズーム＆パンリセット",
+  help_middle_reset_key: "中クリック x2",
+  help_arrow_pan: "パン（キャンバスフォーカス時）",
+  help_arrow_pan_key: "矢印キー",
+  help_drop_image: "画像読み込み",
+  help_drop_image_key: "ドラッグ＆ドロップ",
 
   // App - toast messages
   toast_restore_failed: "保存データの復元に失敗しました",

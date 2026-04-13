@@ -82,7 +82,11 @@ export const ColorPanel = React.memo(function ColorPanel(props: ColorPanelProps)
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
-      if (e.button === 1 || panZoom.spaceRef.current) {
+      if (e.button === 1) {
+        panZoom.handleMiddleDown(e);
+        return;
+      }
+      if (panZoom.spaceRef.current) {
         e.preventDefault();
         panZoom.startPan(e);
         return;

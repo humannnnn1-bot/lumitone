@@ -32,7 +32,7 @@ import { TheoryPanel } from "./components/TheoryPanel";
 import { MusicPanel } from "./components/MusicPanel";
 import { useTranslation } from "./i18n";
 
-const APP_VERSION = "5.3.7";
+const APP_VERSION = "5.3.8";
 
 /* ═══════════════════════════════════════════
    LAYOUT STYLE CONSTANTS
@@ -245,6 +245,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     setZoom: panZoom.setZoom,
     onSave: handleKbSave,
     onSaveAs: handleKbSaveAs,
+    activeTab,
   });
 
   const handleClear = useCallback(() => {
@@ -369,6 +370,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     spaceRef: panZoom.spaceRef,
     panningRef: panZoom.panningRef,
     startPan: panZoom.startPan,
+    handleMiddleDown: panZoom.handleMiddleDown,
     movePan: panZoom.movePan,
     endPan: panZoom.endPan,
   });
@@ -470,6 +472,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
               requestFilename={requestFilename}
               panZoomMode={panZoom.panZoomMode}
               setPanZoomMode={panZoom.setPanZoomMode}
+              handleMiddleDown={panZoom.handleMiddleDown}
               onPinchDown={panZoom.onPinchDown}
               onPinchMove={panZoom.onPinchMove}
               onPinchUp={panZoom.onPinchUp}

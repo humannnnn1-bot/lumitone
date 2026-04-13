@@ -13,6 +13,7 @@ export interface PanZoomResult {
   setCursorMode: React.Dispatch<React.SetStateAction<null | "grab" | "grabbing">>;
   setPanZoomMode: React.Dispatch<React.SetStateAction<boolean>>;
   startPan: (e: React.PointerEvent) => void;
+  handleMiddleDown: (e: React.PointerEvent) => void;
   movePan: (e: React.PointerEvent) => void;
   endPan: () => void;
   onWheel: (e: WheelEvent) => void;
@@ -44,6 +45,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
   const panStartRef = useRef({ x: 0, y: 0 });
   const panOriginRef = useRef({ x: 0, y: 0 });
   const spaceRef = useRef(false);
+  const lastMiddleDownRef = useRef(0);
 
   const zoomRef = useSyncRef(zoom);
   const panRef = useSyncRef(pan);
@@ -82,6 +84,24 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
         } catch {}
     },
     [panRef],
+  );
+
+  /** Middle-click handler: double-click resets zoom/pan, single starts pan. */
+  const handleMiddleDown = useCallback(
+    (e: React.PointerEvent) => {
+      e.preventDefault();
+      const now = performance.now();
+      if (now - lastMiddleDownRef.current < 400) {
+        lastMiddleDownRef.current = 0;
+        setZoom(1);
+        setPan({ x: 0, y: 0 });
+        schedCursorRef.current?.();
+        return;
+      }
+      lastMiddleDownRef.current = now;
+      startPan(e);
+    },
+    [startPan, setZoom, setPan, schedCursorRef],
   );
 
   const movePan = useCallback(
@@ -215,6 +235,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
     setCursorMode,
     setPanZoomMode,
     startPan,
+    handleMiddleDown,
     movePan,
     endPan,
     onWheel,

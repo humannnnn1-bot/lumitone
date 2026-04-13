@@ -149,7 +149,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
   const [alpha0, setAlpha0] = useState(0);
   const [alpha7, setAlpha7] = useState(0);
   const [originMode, setOriginMode] = useState<0 | 7>(0);
-  const [droneMuted, setDroneMuted] = useState(false);
+  const [droneMuted, setDroneMuted] = useState(true);
 
   // Auto-rotation state
   const [alphaDir, setAlphaDir] = useState<1 | -1 | 0>(0);
@@ -362,14 +362,60 @@ export const MusicPanel = React.memo(function MusicPanel() {
     [engine],
   );
 
+  // Tone burst highlight: flash white then fade out over 500ms (supports multiple simultaneous)
+  const [burstHighlight, setBurstHighlight] = useState<Set<number>>(() => new Set());
+  const burstTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+
   const handleBlockClick = useCallback(
     (lv: number, angle: number) => {
       ensureAudio();
       engine.initAudio();
       engine.triggerToneBurst(lv, angle);
+      // Clear existing timer for this level (handles rapid re-trigger)
+      const prev = burstTimersRef.current.get(lv);
+      if (prev) clearTimeout(prev);
+      // Remove then re-add to force transition restart
+      setBurstHighlight((s) => {
+        const n = new Set(s);
+        n.delete(lv);
+        return n;
+      });
+      requestAnimationFrame(() => {
+        setBurstHighlight((s) => new Set(s).add(lv));
+        burstTimersRef.current.set(
+          lv,
+          setTimeout(() => {
+            setBurstHighlight((s) => {
+              const n = new Set(s);
+              n.delete(lv);
+              return n;
+            });
+            burstTimersRef.current.delete(lv);
+          }, 20),
+        );
+      });
     },
     [engine, ensureAudio],
   );
+
+  // Keyboard 1-6: trigger tone burst for corresponding level
+  const sonificationLevelsRef = useRef(sonificationLevels);
+  useEffect(() => {
+    sonificationLevelsRef.current = sonificationLevels;
+  }, [sonificationLevels]);
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const k = e.key;
+      if (k >= "1" && k <= "6") {
+        const lv = +k;
+        const entry = sonificationLevelsRef.current.find((s) => s.lv === lv);
+        if (entry) handleBlockClick(lv, entry.angle);
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [handleBlockClick]);
 
   const grayStepCbRef = useRef<(lv: number | null) => void>((lv: number | null) => setGrayStep(lv));
   const fanoBeatCbRef = useRef<(line: number, pos: number) => void>((_line, pos) => setRhythmBeat(pos % 7));
@@ -598,6 +644,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                     return next;
                   });
                   setHoveredCandidate(null);
+                  handleBlockClick(lp.lv, cand.angle);
                 };
                 return (
                   <div
@@ -686,6 +733,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                     const mainCand = cands[mainCi];
                     const isMainHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === mainCi;
                     const isSelected = selectedLevels.has(lp.lv);
+                    const isBurst = burstHighlight.has(lp.lv);
                     return (
                       <div
                         role="button"
@@ -729,11 +777,11 @@ export const MusicPanel = React.memo(function MusicPanel() {
                           height: 28,
                           borderRadius: R.md,
                           background: isDirect ? `rgb(${cands[directIdx!]?.rgb.join(",")})` : lp.hex,
-                          border: `2px solid ${isMainHovered || isSelected ? C.accent : C.border}`,
+                          border: `2px solid ${isBurst ? "#ffffff" : isMainHovered || isSelected ? C.accent : C.border}`,
                           boxSizing: "border-box" as const,
                           cursor: "pointer",
-                          boxShadow: isMainHovered ? SHADOW.glow(C.accent) : "none",
-                          transition: "box-shadow 0.15s, border-color 0.15s",
+                          boxShadow: isBurst ? SHADOW.glow("#ffffff") : isMainHovered ? SHADOW.glow(C.accent) : "none",
+                          transition: isBurst ? "none" : "box-shadow 0.5s, border-color 0.5s",
                         }}
                       />
                     );
