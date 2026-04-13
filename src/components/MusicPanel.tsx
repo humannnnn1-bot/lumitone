@@ -258,6 +258,11 @@ export const MusicPanel = React.memo(function MusicPanel() {
     originMode,
   });
 
+  // Init audio on mount (tab click provides user gesture for AudioContext)
+  useEffect(() => {
+    engine.initAudio();
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Resume drone when user interacts with LinkedViz controls
   const resumeDrone = useCallback(() => {
     if (droneMuted) {
