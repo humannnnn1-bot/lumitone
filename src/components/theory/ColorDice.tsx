@@ -271,6 +271,8 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
           {t("theory_dice_footer_ops")}
           <br />
           {t("theory_dice_footer_demorgan")}
+          <br />
+          {t("theory_dice_footer_subtractive")}
         </p>
       </div>
 

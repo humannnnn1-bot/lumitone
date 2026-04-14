@@ -212,12 +212,13 @@ export const en = {
     "This is a universal theorem: for any positive luma coefficients with no tied luma values, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7.",
   theory_dice_net_title: "Hue unfolding",
   theory_dice_desc3:
-    "The 2-2-2 staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously. Among the 11 cube nets, only this staircase arranges faces in hue-wheel order (proof: the hue cycle R\u2192Y\u2192G\u2192C\u2192B\u2192M requires 5 specific cube-edge adjacencies forming a Hamiltonian path on the face graph; a net respecting this linear sequence must use exactly these 5 edges as fold-lines, which determines a unique spanning tree of the octahedron graph \u2014 verified by exhaustive check of all 11 nets).",
+    "The 2-2-2 staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously. Among the 11 free cube nets, only this staircase has a face-adjacency tree containing the hue-order path R\u2192Y\u2192G\u2192C\u2192B\u2192M (equivalently its reverse). Proof sketch: a cube net has 6 faces and therefore exactly 5 face adjacencies, so requiring those 5 hue edges forces that Hamiltonian path as the whole tree; unfolding that tree on the cube yields a unique free net, namely the 2-2-2 staircase.",
   theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
   theory_dice_additive_col: "Additive (\u2295)",
   theory_dice_subtractive_col: "Subtractive (\u2227)",
   theory_dice_footer_ops: "\u2295 = XOR over GF(2)\u00b3 | \u2227 = AND in the Boolean lattice",
   theory_dice_footer_demorgan: "For disjoint colors (a \u2227 b = 0): (a \u2295 b)' = a' \u2227 b'  where x' = x \u2295 7",
+  theory_dice_footer_subtractive: "For the displayed CMY pairs, a \u2228 b = 7, so a + b - 7 = a \u2227 b.",
   theory_fano_title: "Fano Plane",
   theory_fano_desc:
     "The 7 chromatic levels form PG(2,2) (the smallest projective plane: 7 points, 7 lines, 3 points per line) and the unique Steiner triple system S(2,3,7) (every pair of points lies on exactly one line). In the triangle: vertices = RGB (primaries), midpoints = CMY (each is XOR of adjacent vertices), center = White (where all complement lines meet). The 3 sides are additive mixing, 3 medians are complementary pairs, and the inscribed circle is CMY closure. For any line {a, b, c}, a \u2295 b \u2295 c = 0.",
@@ -237,7 +238,7 @@ export const en = {
   theory_gray_pause: "\u23f8 Pause",
   theory_xor_title: "XOR Mixing",
   theory_xor_desc:
-    "XOR defines every color relationship in this system. The three primaries {G, R, B} are the basis: every color is their unique XOR combination, and each color c has a complement c \u2295 7 with c \u2295 (c \u2295 7) = 7 (White). Arithmetically, XOR is carry-free binary addition (1+1 = 0). For primaries, integer addition equals XOR directly (1+4 = 5 = 1\u22954). For CMY, bits overlap and carry occurs (3+5 = 8), but XOR discards the carry (3\u22955 = 6). The \u201csubtract 7\u201d rule of subtractive mixing is exactly this carry correction.",
+    "XOR defines every color relationship in this system. The three primaries {G, R, B} are the basis: every color is their unique XOR combination, and each color c has a complement c \u2295 7 with c \u2295 (c \u2295 7) = 7 (White). Arithmetically, XOR is carry-free binary addition (1+1 = 0). For disjoint primaries, integer addition agrees with XOR directly (1+4 = 5 = 1\u22954). In general, a + b = (a \u2295 b) + 2(a \u2227 b): the overlap term a \u2227 b is what ordinary arithmetic counts twice. The subtractive CMY examples in the die are Boolean-AND identities. Because the displayed pairs satisfy a \u2228 b = 7, they obey a + b - 7 = a \u2227 b.",
   theory_hamming_title: "Hamming Code",
   theory_hamming_desc:
     "The RGB primaries (B=1, R=2, G=4) are exactly the powers of 2 \u2014 each has a single 1-bit, making them natural parity checks. Each primary checks all positions whose binary representation contains that bit: Blue checks odd positions {1,3,5,7}, Red checks {2,3,6,7}, Green checks {4,5,6,7}. The remaining colors (M=3, C=5, Y=6, W=7) occupy the data positions. If a single position is corrupted, the failed parity checks identify that position \u2014 the syndrome is the error position in binary. Click a position to inject an error and watch the syndrome decode it.",
@@ -268,7 +269,7 @@ export const en = {
   theory_conn_fano_hamming_hook:
     "Fano \u2245 Hamming: the 7 Fano points are the 7 columns of the parity-check matrix. Projective geometry and coding theory are two readings of the same structure.",
   theory_conn_cube_geometry_hook:
-    "Cube geometry: the 7 Fano lines are planar cross-sections of the cube through Black. The 3 parity checks slice along coordinate hyperplanes to localize errors.",
+    "Cube geometry: the 7 Fano lines correspond to the 7 two-dimensional subspaces of GF(2)^3 through Black. In the Euclidean cube, 6 of them appear as literal plane slices (3 coordinate planes and 3 diagonal planes); the remaining CMY line corresponds to the even-parity tetrahedron {0,3,5,6}. The three parity checks are the coordinate planes G=0, R=0, and B=0.",
   theory_conn_gray_hook:
     "Gray code: the hue wheel R\u2192Y\u2192G\u2192C\u2192B\u2192M is a Hamiltonian cycle on both the cube\u2019s chromatic vertices and the octahedron\u2019s vertex graph.",
   theory_conn_boolean_hook:
@@ -301,7 +302,7 @@ export const en = {
   // Octahedron (chromatic cross-polytope)
   theory_octa_title: "Color Diamond",
   theory_octa_desc:
-    "The most symmetric way to display 6 chromatic colors and their complement pairs: each complement axis (R\u2194C, G\u2194M, B\u2194Y) connects antipodal vertices, with primaries on +axes and CMY on \u2212axes. This is the dual of the color cube \u2014 6 vertices become 8 faces (one per GF(2)\u00b3 element), and the face-adjacency graph is the color cube itself. Unlike the cube (whose 12 edges yield only 3 XOR values), the octahedron\u2019s 12 edges produce all 6 chromatic XOR values, each exactly twice \u2014 every non-complementary pair mixes to a third color visible as the edge gradient\u2019s midpoint.",
+    "The most symmetric way to display 6 chromatic colors and their complement pairs: each complement axis (R\u2194C, G\u2194M, B\u2194Y) connects antipodal vertices, with primaries on +axes and CMY on \u2212axes. This is the dual of the color cube \u2014 6 vertices become 8 faces (one per GF(2)\u00b3 element), and the face-adjacency graph is the color cube itself. Unlike the cube (whose 12 edges yield only 3 XOR values), the octahedron\u2019s 12 edges cover all 6 chromatic XOR results exactly twice: each non-complementary pair {a,b} determines a third color a\u2295b.",
   theory_octa_axes: "Complement axes",
 
   // §10 Color Tetra
