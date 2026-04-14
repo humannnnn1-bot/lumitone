@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { TOAST_DURATION } from "../constants";
-import type { MapMode } from "../components/AnalyzePanel";
+import type { MapMode } from "../components/analyze-types";
 import type { TranslationFn } from "../i18n";
 import { useSyncRef } from "./useSyncRef";
 
