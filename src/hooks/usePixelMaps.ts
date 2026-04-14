@@ -12,7 +12,7 @@ import type { WorkerRequest, WorkerResponse } from "../workers/pixel-analysis.wo
 import PixelAnalysisWorker from "../workers/pixel-analysis.worker?worker";
 
 const WORKER_MODES = new Set<MapMode>(["noise", "entropy", "depth", "gradient", "region"]);
-const PRELOAD_ORDER: readonly MapMode[] = ["luminance", "region", "gradient", "depth", "noise", "entropy"];
+const PRELOAD_ORDER: readonly MapMode[] = ["luminance", "noise", "gradient", "region", "depth", "entropy"];
 
 export interface PixelMaps {
   noise: Float32Array;

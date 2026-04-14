@@ -19,7 +19,7 @@ export function useUIState(_t: TranslationFn) {
   const [showHelp, setShowHelp] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" | "info" } | null>(null);
   const [showNewCanvas, setShowNewCanvas] = useState(false);
-  const [mapMode, setMapMode] = useState<MapMode>("region");
+  const [mapMode, setMapMode] = useState<MapMode>("luminance");
   const [hueAngle, setHueAngle] = useState(0);
   const [directCandidates, setDirectCandidates] = useState<Map<number, number>>(new Map());
   const [promptState, setPromptState] = useState<{ defaultValue: string; resolve: (v: string | null) => void } | null>(null);

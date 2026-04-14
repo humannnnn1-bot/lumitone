@@ -173,7 +173,7 @@ describe("usePixelMaps", () => {
 
     await waitFor(() => expect(result.current.noise[0]).toBe(1));
     await waitFor(() =>
-      expect(MockPixelAnalysisWorker.postedModes).toEqual(["noise", "luminance", "region", "gradient", "depth", "entropy"]),
+      expect(MockPixelAnalysisWorker.postedModes).toEqual(["noise", "luminance", "gradient", "region", "depth", "entropy"]),
     );
     expect(MockPixelAnalysisWorker.instances).toHaveLength(2);
   });
@@ -184,7 +184,7 @@ describe("usePixelMaps", () => {
     const { result, rerender } = renderHook(({ mode }: { mode: "noise" | "depth" }) => usePixelMaps(cvs, mode, true), { initialProps });
 
     await waitFor(() =>
-      expect(MockPixelAnalysisWorker.postedModes).toEqual(["noise", "luminance", "region", "gradient", "depth", "entropy"]),
+      expect(MockPixelAnalysisWorker.postedModes).toEqual(["noise", "luminance", "gradient", "region", "depth", "entropy"]),
     );
     const postedBeforeSwitch = MockPixelAnalysisWorker.postedModes.slice();
 
