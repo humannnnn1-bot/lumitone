@@ -15,6 +15,16 @@ function edgeKey(a: number, b: number): string {
 }
 
 describe("theory-data invariants", () => {
+  it("treats the CMY Fano line as an even-parity tetrahedron rather than a Euclidean plane slice", () => {
+    const p3 = [0, 1, 1];
+    const p5 = [1, 0, 1];
+    const p6 = [1, 1, 0];
+    const det = p3[0] * (p5[1] * p6[2] - p5[2] * p6[1]) - p3[1] * (p5[0] * p6[2] - p5[2] * p6[0]) + p3[2] * (p5[0] * p6[1] - p5[1] * p6[0]);
+
+    expect(det).not.toBe(0);
+    expect(new Set([0, 3, 5, 6])).toEqual(new Set(TETRA_T0));
+  });
+
   it("models the Fano plane as a Steiner triple system", () => {
     const pairCounts = new Map<string, number>();
 
@@ -75,6 +85,21 @@ describe("theory-data invariants", () => {
       for (const b of TETRA_T0) {
         expect(t0.has(a ^ b)).toBe(true);
       }
+    }
+  });
+
+  it("matches the displayed subtractive CMY examples with Boolean AND", () => {
+    const subtractivePairs: [number, number, number][] = [
+      [3, 5, 1],
+      [5, 6, 4],
+      [6, 3, 2],
+    ];
+
+    for (const [a, b, expected] of subtractivePairs) {
+      expect(a | b).toBe(7);
+      expect(a + b - 7).toBe(expected);
+      expect(a & b).toBe(expected);
+      expect(a ^ b).not.toBe(expected);
     }
   });
 });

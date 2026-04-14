@@ -22,5 +22,6 @@ describe("ColorDice", () => {
     expect(text).toContain("Boolean lattice");
     expect(text).toContain("For disjoint colors (a ∧ b = 0)");
     expect(text).toContain("(a ⊕ b)' = a' ∧ b'");
+    expect(text).toContain("a ∨ b = 7");
   });
 });
