@@ -25,35 +25,35 @@ interface Props {
 
 export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHover }: Props) {
   const { t } = useTranslation();
-  const [flippedBit, setFlippedBit] = useState<number | null>(null);
+  const [errorPosition, setErrorPosition] = useState<number | null>(null);
   const [corrected, setCorrected] = useState(false);
   const correctedTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const enter = useCallback((lv: number) => onHover(lv), [onHover]);
   const leave = useCallback(() => onHover(null), [onHover]);
 
-  // Reset corrected state when flippedBit changes
+  // Reset corrected state when the injected error position changes
   useEffect(() => {
     setCorrected(false);
     return () => clearTimeout(correctedTimerRef.current);
-  }, [flippedBit]);
+  }, [errorPosition]);
 
   const handleCorrect = useCallback(() => {
     setCorrected(true);
     correctedTimerRef.current = setTimeout(() => {
-      setFlippedBit(null);
+      setErrorPosition(null);
       setCorrected(false);
     }, 1200);
   }, []);
 
-  // Compute syndrome from flipped bit
-  const syndrome = corrected ? 0 : flippedBit !== null ? flippedBit : 0;
+  // The demo injects a single position error, so the syndrome is that position in binary.
+  const syndrome = corrected ? 0 : errorPosition !== null ? errorPosition : 0;
   const parityResults = PARITY_GROUPS.map((pg) => ({
     ...pg,
     failed: (syndrome & pg.parity) !== 0,
   }));
 
   const handleFlip = useCallback((lv: number) => {
-    setFlippedBit((prev) => (prev === lv ? null : lv));
+    setErrorPosition((prev) => (prev === lv ? null : lv));
   }, []);
 
   // Hamming role table data (positions 1-7)
@@ -69,6 +69,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
           return (
             <g
               key={lv.lv}
+              data-testid={`hamming-position-${lv.lv}`}
               onMouseEnter={() => enter(lv.lv)}
               onMouseLeave={leave}
               onClick={() => handleFlip(lv.lv)}
@@ -80,8 +81,8 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                 r={9}
                 fill={lv.color}
                 fillOpacity={0.8}
-                stroke={flippedBit === lv.lv ? "#ff4444" : isParity ? C.accentBright : "transparent"}
-                strokeWidth={flippedBit === lv.lv ? 2 : 1.5}
+                stroke={errorPosition === lv.lv ? "#ff4444" : isParity ? C.accentBright : "transparent"}
+                strokeWidth={errorPosition === lv.lv ? 2 : 1.5}
               />
               <text
                 x={x}
@@ -186,7 +187,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                   {pg.label}
                 </text>
                 {/* Parity check result indicator */}
-                {flippedBit !== null && (
+                {errorPosition !== null && (
                   <text
                     x={8}
                     y={y}
@@ -206,7 +207,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                 const isHl = hlLevel === lv;
                 const dim = anyHl && !isHl && !parityActive && !groupContainsHl;
                 const isParity = lv === pg.parity;
-                const isFlipped = flippedBit === lv;
+                const isErrored = errorPosition === lv;
                 return (
                   <g
                     key={"cd" + ci}
@@ -222,8 +223,8 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                       r={DOT_R - (isParity ? 0 : 2)}
                       fill={info.color}
                       fillOpacity={dim ? 0.15 : 0.8}
-                      stroke={isFlipped ? "#ff4444" : isHl ? "#fff" : info.color}
-                      strokeWidth={isFlipped ? 2.5 : isHl ? 2 : isParity ? 1.5 : 1}
+                      stroke={isErrored ? "#ff4444" : isHl ? "#fff" : info.color}
+                      strokeWidth={isErrored ? 2.5 : isHl ? 2 : isParity ? 1.5 : 1}
                       strokeDasharray={isParity ? "3,2" : undefined}
                       opacity={dim ? 0.3 : 1}
                     />
@@ -248,7 +249,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
         })}
 
         {/* Error detection result */}
-        {flippedBit !== null && (
+        {errorPosition !== null && (
           <g>
             <text
               x={W / 2}
@@ -260,9 +261,9 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
               fill={corrected ? "#44ff44" : syndrome > 0 ? "#ff4444" : "#44ff44"}
             >
               {corrected
-                ? t("theory_hamming_corrected", THEORY_LEVELS[flippedBit].name + " (" + flippedBit + ")")
+                ? t("theory_hamming_corrected", `${errorPosition} (${THEORY_LEVELS[errorPosition].name})`)
                 : syndrome > 0
-                  ? t("theory_hamming_error", THEORY_LEVELS[syndrome].name + " (" + syndrome + ")")
+                  ? t("theory_hamming_error", `${syndrome} (${THEORY_LEVELS[syndrome].name})`)
                   : t("theory_hamming_ok")}
             </text>
             <text x={W / 2} y={H - 14} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textDimmer}>
@@ -274,8 +275,8 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
       </svg>
 
       <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>
-        {flippedBit !== null ? (
-          <button className="theory-annotation" style={S_BTN} onClick={() => setFlippedBit(null)}>
+        {errorPosition !== null ? (
+          <button className="theory-annotation" style={S_BTN} onClick={() => setErrorPosition(null)}>
             {t("theory_hamming_reset")} {"\u21ba"}
           </button>
         ) : (
@@ -286,7 +287,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
             {t("theory_hamming_flip")}
           </span>
         )}
-        {flippedBit !== null && !corrected && (
+        {errorPosition !== null && !corrected && (
           <button
             className="theory-annotation"
             style={{ ...S_BTN, color: "#44ff44", borderColor: "rgba(68,255,68,0.4)" }}

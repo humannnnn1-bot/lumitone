@@ -34,6 +34,32 @@ if (typeof globalThis.requestAnimationFrame === "undefined") {
   };
 }
 
+/* matchMedia polyfill */
+if (typeof globalThis.matchMedia === "undefined") {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- polyfill
+  (globalThis as any).matchMedia = (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addListener: () => {},
+    removeListener: () => {},
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => false,
+  });
+}
+
+/* ResizeObserver polyfill */
+if (typeof globalThis.ResizeObserver === "undefined") {
+  class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- polyfill
+  (globalThis as any).ResizeObserver = ResizeObserver;
+}
+
 /* PointerEvent constructor polyfill (only in jsdom where MouseEvent exists) */
 if (typeof globalThis.PointerEvent === "undefined" && typeof globalThis.MouseEvent !== "undefined") {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any -- polyfill

@@ -107,15 +107,9 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
           );
         })}
 
-        {/* Complement diagonals (space diagonals through center) */}
+        {/* Complement diagonals (all 4 body diagonals) */}
         {showComplements &&
-          (
-            [
-              [1, 6],
-              [2, 5],
-              [3, 4],
-            ] as const
-          ).map(([a, b]) => {
+          COMPLEMENT_EDGES.map(([a, b]) => {
             const pa = getPos(a),
               pb = getPos(b);
             const la = THEORY_LEVELS[a],
@@ -129,7 +123,17 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                     <stop offset="100%" stopColor={lb.color} stopOpacity={0.6} />
                   </linearGradient>
                 </defs>
-                <line x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} stroke={grad} strokeWidth={1.5} strokeDasharray="6,4" opacity={0.7} />
+                <line
+                  data-testid={`cube-complement-${a}-${b}`}
+                  x1={pa.x}
+                  y1={pa.y}
+                  x2={pb.x}
+                  y2={pb.y}
+                  stroke={grad}
+                  strokeWidth={1.5}
+                  strokeDasharray="6,4"
+                  opacity={0.7}
+                />
                 <text
                   x={(pa.x + pb.x) / 2}
                   y={(pa.y + pb.y) / 2 - 8}

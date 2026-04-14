@@ -96,19 +96,20 @@ const VIEW_ROWS: [DieView, DieView][] = [
     { top: 4, left: 2, right: 1, type: "identity" }, // RGB
     { top: 6, left: 5, right: 3, type: "identity" }, // CMY
   ],
-  // De Morgan dual pairs: each row's ⊕ and ∧ are related by complement (a⊕b=c ↔ a'∧b'=c')
+  // Restricted complement-paired examples with disjoint inputs:
+  // when a ∧ b = 0, complement turns the additive example into the displayed subtractive one.
   // Outputs form complement pairs: Y↔B, C↔R, M↔G. Additive column follows color wheel: Y→C→M.
   [
     { top: 6, left: 2, right: 4, type: "additive" }, // R⊕G=Y
-    { top: 1, left: 3, right: 5, type: "subtractive" }, // M∧C=B  (De Morgan dual: R'=C, G'=M, Y'=B)
+    { top: 1, left: 3, right: 5, type: "subtractive" }, // M∧C=B  (paired with R⊕G=Y)
   ],
   [
     { top: 5, left: 4, right: 1, type: "additive" }, // G⊕B=C
-    { top: 2, left: 6, right: 3, type: "subtractive" }, // Y∧M=R  (De Morgan dual: G'=M, B'=Y, C'=R)
+    { top: 2, left: 6, right: 3, type: "subtractive" }, // Y∧M=R  (paired with G⊕B=C)
   ],
   [
     { top: 3, left: 1, right: 2, type: "additive" }, // B⊕R=M
-    { top: 4, left: 5, right: 6, type: "subtractive" }, // C∧Y=G  (De Morgan dual: R'=C, B'=Y, M'=G)
+    { top: 4, left: 5, right: 6, type: "subtractive" }, // C∧Y=G  (paired with B⊕R=M)
   ],
 ];
 
@@ -267,10 +268,9 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
           className="theory-annotation"
           style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center", lineHeight: 1.6 }}
         >
-          {"\u2295"} = XOR (GF(2){"\u00b3"}) | {"\u2227"} = AND (Boolean)
+          {t("theory_dice_footer_ops")}
           <br />
-          De Morgan: a{"\u2295"}b=c {"\u2194"} a{"\u2032"}
-          {"\u2227"}b{"\u2032"}=c{"\u2032"} (x{"\u2032"}=x{"\u2295"}7)
+          {t("theory_dice_footer_demorgan")}
         </p>
       </div>
 
