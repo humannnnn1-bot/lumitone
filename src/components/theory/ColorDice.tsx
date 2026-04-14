@@ -256,6 +256,12 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
             {t("theory_dice_subtractive_col")}
           </div>
         </div>
+        <p
+          className="theory-annotation"
+          style={{ fontSize: 8, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}
+        >
+          {t("theory_dice_ops_note")}
+        </p>
         {/* Grid rows */}
         {VIEW_ROWS.map(([left, right], ri) => (
           <div key={`vr${ri}`} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>

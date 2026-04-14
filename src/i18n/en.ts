@@ -214,14 +214,17 @@ export const en = {
   theory_dice_desc3:
     "The 2-2-2 staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously. Among the 11 free cube nets, only this staircase has a face-adjacency tree containing the hue-order path R\u2192Y\u2192G\u2192C\u2192B\u2192M (equivalently its reverse). Proof sketch: a cube net has 6 faces and therefore exactly 5 face adjacencies, so requiring those 5 hue edges forces that Hamiltonian path as the whole tree; unfolding that tree on the cube yields a unique free net, namely the 2-2-2 staircase.",
   theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
-  theory_dice_additive_col: "Additive (\u2295)",
-  theory_dice_subtractive_col: "Subtractive (\u2227)",
+  theory_dice_additive_col: "XOR view (additive reading)",
+  theory_dice_subtractive_col: "AND view (subtractive reading)",
+  theory_dice_ops_note: "These are operational readings within this model.",
   theory_dice_footer_ops: "\u2295 = XOR over GF(2)\u00b3 | \u2227 = AND in the Boolean lattice",
   theory_dice_footer_demorgan: "For disjoint colors (a \u2227 b = 0): (a \u2295 b)' = a' \u2227 b'  where x' = x \u2295 7",
   theory_dice_footer_subtractive: "For the displayed CMY pairs, a \u2228 b = 7, so a + b - 7 = a \u2227 b.",
   theory_fano_title: "Fano Plane",
   theory_fano_desc:
-    "The 7 chromatic levels form PG(2,2) (the smallest projective plane: 7 points, 7 lines, 3 points per line) and the unique Steiner triple system S(2,3,7) (every pair of points lies on exactly one line). In the triangle: vertices = RGB (primaries), midpoints = CMY (each is XOR of adjacent vertices), center = White (where all complement lines meet). The 3 sides are additive mixing, 3 medians are complementary pairs, and the inscribed circle is CMY closure. For any line {a, b, c}, a \u2295 b \u2295 c = 0.",
+    "The 7 nonzero levels {1, …, 7} form PG(2,2) (the smallest projective plane: 7 points, 7 lines, 3 points per line) and the unique Steiner triple system S(2,3,7) (every pair of points lies on exactly one line). Under projectivization, the zero vector is not a point, so Black (0) does not appear here.",
+  theory_fano_desc2:
+    "In the triangle: vertices = RGB (primaries), midpoints = CMY (each is XOR of adjacent vertices), center = White (where all complement lines meet). The 3 sides are additive mixing, the 3 medians are complementary pairs, and the inscribed circle is CMY closure. For any line {a, b, c}, a \u2295 b \u2295 c = 0.",
   theory_fano_xor: "{0} \u2295 {1} = {2}",
   theory_fano_primary: "Primary mixing",
   theory_fano_complement: "Complementary",
@@ -241,7 +244,9 @@ export const en = {
     "XOR defines every color relationship in this system. The three primaries {G, R, B} are the basis: every color is their unique XOR combination, and each color c has a complement c \u2295 7 with c \u2295 (c \u2295 7) = 7 (White). Arithmetically, XOR is carry-free binary addition (1+1 = 0). For disjoint primaries, integer addition agrees with XOR directly (1+4 = 5 = 1\u22954). In general, a + b = (a \u2295 b) + 2(a \u2227 b): the overlap term a \u2227 b is what ordinary arithmetic counts twice. The subtractive CMY examples in the die are Boolean-AND identities. Because the displayed pairs satisfy a \u2228 b = 7, they obey a + b - 7 = a \u2227 b.",
   theory_hamming_title: "Hamming Code",
   theory_hamming_desc:
-    "The RGB primaries (B=1, R=2, G=4) are exactly the powers of 2 \u2014 each has a single 1-bit, making them natural parity checks. Each primary checks all positions whose binary representation contains that bit: Blue checks odd positions {1,3,5,7}, Red checks {2,3,6,7}, Green checks {4,5,6,7}. The remaining colors (M=3, C=5, Y=6, W=7) occupy the data positions. If a single position is corrupted, the failed parity checks identify that position \u2014 the syndrome is the error position in binary. Click a position to inject an error and watch the syndrome decode it.",
+    "The positions 1..7 used here are the same nonzero 3-bit labels as the Fano plane\u2019s 7 points. The RGB primaries (B=1, R=2, G=4) are exactly the powers of 2 \u2014 each has a single 1-bit, making them natural parity checks.",
+  theory_hamming_desc2:
+    "Each primary checks all positions whose binary representation contains that bit: Blue checks odd positions {1,3,5,7}, Red checks {2,3,6,7}, Green checks {4,5,6,7}. The remaining colors (M=3, C=5, Y=6, W=7) occupy the data positions. If a single position is corrupted, the failed parity checks identify that position \u2014 the syndrome is the error position in binary.",
   theory_hamming_parity: "Parity",
   theory_hamming_checks: "Checks",
   theory_hamming_flip: "Click a position to inject an error",
@@ -290,7 +295,7 @@ export const en = {
     "Adding Black as an eighth overall-parity coordinate places these 7 colored positions inside the [8,4,4] extended Hamming framework; the 8 levels are coordinate labels, not codewords.",
   theory_conn_boundary:
     "GL(3,2) (order 168) is the full automorphism group of PG(2,2); only its S\u2083 subgroup (6 channel permutations) preserves chromatic meaning. Extensions beyond 8 colors require different algebraic structures.",
-  theory_conn_boundary_title: "Scope of this framework",
+  theory_conn_boundary_title: "Scope and Limits",
   theory_xor_complement: "Complement: {0} \u2295 7 = {1}",
   theory_xor_cayley_aria: "XOR Cayley table",
   theory_pin_hint: "Hover to highlight \u00b7 Click to pin",
@@ -329,11 +334,11 @@ export const en = {
   theory_stella_k8_degree: "Degrees: 3 + 3 + 1 = 7 = deg(K\u2088)",
 
   // Section group labels
-  theory_group_foundations: "FOUNDATIONS",
-  theory_group_geometry: "COLOR GEOMETRY",
-  theory_group_algebra: "ALGEBRAIC STRUCTURES",
+  theory_group_foundations: "FOUNDATIONS & NOTATION",
+  theory_group_geometry: "CUBE & CYCLES",
+  theory_group_algebra: "PROJECTIVE GEOMETRY & CODING",
   theory_group_polyhedra: "POLYHEDRA",
-  theory_group_synthesis: "SYNTHESIS",
+  theory_group_synthesis: "SYNTHESIS & LIMITS",
 
   theory_fano_cmy_collapse: "CMY line",
   theory_fano_cmy_eq: "M\u2295C\u2295Y = 0 \u2192 collinear!",

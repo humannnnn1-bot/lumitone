@@ -1,5 +1,5 @@
 import React from "react";
-import { C, FS, FW, SP } from "../../tokens";
+import { C, FS, SP } from "../../tokens";
 import { useTranslation } from "../../i18n";
 
 const S_ITEM: React.CSSProperties = {
@@ -23,25 +23,22 @@ export const ConnectionsSummary = React.memo(function ConnectionsSummary() {
         <li style={S_ITEM}>{t("theory_conn_boolean_hook")}</li>
       </ul>
 
-      {/* Extended Hamming note */}
-      <p style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
-        {t("theory_conn_extended")}
-      </p>
-
-      {/* Framework scope */}
-      <div style={{ width: "100%", borderTop: `1px solid ${C.border}`, paddingTop: SP.lg }}>
-        <p style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, fontWeight: FW.bold, margin: `0 0 ${SP.sm}px` }}>
-          {t("theory_conn_boundary_title")}
-        </p>
-        <p style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, margin: 0, lineHeight: 1.6 }}>
-          {t("theory_conn_boundary")}
-        </p>
-      </div>
-
       {/* Closing tagline */}
       <div className="theory-conn-footer" style={{ textAlign: "center" }}>
         <p style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.accentBright, margin: 0 }}>{t("theory_conn_conclusion_2")}</p>
       </div>
+    </div>
+  );
+});
+
+export const ScopeSummary = React.memo(function ScopeSummary() {
+  const { t } = useTranslation();
+
+  return (
+    <div style={{ width: "100%", maxWidth: 480, borderTop: `1px solid ${C.border}`, paddingTop: SP.lg }}>
+      <p style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, margin: 0, lineHeight: 1.6 }}>
+        {t("theory_conn_boundary")}
+      </p>
     </div>
   );
 });

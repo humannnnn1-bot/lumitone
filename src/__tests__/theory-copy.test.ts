@@ -17,6 +17,16 @@ describe("theory copy", () => {
     expect(ja.theory_dice_footer_subtractive).toContain("a + b - 7 = a ∧ b");
   });
 
+  it("labels die views as XOR and AND readings within the model", () => {
+    expect(en.theory_dice_additive_col).toBe("XOR view (additive reading)");
+    expect(en.theory_dice_subtractive_col).toBe("AND view (subtractive reading)");
+    expect(en.theory_dice_ops_note.toLowerCase()).toContain("within this model");
+
+    expect(ja.theory_dice_additive_col).toBe("XORの読み（加法的）");
+    expect(ja.theory_dice_subtractive_col).toBe("ANDの読み（減法的）");
+    expect(ja.theory_dice_ops_note).toContain("このモデル上の演算的な読み");
+  });
+
   it("describes Hamming as a position-error demo", () => {
     expect(en.theory_hamming_desc.toLowerCase()).toContain("position");
     expect(en.theory_hamming_flip.toLowerCase()).toContain("position");
@@ -25,6 +35,16 @@ describe("theory copy", () => {
     expect(ja.theory_hamming_desc).toContain("位置");
     expect(ja.theory_hamming_flip).toContain("位置");
     expect(ja.theory_hamming_desc).not.toContain("チャンネル");
+  });
+
+  it("explains why Black is absent from the Fano plane and reuses those labels in Hamming", () => {
+    expect(en.theory_fano_desc.toLowerCase()).toContain("zero vector");
+    expect(en.theory_fano_desc).toContain("Black (0)");
+    expect(en.theory_hamming_desc.toLowerCase()).toContain("same nonzero 3-bit labels");
+
+    expect(ja.theory_fano_desc).toContain("零ベクトル");
+    expect(ja.theory_fano_desc).toContain("Black(0)");
+    expect(ja.theory_hamming_desc).toContain("同じ非零3ビットラベル");
   });
 
   it("clarifies that the [8,4,4] note is about coordinates, not codewords", () => {

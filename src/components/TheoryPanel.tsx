@@ -13,7 +13,7 @@ import { Octahedron } from "./theory/Octahedron";
 import { LuminanceZigzag } from "./theory/LuminanceZigzag";
 import { TetraDecomposition } from "./theory/TetraDecomposition";
 import { StellaOctangula } from "./theory/StellaOctangula";
-import { ConnectionsSummary, PolyhedraNetwork } from "./theory/ConnectionsSummary";
+import { ConnectionsSummary, PolyhedraNetwork, ScopeSummary } from "./theory/ConnectionsSummary";
 
 const S_SECTION: React.CSSProperties = {
   display: "flex",
@@ -138,7 +138,7 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
         </p>
 
         {/* ═══════════════════════════════════════
-           FOUNDATIONS (基礎)  §1-§3
+           FOUNDATIONS & NOTATION (前提と記法)  §1-§2
            ═══════════════════════════════════════ */}
         <div style={S_GROUP_LABEL}>{t("theory_group_foundations")}</div>
 
@@ -149,56 +149,56 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
         <hr style={S_DIVIDER} />
 
-        {/* §2 Luma Zigzag */}
-        <Section title={t("theory_zigzag_title")} desc={t("theory_zigzag_desc")}>
-          <LuminanceZigzag hlLevel={hlLevel} onHover={onHover} />
-        </Section>
-
-        <hr style={S_DIVIDER} />
-
-        {/* §3 Color Die */}
-        <Section title={t("theory_dice_title")} desc={[t("theory_dice_desc"), t("theory_dice_desc2")]}>
-          <ColorDice hlLevel={hlLevel} onHover={onHover} />
-        </Section>
-
-        {/* ═══════════════════════════════════════
-           COLOR GEOMETRY (色空間幾何)  §4-§6
-           ═══════════════════════════════════════ */}
-        <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_geometry")}</div>
-
-        {/* §4 XOR Mixing */}
+        {/* §2 XOR Mixing */}
         <Section title={t("theory_xor_title")} desc={t("theory_xor_desc")}>
           <XorDemo hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
-        <hr style={S_DIVIDER} />
+        {/* ═══════════════════════════════════════
+           CUBE & CYCLES (立方体と巡回)  §3-§6
+           ═══════════════════════════════════════ */}
+        <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_geometry")}</div>
 
-        {/* §5 Color Cube */}
+        {/* §3 Color Cube */}
         <Section title={t("theory_cube_title")} desc={t("theory_cube_desc")}>
           <ColorCube hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
-        {/* §6 Fano Plane */}
-        <Section title={t("theory_fano_title")} desc={t("theory_fano_desc")}>
-          <FanoPlane hlLevel={hlLevel} onHover={onHover} />
-        </Section>
-
-        {/* ═══════════════════════════════════════
-           ALGEBRAIC STRUCTURES (代数構造)  §7-§8
-           ═══════════════════════════════════════ */}
-        <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_algebra")}</div>
-
-        {/* §7 Gray Code Cycle */}
+        {/* §4 Gray Code Cycle */}
         <Section title={t("theory_gray_title")} desc={t("theory_gray_desc")}>
           <GrayCodeHex hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
+        {/* §5 Luma Zigzag */}
+        <Section title={t("theory_zigzag_title")} desc={t("theory_zigzag_desc")}>
+          <LuminanceZigzag hlLevel={hlLevel} onHover={onHover} />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
+        {/* §6 Color Die */}
+        <Section title={t("theory_dice_title")} desc={[t("theory_dice_desc"), t("theory_dice_desc2")]}>
+          <ColorDice hlLevel={hlLevel} onHover={onHover} />
+        </Section>
+
+        {/* ═══════════════════════════════════════
+           PROJECTIVE GEOMETRY & CODING (射影幾何と符号)  §7-§8
+           ═══════════════════════════════════════ */}
+        <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_algebra")}</div>
+
+        {/* §7 Fano Plane */}
+        <Section title={t("theory_fano_title")} desc={[t("theory_fano_desc"), t("theory_fano_desc2")]}>
+          <FanoPlane hlLevel={hlLevel} onHover={onHover} />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
         {/* §8 Hamming Code */}
-        <Section title={t("theory_hamming_title")} desc={t("theory_hamming_desc")}>
+        <Section title={t("theory_hamming_title")} desc={[t("theory_hamming_desc"), t("theory_hamming_desc2")]}>
           <HammingDiagram hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
@@ -234,13 +234,20 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
         </Section>
 
         {/* ═══════════════════════════════════════
-           SYNTHESIS (総括)  §13
+           SYNTHESIS & LIMITS (総括と限界)  §13-§14
            ═══════════════════════════════════════ */}
         <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_synthesis")}</div>
 
         {/* §13 Connections */}
         <Section title={t("theory_connections_title")} desc={t("theory_connections_desc")}>
           <ConnectionsSummary />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
+        {/* §14 Scope */}
+        <Section title={t("theory_conn_boundary_title")} desc={t("theory_conn_extended")}>
+          <ScopeSummary />
         </Section>
       </div>
     </PinResetContext.Provider>
