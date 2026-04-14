@@ -52,7 +52,7 @@ describe("theory copy", () => {
     expect(en.theory_conn_extended.toLowerCase()).toContain("not codewords");
 
     expect(ja.theory_conn_extended).toContain("座標");
-    expect(ja.theory_conn_extended).toContain("位置ラベル");
+    expect(ja.theory_conn_extended).toContain("符号語の各座標位置");
   });
 
   it("describes the cube-Fano link as subspaces rather than seven literal plane slices", () => {

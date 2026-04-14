@@ -294,7 +294,7 @@ export const ja: Record<TranslationKey, string> = {
   theory_pn_stellation: "\u661f\u5f62\u5316",
   theory_pn_compound: "\u8907\u5408\u5316",
   theory_conn_extended:
-    "Black(0) を 8 番目の全体パリティ座標として加えると、この 7 点構造は [8,4,4] 拡張ハミング符号の座標系に埋め込めます。8 色そのものが codeword なのではなく、codeword の位置ラベルです。",
+    "Black(0) を 8 番目の全体パリティ座標として加えると、この 7 点構造は [8,4,4] 拡張ハミング符号の座標系に埋め込めます。8色そのものが符号語なのではなく、符号語の各座標位置を表すラベルです。",
   theory_conn_boundary:
     "GL(3,2)（位数168）は PG(2,2) の完全自己同型群。そのうち色彩的に有意なのは S\u2083（チャンネル置換6通り）のみ。8色を超える拡張には異なる代数構造が必要です。",
   theory_conn_boundary_title: "範囲と限界",
