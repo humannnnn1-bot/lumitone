@@ -30,7 +30,15 @@ export interface GlazeFillResult {
 
 export interface FloodFillWorkerHandle {
   requestCanvasFill(buf: Uint8Array, sx: number, sy: number, newVal: number, w: number, h: number): Promise<CanvasFillResult>;
-  requestGlazeFill(data: Uint8Array, colorMap: Uint8Array, sx: number, sy: number, newCmVal: number, w: number, h: number): Promise<GlazeFillResult>;
+  requestGlazeFill(
+    data: Uint8Array,
+    colorMap: Uint8Array,
+    sx: number,
+    sy: number,
+    newCmVal: number,
+    w: number,
+    h: number,
+  ): Promise<GlazeFillResult>;
 }
 
 export function useFloodFillWorker(): FloodFillWorkerHandle {
@@ -39,9 +47,19 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
   // Track whether worker creation was attempted and failed (skip retries)
   const workerFailedRef = useRef(false);
 
+  const resetWorker = useCallback((target: Worker) => {
+    if (workerRef.current === target) {
+      target.terminate();
+      workerRef.current = null;
+    }
+  }, []);
+
   // Cleanup on unmount
   useEffect(() => {
-    return () => { workerRef.current?.terminate(); workerRef.current = null; };
+    return () => {
+      workerRef.current?.terminate();
+      workerRef.current = null;
+    };
   }, []);
 
   /** Lazily create the worker. Returns null if creation fails. */
@@ -83,11 +101,13 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
 
         const timeout = setTimeout(() => {
           cleanup();
+          resetWorker(worker);
           reject(new Error("Flood fill timed out"));
         }, FILL_TIMEOUT_MS);
 
         const errHandler = (ev: ErrorEvent) => {
           cleanup();
+          resetWorker(worker);
           reject(new Error(ev.message || "Worker error"));
         };
 
@@ -106,7 +126,7 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
         worker.postMessage(req, [dataCopy.buffer as ArrayBuffer]);
       });
     },
-    [],
+    [resetWorker],
   );
 
   const requestGlazeFill = useCallback(
@@ -126,8 +146,16 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
       const dataCopy = new Uint8Array(data);
       const cmCopy = new Uint8Array(colorMap);
       const req: FloodFillWorkerRequest = {
-        id, kind: "glaze", data: dataCopy, sx, sy,
-        newVal: 0, w, h, colorMap: cmCopy, newCmVal,
+        id,
+        kind: "glaze",
+        data: dataCopy,
+        sx,
+        sy,
+        newVal: 0,
+        w,
+        h,
+        colorMap: cmCopy,
+        newCmVal,
       };
 
       return new Promise<GlazeFillResult>((resolve, reject) => {
@@ -139,11 +167,13 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
 
         const timeout = setTimeout(() => {
           cleanup();
+          resetWorker(worker);
           reject(new Error("Glaze fill timed out"));
         }, FILL_TIMEOUT_MS);
 
         const errHandler = (ev: ErrorEvent) => {
           cleanup();
+          resetWorker(worker);
           reject(new Error(ev.message || "Worker error"));
         };
 
@@ -162,7 +192,7 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
         worker.postMessage(req, [dataCopy.buffer as ArrayBuffer, cmCopy.buffer as ArrayBuffer]);
       });
     },
-    [],
+    [resetWorker],
   );
 
   return { requestCanvasFill, requestGlazeFill };
