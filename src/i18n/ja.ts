@@ -215,8 +215,9 @@ export const ja: Record<TranslationKey, string> = {
     "2-2-2型の階段状の展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。11種類の立方体展開図（回転・反転は同一視）のうち、この階段型だけが面隣接木（各面を頂点、辺共有を枝とする木）に色相順路 R→Y→G→C→B→M（またはその逆順）を含みます。証明の要点: 立方体展開図は6面なので面隣接はちょうど5本であり、この5本の色相辺を要求した時点で面隣接木全体がそのハミルトン路に固定されます。その木を立方体から展開すると、得られる立方体展開図は 2-2-2 の階段型に一意に定まります。",
   theory_dice_hint:
     "6\u9762 \u2192 8\u9802\u70b9: Black (0) \u3068 White (7) \u3092\u52a0\u3048\u308b\u3068\u30ab\u30e9\u30fc\u30ad\u30e5\u30fc\u30d6\u306b",
-  theory_dice_additive_col: "\u52a0\u6cd5 (\u2295)",
-  theory_dice_subtractive_col: "\u6e1b\u6cd5 (\u2227)",
+  theory_dice_additive_col: "XORの読み（加法的）",
+  theory_dice_subtractive_col: "ANDの読み（減法的）",
+  theory_dice_ops_note: "このモデル上の演算的な読みです。",
   theory_dice_footer_ops: "\u2295 = GF(2)\u00b3 \u4e0a\u306e XOR | \u2227 = \u30d6\u30fc\u30eb\u683c\u5b50\u306e AND",
   theory_dice_footer_demorgan:
     "\u91cd\u306a\u308a\u306e\u306a\u30442\u8272\uff08a \u2227 b = 0\uff09\u3067\u306f: (a \u2295 b)' = a' \u2227 b' \uff08x' = x \u2295 7\uff09",
@@ -224,7 +225,9 @@ export const ja: Record<TranslationKey, string> = {
     "\u8868\u793a\u3057\u3066\u3044\u308b CMY \u30da\u30a2\u3067\u306f a \u2228 b = 7 \u306a\u306e\u3067\u3001a + b - 7 = a \u2227 b.",
   theory_fano_title: "ファノ平面",
   theory_fano_desc:
-    "7つの色彩レベルは PG(2,2)（最小の射影平面: 7点、7線、各線3点）、唯一のシュタイナー三重系 S(2,3,7)（任意の2点がちょうど1本の線上）を形成します。三角形で: 頂点 = RGB（原色）、辺の中点 = CMY（隣接頂点のXOR）、中心 = White（全補色線の交点）。3辺 = 加法混色、3中線 = 補色合成、内接円 = CMY閉包。各線 {a, b, c} は a \u2295 b \u2295 c = 0。",
+    "7つの非零レベル {1, …, 7} は PG(2,2)（最小の射影平面: 7点、7線、各線3点）、唯一のシュタイナー三重系 S(2,3,7)（任意の2点がちょうど1本の線上）を形成します。射影化では零ベクトルは点にならないので、Black(0) はここには現れません。",
+  theory_fano_desc2:
+    "図では、頂点 = RGB（原色）、辺の中点 = CMY（隣接頂点のXOR）、中心 = White（全補色線の交点）です。3辺 = 加法混色、3中線 = 補色ペア、内接円 = CMY閉包。各線 {a, b, c} は a \u2295 b \u2295 c = 0。",
   theory_fano_xor: "{0} \u2295 {1} = {2}",
   theory_fano_primary: "原色混合",
   theory_fano_complement: "補色ペア",
@@ -244,7 +247,9 @@ export const ja: Record<TranslationKey, string> = {
     "XOR はこのシステムにおける全ての色の関係を定義します。3原色 {G, R, B} が基底であり、各色はそれらの一意な XOR 結合です。各色 c の補色は c \u2295 7 で、c \u2295 (c \u2295 7) = 7 (White)。算術的には、XOR は繰り上がりのない2進加算（1+1 = 0）です。重なりのない原色同士では、通常の整数加算はそのまま XOR に一致します（1+4 = 5 = 1\u22954）。一般には a + b = (a \u2295 b) + 2(a \u2227 b) で、通常の加算が二重に数えるのは重なり項 a \u2227 b です。ダイスの減法列はブール AND の恒等式を示しています。表示しているペアは a \u2228 b = 7 を満たすので、a + b - 7 = a \u2227 b が成り立ちます。",
   theory_hamming_title: "ハミング符号",
   theory_hamming_desc:
-    "RGB原色（B=1, R=2, G=4）は2の冪 \u2014 2進表現で1ビットだけが立つため、自然なパリティ検査ビットとなります。Blue は奇数位置 {1,3,5,7} を、Red は {2,3,6,7} を、Green は {4,5,6,7} を検査します。残りの色（M=3, C=5, Y=6, W=7）がデータ位置を担います。単一の位置に誤りが入ると、失敗したパリティ検査がその位置を特定します \u2014 シンドロームは誤り位置の2進表現です。位置をクリックして誤りを入れ、シンドロームがどう復号するかを確かめられます。",
+    "ここで使う位置 1..7 は、ファノ平面の7点と同じ非零3ビットラベルです。RGB原色（B=1, R=2, G=4）は2の冪 \u2014 2進表現で1ビットだけが立つため、自然なパリティ検査ビットとなります。",
+  theory_hamming_desc2:
+    "Blue は奇数位置 {1,3,5,7} を、Red は {2,3,6,7} を、Green は {4,5,6,7} を検査します。残りの色（M=3, C=5, Y=6, W=7）がデータ位置を担います。単一の位置に誤りが入ると、失敗したパリティ検査がその位置を特定します \u2014 シンドロームは誤り位置の2進表現です。",
   theory_hamming_parity: "パリティ",
   theory_hamming_checks: "検査対象",
   theory_hamming_flip: "\u4f4d\u7f6e\u3092\u30af\u30ea\u30c3\u30af\u3057\u3066\u8aa4\u308a\u3092\u5165\u308c\u308b",
@@ -292,7 +297,7 @@ export const ja: Record<TranslationKey, string> = {
     "Black(0) を 8 番目の全体パリティ座標として加えると、この 7 点構造は [8,4,4] 拡張ハミング符号の座標系に埋め込めます。8 色そのものが codeword なのではなく、codeword の位置ラベルです。",
   theory_conn_boundary:
     "GL(3,2)（位数168）は PG(2,2) の完全自己同型群。そのうち色彩的に有意なのは S\u2083（チャンネル置換6通り）のみ。8色を超える拡張には異なる代数構造が必要です。",
-  theory_conn_boundary_title: "この枠組みの範囲",
+  theory_conn_boundary_title: "範囲と限界",
   theory_xor_complement: "補色: {0} \u2295 7 = {1}",
   theory_xor_cayley_aria: "XOR \u30b1\u30a4\u30ea\u30fc\u8868",
   theory_pin_hint: "\u30db\u30d0\u30fc\u3067\u30cf\u30a4\u30e9\u30a4\u30c8 \u00b7 \u30af\u30ea\u30c3\u30af\u3067\u56fa\u5b9a",
@@ -331,11 +336,11 @@ export const ja: Record<TranslationKey, string> = {
   theory_stella_k8_degree: "度数: 3 + 3 + 1 = 7 = deg(K₈)",
 
   // Section group labels
-  theory_group_foundations: "基礎",
-  theory_group_geometry: "色空間幾何",
-  theory_group_algebra: "代数構造",
+  theory_group_foundations: "前提と記法",
+  theory_group_geometry: "立方体と巡回",
+  theory_group_algebra: "射影幾何と符号",
   theory_group_polyhedra: "多面体",
-  theory_group_synthesis: "総括",
+  theory_group_synthesis: "総括と限界",
 
   theory_fano_cmy_collapse: "CMY\u5171\u7dda",
   theory_fano_cmy_eq: "M\u2295C\u2295Y = 0 \u2192 共線！",
