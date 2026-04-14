@@ -193,7 +193,7 @@ export const TetraDecomposition = React.memo(function TetraDecomposition({ hlLev
       {/* T0/T1 Tetrahedra — two inscribed tetrahedra in the cube */}
       <p
         className="theory-annotation"
-        style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.accentBright, margin: 0, fontWeight: FW.bold }}
+        style={{ fontSize: FS.xl, fontFamily: "monospace", color: C.accentBright, margin: 0, fontWeight: FW.bold }}
       >
         {t("theory_dice_tetra")}
       </p>

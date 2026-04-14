@@ -276,6 +276,12 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
 
       {/* Die net description + staircase unfolding */}
       <p
+        className="theory-annotation"
+        style={{ fontSize: FS.xl, fontFamily: "monospace", color: C.accentBright, margin: `${SP.xl}px 0 0`, fontWeight: FW.bold }}
+      >
+        {t("theory_dice_net_title")}
+      </p>
+      <p
         className="theory-desc"
         style={{ fontSize: 13, fontFamily: "monospace", color: C.textMuted, textAlign: "left", maxWidth: 480, lineHeight: 1.6, margin: 0 }}
       >

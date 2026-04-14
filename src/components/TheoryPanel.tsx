@@ -214,21 +214,31 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
         <hr style={S_DIVIDER} />
 
-        {/* §10 Tetrahedra & Stella (merged) */}
-        <Section title={t("theory_tetra_stella_title")} desc={t("theory_tetra_stella_desc")}>
+        {/* §10 Color Tetra */}
+        <Section title={t("theory_tetra_title")} desc={t("theory_tetra_desc")}>
           <TetraDecomposition hlLevel={hlLevel} onHover={onHover} />
-          <hr style={S_DIVIDER} />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
+        {/* §11 Color Star (Stella Octangula) */}
+        <Section title={t("theory_stella_title")} desc={t("theory_stella_desc")}>
           <StellaOctangula hlLevel={hlLevel} onHover={onHover} />
-          <hr style={S_DIVIDER} />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
+        {/* §12 Polyhedra Transformation Network */}
+        <Section title={t("theory_conn_polyhedra")} desc={t("theory_conn_polyhedra_desc")}>
           <PolyhedraNetwork />
         </Section>
 
         {/* ═══════════════════════════════════════
-           SYNTHESIS (総括)  §11
+           SYNTHESIS (総括)  §13
            ═══════════════════════════════════════ */}
         <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_synthesis")}</div>
 
-        {/* §11 Connections */}
+        {/* §13 Connections */}
         <Section title={t("theory_connections_title")} desc={t("theory_connections_desc")}>
           <ConnectionsSummary />
         </Section>

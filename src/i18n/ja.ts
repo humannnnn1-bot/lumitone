@@ -210,6 +210,7 @@ export const ja: Record<TranslationKey, string> = {
     "6つの有彩色を暗い順に1\u20136とナンバリングし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。",
   theory_dice_desc2:
     "これは普遍的定理です: 任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。",
+  theory_dice_net_title: "\u30ab\u30e9\u30fc\u30c0\u30a4\u30b9\u306e\u8272\u76f8\u5c55\u958b",
   theory_dice_desc3:
     "2-2-2型の階段状の展開図は色相環の順序に沿い \u2014 各ステップで1チャンネルが切り替わるため、ルマ順位\u30fb1ビット隣接\u30fb色相角を同時に符号化しています。11種の立方体展開図のうち、この階段型のみが色相環順に面を配列します（証明: 色相環 R→Y→G→C→B→M は5つの特定の立方体辺隣接を要求し、面グラフ上のハミルトン路を形成します。この線形順序に従う展開図はこれら5辺を折り線として使う必要があり、正八面体グラフの全域木として一意に決定されます — 全11種の網羅検証により確認）。",
   theory_dice_hint:
@@ -241,7 +242,7 @@ export const ja: Record<TranslationKey, string> = {
     "XOR はこのシステムにおける全ての色の関係を定義します。3原色 {G, R, B} が基底であり、各色はそれらの一意なXOR結合です。各色 c の補色は c \u2295 7 で、c \u2295 (c \u2295 7) = 7 (White)。算術的には、XOR は繰り上がりのない2進加算（1+1 = 0）です。原色同士では整数加算がXORに一致し（1+4 = 5 = 1\u22954）、CMYではビットが重なり繰り上がりが生じますが（3+5 = 8）、XORはこの繰り上がりを捨てます（3\u22955 = 6）。減法混色の「7を引く」規則は、整数算術側での桁あふれ補正です。",
   theory_hamming_title: "ハミング符号",
   theory_hamming_desc:
-    "RGB原色（B=1, R=2, G=4）は2の冪 \u2014 2進表現で1ビットだけが立つため、自然なパリティ検査ビットとなります。Blue は奇数位置 {1,3,5,7} を、Red は {2,3,6,7} を、Green は {4,5,6,7} を検査します。残りの色（M=3, C=5, Y=6, W=7）がデータ位置を担います。単一の位置に誤りが入ると、失敗したパリティ検査がその位置を特定します \u2014 syndrome は誤り位置の2進表現です。位置をクリックして誤りを入れ、syndrome がどう復号するかを確かめられます。",
+    "RGB原色（B=1, R=2, G=4）は2の冪 \u2014 2進表現で1ビットだけが立つため、自然なパリティ検査ビットとなります。Blue は奇数位置 {1,3,5,7} を、Red は {2,3,6,7} を、Green は {4,5,6,7} を検査します。残りの色（M=3, C=5, Y=6, W=7）がデータ位置を担います。単一の位置に誤りが入ると、失敗したパリティ検査がその位置を特定します \u2014 シンドロームは誤り位置の2進表現です。位置をクリックして誤りを入れ、シンドロームがどう復号するかを確かめられます。",
   theory_hamming_parity: "パリティ",
   theory_hamming_checks: "検査対象",
   theory_hamming_flip: "\u4f4d\u7f6e\u3092\u30af\u30ea\u30c3\u30af\u3057\u3066\u8aa4\u308a\u3092\u5165\u308c\u308b",
@@ -275,7 +276,16 @@ export const ja: Record<TranslationKey, string> = {
     "ブール的な見方では、XOR は加法、AND は乗法です。ただし補色が全ての XOR 恒等式を AND 恒等式に変えるわけではありません。重なりのない2色（a \u2227 b = 0）では (a \u2295 b)' = a' \u2227 b' が成り立ちます。",
   theory_conn_polyhedra: "多面体変換ネットワーク",
   theory_conn_polyhedra_desc:
-    "§9\u2013§10の多面体は幾何学的操作で連鎖し、ハミング距離の3層構造（d=1: 辺、d=2: 星形辺、d=3: 補色対角）を保存します。八面体にはグレイコード帯状展開図が双対として存在し、立方体・八面体の全域木の総数は共に384本（双対マトロイド定理）。",
+    "立方体 Q\u2083を頂点とするダイヤモンド・ダイアグラムは、§9\u2013§11の4つの多面体が幾何学的操作でどう連鎖するかを示します。面頂反転はカラーダイスの6面を、偶奇分割はカラーキューブの8頂点を起点とし、両経路は星形八面体で収束します。この図式は可換です: 左経路（偶奇分割\u2192複合化）と右経路（面頂反転\u2192星形化）は同じ星形八面体を生みます。立方体から星形八面体への直接の関係 \u2014 12本の面対角線 \u2014 はこの2経路の合成です。",
+  theory_conn_polyhedra_legend: "\u5b9f\u7dda = \u57fa\u672c\u64cd\u4f5c \u2502 \u7834\u7dda = \u5408\u6210 \u2502 \u27F3 = \u53ef\u63db",
+  theory_pn_cube: "\u7acb\u65b9\u4f53 Q\u2083",
+  theory_pn_octa: "\u516b\u9762\u4f53",
+  theory_pn_tetra: "T\u2080/T\u2081",
+  theory_pn_stella: "\u661f\u5f62\u516b\u9762\u4f53",
+  theory_pn_fv_rev: "\u9762\u9802\u53cd\u8ee2",
+  theory_pn_parity: "\u5076\u5947\u5206\u5272",
+  theory_pn_stellation: "\u661f\u5f62\u5316",
+  theory_pn_compound: "\u8907\u5408\u5316",
   theory_conn_extended:
     "Black(0) を 8 番目の全体パリティ座標として加えると、この 7 点構造は [8,4,4] 拡張ハミング符号の座標系に埋め込めます。8 色そのものが codeword なのではなく、codeword の位置ラベルです。",
   theory_conn_boundary:
@@ -295,10 +305,14 @@ export const ja: Record<TranslationKey, string> = {
     "6有彩色とその補色対称性を最も美しく表す形です。各補色軸（R\u2194C, G\u2194M, B\u2194Y）が対頂点を結び、原色が+軸、CMYが\u2212軸に配置されます。色立方体の双対であり \u2014 6頂点が8面（各八分空間が1つのGF(2)\u00b3元）に対応し、面隣接グラフは立方体グラフQ\u2083そのものです。立方体の12辺のXOR値は原色3種のみですが、正八面体の12辺は6有彩色すべてのXOR値を生成し、各色がちょうど2回 \u2014 補色でない全ペアが第三の色に混合され、辺グラデーションの中間点として視認できます。",
   theory_octa_axes: "補色軸",
 
-  // K₈ three-factor decomposition — Tetrahedra & Stella Octangula (merged)
-  theory_tetra_stella_title: "カラーテトラとカラースター",
-  theory_tetra_stella_desc:
-    "8色の全28ペアは、隣接（1チャンネル差）・対角（2チャンネル差）・補色（3チャンネル差）の3カテゴリに分かれます。この三分類が3つの幾何構造に対応します。立方体の8頂点は2つの四面体に分かれます: T0（偶数重み: Black, M, C, Y）と T1（奇数重み: B, R, G, W）。T0 はクライン四群V\u2084を形成し、各面の3頂点のXORが対頂点に等しい \u2014 面が自然に色で塗れる理由です。T0とT1を合成するとカラースター（Stella Octangula）になります。その12辺（すべて距離2）のXOR値はCMY、立方体の12辺（距離1）はRGB、4組の補色対角（距離3）はWhiteを生成。K\u2088 = 立方体 + カラースター + 補色対 が全28ペアを分割します。",
+  // §10 カラーテトラ
+  theory_tetra_title: "カラーテトラ",
+  theory_tetra_desc:
+    "8色の全28ペアは、隣接（1チャンネル差）・対角（2チャンネル差）・補色（3チャンネル差）の3カテゴリに分かれます。この三分類が3つの幾何構造に対応します。立方体の8頂点は2つの四面体に分かれます: T0（偶数重み: Black, M, C, Y）と T1（奇数重み: B, R, G, W）。T0 はクライン四群V\u2084を形成し、各面の3頂点のXORが対頂点に等しい \u2014 面が自然に色で塗れる理由です。",
+
+  // §11 カラースター（星形八面体）
+  theory_stella_desc:
+    "T0とT1を複合するとカラースター（星形八面体）になります。その12辺（すべて距離2）のXOR値はCMY、立方体の12辺（距離1）はRGB、4組の補色対角（距離3）はWhiteを生成。K\u2088 = 立方体 + カラースター + 補色対 が全28ペアをハミング距離の3層（d=1, d=2, d=3）に分割します。",
 
   // ColorDice tetrahedra
   theory_dice_tetra: "T0/T1 四面体",
@@ -308,9 +322,10 @@ export const ja: Record<TranslationKey, string> = {
   theory_dice_tetra_face_xor: "面定理: 面の3頂点の XOR = 対頂点の色",
 
   // Stella Octangula (sub-labels, used within merged §10)
-  theory_stella_compound: "合成",
+  theory_stella_title: "カラースター",
+  theory_stella_compound: "複合",
   theory_stella_k8: "K₈",
-  theory_stella_annotation: "T0 ∪ T1 合成 = 八面体の第一星形化 — 各辺は2チャンネル同時切替",
+  theory_stella_annotation: "T0 ∪ T1 複合 = 八面体の第一星形化 — 各辺は2チャンネル同時切替",
   theory_stella_k8_degree: "度数: 3 + 3 + 1 = 7 = deg(K₈)",
 
   // Section group labels

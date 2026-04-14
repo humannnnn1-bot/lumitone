@@ -1,11 +1,11 @@
 import React, { useCallback, useState, useEffect, useRef } from "react";
 import { THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
-import { S_BTN } from "../../styles";
+import { S_BTN_SM } from "../../styles";
 import { useTranslation } from "../../i18n";
 
 const W = 340,
-  H = 240;
+  H = 215;
 
 // Parity check groups: each parity bit checks specific positions
 const PARITY_GROUPS: { parity: number; checks: number[]; label: string }[] = [
@@ -253,7 +253,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
           <g>
             <text
               x={W / 2}
-              y={H - 30}
+              y={188}
               textAnchor="middle"
               fontSize={FS.md}
               fontFamily="monospace"
@@ -266,7 +266,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                   ? t("theory_hamming_error", `${syndrome} (${THEORY_LEVELS[syndrome].name})`)
                   : t("theory_hamming_ok")}
             </text>
-            <text x={W / 2} y={H - 14} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textDimmer}>
+            <text x={W / 2} y={204} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textDimmer}>
               syndrome = {syndrome.toString(2).padStart(3, "0")}
               {corrected ? " \u2192 corrected" : ""}
             </text>
@@ -274,11 +274,22 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
         )}
       </svg>
 
-      <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>
+      <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center", minHeight: 28 }}>
         {errorPosition !== null ? (
-          <button className="theory-annotation" style={S_BTN} onClick={() => setErrorPosition(null)}>
-            {t("theory_hamming_reset")} {"\u21ba"}
-          </button>
+          <>
+            <button className="theory-annotation" style={S_BTN_SM} onClick={() => setErrorPosition(null)}>
+              {t("theory_hamming_reset")} {"\u21ba"}
+            </button>
+            {!corrected && (
+              <button
+                className="theory-annotation"
+                style={{ ...S_BTN_SM, color: "#44ff44", borderColor: "rgba(68,255,68,0.4)" }}
+                onClick={handleCorrect}
+              >
+                {t("theory_hamming_correct")}
+              </button>
+            )}
+          </>
         ) : (
           <span
             className="theory-annotation"
@@ -286,15 +297,6 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
           >
             {t("theory_hamming_flip")}
           </span>
-        )}
-        {errorPosition !== null && !corrected && (
-          <button
-            className="theory-annotation"
-            style={{ ...S_BTN, color: "#44ff44", borderColor: "rgba(68,255,68,0.4)" }}
-            onClick={handleCorrect}
-          >
-            {t("theory_hamming_correct")}
-          </button>
         )}
       </div>
     </div>

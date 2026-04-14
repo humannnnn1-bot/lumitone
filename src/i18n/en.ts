@@ -210,6 +210,7 @@ export const en = {
     "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule.",
   theory_dice_desc2:
     "This is a universal theorem: for any positive luma coefficients with no tied luma values, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7.",
+  theory_dice_net_title: "Hue unfolding",
   theory_dice_desc3:
     "The 2-2-2 staircase net unfolds in hue-wheel order \u2014 each step toggles one channel, encoding luma rank, single-bit adjacency, and hue angle simultaneously. Among the 11 cube nets, only this staircase arranges faces in hue-wheel order (proof: the hue cycle R\u2192Y\u2192G\u2192C\u2192B\u2192M requires 5 specific cube-edge adjacencies forming a Hamiltonian path on the face graph; a net respecting this linear sequence must use exactly these 5 edges as fold-lines, which determines a unique spanning tree of the octahedron graph \u2014 verified by exhaustive check of all 11 nets).",
   theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
@@ -274,7 +275,16 @@ export const en = {
     "Boolean view: XOR is addition and AND is multiplication on the same 3-bit lattice. Complement does not turn every XOR identity into an AND identity; for disjoint colors (a \u2227 b = 0), it gives (a \u2295 b)' = a' \u2227 b'.",
   theory_conn_polyhedra: "Polyhedra network",
   theory_conn_polyhedra_desc:
-    "All polyhedra in \u00a79\u2013\u00a710 are connected by geometric operations preserving the Hamming 3-layer structure (d=1: edges, d=2: stella, d=3: complements). The octahedron has a dual Gray-code strip net; both polyhedra share 384 spanning trees (dual matroid theorem).",
+    "The diamond diagram with Cube Q\u2083 at its apex shows how the four polyhedra of \u00a79\u2013\u00a711 are linked by geometric operations. Face-vertex reversal starts from the Color Dice\u2019s 6 faces; even-odd partition starts from the Color Cube\u2019s 8 vertices; both paths converge at the stella octangula. The diagram commutes: the left path (even-odd partition \u2192 compounding) and the right path (face-vertex reversal \u2192 stellation) yield the same stella octangula. The direct relationship from cube to stella \u2014 the 12 face diagonals \u2014 is the composition of these two paths.",
+  theory_conn_polyhedra_legend: "solid = primitive operation \u2502 dashed = composition \u2502 \u27F3 = commutative",
+  theory_pn_cube: "Cube Q\u2083",
+  theory_pn_octa: "Octahedron",
+  theory_pn_tetra: "T\u2080/T\u2081",
+  theory_pn_stella: "Stella Oct.",
+  theory_pn_fv_rev: "F-V reversal",
+  theory_pn_parity: "parity split",
+  theory_pn_stellation: "stellation",
+  theory_pn_compound: "compounding",
   theory_conn_extended:
     "Adding Black as an eighth overall-parity coordinate places these 7 colored positions inside the [8,4,4] extended Hamming framework; the 8 levels are coordinate labels, not codewords.",
   theory_conn_boundary:
@@ -294,10 +304,14 @@ export const en = {
     "The most symmetric way to display 6 chromatic colors and their complement pairs: each complement axis (R\u2194C, G\u2194M, B\u2194Y) connects antipodal vertices, with primaries on +axes and CMY on \u2212axes. This is the dual of the color cube \u2014 6 vertices become 8 faces (one per GF(2)\u00b3 element), and the face-adjacency graph is the color cube itself. Unlike the cube (whose 12 edges yield only 3 XOR values), the octahedron\u2019s 12 edges produce all 6 chromatic XOR values, each exactly twice \u2014 every non-complementary pair mixes to a third color visible as the edge gradient\u2019s midpoint.",
   theory_octa_axes: "Complement axes",
 
-  // K₈ three-factor decomposition — Tetrahedra & Stella Octangula (merged)
-  theory_tetra_stella_title: "Color Tetra & Color Star",
-  theory_tetra_stella_desc:
-    "Every pair of 8 colors is adjacent (1 channel apart), diagonal (2 channels), or complementary (3 channels). This three-way classification corresponds to three geometric structures. The cube\u2019s 8 vertices split into two tetrahedra: T0 (even weight: Black, M, C, Y) and T1 (odd weight: B, R, G, W). T0 forms the Klein four-group V\u2084, where any face\u2019s 3 vertices XOR to the opposite vertex \u2014 this is why each face is naturally colored. Compounding T0 and T1 yields the Color Star (Stella Octangula). Its 12 edges (all distance 2) produce CMY as XOR values, while the cube\u2019s 12 edges (distance 1) produce RGB, and the 4 complement diagonals (distance 3) produce White. K\u2088 = Cube + Color Star + Complements partitions all 28 color-pair relationships.",
+  // §10 Color Tetra
+  theory_tetra_title: "Color Tetra",
+  theory_tetra_desc:
+    "Every pair of 8 colors is adjacent (1 channel apart), diagonal (2 channels), or complementary (3 channels). This three-way classification corresponds to three geometric structures. The cube\u2019s 8 vertices split into two tetrahedra: T0 (even weight: Black, M, C, Y) and T1 (odd weight: B, R, G, W). T0 forms the Klein four-group V\u2084, where any face\u2019s 3 vertices XOR to the opposite vertex \u2014 this is why each face is naturally colored.",
+
+  // §11 Color Star (Stella Octangula)
+  theory_stella_desc:
+    "Compounding T0 and T1 yields the Color Star (Stella Octangula). Its 12 edges (all distance 2) produce CMY as XOR values, while the cube\u2019s 12 edges (distance 1) produce RGB, and the 4 complement diagonals (distance 3) produce White. K\u2088 = Cube + Color Star + Complements partitions all 28 color-pair relationships into three Hamming distance layers (d=1, d=2, d=3).",
 
   // ColorDice tetrahedra
   theory_dice_tetra: "T0/T1 Tetrahedra",
@@ -307,6 +321,7 @@ export const en = {
   theory_dice_tetra_face_xor: "Face theorem: XOR of 3 face vertices = the opposite vertex",
 
   // Stella Octangula (sub-labels, used within merged §10)
+  theory_stella_title: "Color Star",
   theory_stella_compound: "Compound",
   theory_stella_k8: "K\u2088",
   theory_stella_annotation: "T0 \u222a T1 compound = first stellation of the octahedron \u2014 each edge is a 2-channel flip",

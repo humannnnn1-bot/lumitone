@@ -71,7 +71,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
-      <svg viewBox={`0 25 ${W} ${H}`} style={{ width: "100%", maxWidth: W }} role="img" aria-label={t("theory_cube_title")}>
+      <svg viewBox="55 30 190 205" style={{ width: "100%", maxWidth: 220 }} role="img" aria-label={t("theory_cube_title")}>
         {/* Equator path (toggle overlay) */}
         {equatorMode && (
           <path d={equatorPath} fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.40)" strokeWidth={1.5} strokeDasharray="4,3" />
@@ -275,11 +275,17 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
         })}
       </svg>
 
-      {showK8 && (
-        <div style={{ fontSize: FS.xs, color: C.textDimmer, textAlign: "center", fontFamily: "monospace" }}>
-          {"K\u2088 = Q\u2083 \u222A (K\u2084\u2294K\u2084) \u222A M\u2084"}
-        </div>
-      )}
+      <div
+        style={{
+          fontSize: FS.xs,
+          color: C.textDimmer,
+          textAlign: "center",
+          fontFamily: "monospace",
+          visibility: showK8 ? "visible" : "hidden",
+        }}
+      >
+        {"K\u2088 = Q\u2083 \u222A (K\u2084\u2294K\u2084) \u222A M\u2084"}
+      </div>
 
       <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>
         <button

@@ -415,7 +415,7 @@ export const AG32_PLANES: AffinePlane[] = [
   { elements: [0, 2, 5, 7], isSubspace: true, fanoLine: 4 },
   { elements: [1, 3, 4, 6], isSubspace: false, fanoLine: 4 },
   // Class 5: L={3,4,7}={M,G,W}
-  { elements: [0, 4, 3, 7], isSubspace: true, fanoLine: 5 },
+  { elements: [0, 3, 4, 7], isSubspace: true, fanoLine: 5 },
   { elements: [1, 2, 5, 6], isSubspace: false, fanoLine: 5 },
   // Class 6: L={3,5,6}={C,M,Y}
   { elements: [0, 3, 5, 6], isSubspace: true, fanoLine: 6 },

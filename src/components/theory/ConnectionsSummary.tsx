@@ -51,42 +51,58 @@ export const PolyhedraNetwork = React.memo(function PolyhedraNetwork() {
   const { t } = useTranslation();
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md, width: "100%" }}>
-      <p style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.accentBright, fontWeight: FW.bold, margin: 0 }}>
-        {t("theory_conn_polyhedra")}
-      </p>
-      <svg viewBox="0 0 360 170" style={{ width: "100%", maxWidth: 360 }}>
+      <svg viewBox="0 0 400 340" style={{ width: "100%", maxWidth: 360 }}>
         {(() => {
           const nodes = [
-            { id: "cube", label: "Cube Q\u2083", x: 90, y: 30, color: "#ffa060" },
-            { id: "octa", label: "Octahedron", x: 270, y: 30, color: "#60ffa0" },
-            { id: "tetra", label: "T\u2080/T\u2081", x: 90, y: 100, color: "#ffcc60" },
-            { id: "trunc", label: "Trunc.Tetra", x: 90, y: 155, color: "#ccaa60" },
+            { id: "cube", label: t("theory_pn_cube"), x: 200, y: 35, color: "#ffa060" },
+            { id: "octa", label: t("theory_pn_octa"), x: 335, y: 170, color: "#60ffa0" },
+            { id: "tetra", label: t("theory_pn_tetra"), x: 65, y: 170, color: "#ffcc60" },
+            { id: "stella", label: t("theory_pn_stella"), x: 200, y: 305, color: "#60ccaa" },
           ];
           const edges = [
-            { from: "cube", to: "octa", label: "dual", dash: false, bidirectional: true },
-            { from: "cube", to: "tetra", label: "vertex alt.", dash: true, bidirectional: false },
-            { from: "tetra", to: "trunc", label: "truncation", dash: true, bidirectional: false },
+            { from: "cube", to: "octa", label: t("theory_pn_fv_rev"), dash: false, bidirectional: false },
+            { from: "cube", to: "tetra", label: t("theory_pn_parity"), dash: false, bidirectional: false },
+            { from: "octa", to: "stella", label: t("theory_pn_stellation"), dash: false, bidirectional: false },
+            { from: "tetra", to: "stella", label: t("theory_pn_compound"), dash: false, bidirectional: false },
           ];
           const nodeMap = Object.fromEntries(nodes.map((n) => [n.id, n]));
+          const cx = nodes.reduce((s, n) => s + n.x, 0) / nodes.length;
+          const cy = nodes.reduce((s, n) => s + n.y, 0) / nodes.length;
           return (
             <>
               {edges.map((e, i) => {
                 const from = nodeMap[e.from],
                   to = nodeMap[e.to];
-                const mx = (from.x + to.x) / 2,
-                  my = (from.y + to.y) / 2;
                 const dx = to.x - from.x,
                   dy = to.y - from.y;
                 const len = Math.sqrt(dx * dx + dy * dy) || 1;
-                const perpX = (-dy / len) * 8,
-                  perpY = (dx / len) * 8;
+                const ux = dx / len,
+                  uy = dy / len;
+                // Shrink line ends to clear node rects (half-width 50, half-height 10)
+                const clipStart = Math.min(Math.abs(52 / (Math.abs(ux) || 1)), Math.abs(14 / (Math.abs(uy) || 1)));
+                const clipEnd = clipStart;
+                const x1 = from.x + ux * clipStart,
+                  y1 = from.y + uy * clipStart;
+                const x2 = to.x - ux * clipEnd,
+                  y2 = to.y - uy * clipEnd;
+                const mx = (from.x + to.x) / 2,
+                  my = (from.y + to.y) / 2;
+                // Perpendicular pointing outward from diamond center
+                let perpX = -uy * 14,
+                  perpY = ux * 14;
+                const outX = mx - cx,
+                  outY = my - cy;
+                if (perpX * outX + perpY * outY < 0) {
+                  perpX = -perpX;
+                  perpY = -perpY;
+                }
                 return (
                   <g key={`pe-${i}`}>
                     <line
-                      x1={from.x}
-                      y1={from.y}
-                      x2={to.x}
-                      y2={to.y}
+                      x1={x1}
+                      y1={y1}
+                      x2={x2}
+                      y2={y2}
                       stroke="rgba(255,255,255,0.25)"
                       strokeWidth={1}
                       strokeDasharray={e.dash ? "4,3" : undefined}
@@ -110,7 +126,7 @@ export const PolyhedraNetwork = React.memo(function PolyhedraNetwork() {
                       y={my + perpY * (e.bidirectional ? 2.2 : 1)}
                       textAnchor="middle"
                       dominantBaseline="central"
-                      fontSize={FS.xxs}
+                      fontSize={10}
                       fontFamily="monospace"
                       fill="rgba(255,255,255,0.45)"
                     >
@@ -120,19 +136,34 @@ export const PolyhedraNetwork = React.memo(function PolyhedraNetwork() {
                 );
               })}
               <defs>
-                <marker id="arrowPoly" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
-                  <path d="M0,0 L6,2 L0,4" fill="rgba(255,255,255,0.3)" />
+                <marker id="arrowPoly" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+                  <path d="M0,0 L8,3 L0,6" fill="rgba(255,255,255,0.5)" />
                 </marker>
               </defs>
+              {/* Composite arrow: Cube -> Stella (dashed, vertical) */}
+              <line
+                x1={cx}
+                y1={nodes[0].y + 10}
+                x2={cx}
+                y2={nodes[3].y - 10}
+                stroke="rgba(255,255,255,0.2)"
+                strokeWidth={1}
+                strokeDasharray="4,3"
+                markerEnd="url(#arrowPoly)"
+              />
+              {/* Commutativity symbol at diamond center */}
+              <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fontSize={30} fill="rgba(255,255,255,0.35)">
+                &#x27F3;
+              </text>
               {nodes.map((n) => (
                 <g key={`pn-${n.id}`}>
-                  <rect x={n.x - 42} y={n.y - 10} width={84} height={20} rx={4} fill="rgba(0,0,0,0.5)" stroke={n.color} strokeWidth={1} />
+                  <rect x={n.x - 52} y={n.y - 14} width={104} height={28} rx={4} fill="rgba(0,0,0,0.5)" stroke={n.color} strokeWidth={1} />
                   <text
                     x={n.x}
                     y={n.y}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fontSize={FS.xs}
+                    fontSize={12}
                     fontFamily="monospace"
                     fill={n.color}
                     fontWeight={700}
@@ -145,11 +176,8 @@ export const PolyhedraNetwork = React.memo(function PolyhedraNetwork() {
           );
         })()}
       </svg>
-      <p
-        className="theory-annotation"
-        style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center", lineHeight: 1.6 }}
-      >
-        {t("theory_conn_polyhedra_desc")}
+      <p style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, margin: 0, textAlign: "center" }}>
+        {t("theory_conn_polyhedra_legend")}
       </p>
     </div>
   );

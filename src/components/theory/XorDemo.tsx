@@ -22,7 +22,7 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
     const el = containerRef.current;
     if (!el) return;
     const ro = new ResizeObserver((entries) => {
-      for (const e of entries) setCompact(e.contentRect.width < 420);
+      for (const e of entries) setCompact(e.contentRect.width < 520);
     });
     ro.observe(el);
     return () => ro.disconnect();
