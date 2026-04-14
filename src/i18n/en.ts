@@ -215,6 +215,8 @@ export const en = {
   theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
   theory_dice_additive_col: "Additive (\u2295)",
   theory_dice_subtractive_col: "Subtractive (\u2227)",
+  theory_dice_footer_ops: "\u2295 = XOR over GF(2)\u00b3 | \u2227 = AND in the Boolean lattice",
+  theory_dice_footer_demorgan: "For disjoint colors (a \u2227 b = 0): (a \u2295 b)' = a' \u2227 b'  where x' = x \u2295 7",
   theory_fano_title: "Fano Plane",
   theory_fano_desc:
     "The 7 chromatic levels form PG(2,2) (the smallest projective plane: 7 points, 7 lines, 3 points per line) and the unique Steiner triple system S(2,3,7) (every pair of points lies on exactly one line). In the triangle: vertices = RGB (primaries), midpoints = CMY (each is XOR of adjacent vertices), center = White (where all complement lines meet). The 3 sides are additive mixing, 3 medians are complementary pairs, and the inscribed circle is CMY closure. For any line {a, b, c}, a \u2295 b \u2295 c = 0.",
@@ -237,14 +239,14 @@ export const en = {
     "XOR defines every color relationship in this system. The three primaries {G, R, B} are the basis: every color is their unique XOR combination, and each color c has a complement c \u2295 7 with c \u2295 (c \u2295 7) = 7 (White). Arithmetically, XOR is carry-free binary addition (1+1 = 0). For primaries, integer addition equals XOR directly (1+4 = 5 = 1\u22954). For CMY, bits overlap and carry occurs (3+5 = 8), but XOR discards the carry (3\u22955 = 6). The \u201csubtract 7\u201d rule of subtractive mixing is exactly this carry correction.",
   theory_hamming_title: "Hamming Code",
   theory_hamming_desc:
-    "The RGB primaries (B=1, R=2, G=4) are exactly the powers of 2 \u2014 each has a single 1-bit, making them natural parity checks. Each primary checks all positions whose binary representation contains that bit: Blue checks odd positions {1,3,5,7}, Red checks {2,3,6,7}, Green checks {4,5,6,7}. The remaining colors (M=3, C=5, Y=6, W=7) carry data. If any single channel flips, the failed parity checks identify which one \u2014 the syndrome is the error\u2019s position in binary. Flip a bit to see error detection in action.",
+    "The RGB primaries (B=1, R=2, G=4) are exactly the powers of 2 \u2014 each has a single 1-bit, making them natural parity checks. Each primary checks all positions whose binary representation contains that bit: Blue checks odd positions {1,3,5,7}, Red checks {2,3,6,7}, Green checks {4,5,6,7}. The remaining colors (M=3, C=5, Y=6, W=7) occupy the data positions. If a single position is corrupted, the failed parity checks identify that position \u2014 the syndrome is the error position in binary. Click a position to inject an error and watch the syndrome decode it.",
   theory_hamming_parity: "Parity",
   theory_hamming_checks: "Checks",
-  theory_hamming_flip: "Click a color to flip",
+  theory_hamming_flip: "Click a position to inject an error",
   theory_hamming_reset: "Reset",
-  theory_hamming_error: "Error at {0}",
+  theory_hamming_error: "Error at position {0}",
   theory_hamming_ok: "No error",
-  theory_hamming_corrected: "Corrected {0}",
+  theory_hamming_corrected: "Corrected position {0}",
   theory_hamming_correct: "Correct \u2713",
   theory_connections_title: "Connections",
   theory_connections_desc:
@@ -269,11 +271,12 @@ export const en = {
   theory_conn_gray_hook:
     "Gray code: the hue wheel R\u2192Y\u2192G\u2192C\u2192B\u2192M is a Hamiltonian cycle on both the cube\u2019s chromatic vertices and the octahedron\u2019s vertex graph.",
   theory_conn_boolean_hook:
-    "Boolean ring: XOR (addition) and AND (multiplication) form a dual pair. The complement map swaps additive and subtractive mixing via De Morgan\u2019s law: \u03c3(a \u2295 b) = \u03c3(a) \u2227 \u03c3(b).",
+    "Boolean view: XOR is addition and AND is multiplication on the same 3-bit lattice. Complement does not turn every XOR identity into an AND identity; for disjoint colors (a \u2227 b = 0), it gives (a \u2295 b)' = a' \u2227 b'.",
   theory_conn_polyhedra: "Polyhedra network",
   theory_conn_polyhedra_desc:
     "All polyhedra in \u00a79\u2013\u00a710 are connected by geometric operations preserving the Hamming 3-layer structure (d=1: edges, d=2: stella, d=3: complements). The octahedron has a dual Gray-code strip net; both polyhedra share 384 spanning trees (dual matroid theorem).",
-  theory_conn_extended: "Adding Black as overall parity bit yields the [8,4,4] extended Hamming code over all 8 levels",
+  theory_conn_extended:
+    "Adding Black as an eighth overall-parity coordinate places these 7 colored positions inside the [8,4,4] extended Hamming framework; the 8 levels are coordinate labels, not codewords.",
   theory_conn_boundary:
     "GL(3,2) (order 168) is the full automorphism group of PG(2,2); only its S\u2083 subgroup (6 channel permutations) preserves chromatic meaning. Extensions beyond 8 colors require different algebraic structures.",
   theory_conn_boundary_title: "Scope of this framework",

@@ -216,6 +216,9 @@ export const ja: Record<TranslationKey, string> = {
     "6\u9762 \u2192 8\u9802\u70b9: Black (0) \u3068 White (7) \u3092\u52a0\u3048\u308b\u3068\u30ab\u30e9\u30fc\u30ad\u30e5\u30fc\u30d6\u306b",
   theory_dice_additive_col: "\u52a0\u6cd5 (\u2295)",
   theory_dice_subtractive_col: "\u6e1b\u6cd5 (\u2227)",
+  theory_dice_footer_ops: "\u2295 = GF(2)\u00b3 \u4e0a\u306e XOR | \u2227 = \u30d6\u30fc\u30eb\u683c\u5b50\u306e AND",
+  theory_dice_footer_demorgan:
+    "\u91cd\u306a\u308a\u306e\u306a\u30442\u8272\uff08a \u2227 b = 0\uff09\u3067\u306f: (a \u2295 b)' = a' \u2227 b' \uff08x' = x \u2295 7\uff09",
   theory_fano_title: "ファノ平面",
   theory_fano_desc:
     "7つの色彩レベルは PG(2,2)（最小の射影平面: 7点、7線、各線3点）、唯一のシュタイナー三重系 S(2,3,7)（任意の2点がちょうど1本の線上）を形成します。三角形で: 頂点 = RGB（原色）、辺の中点 = CMY（隣接頂点のXOR）、中心 = White（全補色線の交点）。3辺 = 加法混色、3中線 = 補色合成、内接円 = CMY閉包。各線 {a, b, c} は a \u2295 b \u2295 c = 0。",
@@ -238,14 +241,14 @@ export const ja: Record<TranslationKey, string> = {
     "XOR はこのシステムにおける全ての色の関係を定義します。3原色 {G, R, B} が基底であり、各色はそれらの一意なXOR結合です。各色 c の補色は c \u2295 7 で、c \u2295 (c \u2295 7) = 7 (White)。算術的には、XOR は繰り上がりのない2進加算（1+1 = 0）です。原色同士では整数加算がXORに一致し（1+4 = 5 = 1\u22954）、CMYではビットが重なり繰り上がりが生じますが（3+5 = 8）、XORはこの繰り上がりを捨てます（3\u22955 = 6）。減法混色の「7を引く」規則は、整数算術側での桁あふれ補正です。",
   theory_hamming_title: "ハミング符号",
   theory_hamming_desc:
-    "RGB原色（B=1, R=2, G=4）は2の冪 \u2014 2進表現で1ビットだけが立つため、自然なパリティ検査ビットとなります。Blue は奇数位置 {1,3,5,7} を、Red は {2,3,6,7} を、Green は {4,5,6,7} を検査します。残りの色（M=3, C=5, Y=6, W=7）がデータを運びます。いずれか1チャンネルが反転すると、失敗したパリティ検査がどのチャンネルかを特定します \u2014 syndrome は誤り位置の2進表現です。ビットを反転させてエラー検出を体験できます。",
+    "RGB原色（B=1, R=2, G=4）は2の冪 \u2014 2進表現で1ビットだけが立つため、自然なパリティ検査ビットとなります。Blue は奇数位置 {1,3,5,7} を、Red は {2,3,6,7} を、Green は {4,5,6,7} を検査します。残りの色（M=3, C=5, Y=6, W=7）がデータ位置を担います。単一の位置に誤りが入ると、失敗したパリティ検査がその位置を特定します \u2014 syndrome は誤り位置の2進表現です。位置をクリックして誤りを入れ、syndrome がどう復号するかを確かめられます。",
   theory_hamming_parity: "パリティ",
   theory_hamming_checks: "検査対象",
-  theory_hamming_flip: "\u8272\u3092\u30af\u30ea\u30c3\u30af\u3057\u3066\u53cd\u8ee2",
+  theory_hamming_flip: "\u4f4d\u7f6e\u3092\u30af\u30ea\u30c3\u30af\u3057\u3066\u8aa4\u308a\u3092\u5165\u308c\u308b",
   theory_hamming_reset: "\u30ea\u30bb\u30c3\u30c8",
-  theory_hamming_error: "{0} にエラー",
+  theory_hamming_error: "\u4f4d\u7f6e {0} \u306b\u30a8\u30e9\u30fc",
   theory_hamming_ok: "エラーなし",
-  theory_hamming_corrected: "{0} を訂正",
+  theory_hamming_corrected: "\u4f4d\u7f6e {0} \u3092\u8a02\u6b63",
   theory_hamming_correct: "訂正 \u2713",
   theory_connections_title: "連関",
   theory_connections_desc:
@@ -269,11 +272,12 @@ export const ja: Record<TranslationKey, string> = {
   theory_conn_gray_hook:
     "グレイコード: 色相環 R\u2192Y\u2192G\u2192C\u2192B\u2192M は立方体の有彩色頂点と八面体頂点グラフの両方におけるハミルトン閉路です。",
   theory_conn_boolean_hook:
-    "ブール環: XOR（加法）と AND（乗法）が双対をなし、補色写像がド・モルガンの法則で加法混色と減法混色を入れ替えます: \u03c3(a \u2295 b) = \u03c3(a) \u2227 \u03c3(b)。",
+    "ブール的な見方では、XOR は加法、AND は乗法です。ただし補色が全ての XOR 恒等式を AND 恒等式に変えるわけではありません。重なりのない2色（a \u2227 b = 0）では (a \u2295 b)' = a' \u2227 b' が成り立ちます。",
   theory_conn_polyhedra: "多面体変換ネットワーク",
   theory_conn_polyhedra_desc:
     "§9\u2013§10の多面体は幾何学的操作で連鎖し、ハミング距離の3層構造（d=1: 辺、d=2: 星形辺、d=3: 補色対角）を保存します。八面体にはグレイコード帯状展開図が双対として存在し、立方体・八面体の全域木の総数は共に384本（双対マトロイド定理）。",
-  theory_conn_extended: "Black を全体パリティビットとして追加すると [8,4,4] 拡張ハミング符号になる",
+  theory_conn_extended:
+    "Black(0) を 8 番目の全体パリティ座標として加えると、この 7 点構造は [8,4,4] 拡張ハミング符号の座標系に埋め込めます。8 色そのものが codeword なのではなく、codeword の位置ラベルです。",
   theory_conn_boundary:
     "GL(3,2)（位数168）は PG(2,2) の完全自己同型群。そのうち色彩的に有意なのは S\u2083（チャンネル置換6通り）のみ。8色を超える拡張には異なる代数構造が必要です。",
   theory_conn_boundary_title: "この枠組みの範囲",
