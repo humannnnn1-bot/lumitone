@@ -2,8 +2,8 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { LEVEL_INFO, LUMA_R, LUMA_G, LUMA_B } from "../color-engine";
 import { LEVEL_MASK } from "../constants";
 import type { CanvasData } from "../types";
-import type { MapMode } from "./AnalyzePanel";
-import { computeNoiseLevelNorm, computeDiversity, computeEdgeDepth, computeGradient, computeRegion } from "../utils/pixel-analysis";
+import type { MapMode } from "./analyze-types";
+import type { PixelMaps } from "../hooks/usePixelMaps";
 import { C, SP, FS, R } from "../tokens";
 
 /* ── Scientific colormaps (32-stop LUTs, interpolated to 256) ── */
@@ -135,92 +135,6 @@ const TURBO = buildLUT([
   [144, 28, 14],
   [122, 4, 3],
 ]);
-
-/* ── Pixel maps hook ── */
-export interface PixelMaps {
-  noise: Float32Array;
-  depth: Float32Array;
-  gradAngle: Float32Array;
-  gradMag: Float32Array;
-  regionId: Int32Array;
-  isEdge: Uint8Array;
-  levelNorm: Float32Array;
-  localDiversity: Float32Array;
-  w: number;
-  h: number;
-}
-
-/** Synchronous fallback for pixel maps (used when Worker is unavailable). */
-function computePixelMapsSync(cvs: CanvasData, mode: MapMode): PixelMaps {
-  const { data, w, h } = cvs;
-  const n = w * h;
-  const maps: PixelMaps = {
-    noise: new Float32Array(n),
-    depth: new Float32Array(n),
-    gradAngle: new Float32Array(n),
-    gradMag: new Float32Array(n),
-    regionId: new Int32Array(n),
-    isEdge: new Uint8Array(n),
-    levelNorm: new Float32Array(n),
-    localDiversity: new Float32Array(n),
-    w,
-    h,
-  };
-  if (n === 0) return maps;
-  switch (mode) {
-    case "noise":
-      computeNoiseLevelNorm(data, w, h, maps.noise, maps.levelNorm, cvs.colorMap);
-      break;
-    case "entropy":
-      computeDiversity(data, w, h, maps.localDiversity, cvs.colorMap);
-      break;
-    case "depth":
-      computeEdgeDepth(data, w, h, maps.isEdge, maps.depth, cvs.colorMap);
-      break;
-    case "gradient":
-      computeGradient(data, w, h, maps.levelNorm, maps.gradAngle, maps.gradMag);
-      break;
-    case "region":
-      computeRegion(data, w, h, maps.regionId, maps.isEdge, cvs.colorMap);
-      break;
-    case "luminance":
-      for (let i = 0; i < n; i++) maps.levelNorm[i] = (data[i] & LEVEL_MASK) / 7;
-      break;
-    case "colorlum":
-      break;
-  }
-  return maps;
-}
-
-const emptyMaps = (w: number, h: number): PixelMaps => {
-  const n = w * h;
-  return {
-    noise: new Float32Array(n),
-    depth: new Float32Array(n),
-    gradAngle: new Float32Array(n),
-    gradMag: new Float32Array(n),
-    regionId: new Int32Array(n),
-    isEdge: new Uint8Array(n),
-    levelNorm: new Float32Array(n),
-    localDiversity: new Float32Array(n),
-    w,
-    h,
-  };
-};
-
-/**
- * Async pixel maps hook: offloads heavy computation to a Web Worker.
- * Falls back to synchronous computation for lightweight modes (luminance, colorlum).
- */
-export function usePixelMaps(cvs: CanvasData, mode: MapMode): PixelMaps {
-  const [maps, setMaps] = useState<PixelMaps>(() => emptyMaps(cvs.w, cvs.h));
-
-  useEffect(() => {
-    setMaps(computePixelMapsSync(cvs, mode));
-  }, [cvs, mode]);
-
-  return maps;
-}
 
 /* ── Map canvas component ── */
 export function MapCanvas({
