@@ -17,11 +17,15 @@ vi.mock("../i18n", () => ({
 // Mock MapCanvas since it depends on canvas/WebGL
 vi.mock("../components/MapCanvas", () => ({
   MapCanvas: () => React.createElement("div", { "data-testid": "map-canvas" }),
+}));
+
+vi.mock("../hooks/usePixelMaps", () => ({
   usePixelMaps: () => ({}),
 }));
 
 function makeProps(overrides?: Partial<Parameters<typeof AnalyzePanel>[0]>) {
-  const w = 10, h = 10;
+  const w = 10,
+    h = 10;
   return {
     hist: [20, 15, 10, 10, 15, 10, 10, 10],
     total: 100,
@@ -41,6 +45,7 @@ function makeProps(overrides?: Partial<Parameters<typeof AnalyzePanel>[0]>) {
     cvs: { w, h, data: new Uint8Array(w * h), colorMap: new Uint8Array(w * h) },
     displayW: 320,
     displayH: 320,
+    active: true,
     mapMode: "luminance" as const,
     setMapMode: vi.fn(),
     ...overrides,

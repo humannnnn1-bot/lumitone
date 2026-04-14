@@ -2,11 +2,11 @@ import React from "react";
 import { useTranslation } from "../i18n";
 import type { CanvasData } from "../types";
 import { S_BTN, S_BTN_ACTIVE } from "../styles";
-import { MapCanvas, usePixelMaps } from "./MapCanvas";
+import { MapCanvas } from "./MapCanvas";
+import type { MapMode } from "./analyze-types";
+import { usePixelMaps } from "../hooks/usePixelMaps";
 import { CompositionDonut } from "./CompositionDonut";
 import { C, SP, FS, FW } from "../tokens";
-
-export type MapMode = "entropy" | "noise" | "depth" | "gradient" | "region" | "luminance" | "colorlum";
 
 interface AnalyzePanelProps {
   hist: number[];
@@ -18,6 +18,7 @@ interface AnalyzePanelProps {
   cvs: CanvasData;
   displayW: number;
   displayH: number;
+  active: boolean;
   mapMode: MapMode;
   setMapMode: (mode: MapMode) => void;
 }
@@ -43,11 +44,12 @@ export const AnalyzePanel = React.memo(
     cvs,
     displayW,
     displayH,
+    active,
     mapMode,
     setMapMode,
   }: AnalyzePanelProps) {
     const { t } = useTranslation();
-    const pixelMaps = usePixelMaps(cvs, mapMode);
+    const pixelMaps = usePixelMaps(cvs, mapMode, active);
 
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: SP.lg, alignItems: "center" }}>
@@ -105,6 +107,7 @@ export const AnalyzePanel = React.memo(
     if (prev.total !== next.total || prev.brushLevel !== next.brushLevel) return false;
     if (prev.cvs !== next.cvs) return false;
     if (prev.cc !== next.cc) return false;
+    if (prev.active !== next.active) return false;
     if (prev.displayW !== next.displayW || prev.displayH !== next.displayH) return false;
     for (let i = 0; i < 8; i++) {
       if (prev.hist[i] !== next.hist[i]) return false;

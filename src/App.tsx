@@ -1,4 +1,4 @@
-import React, { useRef, useCallback, useMemo, useState } from "react";
+import React, { useEffect, useRef, useCallback, useMemo, useState } from "react";
 
 import { isShapeTool } from "./constants";
 import { LUMA_R, LUMA_G, LUMA_B, GRAY_LUT } from "./color-engine";
@@ -127,6 +127,11 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
 
   const hist = state.hist;
   const [scrollToGallery, setScrollToGallery] = useState(false);
+  const [hasOpenedStats, setHasOpenedStats] = useState(() => activeTab === 4);
+
+  useEffect(() => {
+    if (activeTab === 4) setHasOpenedStats(true);
+  }, [activeTab]);
 
   const prvRef = useRef<HTMLCanvasElement | null>(null);
   const glazePrvRef = useRef<HTMLCanvasElement | null>(null);
@@ -569,21 +574,24 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             </GlazeContextProvider>
           </div>
         )}
-        <div id="tabpanel-4" role="tabpanel" style={{ display: activeTab === 4 ? undefined : "none" }}>
-          <AnalyzePanel
-            hist={hist}
-            total={cvs.w * cvs.h}
-            colorLUT={colorLUT}
-            cc={cc}
-            brushLevel={brushLevel}
-            setBrushLevel={setBrushLevel}
-            cvs={cvs}
-            displayW={displayW}
-            displayH={displayH}
-            mapMode={mapMode}
-            setMapMode={setMapMode}
-          />
-        </div>
+        {(activeTab === 4 || hasOpenedStats) && (
+          <div id="tabpanel-4" role="tabpanel" style={{ display: activeTab === 4 ? undefined : "none" }}>
+            <AnalyzePanel
+              hist={hist}
+              total={cvs.w * cvs.h}
+              colorLUT={colorLUT}
+              cc={cc}
+              brushLevel={brushLevel}
+              setBrushLevel={setBrushLevel}
+              cvs={cvs}
+              displayW={displayW}
+              displayH={displayH}
+              active={activeTab === 4}
+              mapMode={mapMode}
+              setMapMode={setMapMode}
+            />
+          </div>
+        )}
         <div id="tabpanel-5" role="tabpanel" style={{ width: "100%", display: activeTab === 5 ? undefined : "none" }}>
           <GalleryPanel
             cvs={cvs}
