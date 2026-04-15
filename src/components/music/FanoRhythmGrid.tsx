@@ -1,6 +1,7 @@
 import React from "react";
 import { C, R } from "../../tokens";
 import { FANO_LINES } from "../theory/theory-data";
+import { FANO_RHYTHM_PATTERNS } from "./music-data";
 
 interface FanoRhythmGridProps {
   playing: boolean;
@@ -9,9 +10,6 @@ interface FanoRhythmGridProps {
 }
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
-
-// Line i has onsets at positions [(0+i)%7, (1+i)%7, (3+i)%7]
-const FANO_RHYTHM_PATTERNS: number[][] = Array.from({ length: 7 }, (_, i) => [(0 + i) % 7, (1 + i) % 7, (3 + i) % 7]);
 
 const CELL = 18;
 const GAP = 2;

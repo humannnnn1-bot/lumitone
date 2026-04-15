@@ -7,22 +7,12 @@ import { AndTriads } from "../components/music/AndTriads";
 import { OctahedronMix } from "../components/music/OctahedronMix";
 import { TetraSplitView } from "../components/music/TetraSplitView";
 import { K8LayerGraph } from "../components/music/K8LayerGraph";
-import { LineComplementPartition } from "../components/music/LineComplementPartition";
-
 function renderWithLanguage(node: ReactNode) {
   localStorage.setItem("chromalum_lang", "en");
   return render(<LanguageProvider>{node}</LanguageProvider>);
 }
 
 describe("Music polyhedra widgets", () => {
-  it("labels the Fano partition as a complement rather than a dual point", () => {
-    renderWithLanguage(<LineComplementPartition phase="complement" lineIndex={0} activeLevels={[]} />);
-
-    expect(screen.getByText("Line (3)")).toBeTruthy();
-    expect(screen.getByText("Complement (4)")).toBeTruthy();
-    expect(screen.queryByText("Dual (4)")).toBeNull();
-  });
-
   it("renders the subtractive AND triads", () => {
     renderWithLanguage(<AndTriads activeStep={null} activeLevels={[]} />);
 
