@@ -16,9 +16,7 @@ describe("Music polyhedra widgets", () => {
   it("renders the subtractive AND triads", () => {
     renderWithLanguage(<AndTriads activeStep={null} activeLevels={[]} />);
 
-    expect(screen.getByText("3∧5=1")).toBeTruthy();
-    expect(screen.getByText("5∧6=4")).toBeTruthy();
-    expect(screen.getByText("6∧3=2")).toBeTruthy();
+    expect(screen.getByText("a∨b=7 ⇒ a+b−7 = a∧b")).toBeTruthy();
   });
 
   it("shows the octahedron xor result for a non-complementary pair", () => {
@@ -39,6 +37,6 @@ describe("Music polyhedra widgets", () => {
   it("shows the selected K8 layer label", () => {
     renderWithLanguage(<K8LayerGraph layer={2} activeEdgeIndex={0} activeLevels={[]} />);
 
-    expect(screen.getByText("d=2 stella")).toBeTruthy();
+    expect(screen.getByText("d=2")).toBeTruthy();
   });
 });

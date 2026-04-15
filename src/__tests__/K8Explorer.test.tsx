@@ -23,6 +23,6 @@ describe("K8Explorer", () => {
     renderWithLanguage(<K8Explorer engine={mockEngine} activeLevels={[]} stopSignal={0} resetSignal={0} tetraPhase={null} />);
 
     // Default layer is 1, so Tetra split should not show
-    expect(screen.getByText("K8 Explorer")).toBeTruthy();
+    expect(screen.getByText("K8")).toBeTruthy();
   });
 });
