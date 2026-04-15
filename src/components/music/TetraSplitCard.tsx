@@ -69,6 +69,7 @@ export const TetraSplitCard = React.memo(function TetraSplitCard({
         flexDirection: "column",
         gap: SP.md,
         width: "100%",
+        flex: 1,
         transition: "box-shadow .25s",
         boxShadow: highlighted ? "inset 0 0 0 1px #ffd36e40, 0 0 8px #ffd36e20" : "none",
       }}

@@ -65,7 +65,7 @@ export const ErrorCorrectionCard = React.memo(function ErrorCorrectionCard({
   }, [engine, errorPos, onErrorPhaseChange]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%", flex: 1 }}>
       <div style={S_ROW}>
         <span style={S_LABEL}>{t("music_error_title")}</span>
         <select value={errorPos} onChange={(e) => onErrorPosChange(Number(e.target.value))} style={S_SELECT}>

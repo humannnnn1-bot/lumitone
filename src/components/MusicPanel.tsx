@@ -90,6 +90,7 @@ const S_CARD: React.CSSProperties = {
   borderRadius: R.lg,
   border: `1px solid ${C.border}`,
   background: "rgba(255,255,255,0.02)",
+  aspectRatio: "4 / 5",
 };
 const S_CARD_FANO: React.CSSProperties = { ...S_CARD, borderTop: "2px solid #4060c0" };
 const S_CARD_GROUP: React.CSSProperties = { ...S_CARD, borderTop: "2px solid #c0a040" };
@@ -99,6 +100,7 @@ const S_CARD_GRID: React.CSSProperties = {
   gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
   gap: SP.xl,
   width: "100%",
+  alignItems: "start",
 };
 
 /** Find Fano line index for a triple {a, b, a XOR b}, or -1 if not a Fano line */

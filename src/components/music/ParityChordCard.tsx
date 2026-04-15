@@ -68,7 +68,7 @@ export const ParityChordCard = React.memo(function ParityChordCard({
   );
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%", flex: 1 }}>
       <div style={S_ROW}>
         <span style={S_LABEL}>{t("music_parity_title")}</span>
         {([0, 1, 2] as const).map((group) => (

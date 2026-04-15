@@ -38,7 +38,7 @@ export const ZigzagCard = React.memo(function ZigzagCard({ engine, activeLevels,
   }, [engine, zigzagStep]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%", flex: 1 }}>
       <div style={S_ROW}>
         <span style={S_LABEL}>{t("music_zigzag_title")}</span>
         <button type="button" style={zigzagStep !== null ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handleToggle}>

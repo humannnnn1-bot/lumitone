@@ -36,7 +36,7 @@ export const ComplementPairsCard = React.memo(function ComplementPairsCard({ eng
   }, [engine]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%", flex: 1 }}>
       <div style={S_ROW}>
         <span style={S_LABEL}>{t("music_complement_title")}</span>
         <button type="button" style={activePair >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handlePlay}>

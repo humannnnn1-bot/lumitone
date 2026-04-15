@@ -88,7 +88,7 @@ export const K8Explorer = React.memo(function K8Explorer({
   }, [resetSignal, onLayerChange]);
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%" }}>
+    <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%", flex: 1 }}>
       <div style={S_ROW}>
         <span style={S_LABEL}>{t("music_k8_explorer_title")}</span>
         <button type="button" style={layer === 1 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleSelectLayer(1)}>

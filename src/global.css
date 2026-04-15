@@ -163,7 +163,8 @@ input[type="checkbox"]:focus-visible {
 
 /* ── Algebra cards: center SVG/canvas vertically, keep header at top ── */
 .music-algebra-scroll > div > svg,
-.music-algebra-scroll > div > canvas {
+.music-algebra-scroll > div > canvas,
+.music-algebra-scroll > div > div > svg {
   margin-top: auto;
   margin-bottom: auto;
 }
