@@ -1,4 +1,5 @@
 import React from "react";
+import { FANO_LINES } from "../theory/theory-data";
 
 interface MiniFanoChordProps {
   hoveredLine: number | null;
@@ -9,16 +10,6 @@ interface MiniFanoChordProps {
   /** Currently playing line index from Fano rhythm (0-6 or null) */
   playingLine?: number | null;
 }
-
-const FANO_LINES = [
-  [1, 2, 3], // 0: left edge   (B-R, midpoint M)
-  [1, 4, 5], // 1: bottom edge (B-G, midpoint C)
-  [2, 4, 6], // 2: right edge  (R-G, midpoint Y)
-  [1, 6, 7], // 3: median from B through W to Y
-  [2, 5, 7], // 4: median from R through W to C
-  [3, 4, 7], // 5: median from M through W to G
-  [3, 5, 6], // 6: inscribed circle (M-C-Y)
-];
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
 
@@ -54,7 +45,7 @@ const PTS: Record<number, [number, number]> = {
 };
 
 // Inscribed circle line index
-const CIRCLE_LINE_INDEX = 6; // [3, 5, 6]
+const CIRCLE_LINE_INDEX = FANO_LINES.length - 1; // [3, 5, 6]
 
 function pointColor(lv: number, activeLevels: MiniFanoChordProps["activeLevels"]): string {
   const found = activeLevels.find((l) => l.lv === lv);
@@ -62,7 +53,7 @@ function pointColor(lv: number, activeLevels: MiniFanoChordProps["activeLevels"]
   return LV_COLORS[lv] ?? "#888";
 }
 
-function linePath(line: number[]): string {
+function linePath(line: readonly number[]): string {
   const pts = line.map((lv) => PTS[lv]);
   return `M${pts[0][0]},${pts[0][1]} L${pts[1][0]},${pts[1][1]} L${pts[2][0]},${pts[2][1]}`;
 }

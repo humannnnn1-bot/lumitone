@@ -1,5 +1,6 @@
 import React from "react";
 import { C } from "../../tokens";
+import { FANO_LINES } from "../theory/theory-data";
 
 interface XorFanoLineProps {
   stepLv: number | null;
@@ -9,16 +10,6 @@ interface XorFanoLineProps {
 }
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
-
-const FANO_LINES = [
-  [1, 2, 3],
-  [1, 4, 5],
-  [2, 4, 6],
-  [1, 6, 7],
-  [2, 5, 7],
-  [3, 4, 7],
-  [3, 5, 6],
-];
 
 // Projective duality: each line's dual point in GF(2)³
 const LINE_DUAL_POINTS = [4, 2, 1, 6, 5, 3, 7];
@@ -36,7 +27,7 @@ const PTS: Record<number, [number, number]> = {
 };
 
 // Inscribed circle line index
-const CIRCLE_LINE_INDEX = 6; // [3, 5, 6]
+const CIRCLE_LINE_INDEX = FANO_LINES.length - 1; // [3, 5, 6]
 
 function pointColor(lv: number, activeLevels: XorFanoLineProps["activeLevels"]): string {
   const found = activeLevels.find((l) => l.lv === lv);
@@ -44,7 +35,7 @@ function pointColor(lv: number, activeLevels: XorFanoLineProps["activeLevels"]):
   return LV_COLORS[lv] ?? "#888";
 }
 
-function linePath(line: number[]): string {
+function linePath(line: readonly number[]): string {
   const pts = line.map((lv) => PTS[lv]);
   return `M${pts[0][0]},${pts[0][1]} L${pts[1][0]},${pts[1][1]} L${pts[2][0]},${pts[2][1]}`;
 }

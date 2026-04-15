@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback, useState } from "react";
-import { FANO_LINES } from "../components/theory/theory-data";
+import { COMPLEMENT_EDGES, CUBE_EDGES, FANO_LINES, STELLA_EDGES, TETRA_T0, TETRA_T1 } from "../components/theory/theory-data";
 
 /* ── Types ── */
 export interface SonificationLevel {
@@ -35,13 +35,14 @@ interface MusicEngineReturn {
   analyserNode: AnalyserNode | null;
   playXorTriple: (lvA: number, lvB: number, onStep: (lv: number | null) => void) => void;
   playParityChord: (parityBit: 0 | 1 | 2) => void;
-  playDualChord: (lineIndex: number) => void;
-  playLineAndDual: (lineIndex: number, onStep: (phase: "line" | "dual" | null) => void) => void;
+  playComplementChord: (lineIndex: number) => void;
+  playLineAndComplement: (lineIndex: number, onStep: (phase: "line" | "complement" | null) => void) => void;
   playSyndromeDemo: (errorPos: number, onPhase: (phase: "original" | "corrupted" | "syndrome" | "corrected" | null) => void) => void;
   playGray3Voice: (onStep: (lv: number | null) => void) => void;
   playWeightSpectrum: (onStep: (positions: number[], weight: number, index: number) => void) => void;
   playCayleyRow: (row: number, onStep: (col: number, value: number) => void) => void;
-  applyGL32Transform: (gen: "A" | "B", onPerm?: (perm: number[]) => void) => void;
+  applyGL32Transform: (gen: "A" | "B" | "C", onPerm?: (perm: number[]) => void) => void;
+  resetGL32Transform: (onPerm?: (perm: number[]) => void) => void;
   setLuminanceMode: (mode: "symmetric" | "luminance") => void;
   stopAlgebra: () => void;
   setDroneMuted: (muted: boolean) => void;
@@ -56,6 +57,10 @@ interface MusicEngineReturn {
     c: number,
     onStep: (phase: "bxc" | "left" | "ab" | "ac" | "right" | "equal" | null, value: number) => void,
   ) => void;
+  playAndTriads: (onStep: (step: { pairIndex: number; phase: "operands" | "result" } | null) => void) => void;
+  playOctahedronMix: (lvA: number, lvB: number, onStep: (phase: "pair" | "result" | null) => void) => void;
+  playTetraSplit: (onStep: (phase: "t0" | "t1" | null) => void) => void;
+  playK8Layer: (layer: 1 | 2 | 3, onStep: (edgeIndex: number, pair: [number, number] | null) => void) => void;
 }
 
 /* ── Constants ── */
@@ -111,6 +116,13 @@ function gl32GenB(lv: number): number {
     b = lv & 1;
   return (g << 2) | (b << 1) | r;
 }
+// Gen C: [G,R,B] -> [G,R,R⊕B] (true linear mix, not a channel permutation)
+function gl32GenC(lv: number): number {
+  const g = (lv >> 2) & 1,
+    r = (lv >> 1) & 1,
+    b = lv & 1;
+  return (g << 2) | (r << 1) | (r ^ b);
+}
 
 /** 3-voice frequencies for Gray code decomposition */
 const GRAY_VOICE_FREQS = [550, 440, 330]; // bit0=B, bit1=R, bit2=G
@@ -122,6 +134,16 @@ const COMPLEMENT_PAIRS: [number, number][] = [
   [2, 5],
   [3, 4],
 ];
+const AND_TRIADS: [number, number, number][] = [
+  [3, 5, 1],
+  [5, 6, 4],
+  [6, 3, 2],
+];
+const K8_LAYER_EDGES = {
+  1: CUBE_EDGES,
+  2: STELLA_EDGES,
+  3: COMPLEMENT_EDGES,
+} as const;
 const ZIGZAG_PATH = [2, 6, 4, 5, 1, 3]; // R -> Y -> G -> C -> B -> M (luma order)
 
 /** Luma value → frequency (distinct from angleToFreq: sonifies BT.601 luma theorem) */
@@ -644,6 +666,13 @@ export function useMusicEngine({
     );
   }, [enabled, levels, hoveredLv, alpha0, alpha7, volume, scaleMode, fmEnabled, panEnabled, hoveredFanoLine, luminanceMode, originMode]);
 
+  const angleForLv = useCallback((lv: number): number => {
+    const p = paramsRef.current;
+    const d = p.levels.find((l) => l.lv === lv);
+    const activeAlpha = p.originMode === 0 ? p.alpha0 : p.alpha7;
+    return (d?.angle ?? 0) + activeAlpha;
+  }, []);
+
   /* ── Tone Burst ── */
   const triggerToneBurst = useCallback((lv: number, angle: number) => {
     const nodes = nodesRef.current;
@@ -672,6 +701,17 @@ export function useMusicEngine({
     osc.start(now);
     osc.stop(now + 0.35);
   }, []);
+
+  const playDiscreteLevel = useCallback(
+    (lv: number) => {
+      if (lv === 0 || lv === 7) {
+        triggerToneBurst(lv, -1);
+        return;
+      }
+      triggerToneBurst(lv, angleForLv(lv));
+    },
+    [triggerToneBurst, angleForLv],
+  );
 
   /* ── Gray Code Melody ── */
   const playGrayMelody = useCallback(
@@ -770,14 +810,6 @@ export function useMusicEngine({
     algebraTimersRef.current = [];
   }, []);
 
-  /* ── Helper: get angle for a level ── */
-  const angleForLv = useCallback((lv: number): number => {
-    const p = paramsRef.current;
-    const d = p.levels.find((l) => l.lv === lv);
-    const activeAlpha = p.originMode === 0 ? p.alpha0 : p.alpha7;
-    return (d?.angle ?? 0) + activeAlpha;
-  }, []);
-
   /* ── Helper: schedule a timeout and track it ── */
   const scheduleAlgebra = useCallback((fn: () => void, ms: number) => {
     const id = setTimeout(fn, ms);
@@ -833,50 +865,48 @@ export function useMusicEngine({
     [triggerToneBurst, angleForLv],
   );
 
-  /* ── 3. playDualChord ── */
-  const playDualChord = useCallback(
+  /* ── 3. playComplementChord ── */
+  const playComplementChord = useCallback(
     (lineIndex: number) => {
       if (!nodesRef.current) return;
       if (lineIndex < 0 || lineIndex >= FANO_LINES.length) return;
       const lineSet = new Set(FANO_LINES[lineIndex]);
-      const dual = ALL_POINTS.filter((lv) => !lineSet.has(lv));
-      for (const lv of dual) {
-        triggerToneBurst(lv, angleForLv(lv));
+      const complement = ALL_POINTS.filter((lv) => !lineSet.has(lv));
+      for (const lv of complement) {
+        playDiscreteLevel(lv);
       }
     },
-    [triggerToneBurst, angleForLv],
+    [playDiscreteLevel],
   );
 
-  /* ── 4. playLineAndDual ── */
-  const playLineAndDual = useCallback(
-    (lineIndex: number, onStep: (phase: "line" | "dual" | null) => void) => {
+  /* ── 4. playLineAndComplement ── */
+  const playLineAndComplement = useCallback(
+    (lineIndex: number, onStep: (phase: "line" | "complement" | null) => void) => {
       if (!nodesRef.current) return;
       if (lineIndex < 0 || lineIndex >= FANO_LINES.length) return;
       clearAlgebraTimers();
 
       const line = FANO_LINES[lineIndex];
       const lineSet = new Set(line);
-      const dual = ALL_POINTS.filter((lv) => !lineSet.has(lv));
+      const complement = ALL_POINTS.filter((lv) => !lineSet.has(lv));
 
-      // Play line chord
       scheduleAlgebra(() => {
         onStep("line");
         for (const lv of line) {
-          triggerToneBurst(lv, angleForLv(lv));
+          playDiscreteLevel(lv);
         }
       }, 0);
 
-      // Play dual chord after 500ms
       scheduleAlgebra(() => {
-        onStep("dual");
-        for (const lv of dual) {
-          triggerToneBurst(lv, angleForLv(lv));
+        onStep("complement");
+        for (const lv of complement) {
+          playDiscreteLevel(lv);
         }
       }, 500);
 
       scheduleAlgebra(() => onStep(null), 1000);
     },
-    [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
+    [playDiscreteLevel, clearAlgebraTimers, scheduleAlgebra],
   );
 
   /* ── 5. playSyndromeDemo ── */
@@ -1077,30 +1107,48 @@ export function useMusicEngine({
   );
 
   /* ── 9. applyGL32Transform ── */
-  const applyGL32Transform = useCallback((gen: "A" | "B", onPerm?: (perm: number[]) => void) => {
+  const applyGL32Transform = useCallback((gen: "A" | "B" | "C", onPerm?: (perm: number[]) => void) => {
     if (!nodesRef.current) return;
-    const genFn = gen === "A" ? gl32GenA : gl32GenB;
+    const genFn = gen === "A" ? gl32GenA : gen === "B" ? gl32GenB : gl32GenC;
     const perm = gl32PermRef.current;
-    // Apply generator: new_perm[i] = genFn(perm[i])
     gl32PermRef.current = perm.map((lv) => genFn(lv));
 
-    // Re-apply params: remap oscillator frequencies according to permutation
     const nodes = nodesRef.current;
     const p = paramsRef.current;
     const now = nodes.ctx.currentTime;
     const newPerm = gl32PermRef.current;
+    const activeAlpha = p.originMode === 0 ? p.alpha0 : p.alpha7;
+    const freqForLv = (lv: number): number => {
+      if (lv === 0 || lv === 7) return lumaToFreq(LUMA_VALUES[lv]);
+      const lvData = p.levels.find((l) => l.lv === lv);
+      return angleToFreq((lvData?.angle ?? 0) + activeAlpha, p.scaleMode);
+    };
 
     for (let i = 0; i < 6; i++) {
-      const targetLv = newPerm[i]; // osc[i] now gets the frequency of level targetLv
-      const lvData = p.levels.find((l) => l.lv === targetLv);
-      if (lvData) {
-        const activeAlpha = p.originMode === 0 ? p.alpha0 : p.alpha7;
-        nodes.oscs[i].frequency.setTargetAtTime(angleToFreq(lvData.angle + activeAlpha, p.scaleMode), now, RAMP_TC);
-      }
+      const targetLv = newPerm[i];
+      nodes.oscs[i].frequency.setTargetAtTime(freqForLv(targetLv), now, RAMP_TC);
     }
 
-    // Notify caller with the full permutation array [0, perm[1], ..., perm[7]]
     onPerm?.([0, ...newPerm]);
+  }, []);
+
+  const resetGL32Transform = useCallback((onPerm?: (perm: number[]) => void) => {
+    if (!nodesRef.current) {
+      gl32PermRef.current = [1, 2, 3, 4, 5, 6, 7];
+      onPerm?.([0, 1, 2, 3, 4, 5, 6, 7]);
+      return;
+    }
+    gl32PermRef.current = [1, 2, 3, 4, 5, 6, 7];
+    const nodes = nodesRef.current;
+    const p = paramsRef.current;
+    const now = nodes.ctx.currentTime;
+    const activeAlpha = p.originMode === 0 ? p.alpha0 : p.alpha7;
+    for (let i = 0; i < 6; i++) {
+      const lvData = p.levels.find((l) => l.lv === i + 1);
+      if (!lvData) continue;
+      nodes.oscs[i].frequency.setTargetAtTime(angleToFreq(lvData.angle + activeAlpha, p.scaleMode), now, RAMP_TC);
+    }
+    onPerm?.([0, 1, 2, 3, 4, 5, 6, 7]);
   }, []);
 
   /* ── 10. setLuminanceMode ── */
@@ -1289,6 +1337,84 @@ export function useMusicEngine({
     [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
   );
 
+  const playAndTriads = useCallback(
+    (onStep: (step: { pairIndex: number; phase: "operands" | "result" } | null) => void) => {
+      if (!nodesRef.current) return;
+      clearAlgebraTimers();
+      let t = 0;
+      AND_TRIADS.forEach(([a, b, result], pairIndex) => {
+        scheduleAlgebra(() => {
+          onStep({ pairIndex, phase: "operands" });
+          playDiscreteLevel(a);
+          playDiscreteLevel(b);
+        }, t);
+        scheduleAlgebra(() => {
+          onStep({ pairIndex, phase: "result" });
+          playDiscreteLevel(result);
+        }, t + 360);
+        t += 860;
+      });
+      scheduleAlgebra(() => onStep(null), t);
+    },
+    [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
+  );
+
+  const playOctahedronMix = useCallback(
+    (lvA: number, lvB: number, onStep: (phase: "pair" | "result" | null) => void) => {
+      if (!nodesRef.current) return;
+      if (lvA < 1 || lvA > 6 || lvB < 1 || lvB > 6 || lvA === lvB) return;
+      const result = lvA ^ lvB;
+      if (result < 1 || result > 6) return;
+      clearAlgebraTimers();
+      scheduleAlgebra(() => {
+        onStep("pair");
+        playDiscreteLevel(lvA);
+        playDiscreteLevel(lvB);
+      }, 0);
+      scheduleAlgebra(() => {
+        onStep("result");
+        playDiscreteLevel(result);
+      }, 480);
+      scheduleAlgebra(() => onStep(null), 920);
+    },
+    [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
+  );
+
+  const playTetraSplit = useCallback(
+    (onStep: (phase: "t0" | "t1" | null) => void) => {
+      if (!nodesRef.current) return;
+      clearAlgebraTimers();
+      scheduleAlgebra(() => {
+        onStep("t0");
+        TETRA_T0.forEach((lv) => playDiscreteLevel(lv));
+      }, 0);
+      scheduleAlgebra(() => {
+        onStep("t1");
+        TETRA_T1.forEach((lv) => playDiscreteLevel(lv));
+      }, 650);
+      scheduleAlgebra(() => onStep(null), 1300);
+    },
+    [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
+  );
+
+  const playK8Layer = useCallback(
+    (layer: 1 | 2 | 3, onStep: (edgeIndex: number, pair: [number, number] | null) => void) => {
+      if (!nodesRef.current) return;
+      const edges = K8_LAYER_EDGES[layer];
+      clearAlgebraTimers();
+      const intervalMs = layer === 3 ? 520 : 280;
+      edges.forEach(([a, b], edgeIndex) => {
+        scheduleAlgebra(() => {
+          onStep(edgeIndex, [a, b]);
+          playDiscreteLevel(a);
+          playDiscreteLevel(b);
+        }, edgeIndex * intervalMs);
+      });
+      scheduleAlgebra(() => onStep(-1, null), edges.length * intervalMs);
+    },
+    [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
+  );
+
   return {
     initAudio,
     triggerToneBurst,
@@ -1299,13 +1425,14 @@ export function useMusicEngine({
     analyserNode,
     playXorTriple,
     playParityChord,
-    playDualChord,
-    playLineAndDual,
+    playComplementChord,
+    playLineAndComplement,
     playSyndromeDemo,
     playGray3Voice,
     playWeightSpectrum,
     playCayleyRow,
     applyGL32Transform,
+    resetGL32Transform,
     setLuminanceMode,
     stopAlgebra,
     setDroneMuted,
@@ -1315,5 +1442,9 @@ export function useMusicEngine({
     playPointFanoContext,
     playExtendedHamming,
     playDistributiveLaw,
+    playAndTriads,
+    playOctahedronMix,
+    playTetraSplit,
+    playK8Layer,
   };
 }
