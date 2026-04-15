@@ -13,9 +13,13 @@ import { GL32Arrows } from "./music/GL32Arrows";
 import { DistributiveFlow } from "./music/DistributiveFlow";
 import { AndTriads } from "./music/AndTriads";
 import { OctahedronMix } from "./music/OctahedronMix";
-import { LuminanceLab } from "./music/LuminanceLab";
+import { ComplementPairsCard } from "./music/ComplementPairsCard";
+import { ZigzagCard } from "./music/ZigzagCard";
 import { K8Explorer } from "./music/K8Explorer";
-import { HammingDecoder } from "./music/HammingDecoder";
+import { TetraSplitCard } from "./music/TetraSplitCard";
+import { ParityChordCard } from "./music/ParityChordCard";
+import { ErrorCorrectionCard } from "./music/ErrorCorrectionCard";
+import type { DecoderPhase } from "./music/HammingDecoder";
 import { MiniFanoChord } from "./music/MiniFanoChord";
 import { FANO_LINES } from "./theory/theory-data";
 
@@ -225,6 +229,14 @@ export const MusicPanel = React.memo(function MusicPanel() {
   // Signals for explorer components to stop/reset
   const [stopSignal, setStopSignal] = useState(0);
   const [resetSignal, setResetSignal] = useState(0);
+
+  // Cross-card state: K8 layer ↔ TetraSplit phase
+  const [k8Layer, setK8Layer] = useState<1 | 2 | 3>(1);
+  const [tetraPhase, setTetraPhase] = useState<"t0" | "t1" | null>(null);
+
+  // Cross-card state: Parity ↔ Error Correction
+  const [errorPos, setErrorPos] = useState(1);
+  const [errorPhase, setErrorPhase] = useState<DecoderPhase>(null);
 
   // Compute sonification levels
   const sonificationLevels = useMemo(() => {
@@ -1233,7 +1245,25 @@ export const MusicPanel = React.memo(function MusicPanel() {
         </div>
 
         <div style={S_CARD_FANO}>
-          <HammingDecoder engine={engine} activeLevels={activeLevels} stopSignal={stopSignal} />
+          <ParityChordCard
+            engine={engine}
+            activeLevels={activeLevels}
+            stopSignal={stopSignal}
+            errorPos={errorPos}
+            errorPhase={errorPhase}
+          />
+        </div>
+
+        <div style={S_CARD_FANO}>
+          <ErrorCorrectionCard
+            engine={engine}
+            activeLevels={activeLevels}
+            stopSignal={stopSignal}
+            errorPos={errorPos}
+            errorPhase={errorPhase}
+            onErrorPosChange={setErrorPos}
+            onErrorPhaseChange={setErrorPhase}
+          />
         </div>
 
         {/* 9. Weight Spectrum ([7,4,3] / [8,4,4]) */}
@@ -1377,7 +1407,24 @@ export const MusicPanel = React.memo(function MusicPanel() {
         </div>
 
         <div style={S_CARD_GROUP}>
-          <K8Explorer engine={engine} activeLevels={activeLevels} stopSignal={stopSignal} resetSignal={resetSignal} />
+          <K8Explorer
+            engine={engine}
+            activeLevels={activeLevels}
+            stopSignal={stopSignal}
+            resetSignal={resetSignal}
+            tetraPhase={tetraPhase}
+            onLayerChange={setK8Layer}
+          />
+        </div>
+
+        <div style={S_CARD_GROUP}>
+          <TetraSplitCard
+            engine={engine}
+            activeLevels={activeLevels}
+            stopSignal={stopSignal}
+            highlighted={k8Layer === 2}
+            onPhaseChange={setTetraPhase}
+          />
         </div>
 
         {/* ── F: Symmetry / Automorphism ── */}
@@ -1434,7 +1481,11 @@ export const MusicPanel = React.memo(function MusicPanel() {
         </div>
 
         <div style={S_CARD_GROUP}>
-          <LuminanceLab engine={engine} activeLevels={activeLevels} stopSignal={stopSignal} />
+          <ComplementPairsCard engine={engine} activeLevels={activeLevels} stopSignal={stopSignal} />
+        </div>
+
+        <div style={S_CARD_GROUP}>
+          <ZigzagCard engine={engine} activeLevels={activeLevels} stopSignal={stopSignal} />
         </div>
       </div>
     </div>

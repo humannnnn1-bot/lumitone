@@ -20,7 +20,7 @@ function renderWithLanguage(node: ReactNode) {
 
 describe("K8Explorer", () => {
   it("shows the K8 layer view with the tetra split when layer 2 is active", () => {
-    renderWithLanguage(<K8Explorer engine={mockEngine} activeLevels={[]} stopSignal={0} resetSignal={0} />);
+    renderWithLanguage(<K8Explorer engine={mockEngine} activeLevels={[]} stopSignal={0} resetSignal={0} tetraPhase={null} />);
 
     // Default layer is 1, so Tetra split should not show
     expect(screen.getByText("K8 Explorer")).toBeTruthy();

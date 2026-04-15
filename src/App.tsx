@@ -31,7 +31,7 @@ import { HexTab } from "./components/HexTab";
 import { TheoryPanel } from "./components/TheoryPanel";
 import { useTranslation } from "./i18n";
 
-const APP_VERSION = "5.3.9";
+const APP_VERSION = "5.4.1";
 const MusicPanel = lazy(async () => {
   const mod = await import("./components/MusicPanel");
   return { default: mod.MusicPanel };

@@ -2,6 +2,7 @@ import React from "react";
 import { C, FS, FW } from "../../tokens";
 import { useTranslation } from "../../i18n";
 import { TETRA_T0, TETRA_T1 } from "../theory/theory-data";
+import { COLOR_T0, COLOR_T1 } from "./K8LayerGraph";
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
 const EDGES: [number, number][] = [
@@ -40,8 +41,8 @@ interface Props {
 export const TetraSplitView = React.memo(function TetraSplitView({ phase, activeLevels }: Props) {
   const { t } = useTranslation();
   const groups = [
-    { key: "t0" as const, label: "T0", subtitle: t("music_tetra_even"), centerX: 48, levels: [...TETRA_T0] },
-    { key: "t1" as const, label: "T1", subtitle: t("music_tetra_odd"), centerX: 132, levels: [...TETRA_T1] },
+    { key: "t0" as const, label: "T0", subtitle: t("music_tetra_even"), centerX: 48, levels: [...TETRA_T0], color: COLOR_T0 },
+    { key: "t1" as const, label: "T1", subtitle: t("music_tetra_odd"), centerX: 132, levels: [...TETRA_T1], color: COLOR_T1 },
   ];
 
   return (
@@ -78,7 +79,7 @@ export const TetraSplitView = React.memo(function TetraSplitView({ phase, active
                 y1={points[a][1]}
                 x2={points[b][0]}
                 y2={points[b][1]}
-                stroke={active ? C.accent : "rgba(255,255,255,0.18)"}
+                stroke={group.color}
                 strokeWidth={active ? 1.5 : 1}
               />
             ))}
