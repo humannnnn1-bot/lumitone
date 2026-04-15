@@ -161,15 +161,6 @@ input[type="checkbox"]:focus-visible {
   }
 }
 
-/* ── Mobile: constrain algebra card scroll ── */
-@media (max-width: 767px) {
-  .music-algebra-scroll {
-    max-height: 60vh;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-}
-
 /* ── Algebra cards: center SVG/canvas vertically, keep header at top ── */
 .music-algebra-scroll > div > svg,
 .music-algebra-scroll > div > canvas {
