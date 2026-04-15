@@ -3,13 +3,14 @@ import { C, FS, FW } from "../../tokens";
 import { useTranslation } from "../../i18n";
 import { OCTA_EDGES } from "../theory/theory-data";
 
+/* Regular hexagon: width 92, height ≈ 92·2/√3 ≈ 106, centered at (90, 79) */
 const PTS: Record<number, [number, number]> = {
-  2: [90, 16],
-  6: [136, 50],
-  4: [136, 108],
-  5: [90, 142],
-  1: [44, 108],
-  3: [44, 50],
+  2: [90, 26],
+  6: [136, 52.5],
+  4: [136, 105.5],
+  5: [90, 132],
+  1: [44, 105.5],
+  3: [44, 52.5],
 };
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
@@ -41,7 +42,7 @@ export const OctahedronMix = React.memo(function OctahedronMix({ lvA, lvB, phase
   const valid = lvA != null && lvB != null && lvA !== lvB && xorResult !== null && xorResult >= 1 && xorResult <= 6;
 
   return (
-    <svg viewBox="0 0 180 168" style={{ width: "100%", maxWidth: 180 }}>
+    <svg viewBox="12 10 156 141" style={{ width: "100%" }}>
       <defs>
         <filter id="octa-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
@@ -75,11 +76,11 @@ export const OctahedronMix = React.memo(function OctahedronMix({ lvA, lvB, phase
 
         return (
           <g key={lv} filter={isOperand || isResult ? "url(#octa-glow)" : undefined}>
-            {isResult && <circle cx={x} cy={y} r={13} fill="none" stroke={pointColor(lv, activeLevels)} strokeWidth={2} opacity={0.8} />}
+            {isResult && <circle cx={x} cy={y} r={10} fill="none" stroke={pointColor(lv, activeLevels)} strokeWidth={2} opacity={0.8} />}
             <circle
               cx={x}
               cy={y}
-              r={isOperand || isResult ? 10 : 8}
+              r={isOperand || isResult ? 7 : 6}
               fill={pointColor(lv, activeLevels)}
               stroke="#fff"
               strokeWidth={isOperand || isResult ? 1.8 : 1}
@@ -91,7 +92,7 @@ export const OctahedronMix = React.memo(function OctahedronMix({ lvA, lvB, phase
         );
       })}
 
-      <text x={90} y={162} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={90} y={79} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.textDimmer}>
         {valid && xorResult !== null ? `${lvA}⊕${lvB}=${xorResult}` : t("music_octa_hint_invalid")}
       </text>
     </svg>

@@ -15,14 +15,6 @@ interface ParityChordCardProps {
   errorPhase: DecoderPhase;
 }
 
-const S_ROW: React.CSSProperties = {
-  display: "flex",
-  gap: SP.sm,
-  alignItems: "center",
-  justifyContent: "center",
-  flexWrap: "wrap",
-};
-
 const S_LABEL: React.CSSProperties = {
   fontSize: FS.lg,
   color: C.textDim,
@@ -69,18 +61,20 @@ export const ParityChordCard = React.memo(function ParityChordCard({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%", flex: 1 }}>
-      <div style={S_ROW}>
+      <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
         <span style={S_LABEL}>{t("music_parity_title")}</span>
-        {([0, 1, 2] as const).map((group) => (
-          <button
-            key={group}
-            type="button"
-            style={activeGroups.includes(group) ? S_BTN_SM_ACTIVE : S_BTN_SM}
-            onClick={() => handlePlay(group)}
-          >
-            {t(group === 0 ? "music_parity_p1" : group === 1 ? "music_parity_p2" : "music_parity_p4")}
-          </button>
-        ))}
+        <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
+          {([0, 1, 2] as const).map((group) => (
+            <button
+              key={group}
+              type="button"
+              style={activeGroups.includes(group) ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              onClick={() => handlePlay(group)}
+            >
+              {t(group === 0 ? "music_parity_p1" : group === 1 ? "music_parity_p2" : "music_parity_p4")}
+            </button>
+          ))}
+        </div>
       </div>
       <ParityGrid activeGroups={activeGroups} activeLevels={activeLevels} />
     </div>

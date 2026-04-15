@@ -46,7 +46,7 @@ export const TetraSplitView = React.memo(function TetraSplitView({ phase, active
   ];
 
   return (
-    <svg viewBox="0 0 180 118" style={{ width: "100%", maxWidth: 180 }}>
+    <svg viewBox="4 1 172 116" style={{ width: "100%" }}>
       <defs>
         <filter id="tetra-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />

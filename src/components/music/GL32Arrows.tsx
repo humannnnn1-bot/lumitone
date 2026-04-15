@@ -1,5 +1,5 @@
 import React from "react";
-import { C, R } from "../../tokens";
+import { C } from "../../tokens";
 
 interface GL32ArrowsProps {
   perm: number[]; // current permutation [0,1,2,3,4,5,6,7] or permuted
@@ -13,7 +13,7 @@ const LEVELS = [1, 2, 3, 4, 5, 6, 7];
 const CR = 7;
 const Y_TOP = 20;
 const Y_BOT = 80;
-const X_START = 16;
+const X_START = 24;
 const X_GAP = 22;
 
 function lvColor(lv: number, activeLevels: GL32ArrowsProps["activeLevels"]): string {
@@ -33,12 +33,7 @@ export const GL32Arrows = React.memo(function GL32Arrows({ perm, activeLevels, f
   const bottomValues = LEVELS.map((lv) => perm[lv] ?? lv);
 
   return (
-    <svg
-      viewBox="0 0 180 100"
-      style={{ width: "100%", maxWidth: 180, aspectRatio: "180/100", borderRadius: R.md, border: `1px solid ${C.border}` }}
-    >
-      <rect width={180} height={100} fill={C.bgPanel} rx={R.md} />
-
+    <svg viewBox="0 0 180 100" style={{ width: "100%", aspectRatio: "180/100" }}>
       <defs>
         <marker id="gl-arrow" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto">
           <path d="M0,0 L6,2 L0,4 Z" fill={C.textDimmer} />

@@ -5,6 +5,8 @@ import { FANO_LINE_DUAL_POINTS, FANO_POINT_POSITIONS, FANO_VIEWBOX_HEIGHT, FANO_
 interface MiniFanoChordProps {
   hoveredLine: number | null;
   onLineHover: (lineIndex: number | null) => void;
+  onNodeClick?: (lv: number) => void;
+  onLineClick?: (lineIndex: number) => void;
   activeLevels: { lv: number; rgb: [number, number, number] }[];
   /** Currently playing level from Gray melody (1-7 or null) */
   playingLevel?: number | null;
@@ -27,6 +29,8 @@ function pointColor(lv: number, activeLevels: MiniFanoChordProps["activeLevels"]
 export const MiniFanoChord = React.memo(function MiniFanoChord({
   hoveredLine,
   onLineHover,
+  onNodeClick,
+  onLineClick,
   activeLevels,
   playingLevel,
   playingLine,
@@ -41,7 +45,7 @@ export const MiniFanoChord = React.memo(function MiniFanoChord({
   return (
     <svg
       viewBox={`0 0 ${FANO_VIEWBOX_WIDTH} ${FANO_VIEWBOX_HEIGHT}`}
-      style={{ width: "100%", maxWidth: 300, aspectRatio: `${FANO_VIEWBOX_WIDTH}/${FANO_VIEWBOX_HEIGHT}` }}
+      style={{ width: "100%", maxWidth: 220, aspectRatio: `${FANO_VIEWBOX_WIDTH}/${FANO_VIEWBOX_HEIGHT}` }}
     >
       <defs>
         <filter id="fano-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -75,6 +79,7 @@ export const MiniFanoChord = React.memo(function MiniFanoChord({
               style={{ cursor: "pointer" }}
               onPointerEnter={() => onLineHover(i)}
               onPointerLeave={() => onLineHover(null)}
+              onClick={() => onLineClick?.(i)}
             />
             {/* Visible line */}
             <path d={d} fill="none" stroke={color} strokeWidth={sw} opacity={opacity} strokeLinecap="round" pointerEvents="none" />
@@ -101,7 +106,12 @@ export const MiniFanoChord = React.memo(function MiniFanoChord({
         const textColor = lv >= 4 ? "#000" : "#fff";
 
         return (
-          <g key={lv} filter={highlighted ? "url(#fano-glow)" : undefined}>
+          <g
+            key={lv}
+            filter={highlighted ? "url(#fano-glow)" : undefined}
+            style={{ cursor: onNodeClick ? "pointer" : undefined }}
+            onClick={() => onNodeClick?.(lv)}
+          >
             <circle cx={px} cy={py} r={r} fill={col} stroke="#fff" strokeWidth={isPlaying ? 2 : 1} opacity={dimmed ? 0.3 : 1} />
             <text x={px} y={py + 3} fontSize={9} fill={textColor} textAnchor="middle" pointerEvents="none" opacity={dimmed ? 0.3 : 1}>
               {lv}

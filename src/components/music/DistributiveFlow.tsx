@@ -47,7 +47,7 @@ export const DistributiveFlow = React.memo(function DistributiveFlow({ a, b, c, 
   const isPhaseActive = (p: Phase) => phase === p || (phase === "equal" && (p === "left" || p === "right"));
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W }}>
+    <svg viewBox={`4 1 ${W - 8} ${H - 2}`} style={{ width: "100%" }}>
       <defs>
         <filter id="df-glow">
           <feGaussianBlur stdDeviation="2.5" result="blur" />
@@ -57,14 +57,14 @@ export const DistributiveFlow = React.memo(function DistributiveFlow({ a, b, c, 
           </feMerge>
         </filter>
       </defs>
-      {/* Input labels at top */}
-      <text x={15} y={10} fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer}>
+      {/* Input labels near usage */}
+      <text x={90} y={10} textAnchor="middle" fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer}>
         a={a}
       </text>
-      <text x={45} y={10} fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={25} y={20} textAnchor="middle" fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer}>
         b={b}
       </text>
-      <text x={75} y={10} fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={65} y={20} textAnchor="middle" fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer}>
         c={c}
       </text>
 

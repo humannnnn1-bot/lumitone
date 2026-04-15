@@ -58,7 +58,7 @@ export const GrayCube = React.memo(function GrayCube({ currentCode, activeLevels
   const currentIdx = currentCode !== null ? FULL_GRAY_CODE.indexOf(currentCode) : -1;
 
   return (
-    <svg viewBox="0 0 140 130" style={{ width: "100%", maxWidth: 160, aspectRatio: "140/130" }}>
+    <svg viewBox="0 -6 140 148" style={{ width: "100%", aspectRatio: "140/148" }}>
       <defs>
         <filter id="gc-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
@@ -131,8 +131,8 @@ export const GrayCube = React.memo(function GrayCube({ currentCode, activeLevels
       {/* Legend */}
       {BIT_LABELS.map((label, i) => (
         <g key={`legend-${i}`}>
-          <line x1={10 + i * 40} y1={125} x2={22 + i * 40} y2={125} stroke={BIT_COLORS[i]} strokeWidth={2} />
-          <text x={26 + i * 40} y={128} fontSize={7} fill={BIT_COLORS[i]}>
+          <line x1={10 + i * 40} y1={137} x2={22 + i * 40} y2={137} stroke={BIT_COLORS[i]} strokeWidth={2} />
+          <text x={26 + i * 40} y={140} fontSize={7} fill={BIT_COLORS[i]}>
             {label}
           </text>
         </g>

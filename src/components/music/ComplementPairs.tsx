@@ -23,7 +23,7 @@ interface Props {
 
 export const ComplementPairs = React.memo(function ComplementPairs({ activePair, activeLevels }: Props) {
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W }}>
+    <svg viewBox={`8 0 ${W - 16} ${H}`} style={{ width: "100%" }}>
       <defs>
         <filter id="cp-glow">
           <feGaussianBlur stdDeviation="2" result="blur" />
