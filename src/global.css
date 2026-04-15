@@ -167,6 +167,7 @@ input[type="checkbox"]:focus-visible {
 .music-algebra-scroll > div > div > svg {
   margin-top: auto;
   margin-bottom: auto;
+  align-self: stretch;
 }
 
 /* ── Desktop: 5-column grid for Music algebra cards ── */
@@ -217,6 +218,10 @@ input[type="checkbox"]:focus-visible {
     gap: 8px;
     width: 420px;
     flex-shrink: 0;
+  }
+  .music-layout > .panel-sidebar {
+    align-self: flex-start;
+    gap: 3px;
   }
   .glaze-hue-section {
     margin-top: 0;

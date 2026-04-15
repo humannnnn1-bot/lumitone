@@ -33,7 +33,7 @@ export const WeightHistogram = React.memo(function WeightHistogram({ mode, curre
   const left = (W - totalW) / 2;
 
   return (
-    <svg viewBox={`0 0 ${W} 100`} style={{ width: "100%", maxWidth: W }}>
+    <svg viewBox={`4 0 ${W - 8} 100`} style={{ width: "100%" }}>
       <defs>
         <filter id="wh-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />

@@ -16,14 +16,6 @@ interface ErrorCorrectionCardProps {
   onErrorPhaseChange: (phase: DecoderPhase) => void;
 }
 
-const S_ROW: React.CSSProperties = {
-  display: "flex",
-  gap: SP.sm,
-  alignItems: "center",
-  justifyContent: "center",
-  flexWrap: "wrap",
-};
-
 const S_LABEL: React.CSSProperties = {
   fontSize: FS.lg,
   color: C.textDim,
@@ -66,18 +58,20 @@ export const ErrorCorrectionCard = React.memo(function ErrorCorrectionCard({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%", flex: 1 }}>
-      <div style={S_ROW}>
+      <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
         <span style={S_LABEL}>{t("music_error_title")}</span>
-        <select value={errorPos} onChange={(e) => onErrorPosChange(Number(e.target.value))} style={S_SELECT}>
-          {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-            <option key={i} value={i}>
-              {i}
-            </option>
-          ))}
-        </select>
-        <button type="button" style={errorPhase ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handlePlayDecode}>
-          {t("music_error_play")}
-        </button>
+        <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
+          <select value={errorPos} onChange={(e) => onErrorPosChange(Number(e.target.value))} style={S_SELECT}>
+            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
+              <option key={i} value={i}>
+                {i}
+              </option>
+            ))}
+          </select>
+          <button type="button" style={errorPhase ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handlePlayDecode}>
+            {t("music_error_play")}
+          </button>
+        </div>
       </div>
       <SyndromeTimeline phase={errorPhase} errorPos={errorPos} activeLevels={activeLevels} />
     </div>

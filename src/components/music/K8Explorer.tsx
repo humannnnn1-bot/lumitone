@@ -14,14 +14,6 @@ interface K8ExplorerProps {
   onLayerChange?: (layer: 1 | 2 | 3) => void;
 }
 
-const S_ROW: React.CSSProperties = {
-  display: "flex",
-  gap: SP.sm,
-  alignItems: "center",
-  justifyContent: "center",
-  flexWrap: "wrap",
-};
-
 const S_LABEL: React.CSSProperties = {
   fontSize: FS.lg,
   color: C.textDim,
@@ -89,20 +81,22 @@ export const K8Explorer = React.memo(function K8Explorer({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%", flex: 1 }}>
-      <div style={S_ROW}>
+      <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
         <span style={S_LABEL}>{t("music_k8_explorer_title")}</span>
-        <button type="button" style={layer === 1 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleSelectLayer(1)}>
-          {t("music_k8_d1")}
-        </button>
-        <button type="button" style={layer === 2 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleSelectLayer(2)}>
-          {t("music_k8_d2")}
-        </button>
-        <button type="button" style={layer === 3 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleSelectLayer(3)}>
-          {t("music_k8_d3")}
-        </button>
-        <button type="button" style={edgeIndex >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handleToggleLayerPlayback}>
-          {t("music_k8_play")}
-        </button>
+        <div style={{ display: "flex", gap: SP.sm, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+          <button type="button" style={layer === 1 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleSelectLayer(1)}>
+            {t("music_k8_d1")}
+          </button>
+          <button type="button" style={layer === 2 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleSelectLayer(2)}>
+            {t("music_k8_d2")}
+          </button>
+          <button type="button" style={layer === 3 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleSelectLayer(3)}>
+            {t("music_k8_d3")}
+          </button>
+          <button type="button" style={edgeIndex >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handleToggleLayerPlayback}>
+            {t("music_k8_play")}
+          </button>
+        </div>
       </div>
       <K8LayerGraph layer={layer} activeEdgeIndex={edgeIndex} activeLevels={activeLevels} tetraPhase={layer === 2 ? tetraPhase : null} />
     </div>

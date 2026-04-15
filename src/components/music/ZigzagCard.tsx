@@ -11,7 +11,7 @@ interface Props {
   stopSignal: number;
 }
 
-const S_ROW: React.CSSProperties = { display: "flex", gap: SP.sm, alignItems: "center", justifyContent: "center", flexWrap: "wrap" };
+const S_COL: React.CSSProperties = { display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" };
 const S_LABEL: React.CSSProperties = { fontSize: FS.lg, color: C.textDim, whiteSpace: "nowrap" };
 
 export const ZigzagCard = React.memo(function ZigzagCard({ engine, activeLevels, stopSignal }: Props) {
@@ -39,7 +39,7 @@ export const ZigzagCard = React.memo(function ZigzagCard({ engine, activeLevels,
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%", flex: 1 }}>
-      <div style={S_ROW}>
+      <div style={S_COL}>
         <span style={S_LABEL}>{t("music_zigzag_title")}</span>
         <button type="button" style={zigzagStep !== null ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handleToggle}>
           {zigzagStep !== null ? t("music_zigzag_stop") : t("music_zigzag_play")}

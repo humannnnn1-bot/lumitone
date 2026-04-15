@@ -27,7 +27,7 @@ interface Props {
 
 export const AndTriads = React.memo(function AndTriads({ activeStep, activeLevels }: Props) {
   return (
-    <svg viewBox="0 0 180 118" style={{ width: "100%", maxWidth: 180 }}>
+    <svg viewBox="-10 -4 162 144" style={{ width: "100%" }}>
       <defs>
         <filter id="and-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
@@ -62,7 +62,7 @@ export const AndTriads = React.memo(function AndTriads({ activeStep, activeLevel
               {a}
             </text>
 
-            <text x={47} y={y + 3} fontSize={FS.sm} fill={C.textDim}>
+            <text x={46} y={y + 3} textAnchor="middle" fontSize={FS.sm} fill={C.textDim}>
               ∧
             </text>
 
@@ -79,7 +79,7 @@ export const AndTriads = React.memo(function AndTriads({ activeStep, activeLevel
               {b}
             </text>
 
-            <text x={96} y={y + 3} fontSize={FS.sm} fill={C.textDim}>
+            <text x={93} y={y + 3} textAnchor="middle" fontSize={FS.sm} fill={C.textDim}>
               =
             </text>
 
@@ -95,15 +95,11 @@ export const AndTriads = React.memo(function AndTriads({ activeStep, activeLevel
             <text x={118} y={y + 3.5} fontSize={FS.xs} fontWeight={FW.bold} fill={textColor(r)} textAnchor="middle">
               {r}
             </text>
-
-            <text x={176} y={y + 3} textAnchor="end" fontSize={7} fontFamily="monospace" fill={C.textDimmer}>
-              {a}∧{b}={r}
-            </text>
           </g>
         );
       })}
 
-      <text x={90} y={115} textAnchor="middle" fontSize={7} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={71} y={130} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.textDimmer}>
         a∨b=7 ⇒ a+b−7 = a∧b
       </text>
     </svg>

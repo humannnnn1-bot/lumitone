@@ -11,7 +11,7 @@ interface Props {
   stopSignal: number;
 }
 
-const S_ROW: React.CSSProperties = { display: "flex", gap: SP.sm, alignItems: "center", justifyContent: "center", flexWrap: "wrap" };
+const S_COL: React.CSSProperties = { display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" };
 const S_LABEL: React.CSSProperties = { fontSize: FS.lg, color: C.textDim, whiteSpace: "nowrap" };
 
 export const ComplementPairsCard = React.memo(function ComplementPairsCard({ engine, activeLevels, stopSignal }: Props) {
@@ -37,7 +37,7 @@ export const ComplementPairsCard = React.memo(function ComplementPairsCard({ eng
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%", flex: 1 }}>
-      <div style={S_ROW}>
+      <div style={S_COL}>
         <span style={S_LABEL}>{t("music_complement_title")}</span>
         <button type="button" style={activePair >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handlePlay}>
           {t("music_complement_play")}

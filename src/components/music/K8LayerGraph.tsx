@@ -7,14 +7,14 @@ export const COLOR_T0 = "#ffd36e";
 export const COLOR_T1 = "#90c8ff";
 
 const VERTS: Record<number, [number, number]> = {
-  0: [50, 116],
-  1: [18, 95],
-  2: [114, 95],
-  3: [82, 74],
-  4: [50, 52],
-  5: [18, 30],
-  6: [114, 30],
-  7: [82, 10],
+  0: [74, 116],
+  1: [42, 95],
+  2: [138, 95],
+  3: [106, 74],
+  4: [74, 52],
+  5: [42, 30],
+  6: [138, 30],
+  7: [106, 10],
 };
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
@@ -49,7 +49,7 @@ export const K8LayerGraph = React.memo(function K8LayerGraph({ layer, activeEdge
   const t0Set = new Set(TETRA_T0 as readonly number[]);
 
   return (
-    <svg viewBox="0 0 180 134" style={{ width: "100%", maxWidth: 180 }}>
+    <svg viewBox="12 0 156 134" style={{ width: "100%" }}>
       <defs>
         <filter id="k8-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur" />
@@ -60,7 +60,7 @@ export const K8LayerGraph = React.memo(function K8LayerGraph({ layer, activeEdge
         </filter>
       </defs>
 
-      <text x={90} y={10} textAnchor="middle" fontSize={8} fill={C.textDimmer}>
+      <text x={135} y={128} textAnchor="end" fontSize={8} fill={C.textDimmer}>
         {t(layerInfo.labelKey)}
       </text>
 

@@ -13,12 +13,11 @@ interface TetraSplitCardProps {
   onPhaseChange?: (phase: "t0" | "t1" | null) => void;
 }
 
-const S_ROW: React.CSSProperties = {
+const S_COL: React.CSSProperties = {
   display: "flex",
+  flexDirection: "column",
   gap: SP.sm,
   alignItems: "center",
-  justifyContent: "center",
-  flexWrap: "wrap",
 };
 
 const S_TITLE: React.CSSProperties = {
@@ -74,7 +73,7 @@ export const TetraSplitCard = React.memo(function TetraSplitCard({
         boxShadow: highlighted ? "inset 0 0 0 1px #ffd36e40, 0 0 8px #ffd36e20" : "none",
       }}
     >
-      <div style={S_ROW}>
+      <div style={S_COL}>
         <span style={S_TITLE}>{t("music_tetra_title")}</span>
         <button type="button" style={tetraPhase !== null ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handleToggle}>
           {t("music_tetra_play")}

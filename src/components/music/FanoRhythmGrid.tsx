@@ -1,5 +1,5 @@
 import React from "react";
-import { C, R } from "../../tokens";
+import { C } from "../../tokens";
 import { FANO_LINES } from "../theory/theory-data";
 import { FANO_RHYTHM_PATTERNS } from "./music-data";
 
@@ -32,12 +32,7 @@ export const FanoRhythmGrid = React.memo(function FanoRhythmGrid({ playing, curr
   const gridY = HEADER_H;
 
   return (
-    <svg
-      viewBox={`0 0 ${W} ${H}`}
-      style={{ width: "100%", maxWidth: W, aspectRatio: `${W}/${H}`, borderRadius: R.md, border: `1px solid ${C.border}` }}
-    >
-      <rect width={W} height={H} fill={C.bgPanel} rx={R.md} />
-
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", aspectRatio: `${W}/${H}` }}>
       <defs>
         <filter id="frg-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />

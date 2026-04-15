@@ -17,7 +17,7 @@ const TOP = HEADER + 4;
 
 export const CayleyGrid = React.memo(function CayleyGrid({ row, activeCol, activeLevels: _activeLevels }: CayleyGridProps) {
   return (
-    <svg viewBox="0 0 160 160" style={{ width: "100%", maxWidth: 160, aspectRatio: "1" }}>
+    <svg viewBox="0 0 160 160" style={{ width: "100%", aspectRatio: "1" }}>
       <defs>
         <filter id="cg-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />

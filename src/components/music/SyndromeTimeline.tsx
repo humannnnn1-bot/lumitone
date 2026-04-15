@@ -43,7 +43,7 @@ export const SyndromeTimeline = React.memo(function SyndromeTimeline({ phase, er
   const syndromeBits = [(errorPos & 1) !== 0, (errorPos & 2) !== 0, (errorPos & 4) !== 0];
 
   return (
-    <svg viewBox="0 0 200 120" style={{ width: "100%", maxWidth: 200, aspectRatio: "200/120" }}>
+    <svg viewBox="0 0 200 120" style={{ width: "100%", aspectRatio: "200/120" }}>
       <defs>
         <filter id="st-glow" x="-50%" y="-50%" width="200%" height="200%">
           <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur" />

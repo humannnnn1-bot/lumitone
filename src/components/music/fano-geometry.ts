@@ -1,16 +1,17 @@
 import { FANO_LINES } from "../theory/theory-data";
 
 export const FANO_VIEWBOX_WIDTH = 180;
-export const FANO_VIEWBOX_HEIGHT = 155;
+export const FANO_VIEWBOX_HEIGHT = 162;
 
+/* Equilateral triangle: base = 140, height = 70√3 ≈ 121.2 */
 export const FANO_POINT_POSITIONS: Record<number, [number, number]> = {
   2: [90, 15],
-  1: [17, 122],
-  4: [163, 122],
-  3: [53.5, 68.5],
-  6: [126.5, 68.5],
-  5: [90, 122],
-  7: [90, 86.3],
+  1: [20, 136.2],
+  4: [160, 136.2],
+  3: [55, 75.6],
+  6: [125, 75.6],
+  5: [90, 136.2],
+  7: [90, 95.8],
 };
 
 export const FANO_LINE_DUAL_POINTS = [4, 2, 1, 6, 5, 3, 7] as const;
