@@ -2,7 +2,7 @@ import React from "react";
 import { C } from "../../tokens";
 
 interface ParityGridProps {
-  activeGroup: 0 | 1 | 2 | null;
+  activeGroups: (0 | 1 | 2)[];
   activeLevels: { lv: number; rgb: [number, number, number] }[];
 }
 
@@ -30,7 +30,7 @@ function pointColor(lv: number, activeLevels: ParityGridProps["activeLevels"]): 
   return LV_COLORS[lv] ?? "#888";
 }
 
-export const ParityGrid = React.memo(function ParityGrid({ activeGroup, activeLevels }: ParityGridProps) {
+export const ParityGrid = React.memo(function ParityGrid({ activeGroups, activeLevels }: ParityGridProps) {
   return (
     <svg viewBox="0 0 180 90" style={{ width: "100%", maxWidth: 180, aspectRatio: "2" }}>
       <defs>
@@ -62,7 +62,7 @@ export const ParityGrid = React.memo(function ParityGrid({ activeGroup, activeLe
       {/* Rows */}
       {PARITY_GROUPS.map((group, row) => {
         const y = TOP + row * (CELL + GAP);
-        const isActive = activeGroup === row;
+        const isActive = activeGroups.includes(row as 0 | 1 | 2);
 
         return (
           <g key={row}>

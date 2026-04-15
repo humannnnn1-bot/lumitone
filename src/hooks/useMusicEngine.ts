@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import { COMPLEMENT_EDGES, CUBE_EDGES, FANO_LINES, STELLA_EDGES, TETRA_T0, TETRA_T1 } from "../components/theory/theory-data";
+import { COMPLEMENT_PAIRS, FANO_RHYTHM_PATTERNS, LUMA_VALUES, ZIGZAG_PATH, fanoLinesThrough } from "../components/music/music-data";
 
 /* ── Types ── */
 export interface SonificationLevel {
@@ -25,7 +26,7 @@ interface MusicEngineParams {
   originMode: 0 | 7;
 }
 
-interface MusicEngineReturn {
+export interface MusicEngineReturn {
   initAudio: () => void;
   triggerToneBurst: (lv: number, angle: number) => void;
   playGrayMelody: (tempo: number, onStep: (lv: number | null) => void) => void;
@@ -77,10 +78,6 @@ const C2_PAIRS: [number, number][] = [
   [4, 3],
 ]; // carrier, modulator
 
-const GRAY_PATH = [2, 6, 4, 5, 1, 3]; // R -> Y -> G -> C -> B -> M
-
-const FANO_RHYTHM_PATTERNS = FANO_LINES.map((_, i) => [0, 1, 3].map((p) => (p + i) % 7));
-
 /* ── Algebra constants ── */
 const PARITY_GROUPS: number[][] = [
   [1, 3, 5, 7],
@@ -128,12 +125,6 @@ function gl32GenC(lv: number): number {
 const GRAY_VOICE_FREQS = [550, 440, 330]; // bit0=B, bit1=R, bit2=G
 
 /* ── Extended algebra constants ── */
-const LUMA_VALUES = [0, 29, 76, 105, 150, 179, 226, 255];
-const COMPLEMENT_PAIRS: [number, number][] = [
-  [1, 6],
-  [2, 5],
-  [3, 4],
-];
 const AND_TRIADS: [number, number, number][] = [
   [3, 5, 1],
   [5, 6, 4],
@@ -144,8 +135,6 @@ const K8_LAYER_EDGES = {
   2: STELLA_EDGES,
   3: COMPLEMENT_EDGES,
 } as const;
-const ZIGZAG_PATH = [2, 6, 4, 5, 1, 3]; // R -> Y -> G -> C -> B -> M (luma order)
-
 /** Luma value → frequency (distinct from angleToFreq: sonifies BT.601 luma theorem) */
 function lumaToFreq(gray: number): number {
   return 220 + (gray / 255) * 660; // 220–880 Hz linear
@@ -153,10 +142,7 @@ function lumaToFreq(gray: number): number {
 
 /** Lines through a Fano point */
 function linesThrough(p: number): number[] {
-  return FANO_LINES.reduce<number[]>((acc, line, i) => {
-    if (line.includes(p)) acc.push(i);
-    return acc;
-  }, []);
+  return fanoLinesThrough(p);
 }
 
 /** [8,4,4] extended Hamming codewords (sorted by weight) */
@@ -725,16 +711,14 @@ export function useMusicEngine({
       const intervalMs = 60000 / tempo;
       let step = 0;
       const id = setInterval(() => {
-        const lv = GRAY_PATH[step % GRAY_PATH.length];
-        const p = paramsRef.current;
-        const lvData = p.levels.find((l) => l.lv === lv);
-        triggerToneBurst(lv, lvData?.angle ?? 0);
+        const lv = FULL_GRAY_CODE[step % FULL_GRAY_CODE.length];
+        playDiscreteLevel(lv);
         onStep(lv);
         step++;
       }, intervalMs);
       grayIntervalRef.current = id;
     },
-    [triggerToneBurst],
+    [playDiscreteLevel],
   );
 
   const stopGrayMelody = useCallback(() => {

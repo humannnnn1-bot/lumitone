@@ -1,11 +1,9 @@
 import React from "react";
 import { C, FS, FW } from "../../tokens";
+import { LUMA_VALUES, ZIGZAG_CHANNELS, ZIGZAG_PATH } from "./music-data";
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
-const LUMA = [0, 29, 76, 105, 150, 179, 226, 255];
-const PATH = [2, 6, 4, 5, 1, 3]; // R -> Y -> G -> C -> B -> M
 const NAMES = ["", "B", "R", "M", "G", "C", "Y"];
-const SEG_CHANNELS = ["G", "R", "B", "G", "R", "B"];
 const CH_COLORS: Record<string, string> = { G: "#00cc00", R: "#cc0000", B: "#4466ff" };
 
 const W = 180,
@@ -17,7 +15,7 @@ const ML = 24,
 const PW = W - ML - MR,
   PH = H - MT - MB;
 
-const xPos = (i: number) => ML + (i / (PATH.length - 1)) * PW;
+const xPos = (i: number) => ML + (i / (ZIGZAG_PATH.length - 1)) * PW;
 const yPos = (luma: number) => MT + PH - (luma / 255) * PH;
 
 function pointColor(lv: number, activeLevels: { lv: number; rgb: [number, number, number] }[]): string {
@@ -54,14 +52,14 @@ export const ZigzagGraph = React.memo(function ZigzagGraph({ currentStep, active
         opacity={0.4}
       />
       {/* Segments with channel-colored lines */}
-      {PATH.slice(0, -1).map((lv, i) => {
-        const nextLv = PATH[i + 1];
+      {ZIGZAG_PATH.slice(0, -1).map((lv, i) => {
+        const nextLv = ZIGZAG_PATH[i + 1];
         const x0 = xPos(i),
-          y0 = yPos(LUMA[lv]);
+          y0 = yPos(LUMA_VALUES[lv]);
         const x1 = xPos(i + 1),
-          y1 = yPos(LUMA[nextLv]);
-        const ch = SEG_CHANNELS[i];
-        const delta = LUMA[nextLv] - LUMA[lv];
+          y1 = yPos(LUMA_VALUES[nextLv]);
+        const ch = ZIGZAG_CHANNELS[i];
+        const delta = LUMA_VALUES[nextLv] - LUMA_VALUES[lv];
         const isActive = currentStep === i || currentStep === i + 1;
         return (
           <g key={i}>
@@ -91,9 +89,9 @@ export const ZigzagGraph = React.memo(function ZigzagGraph({ currentStep, active
         );
       })}
       {/* Vertices */}
-      {PATH.map((lv, i) => {
+      {ZIGZAG_PATH.map((lv, i) => {
         const x = xPos(i),
-          y = yPos(LUMA[lv]);
+          y = yPos(LUMA_VALUES[lv]);
         const isActive = currentStep === i;
         return (
           <g key={lv} filter={isActive ? "url(#zg-glow)" : undefined}>
