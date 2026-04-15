@@ -1,5 +1,6 @@
 import React from "react";
 import { C, R } from "../../tokens";
+import { FANO_LINES } from "../theory/theory-data";
 
 interface FanoRhythmGridProps {
   playing: boolean;
@@ -7,15 +8,6 @@ interface FanoRhythmGridProps {
   activeLevels: { lv: number; rgb: [number, number, number] }[];
 }
 
-const FANO_LINES = [
-  [1, 2, 3],
-  [1, 4, 5],
-  [2, 4, 6],
-  [1, 6, 7],
-  [2, 5, 7],
-  [3, 4, 7],
-  [3, 5, 6],
-];
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
 
 // Line i has onsets at positions [(0+i)%7, (1+i)%7, (3+i)%7]
@@ -23,10 +15,12 @@ const FANO_RHYTHM_PATTERNS: number[][] = Array.from({ length: 7 }, (_, i) => [(0
 
 const CELL = 18;
 const GAP = 2;
-const LABEL_W = 18;
+const LABEL_W = 26;
 const HEADER_H = 14;
 const COLS = 7;
 const ROWS = 7;
+const W = 170;
+const H = 160;
 
 function lineColor(lineIdx: number, activeLevels: FanoRhythmGridProps["activeLevels"]): string {
   const firstLv = FANO_LINES[lineIdx][0];
@@ -41,10 +35,10 @@ export const FanoRhythmGrid = React.memo(function FanoRhythmGrid({ playing, curr
 
   return (
     <svg
-      viewBox="0 0 160 160"
-      style={{ width: "100%", maxWidth: 160, aspectRatio: "1", borderRadius: R.md, border: `1px solid ${C.border}` }}
+      viewBox={`0 0 ${W} ${H}`}
+      style={{ width: "100%", maxWidth: W, aspectRatio: `${W}/${H}`, borderRadius: R.md, border: `1px solid ${C.border}` }}
     >
-      <rect width={160} height={160} fill={C.bgPanel} rx={R.md} />
+      <rect width={W} height={H} fill={C.bgPanel} rx={R.md} />
 
       <defs>
         <filter id="frg-glow" x="-50%" y="-50%" width="200%" height="200%">
@@ -76,11 +70,11 @@ export const FanoRhythmGrid = React.memo(function FanoRhythmGrid({ playing, curr
           key={`r${row}`}
           x={LABEL_W - 3}
           y={gridY + row * (CELL + GAP) + CELL / 2 + 3}
-          fontSize={8}
+          fontSize={7}
           fill={C.textDimmer}
           textAnchor="end"
         >
-          L{row + 1}
+          {FANO_LINES[row].join("-")}
         </text>
       ))}
 
