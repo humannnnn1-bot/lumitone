@@ -1185,357 +1185,359 @@ export const MusicPanel = React.memo(function MusicPanel() {
       </div>
 
       {/* ═══ Algebraic Sonification — full-width below both columns ═══ */}
-      <div style={{ ...S_SECTION, marginTop: SP.sm }} role="heading" aria-level={3}>
-        {t("music_section_algebra")}
-      </div>
-      <div id="music-algebra-panel" role="region" className="music-algebra-scroll" style={S_CARD_GRID}>
-        {/* ── A: Core Algebra (GF(2)³ operations) ── */}
-
-        {/* 2. Cayley Table */}
-        <div style={S_CARD_ALGEBRA}>
-          <div style={S_ROW}>
-            <span style={S_LABEL}>{t("music_cayley_title")}</span>
-            <select value={cayleyRow} onChange={(e) => setCayleyRow(Number(e.target.value))} style={S_SELECT}>
-              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-                <option key={i} value={i}>
-                  {i}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              style={cayleyCol >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM}
-              onClick={() => {
-                if (cayleyCol >= 0) {
-                  engine.stopAlgebra?.();
-                  setCayleyCol(-1);
-                } else {
-                  engine.initAudio();
-                  engine.playCayleyRow?.(cayleyRow, (col, _val) => setCayleyCol(col));
-                }
-              }}
-            >
-              {cayleyCol >= 0 ? t("music_cayley_stop") : t("music_cayley_play")}
-            </button>
-          </div>
-          <CayleyGrid row={cayleyRow} activeCol={cayleyCol} activeLevels={activeLevels} />
+      <div className="music-algebra-wrapper" style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%" }}>
+        <div style={{ ...S_SECTION, marginTop: SP.sm }} role="heading" aria-level={3}>
+          {t("music_section_algebra")}
         </div>
+        <div id="music-algebra-panel" role="region" className="music-algebra-scroll" style={S_CARD_GRID}>
+          {/* ── A: Core Algebra (GF(2)³ operations) ── */}
 
-        {/* 3. Distributive Law */}
-        <div style={S_CARD_ALGEBRA}>
-          <div style={S_ROW}>
-            <span style={S_LABEL}>{t("music_distrib_title")}</span>
-            <select value={distA} onChange={(e) => setDistA(Number(e.target.value))} style={S_SELECT}>
-              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-                <option key={i} value={i}>
-                  {i}
-                </option>
-              ))}
-            </select>
-            <select value={distB} onChange={(e) => setDistB(Number(e.target.value))} style={S_SELECT}>
-              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-                <option key={i} value={i}>
-                  {i}
-                </option>
-              ))}
-            </select>
-            <select value={distC} onChange={(e) => setDistC(Number(e.target.value))} style={S_SELECT}>
-              {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-                <option key={i} value={i}>
-                  {i}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              style={distPhase !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
-              onClick={() => {
-                engine.initAudio();
-                engine.playDistributiveLaw?.(distA, distB, distC, (phase) => {
-                  setDistPhase(phase);
-                });
-              }}
-            >
-              {t("music_distrib_play")}
-            </button>
-          </div>
-          <DistributiveFlow a={distA} b={distB} c={distC} phase={distPhase} activeLevels={activeLevels} />
-        </div>
-
-        {/* 4. AND Triads */}
-        <div style={S_CARD_ALGEBRA}>
-          <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
-            <span style={S_LABEL}>{t("music_and_title")}</span>
-            <button
-              type="button"
-              style={andStep !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
-              onClick={() => {
-                if (andStep !== null) {
-                  engine.stopAlgebra?.();
-                  setAndStep(null);
-                } else {
-                  engine.initAudio();
-                  setAndStep(null);
-                  engine.playAndTriads?.((step) => setAndStep(step));
-                }
-              }}
-            >
-              {t("music_and_play")}
-            </button>
-          </div>
-          <AndTriads activeStep={andStep} activeLevels={activeLevels} />
-        </div>
-
-        <div style={S_CARD_CODE}>
-          <ParityChordCard
-            engine={engine}
-            activeLevels={activeLevels}
-            stopSignal={stopSignal}
-            errorPos={errorPos}
-            errorPhase={errorPhase}
-          />
-        </div>
-
-        <div style={S_CARD_CODE}>
-          <ErrorCorrectionCard
-            engine={engine}
-            activeLevels={activeLevels}
-            stopSignal={stopSignal}
-            errorPos={errorPos}
-            errorPhase={errorPhase}
-            onErrorPosChange={setErrorPos}
-            onErrorPhaseChange={setErrorPhase}
-          />
-        </div>
-
-        {/* 9. Weight Spectrum ([7,4,3] / [8,4,4]) */}
-        <div style={S_CARD_CODE}>
-          <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
-            <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
+          {/* 2. Cayley Table */}
+          <div style={S_CARD_ALGEBRA}>
+            <div style={S_ROW}>
+              <span style={S_LABEL}>{t("music_cayley_title")}</span>
+              <select value={cayleyRow} onChange={(e) => setCayleyRow(Number(e.target.value))} style={S_SELECT}>
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <option key={i} value={i}>
+                    {i}
+                  </option>
+                ))}
+              </select>
               <button
                 type="button"
-                style={hammingMode === "743" ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                style={cayleyCol >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM}
                 onClick={() => {
-                  if (weightPlaying) {
+                  if (cayleyCol >= 0) {
                     engine.stopAlgebra?.();
-                    setWeightPlaying(false);
-                    setWeightStep(null);
-                  }
-                  setHammingMode("743");
-                }}
-              >
-                [7,4,3]
-              </button>
-              <button
-                type="button"
-                style={hammingMode === "844" ? S_BTN_SM_ACTIVE : S_BTN_SM}
-                onClick={() => {
-                  if (weightPlaying) {
-                    engine.stopAlgebra?.();
-                    setWeightPlaying(false);
-                    setWeightStep(null);
-                  }
-                  setHammingMode("844");
-                }}
-              >
-                [8,4,4]
-              </button>
-            </div>
-            <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
-              <button
-                type="button"
-                style={weightPlaying ? S_BTN_SM_ACTIVE : S_BTN_SM}
-                onClick={() => {
-                  if (weightPlaying) {
-                    engine.stopAlgebra?.();
-                    setWeightPlaying(false);
-                    setWeightStep(null);
-                    setHoveredFanoLine(null);
+                    setCayleyCol(-1);
                   } else {
                     engine.initAudio();
-                    const playFn = hammingMode === "743" ? engine.playWeightSpectrum : engine.playExtendedHamming;
-                    playFn?.((pos: number[], w: number, idx: number) => {
-                      setWeightStep({ positions: pos, weight: w, index: idx });
-                      // Link to Fano: w=3 codewords (743) or w=4 Fano+Black (844) at idx 1-7
-                      const isFanoLine = (hammingMode === "743" && w === 3) || (hammingMode === "844" && idx >= 1 && idx <= 7);
-                      setHoveredFanoLine(isFanoLine && idx >= 1 && idx <= 7 ? idx - 1 : null);
-                      if (pos.length === 0 && w === -1) {
-                        setWeightPlaying(false);
-                        setWeightStep(null);
-                        setHoveredFanoLine(null);
-                      }
+                    engine.playCayleyRow?.(cayleyRow, (col, _val) => setCayleyCol(col));
+                  }
+                }}
+              >
+                {cayleyCol >= 0 ? t("music_cayley_stop") : t("music_cayley_play")}
+              </button>
+            </div>
+            <CayleyGrid row={cayleyRow} activeCol={cayleyCol} activeLevels={activeLevels} />
+          </div>
+
+          {/* 3. Distributive Law */}
+          <div style={S_CARD_ALGEBRA}>
+            <div style={S_ROW}>
+              <span style={S_LABEL}>{t("music_distrib_title")}</span>
+              <select value={distA} onChange={(e) => setDistA(Number(e.target.value))} style={S_SELECT}>
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <option key={i} value={i}>
+                    {i}
+                  </option>
+                ))}
+              </select>
+              <select value={distB} onChange={(e) => setDistB(Number(e.target.value))} style={S_SELECT}>
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <option key={i} value={i}>
+                    {i}
+                  </option>
+                ))}
+              </select>
+              <select value={distC} onChange={(e) => setDistC(Number(e.target.value))} style={S_SELECT}>
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <option key={i} value={i}>
+                    {i}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                style={distPhase !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                onClick={() => {
+                  engine.initAudio();
+                  engine.playDistributiveLaw?.(distA, distB, distC, (phase) => {
+                    setDistPhase(phase);
+                  });
+                }}
+              >
+                {t("music_distrib_play")}
+              </button>
+            </div>
+            <DistributiveFlow a={distA} b={distB} c={distC} phase={distPhase} activeLevels={activeLevels} />
+          </div>
+
+          {/* 4. AND Triads */}
+          <div style={S_CARD_ALGEBRA}>
+            <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
+              <span style={S_LABEL}>{t("music_and_title")}</span>
+              <button
+                type="button"
+                style={andStep !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                onClick={() => {
+                  if (andStep !== null) {
+                    engine.stopAlgebra?.();
+                    setAndStep(null);
+                  } else {
+                    engine.initAudio();
+                    setAndStep(null);
+                    engine.playAndTriads?.((step) => setAndStep(step));
+                  }
+                }}
+              >
+                {t("music_and_play")}
+              </button>
+            </div>
+            <AndTriads activeStep={andStep} activeLevels={activeLevels} />
+          </div>
+
+          <div style={S_CARD_CODE}>
+            <ParityChordCard
+              engine={engine}
+              activeLevels={activeLevels}
+              stopSignal={stopSignal}
+              errorPos={errorPos}
+              errorPhase={errorPhase}
+            />
+          </div>
+
+          <div style={S_CARD_CODE}>
+            <ErrorCorrectionCard
+              engine={engine}
+              activeLevels={activeLevels}
+              stopSignal={stopSignal}
+              errorPos={errorPos}
+              errorPhase={errorPhase}
+              onErrorPosChange={setErrorPos}
+              onErrorPhaseChange={setErrorPhase}
+            />
+          </div>
+
+          {/* 9. Weight Spectrum ([7,4,3] / [8,4,4]) */}
+          <div style={S_CARD_CODE}>
+            <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
+              <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
+                <button
+                  type="button"
+                  style={hammingMode === "743" ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                  onClick={() => {
+                    if (weightPlaying) {
+                      engine.stopAlgebra?.();
+                      setWeightPlaying(false);
+                      setWeightStep(null);
+                    }
+                    setHammingMode("743");
+                  }}
+                >
+                  [7,4,3]
+                </button>
+                <button
+                  type="button"
+                  style={hammingMode === "844" ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                  onClick={() => {
+                    if (weightPlaying) {
+                      engine.stopAlgebra?.();
+                      setWeightPlaying(false);
+                      setWeightStep(null);
+                    }
+                    setHammingMode("844");
+                  }}
+                >
+                  [8,4,4]
+                </button>
+              </div>
+              <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
+                <button
+                  type="button"
+                  style={weightPlaying ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                  onClick={() => {
+                    if (weightPlaying) {
+                      engine.stopAlgebra?.();
+                      setWeightPlaying(false);
+                      setWeightStep(null);
+                      setHoveredFanoLine(null);
+                    } else {
+                      engine.initAudio();
+                      const playFn = hammingMode === "743" ? engine.playWeightSpectrum : engine.playExtendedHamming;
+                      playFn?.((pos: number[], w: number, idx: number) => {
+                        setWeightStep({ positions: pos, weight: w, index: idx });
+                        // Link to Fano: w=3 codewords (743) or w=4 Fano+Black (844) at idx 1-7
+                        const isFanoLine = (hammingMode === "743" && w === 3) || (hammingMode === "844" && idx >= 1 && idx <= 7);
+                        setHoveredFanoLine(isFanoLine && idx >= 1 && idx <= 7 ? idx - 1 : null);
+                        if (pos.length === 0 && w === -1) {
+                          setWeightPlaying(false);
+                          setWeightStep(null);
+                          setHoveredFanoLine(null);
+                        }
+                      });
+                      setWeightPlaying(true);
+                    }
+                  }}
+                >
+                  {weightPlaying ? t("music_weight_stop") : t("music_weight_play")}
+                </button>
+                {weightStep && weightStep.weight >= 0 && <span style={{ fontSize: FS.md, color: C.accent }}>w={weightStep.weight}</span>}
+              </div>
+            </div>
+            <WeightHistogram
+              mode={hammingMode}
+              currentWeight={weightStep?.weight ?? -1}
+              currentIndex={weightStep?.index ?? -1}
+              activeLevels={activeLevels}
+            />
+          </div>
+
+          {/* ── D: Cube / Gray Code ── */}
+
+          {/* 10. Gray 3-Voice */}
+          <div style={S_CARD_CUBE}>
+            <div style={{ display: "flex", gap: SP.sm, alignItems: "center", justifyContent: "center" }}>
+              <span style={S_LABEL}>{t("music_gray3v_title")}</span>
+              <button
+                type="button"
+                style={{ ...(gray3Playing ? S_BTN_SM_ACTIVE : S_BTN_SM) }}
+                onClick={() => {
+                  if (gray3Playing) {
+                    engine.stopAlgebra?.();
+                    setGray3Playing(false);
+                    setGray3Code(null);
+                  } else {
+                    engine.initAudio();
+                    engine.playGray3Voice?.((lv: number | null) => {
+                      setGray3Code(lv);
                     });
-                    setWeightPlaying(true);
+                    setGray3Playing(true);
                   }
                 }}
               >
-                {weightPlaying ? t("music_weight_stop") : t("music_weight_play")}
+                {gray3Playing ? t("music_gray3v_stop") : t("music_gray3v_play")}
               </button>
-              {weightStep && weightStep.weight >= 0 && <span style={{ fontSize: FS.md, color: C.accent }}>w={weightStep.weight}</span>}
             </div>
+            <GrayCube currentCode={gray3Code} activeLevels={activeLevels} />
           </div>
-          <WeightHistogram
-            mode={hammingMode}
-            currentWeight={weightStep?.weight ?? -1}
-            currentIndex={weightStep?.index ?? -1}
-            activeLevels={activeLevels}
-          />
-        </div>
 
-        {/* ── D: Cube / Gray Code ── */}
+          {/* ── E: Polyhedra / K8 ── */}
 
-        {/* 10. Gray 3-Voice */}
-        <div style={S_CARD_CUBE}>
-          <div style={{ display: "flex", gap: SP.sm, alignItems: "center", justifyContent: "center" }}>
-            <span style={S_LABEL}>{t("music_gray3v_title")}</span>
-            <button
-              type="button"
-              style={{ ...(gray3Playing ? S_BTN_SM_ACTIVE : S_BTN_SM) }}
-              onClick={() => {
-                if (gray3Playing) {
-                  engine.stopAlgebra?.();
-                  setGray3Playing(false);
-                  setGray3Code(null);
-                } else {
-                  engine.initAudio();
-                  engine.playGray3Voice?.((lv: number | null) => {
-                    setGray3Code(lv);
-                  });
-                  setGray3Playing(true);
-                }
-              }}
-            >
-              {gray3Playing ? t("music_gray3v_stop") : t("music_gray3v_play")}
-            </button>
+          {/* 11. Color Diamond / Octahedron */}
+          <div style={S_CARD_POLY}>
+            <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
+              <span style={S_LABEL}>{t("music_octa_title")}</span>
+              <div style={{ display: "flex", gap: SP.sm, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
+                <select value={octaA} onChange={(e) => setOctaA(Number(e.target.value))} style={S_SELECT}>
+                  {[1, 2, 3, 4, 5, 6].map((lv) => (
+                    <option key={lv} value={lv}>
+                      {lv}
+                    </option>
+                  ))}
+                </select>
+                <select value={octaB} onChange={(e) => setOctaB(Number(e.target.value))} style={S_SELECT}>
+                  {[1, 2, 3, 4, 5, 6].map((lv) => (
+                    <option key={lv} value={lv}>
+                      {lv}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  style={octaPhase !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                  onClick={() => {
+                    if (octaPhase !== null) {
+                      engine.stopAlgebra?.();
+                      setOctaPhase(null);
+                    } else {
+                      engine.initAudio();
+                      setOctaPhase(null);
+                      engine.playOctahedronMix?.(octaA, octaB, (phase) => setOctaPhase(phase));
+                    }
+                  }}
+                  disabled={!octaPlayable}
+                >
+                  {t("music_octa_play")}
+                </button>
+              </div>
+            </div>
+            <OctahedronMix lvA={octaA} lvB={octaB} phase={octaPhase} activeLevels={activeLevels} />
           </div>
-          <GrayCube currentCode={gray3Code} activeLevels={activeLevels} />
-        </div>
 
-        {/* ── E: Polyhedra / K8 ── */}
+          <div style={S_CARD_CUBE}>
+            <K8Explorer
+              engine={engine}
+              activeLevels={activeLevels}
+              stopSignal={stopSignal}
+              resetSignal={resetSignal}
+              tetraPhase={tetraPhase}
+              onLayerChange={setK8Layer}
+            />
+          </div>
 
-        {/* 11. Color Diamond / Octahedron */}
-        <div style={S_CARD_POLY}>
-          <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
-            <span style={S_LABEL}>{t("music_octa_title")}</span>
-            <div style={{ display: "flex", gap: SP.sm, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
-              <select value={octaA} onChange={(e) => setOctaA(Number(e.target.value))} style={S_SELECT}>
-                {[1, 2, 3, 4, 5, 6].map((lv) => (
-                  <option key={lv} value={lv}>
-                    {lv}
-                  </option>
-                ))}
-              </select>
-              <select value={octaB} onChange={(e) => setOctaB(Number(e.target.value))} style={S_SELECT}>
-                {[1, 2, 3, 4, 5, 6].map((lv) => (
-                  <option key={lv} value={lv}>
-                    {lv}
-                  </option>
-                ))}
-              </select>
-              <button
-                type="button"
-                style={octaPhase !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
-                onClick={() => {
-                  if (octaPhase !== null) {
-                    engine.stopAlgebra?.();
-                    setOctaPhase(null);
-                  } else {
+          <div style={S_CARD_CUBE}>
+            <TetraSplitCard
+              engine={engine}
+              activeLevels={activeLevels}
+              stopSignal={stopSignal}
+              highlighted={k8Layer === 2}
+              onPhaseChange={setTetraPhase}
+            />
+          </div>
+
+          {/* ── F: Symmetry / Automorphism ── */}
+
+          {/* 14. GL(3,2) */}
+          <div style={S_CARD_SYM}>
+            <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
+              <span style={S_LABEL}>{t("music_gl32_title")}</span>
+              <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
+                <button
+                  type="button"
+                  style={{ ...S_BTN_SM }}
+                  onClick={() => {
                     engine.initAudio();
-                    setOctaPhase(null);
-                    engine.playOctahedronMix?.(octaA, octaB, (phase) => setOctaPhase(phase));
-                  }
-                }}
-                disabled={!octaPlayable}
-              >
-                {t("music_octa_play")}
-              </button>
+                    engine.applyGL32Transform?.("A", (p) => {
+                      setGl32Perm(p);
+                      setGl32Flash(true);
+                      setTimeout(() => setGl32Flash(false), 500);
+                    });
+                  }}
+                >
+                  {t("music_gl32_a")}
+                </button>
+                <button
+                  type="button"
+                  style={{ ...S_BTN_SM }}
+                  onClick={() => {
+                    engine.initAudio();
+                    engine.applyGL32Transform?.("B", (p) => {
+                      setGl32Perm(p);
+                      setGl32Flash(true);
+                      setTimeout(() => setGl32Flash(false), 500);
+                    });
+                  }}
+                >
+                  {t("music_gl32_b")}
+                </button>
+                <button
+                  type="button"
+                  style={{ ...S_BTN_SM }}
+                  onClick={() => {
+                    engine.initAudio();
+                    engine.applyGL32Transform?.("C", (p) => {
+                      setGl32Perm(p);
+                      setGl32Flash(true);
+                      setTimeout(() => setGl32Flash(false), 500);
+                    });
+                  }}
+                >
+                  {t("music_gl32_c")}
+                </button>
+              </div>
             </div>
+            <GL32Arrows perm={gl32Perm} activeLevels={activeLevels} flash={gl32Flash} />
+            <div style={{ fontSize: FS.sm, color: C.textDim, textAlign: "center" }}>{t("music_gl32_note")}</div>
           </div>
-          <OctahedronMix lvA={octaA} lvB={octaB} phase={octaPhase} activeLevels={activeLevels} />
-        </div>
 
-        <div style={S_CARD_CUBE}>
-          <K8Explorer
-            engine={engine}
-            activeLevels={activeLevels}
-            stopSignal={stopSignal}
-            resetSignal={resetSignal}
-            tetraPhase={tetraPhase}
-            onLayerChange={setK8Layer}
-          />
-        </div>
-
-        <div style={S_CARD_CUBE}>
-          <TetraSplitCard
-            engine={engine}
-            activeLevels={activeLevels}
-            stopSignal={stopSignal}
-            highlighted={k8Layer === 2}
-            onPhaseChange={setTetraPhase}
-          />
-        </div>
-
-        {/* ── F: Symmetry / Automorphism ── */}
-
-        {/* 14. GL(3,2) */}
-        <div style={S_CARD_SYM}>
-          <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
-            <span style={S_LABEL}>{t("music_gl32_title")}</span>
-            <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
-              <button
-                type="button"
-                style={{ ...S_BTN_SM }}
-                onClick={() => {
-                  engine.initAudio();
-                  engine.applyGL32Transform?.("A", (p) => {
-                    setGl32Perm(p);
-                    setGl32Flash(true);
-                    setTimeout(() => setGl32Flash(false), 500);
-                  });
-                }}
-              >
-                {t("music_gl32_a")}
-              </button>
-              <button
-                type="button"
-                style={{ ...S_BTN_SM }}
-                onClick={() => {
-                  engine.initAudio();
-                  engine.applyGL32Transform?.("B", (p) => {
-                    setGl32Perm(p);
-                    setGl32Flash(true);
-                    setTimeout(() => setGl32Flash(false), 500);
-                  });
-                }}
-              >
-                {t("music_gl32_b")}
-              </button>
-              <button
-                type="button"
-                style={{ ...S_BTN_SM }}
-                onClick={() => {
-                  engine.initAudio();
-                  engine.applyGL32Transform?.("C", (p) => {
-                    setGl32Perm(p);
-                    setGl32Flash(true);
-                    setTimeout(() => setGl32Flash(false), 500);
-                  });
-                }}
-              >
-                {t("music_gl32_c")}
-              </button>
-            </div>
+          <div style={S_CARD_LUMA}>
+            <ComplementPairsCard engine={engine} activeLevels={activeLevels} stopSignal={stopSignal} />
           </div>
-          <GL32Arrows perm={gl32Perm} activeLevels={activeLevels} flash={gl32Flash} />
-          <div style={{ fontSize: FS.sm, color: C.textDim, textAlign: "center" }}>{t("music_gl32_note")}</div>
-        </div>
 
-        <div style={S_CARD_LUMA}>
-          <ComplementPairsCard engine={engine} activeLevels={activeLevels} stopSignal={stopSignal} />
-        </div>
-
-        <div style={S_CARD_LUMA}>
-          <ZigzagCard engine={engine} activeLevels={activeLevels} stopSignal={stopSignal} />
+          <div style={S_CARD_LUMA}>
+            <ZigzagCard engine={engine} activeLevels={activeLevels} stopSignal={stopSignal} />
+          </div>
         </div>
       </div>
     </div>

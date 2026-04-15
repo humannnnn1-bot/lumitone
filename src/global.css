@@ -147,6 +147,11 @@ input[type="checkbox"]:focus-visible {
   font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Yu Gothic UI", "Meiryo", "Noto Sans CJK JP", system-ui, sans-serif !important;
 }
 
+[role="tablist"] {
+  max-width: 380px;
+  margin: 0 auto;
+}
+
 /* ── Tablet: 2-column for Music tab only ── */
 @media (min-width: 768px) and (max-width: 1023px) {
   .music-layout {
@@ -158,6 +163,14 @@ input[type="checkbox"]:focus-visible {
   .music-layout > .panel-canvas,
   .music-layout > .panel-sidebar {
     max-width: 360px;
+  }
+  .music-algebra-wrapper {
+    max-width: 736px; /* 360 + 16 + 360 */
+    align-self: center;
+  }
+  [role="tablist"] {
+    max-width: 480px;
+    margin: 0 auto;
   }
 }
 
@@ -183,9 +196,9 @@ input[type="checkbox"]:focus-visible {
     --sp-header-mb: 10px;
     --sp-tablist-mb: 8px;
     --sp-title-mb: 6px;
-    --fs-tab: 13px;
-    --sp-tab-v: 5px;
-    --sp-tab-h: 10px;
+    --fs-tab: 11px;
+    --sp-tab-v: 4px;
+    --sp-tab-h: 8px;
   }
   .hex-title-standalone {
     display: block;
@@ -222,6 +235,17 @@ input[type="checkbox"]:focus-visible {
   .music-layout > .panel-sidebar {
     align-self: flex-start;
     gap: 3px;
+  }
+  .music-algebra-wrapper {
+    max-width: 872px; /* 420 + 32 + 420 */
+    align-self: center;
+  }
+  [role="tablist"] {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  [role="tab"] {
+    flex: 1 !important;
   }
   .glaze-hue-section {
     margin-top: 0;
