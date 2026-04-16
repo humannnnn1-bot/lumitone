@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, it, expect, vi, beforeEach, afterAll } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, afterAll } from "vitest";
 import { renderHook } from "@testing-library/react";
 import { useExport } from "../hooks/useExport";
 import type { CanvasData } from "../types";
@@ -41,12 +41,17 @@ describe("useExport", () => {
   const origCanShare = navigator.canShare;
 
   beforeEach(() => {
+    vi.useFakeTimers();
     vi.restoreAllMocks();
     mockShowToast.mockClear();
     mockRenderBuf.mockClear();
     // Default: no Web Share API
     Object.defineProperty(navigator, "share", { value: undefined, writable: true, configurable: true });
     Object.defineProperty(navigator, "canShare", { value: undefined, writable: true, configurable: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
   });
 
   afterAll(() => {
@@ -113,6 +118,8 @@ describe("useExport", () => {
       expect(mockAnchor.href).toBe(fakeUrl);
       expect(mockAnchor.download).toBe("my-art.png");
       expect(mockAnchor.click).toHaveBeenCalled();
+      // revokeObjectURL is called after a setTimeout delay
+      vi.advanceTimersByTime(6000);
       expect(URL.revokeObjectURL).toHaveBeenCalledWith(fakeUrl);
     });
 
