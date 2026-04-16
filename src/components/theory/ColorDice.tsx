@@ -290,59 +290,6 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
         {t("theory_dice_desc3")}
       </p>
       <svg viewBox={`0 0 ${NET_W} ${NET_H}`} style={{ width: "100%", maxWidth: NET_W }} role="img" aria-label={t("theory_dice_title")}>
-        {NET_COMP_PAIRS.map(([a, b]) => {
-          const fa = NET_FACES.find((f) => f.lv === a)!;
-          const fb = NET_FACES.find((f) => f.lv === b)!;
-          const ax = NET_GAP + fa.col * NET_STEP + NET_CELL / 2;
-          const ay = NET_GAP + fa.row * NET_STEP + NET_CELL / 2;
-          const bx = NET_GAP + fb.col * NET_STEP + NET_CELL / 2;
-          const by = NET_GAP + fb.row * NET_STEP + NET_CELL / 2;
-          const isActive = hl === a || hl === b;
-          return (
-            <line
-              key={`nc${a}${b}`}
-              x1={ax}
-              y1={ay}
-              x2={bx}
-              y2={by}
-              stroke="rgba(255,255,255,0.15)"
-              strokeWidth={isActive ? 2 : 1}
-              strokeDasharray="4,3"
-              opacity={isActive ? 0.6 : 0.3}
-            />
-          );
-        })}
-
-        {NET_TOGGLES.map(({ from, to, ch, color }) => {
-          const fa = NET_FACES[from];
-          const fb = NET_FACES[to];
-          const ax = NET_GAP + fa.col * NET_STEP + NET_CELL / 2;
-          const ay = NET_GAP + fa.row * NET_STEP + NET_CELL / 2;
-          const bx = NET_GAP + fb.col * NET_STEP + NET_CELL / 2;
-          const by = NET_GAP + fb.row * NET_STEP + NET_CELL / 2;
-          const mx = (ax + bx) / 2;
-          const my = (ay + by) / 2;
-          const isHorizontal = fa.row === fb.row;
-          const ox = isHorizontal ? 0 : -12;
-          const oy = isHorizontal ? -10 : 0;
-          return (
-            <text
-              key={`nt${from}${to}`}
-              x={mx + ox}
-              y={my + oy}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize={FS.xs}
-              fontFamily="monospace"
-              fontWeight={FW.bold}
-              fill={color}
-              opacity={0.7}
-            >
-              {ch}
-            </text>
-          );
-        })}
-
         {NET_FACES.map(({ lv, col, row }) => {
           const info = THEORY_LEVELS[lv];
           const x = NET_GAP + col * (NET_CELL + NET_GAP);
@@ -389,29 +336,13 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
               >
                 {lv}
               </text>
-              <text
-                x={cx}
-                y={y + NET_CELL - 6}
-                textAnchor="middle"
-                fontSize={FS.xxs}
-                fontFamily="monospace"
-                fill={isDim ? C.textDimmer : info.color}
-                opacity={isDim ? 0.3 : 0.8}
-              >
-                {info.name}
-              </text>
-              {isActive && (
-                <text x={cx} y={y + 10} textAnchor="middle" fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer} opacity={0.7}>
-                  +{comp}=7
-                </text>
-              )}
             </g>
           );
         })}
       </svg>
 
       {/* Complement pairs summary */}
-      <div style={{ display: "flex", gap: SP.lg, justifyContent: "center", flexWrap: "wrap" }}>
+      <div style={{ display: "flex", gap: SP["2xl"], justifyContent: "center", flexWrap: "wrap" }}>
         {PAIRS.map(([a, b]) => {
           const infoA = THEORY_LEVELS[a];
           const infoB = THEORY_LEVELS[b];

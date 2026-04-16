@@ -61,6 +61,8 @@ export interface MusicEngineReturn {
   playAndTriads: (onStep: (step: { pairIndex: number; phase: "operands" | "result" } | null) => void) => void;
   playOctahedronMix: (lvA: number, lvB: number, onStep: (phase: "pair" | "result" | null) => void) => void;
   playTetraSplit: (onStep: (phase: "t0" | "t1" | null) => void) => void;
+  playTetraT0: (onStep: (phase: "t0" | null) => void) => void;
+  playTetraT1: (onStep: (phase: "t1" | null) => void) => void;
   playK8Layer: (layer: 1 | 2 | 3, onStep: (edgeIndex: number, pair: [number, number] | null) => void) => void;
 }
 
@@ -505,6 +507,7 @@ export function useMusicEngine({
   const gray3IntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const zigzagIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const cayleyIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const k8IntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const gl32PermRef = useRef<number[]>([1, 2, 3, 4, 5, 6, 7]); // identity permutation
   const droneMutedRef = useRef(true);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
@@ -815,6 +818,10 @@ export function useMusicEngine({
     if (zigzagIntervalRef.current !== null) {
       clearInterval(zigzagIntervalRef.current);
       zigzagIntervalRef.current = null;
+    }
+    if (k8IntervalRef.current !== null) {
+      clearInterval(k8IntervalRef.current);
+      k8IntervalRef.current = null;
     }
   }, [clearAlgebraTimers]);
 
@@ -1381,22 +1388,53 @@ export function useMusicEngine({
     [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
   );
 
+  const playTetraT0 = useCallback(
+    (onStep: (phase: "t0" | null) => void) => {
+      if (!nodesRef.current) return;
+      clearAlgebraTimers();
+      scheduleAlgebra(() => {
+        onStep("t0");
+        TETRA_T0.forEach((lv) => playDiscreteLevel(lv));
+      }, 0);
+      scheduleAlgebra(() => onStep(null), 650);
+    },
+    [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
+  );
+
+  const playTetraT1 = useCallback(
+    (onStep: (phase: "t1" | null) => void) => {
+      if (!nodesRef.current) return;
+      clearAlgebraTimers();
+      scheduleAlgebra(() => {
+        onStep("t1");
+        TETRA_T1.forEach((lv) => playDiscreteLevel(lv));
+      }, 0);
+      scheduleAlgebra(() => onStep(null), 650);
+    },
+    [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
+  );
+
   const playK8Layer = useCallback(
     (layer: 1 | 2 | 3, onStep: (edgeIndex: number, pair: [number, number] | null) => void) => {
       if (!nodesRef.current) return;
+      if (k8IntervalRef.current !== null) {
+        clearInterval(k8IntervalRef.current);
+      }
       const edges = K8_LAYER_EDGES[layer];
-      clearAlgebraTimers();
       const intervalMs = layer === 3 ? 520 : 280;
-      edges.forEach(([a, b], edgeIndex) => {
-        scheduleAlgebra(() => {
-          onStep(edgeIndex, [a, b]);
-          playDiscreteLevel(a);
-          playDiscreteLevel(b);
-        }, edgeIndex * intervalMs);
-      });
-      scheduleAlgebra(() => onStep(-1, null), edges.length * intervalMs);
+      let step = 0;
+      const id = setInterval(() => {
+        if (!nodesRef.current) return;
+        const ei = step % edges.length;
+        const [a, b] = edges[ei];
+        onStep(ei, [a, b]);
+        playDiscreteLevel(a);
+        playDiscreteLevel(b);
+        step++;
+      }, intervalMs);
+      k8IntervalRef.current = id;
     },
-    [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
+    [playDiscreteLevel],
   );
 
   return {
@@ -1429,6 +1467,8 @@ export function useMusicEngine({
     playAndTriads,
     playOctahedronMix,
     playTetraSplit,
+    playTetraT0,
+    playTetraT1,
     playK8Layer,
   };
 }

@@ -5,7 +5,7 @@ import { usePinReset } from "./pin-reset";
 import { S_BTN } from "../../styles";
 import { useTranslation } from "../../i18n";
 
-const DOT_R = 14;
+const DOT_R = 12;
 
 function edgesOf(v: number): number[] {
   return CUBE_EDGES.map((e, i) => (e[0] === v || e[1] === v ? i : -1)).filter((i) => i >= 0);

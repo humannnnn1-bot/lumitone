@@ -120,7 +120,7 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
         <div style={{ textAlign: "center" }}>
           <h2
             className="theory-title"
-            style={{ fontSize: FS.title, fontWeight: FW.bold, fontFamily: "monospace", color: C.textPrimary, margin: 0 }}
+            style={{ fontSize: FS.title, fontWeight: FW.bold, fontFamily: "monospace", color: C.textPrimary, margin: 0, marginBottom: 12 }}
           >
             {t("theory_title")}
           </h2>

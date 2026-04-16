@@ -92,7 +92,7 @@ export const OctahedronMix = React.memo(function OctahedronMix({ lvA, lvB, phase
         );
       })}
 
-      <text x={90} y={79} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={90} y={79} textAnchor="middle" fontSize={9} fontFamily="monospace" fill={C.textDimmer}>
         {valid && xorResult !== null ? `${lvA}⊕${lvB}=${xorResult}` : t("music_octa_hint_invalid")}
       </text>
     </svg>

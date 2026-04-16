@@ -94,7 +94,7 @@ export const K8Explorer = React.memo(function K8Explorer({
             {t("music_k8_d3")}
           </button>
           <button type="button" style={edgeIndex >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handleToggleLayerPlayback}>
-            {t("music_k8_play")}
+            {edgeIndex >= 0 ? t("music_k8_stop") : t("music_k8_play")}
           </button>
         </div>
       </div>

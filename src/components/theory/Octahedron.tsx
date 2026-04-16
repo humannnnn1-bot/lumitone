@@ -258,7 +258,7 @@ function DiamondView({
   };
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: 300 }} role="img">
+    <svg viewBox="30 20 240 264" style={{ width: "100%", maxWidth: 220 }} role="img">
       {/* Gradient defs: 3 per face (one per vertex → opposite edge midpoint) */}
       <defs>
         {/* Edge gradients: vertex-to-vertex color blend */}
@@ -372,7 +372,7 @@ function DiamondView({
             y2={points[b].y}
             stroke={active ? "#fff" : `url(#${viewId}-eg-${ei})`}
             strokeWidth={w}
-            strokeDasharray={isHidden && !active ? "6,4" : undefined}
+            strokeDasharray={isHidden && !active ? "3,3" : undefined}
             opacity={op}
           />
         );

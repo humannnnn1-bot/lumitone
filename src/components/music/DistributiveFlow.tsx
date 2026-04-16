@@ -58,21 +58,21 @@ export const DistributiveFlow = React.memo(function DistributiveFlow({ a, b, c, 
         </filter>
       </defs>
       {/* Input labels near usage */}
-      <text x={90} y={10} textAnchor="middle" fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={90} y={10} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.textDimmer}>
         a={a}
       </text>
-      <text x={25} y={20} textAnchor="middle" fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={25} y={20} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.textDimmer}>
         b={b}
       </text>
-      <text x={65} y={20} textAnchor="middle" fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={65} y={20} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.textDimmer}>
         c={c}
       </text>
 
       {/* Path labels */}
-      <text x={45} y={50} textAnchor="middle" fontSize={6} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={45} y={50} textAnchor="middle" fontSize={7} fontFamily="monospace" fill={C.textDimmer}>
         a{"\u2227"}(b{"\u2295"}c)
       </text>
-      <text x={135} y={50} textAnchor="middle" fontSize={6} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={135} y={50} textAnchor="middle" fontSize={7} fontFamily="monospace" fill={C.textDimmer}>
         (a{"\u2227"}b){"\u2295"}(a{"\u2227"}c)
       </text>
 
@@ -146,7 +146,7 @@ export const DistributiveFlow = React.memo(function DistributiveFlow({ a, b, c, 
         </text>
       </g>
       {phase === "equal" && (
-        <text x={90} y={H - 2} textAnchor="middle" fontSize={7} fontFamily="monospace" fill={C.accent}>
+        <text x={90} y={H - 2} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.accent}>
           = {left} (equal!)
         </text>
       )}

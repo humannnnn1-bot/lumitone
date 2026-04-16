@@ -5,7 +5,7 @@ interface OscilloscopeProps {
   analyserNode: AnalyserNode | null;
 }
 
-const W = 360;
+const W = 300;
 const H = 80;
 const BG = "#0a0a1a";
 const LINE_COLOR = "#00ff88";
@@ -66,6 +66,7 @@ export const Oscilloscope = React.memo(function Oscilloscope({ analyserNode }: O
         width: "100%",
         maxWidth: W,
         aspectRatio: `${W}/${H}`,
+        marginTop: 4,
         borderRadius: R.md,
         border: `1px solid ${C.border}`,
       }}

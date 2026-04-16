@@ -4,7 +4,7 @@ import { C, FS, FW } from "../../tokens";
 import { useTranslation } from "../../i18n";
 
 const SVG_W = 420,
-  H = 240;
+  H = 224;
 const ROW_H = 24,
   HEADER_Y = 18;
 const COL = { lv: 20, bin: 56, dot: 96, g: 136, r: 164, b: 192, wt: 224, hamming: 278, luma: 370 };
@@ -28,7 +28,7 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
       <svg
         viewBox={`0 0 ${SVG_W} ${H}`}
         className="theory-binary-svg"
-        style={{ width: "100%", maxWidth: SVG_W }}
+        style={{ width: "100%", maxWidth: 480 }}
         role="img"
         aria-label={t("theory_binary_title")}
       >
@@ -124,7 +124,7 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                 fill={lv.lv === 0 ? "none" : lv.color}
                 stroke={lv.lv === 0 ? C.textDimmer : lv.color}
                 strokeWidth={lv.lv === 0 ? 1 : 0}
-                fillOpacity={0.85}
+                fillOpacity={0.9}
               />
               {lv.bits.map((bit, bi) => (
                 <circle
@@ -135,7 +135,7 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                   fill={bit ? CHANNEL_COLORS[bi] : "none"}
                   stroke={CHANNEL_COLORS[bi]}
                   strokeWidth={bit ? 0 : 1}
-                  fillOpacity={bit ? 0.8 : 1}
+                  fillOpacity={bit ? 0.6 : 1}
                   opacity={bit ? 1 : 0.3}
                 />
               ))}
@@ -169,7 +169,7 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                 height={8}
                 rx={2}
                 fill={lv.lv === 0 ? C.textDimmer : lv.color}
-                fillOpacity={0.5}
+                fillOpacity={0.8}
               />
               <text
                 x={COL.luma + 26}

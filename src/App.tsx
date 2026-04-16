@@ -84,19 +84,6 @@ const S_LAZY_PANEL_FALLBACK: React.CSSProperties = {
   fontSize: FS.lg,
 };
 
-function LoadingDots() {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setCount((c) => (c + 1) % 4), 400);
-    return () => clearInterval(id);
-  }, []);
-  return (
-    <span>
-      Loading<span style={{ display: "inline-block", width: "1.5em", textAlign: "left" }}>{".".repeat(count)}</span>
-    </span>
-  );
-}
-
 interface AppContentProps {
   app: ReturnType<typeof useAppState>;
   panZoom: ReturnType<typeof usePanZoom>;
@@ -632,13 +619,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
         </div>
         {activeTab === 7 && (
           <div id="tabpanel-7" role="tabpanel" style={{ width: "100%" }}>
-            <Suspense
-              fallback={
-                <div style={S_LAZY_PANEL_FALLBACK}>
-                  <LoadingDots />
-                </div>
-              }
-            >
+            <Suspense fallback={<div style={S_LAZY_PANEL_FALLBACK}>Loading...</div>}>
               <MusicPanel />
             </Suspense>
           </div>

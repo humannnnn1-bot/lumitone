@@ -79,6 +79,7 @@ const S_SECTION: React.CSSProperties = {
   color: C.textDim,
   fontFamily: FONT.mono,
   width: "100%",
+  boxSizing: "border-box",
 };
 
 const S_CARD: React.CSSProperties = {
@@ -1079,7 +1080,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
           <Oscilloscope analyserNode={engine.analyserNode} />
 
           {/* ═══ Fano Plane ═══ */}
-          <div style={{ ...S_SECTION, marginTop: SP.xl }} role="heading" aria-level={3}>
+          <div style={{ ...S_SECTION, marginTop: SP.xl, width: "100%" }} role="heading" aria-level={3}>
             {t("music_section_fano")}
           </div>
           <MiniFanoChord
@@ -1133,7 +1134,17 @@ export const MusicPanel = React.memo(function MusicPanel() {
             </button>
           </div>
           {/* Point Context */}
-          <div style={{ display: "flex", gap: SP.sm, alignItems: "center", justifyContent: "center", flexWrap: "wrap", width: "100%" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: SP.sm,
+              alignItems: "center",
+              justifyContent: "center",
+              flexWrap: "wrap",
+              width: "100%",
+              marginTop: 3,
+            }}
+          >
             <span style={S_LABEL}>{t("music_pointfano_title")}</span>
             <select value={fanoContextPoint} onChange={(e) => setFanoContextPoint(Number(e.target.value))} style={S_SELECT}>
               {[1, 2, 3, 4, 5, 6, 7].map((lv) => (
@@ -1147,7 +1158,17 @@ export const MusicPanel = React.memo(function MusicPanel() {
             </button>
           </div>
           {/* Line + Complement */}
-          <div style={{ display: "flex", gap: SP.sm, alignItems: "center", justifyContent: "center", flexWrap: "wrap", width: "100%" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: SP.sm,
+              alignItems: "center",
+              justifyContent: "center",
+              flexWrap: "wrap",
+              width: "100%",
+              marginTop: 3,
+            }}
+          >
             <span style={S_LABEL}>{t("music_dual_title")}</span>
             <select value={selectedFanoLine} onChange={(e) => setHoveredFanoLine(Number(e.target.value))} style={S_SELECT}>
               {FANO_LINES.map((line, i) => (
@@ -1161,7 +1182,17 @@ export const MusicPanel = React.memo(function MusicPanel() {
             </button>
           </div>
           {/* Gray Melody + Fano Rhythm */}
-          <div style={{ display: "flex", gap: SP.sm, alignItems: "center", justifyContent: "center", flexWrap: "wrap", width: "100%" }}>
+          <div
+            style={{
+              display: "flex",
+              gap: SP.sm,
+              alignItems: "center",
+              justifyContent: "center",
+              flexWrap: "wrap",
+              width: "100%",
+              marginTop: 3,
+            }}
+          >
             <span style={S_LABEL}>{t("music_traversal_title")}</span>
             <button type="button" style={grayStep !== null ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handleGrayMelody}>
               {grayStep !== null ? t("music_gray_stop") : t("music_gray_melody")}
@@ -1311,6 +1342,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
 
           {/* 9. Weight Spectrum ([7,4,3] / [8,4,4]) */}
           <div style={S_CARD_CODE}>
+            <span style={S_LABEL}>{t("music_weight_title")}</span>
             <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
               <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
                 <button
@@ -1385,36 +1417,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
 
           {/* ── D: Cube / Gray Code ── */}
 
-          {/* 10. Gray 3-Voice */}
-          <div style={S_CARD_CUBE}>
-            <div style={{ display: "flex", gap: SP.sm, alignItems: "center", justifyContent: "center" }}>
-              <span style={S_LABEL}>{t("music_gray3v_title")}</span>
-              <button
-                type="button"
-                style={{ ...(gray3Playing ? S_BTN_SM_ACTIVE : S_BTN_SM) }}
-                onClick={() => {
-                  if (gray3Playing) {
-                    engine.stopAlgebra?.();
-                    setGray3Playing(false);
-                    setGray3Code(null);
-                  } else {
-                    engine.initAudio();
-                    engine.playGray3Voice?.((lv: number | null) => {
-                      setGray3Code(lv);
-                    });
-                    setGray3Playing(true);
-                  }
-                }}
-              >
-                {gray3Playing ? t("music_gray3v_stop") : t("music_gray3v_play")}
-              </button>
-            </div>
-            <GrayCube currentCode={gray3Code} activeLevels={activeLevels} />
-          </div>
-
-          {/* ── E: Polyhedra / K8 ── */}
-
-          {/* 11. Color Diamond / Octahedron */}
+          {/* 10. XOR Mixer / Octahedron */}
           <div style={S_CARD_POLY}>
             <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
               <span style={S_LABEL}>{t("music_octa_title")}</span>
@@ -1453,6 +1456,35 @@ export const MusicPanel = React.memo(function MusicPanel() {
               </div>
             </div>
             <OctahedronMix lvA={octaA} lvB={octaB} phase={octaPhase} activeLevels={activeLevels} />
+          </div>
+
+          {/* ── E: Polyhedra / K8 ── */}
+
+          {/* 11. Gray 3-Voice */}
+          <div style={S_CARD_CUBE}>
+            <div style={{ display: "flex", gap: SP.sm, alignItems: "center", justifyContent: "center" }}>
+              <span style={S_LABEL}>{t("music_gray3v_title")}</span>
+              <button
+                type="button"
+                style={{ ...(gray3Playing ? S_BTN_SM_ACTIVE : S_BTN_SM) }}
+                onClick={() => {
+                  if (gray3Playing) {
+                    engine.stopAlgebra?.();
+                    setGray3Playing(false);
+                    setGray3Code(null);
+                  } else {
+                    engine.initAudio();
+                    engine.playGray3Voice?.((lv: number | null) => {
+                      setGray3Code(lv);
+                    });
+                    setGray3Playing(true);
+                  }
+                }}
+              >
+                {gray3Playing ? t("music_gray3v_stop") : t("music_gray3v_play")}
+              </button>
+            </div>
+            <GrayCube currentCode={gray3Code} activeLevels={activeLevels} />
           </div>
 
           <div style={S_CARD_CUBE}>

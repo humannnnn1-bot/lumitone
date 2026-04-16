@@ -46,20 +46,21 @@ export const TetraSplitCard = React.memo(function TetraSplitCard({
     onPhaseChange?.(null);
   }, [stopSignal, onPhaseChange]);
 
-  const handleToggle = useCallback(() => {
-    if (tetraPhase !== null) {
-      engine.stopAlgebra?.();
-      setTetraPhase(null);
-      onPhaseChange?.(null);
-    } else {
-      engine.initAudio();
-      setTetraPhase(null);
-      engine.playTetraSplit?.((phase) => {
-        setTetraPhase(phase);
-        onPhaseChange?.(phase);
-      });
-    }
-  }, [engine, tetraPhase, onPhaseChange]);
+  const handlePlayT0 = useCallback(() => {
+    engine.initAudio();
+    engine.playTetraT0?.((phase) => {
+      setTetraPhase(phase);
+      onPhaseChange?.(phase);
+    });
+  }, [engine, onPhaseChange]);
+
+  const handlePlayT1 = useCallback(() => {
+    engine.initAudio();
+    engine.playTetraT1?.((phase) => {
+      setTetraPhase(phase);
+      onPhaseChange?.(phase);
+    });
+  }, [engine, onPhaseChange]);
 
   return (
     <div
@@ -75,9 +76,14 @@ export const TetraSplitCard = React.memo(function TetraSplitCard({
     >
       <div style={S_COL}>
         <span style={S_TITLE}>{t("music_tetra_title")}</span>
-        <button type="button" style={tetraPhase !== null ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handleToggle}>
-          {t("music_tetra_play")}
-        </button>
+        <div style={{ display: "flex", gap: SP.sm }}>
+          <button type="button" style={tetraPhase === "t0" ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handlePlayT0}>
+            {"\u25b6 T0"}
+          </button>
+          <button type="button" style={tetraPhase === "t1" ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handlePlayT1}>
+            {"\u25b6 T1"}
+          </button>
+        </div>
       </div>
       <TetraSplitView phase={tetraPhase} activeLevels={activeLevels} />
     </div>

@@ -9,6 +9,8 @@ import {
   TETRA_T1_EDGES,
   vertexRadius,
   faceDiffuse,
+  isBackEdge,
+  vertexDepth,
 } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
 import { usePinReset } from "./pin-reset";
@@ -75,20 +77,23 @@ function MiniTetra({
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
       <svg viewBox={`0 0 ${MT_W} ${MT_H}`} style={{ width: MT_W, height: MT_H }}>
-        {/* Ghost cube edges (dashed, to show inscribed relationship) */}
-        {CUBE_EDGES.map(([a, b], i) => (
-          <line
-            key={`gc${i}`}
-            x1={mtPt(a).x}
-            y1={mtPt(a).y}
-            x2={mtPt(b).x}
-            y2={mtPt(b).y}
-            stroke={C.textDimmer}
-            strokeWidth={0.6}
-            strokeDasharray="3 2"
-            opacity={0.25}
-          />
-        ))}
+        {/* Ghost cube edges (back edges dashed, front edges solid) */}
+        {CUBE_EDGES.map(([a, b], i) => {
+          const back = isBackEdge(a, b);
+          return (
+            <line
+              key={`gc${i}`}
+              x1={mtPt(a).x}
+              y1={mtPt(a).y}
+              x2={mtPt(b).x}
+              y2={mtPt(b).y}
+              stroke={C.textDimmer}
+              strokeWidth={back ? 0.5 : 0.8}
+              strokeDasharray={back ? "3 2" : undefined}
+              opacity={back ? 0.15 : 0.3}
+            />
+          );
+        })}
         {/* Ghost vertices (the 4 non-tetrahedron cube vertices as small dots) */}
         {[0, 1, 2, 3, 4, 5, 6, 7]
           .filter((lv) => !verts.includes(lv))
@@ -96,18 +101,47 @@ function MiniTetra({
             const p = mtPt(lv);
             return <circle key={`gv${lv}`} cx={p.x} cy={p.y} r={2.5} fill={C.textDimmer} opacity={0.25} />;
           })}
-        {/* Tetrahedron faces (filled triangles with diffuse lighting) */}
+        {/* Depth-gradient defs for tetra faces */}
+        <defs>
+          {faces.map((f, i) => {
+            const depths = f.map((vi) => ({ v: vi, d: vertexDepth(vi), p: mtPt(vi) }));
+            const minD = depths.reduce((a, b) => (a.d < b.d ? a : b));
+            const maxD = depths.reduce((a, b) => (a.d > b.d ? a : b));
+            if (minD.d === maxD.d) return null;
+            const fc = faceColor(f);
+            const info = THEORY_LEVELS[fc];
+            const opMin = 0.02 + (minD.d / 3) * 0.2;
+            const opMax = 0.02 + (maxD.d / 3) * 0.2;
+            return (
+              <linearGradient
+                key={`tfg-${i}`}
+                id={`tfg-${i}`}
+                gradientUnits="userSpaceOnUse"
+                x1={minD.p.x}
+                y1={minD.p.y}
+                x2={maxD.p.x}
+                y2={maxD.p.y}
+              >
+                <stop offset="0%" stopColor={info.color} stopOpacity={opMin} />
+                <stop offset="100%" stopColor={info.color} stopOpacity={opMax} />
+              </linearGradient>
+            );
+          })}
+        </defs>
+        {/* Tetrahedron faces (filled triangles with depth-based lighting) */}
         {faces.map((f, i) => {
           const fc = faceColor(f);
           const info = THEORY_LEVELS[fc];
           const pts = f.map((v) => `${mtPt(v).x},${mtPt(v).y}`).join(" ");
           const d = faceDiffuse(f[0], f[1], f[2]);
+          const depths = f.map((vi) => vertexDepth(vi));
+          const hasDepthDiff = Math.max(...depths) !== Math.min(...depths);
           return (
             <polygon
               key={`tf${i}`}
               points={pts}
-              fill={info.color}
-              fillOpacity={0.04 + d * 0.2}
+              fill={hasDepthDiff ? `url(#tfg-${i})` : info.color}
+              fillOpacity={hasDepthDiff ? 1 : 0.04 + d * 0.2}
               stroke={info.color}
               strokeWidth={0.5}
               strokeOpacity={0.1 + d * 0.3}
@@ -115,19 +149,67 @@ function MiniTetra({
             />
           );
         })}
-        {/* Tetrahedron edges */}
+        {/* Tetrahedron edge gradient defs */}
+        <defs>
+          {edges.map(([a, b], i) => {
+            const da = vertexDepth(a) / 3;
+            const db = vertexDepth(b) / 3;
+            if (Math.abs(da - db) < 0.01) return null;
+            const pa = mtPt(a),
+              pb = mtPt(b);
+            const opA = 0.15 + da * 0.6;
+            const opB = 0.15 + db * 0.6;
+            return (
+              <linearGradient key={`teg-${i}`} id={`teg-${i}`} gradientUnits="userSpaceOnUse" x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y}>
+                <stop offset="0%" stopColor="#fff" stopOpacity={opA} />
+                <stop offset="100%" stopColor="#fff" stopOpacity={opB} />
+              </linearGradient>
+            );
+          })}
+        </defs>
+        {/* Tetrahedron edges (depth-based brightness + taper) */}
         {edges.map(([a, b], i) => {
           const active = hl === a || hl === b;
+          const da = vertexDepth(a) / 3;
+          const db = vertexDepth(b) / 3;
+          const hasGradient = Math.abs(da - db) > 0.01;
+          const avgDepth = (da + db) / 2;
+          const pa = mtPt(a),
+            pb = mtPt(b);
+
+          if (active) {
+            return <line key={`te${i}`} x1={pa.x} y1={pa.y} x2={pb.x} y2={pb.y} stroke="#fff" strokeWidth={2} opacity={0.9} />;
+          }
+
+          if (hasGradient) {
+            const hwA = 0.3 + da * 0.8;
+            const hwB = 0.3 + db * 0.8;
+            const dx = pb.x - pa.x,
+              dy = pb.y - pa.y;
+            const len = Math.sqrt(dx * dx + dy * dy) || 1;
+            const nx = -dy / len,
+              ny = dx / len;
+            return (
+              <polygon
+                key={`te${i}`}
+                points={`${pa.x + nx * hwA},${pa.y + ny * hwA} ${pb.x + nx * hwB},${pb.y + ny * hwB} ${pb.x - nx * hwB},${pb.y - ny * hwB} ${pa.x - nx * hwA},${pa.y - ny * hwA}`}
+                fill={`url(#teg-${i})`}
+              />
+            );
+          }
+
+          const uniformOp = 0.15 + avgDepth * 0.6;
+          const uniformW = 0.6 + avgDepth * 1.2;
           return (
             <line
               key={`te${i}`}
-              x1={mtPt(a).x}
-              y1={mtPt(a).y}
-              x2={mtPt(b).x}
-              y2={mtPt(b).y}
-              stroke={active ? "#fff" : "rgba(255,255,255,0.6)"}
-              strokeWidth={active ? 2 : 1.2}
-              opacity={active ? 0.9 : 0.5}
+              x1={pa.x}
+              y1={pa.y}
+              x2={pb.x}
+              y2={pb.y}
+              stroke="rgba(255,255,255,0.65)"
+              strokeWidth={uniformW}
+              opacity={uniformOp}
             />
           );
         })}

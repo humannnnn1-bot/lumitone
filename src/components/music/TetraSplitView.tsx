@@ -65,10 +65,10 @@ export const TetraSplitView = React.memo(function TetraSplitView({ phase, active
 
         return (
           <g key={group.key} opacity={opacity} filter={active ? "url(#tetra-glow)" : undefined}>
-            <text x={group.centerX} y={12} textAnchor="middle" fontSize={8} fill={C.textDimmer}>
+            <text x={group.centerX} y={12} textAnchor="middle" fontSize={9} fill={C.textDimmer}>
               {group.label}
             </text>
-            <text x={group.centerX} y={112} textAnchor="middle" fontSize={7} fill={C.textDimmer}>
+            <text x={group.centerX} y={112} textAnchor="middle" fontSize={8} fill={C.textDimmer}>
               {group.subtitle}
             </text>
 

@@ -1361,17 +1361,11 @@ export const LinkedViz = React.memo(function LinkedViz({
                         fontSize={FS_ROW}
                         fill={textFill}
                         fontWeight={r.dim ? "normal" : "bold"}
-                        fontFamily="'SF Mono','Cascadia Mono',Consolas,Menlo,monospace"
+                        fontFamily="system-ui, sans-serif"
                       >
                         {r.label}
                       </text>
-                      <text
-                        x={textX + LABEL_W}
-                        y={iy + (i + 1) * ROW}
-                        fontSize={FS_ROW}
-                        fill={textFill}
-                        fontFamily="'SF Mono','Cascadia Mono',Consolas,Menlo,monospace"
-                      >
+                      <text x={textX + LABEL_W} y={iy + (i + 1) * ROW} fontSize={FS_ROW} fill={textFill} fontFamily="system-ui, sans-serif">
                         {r.value}
                       </text>
                     </g>
@@ -1407,7 +1401,7 @@ export const LinkedViz = React.memo(function LinkedViz({
   const isInverted = deltaAlpha === 180;
 
   return (
-    <div style={{ marginTop: SP.xl, textAlign: "center" }}>
+    <div style={{ marginTop: SP.xl, textAlign: "center", width: "87%" }}>
       {/* L0/L7 Toggle + Δα controls */}
       <div style={{ marginBottom: SP.md, display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center" }}>
         <button type="button" style={mode === 0 ? S_TOGGLE_ACTIVE : S_TOGGLE} onClick={() => setMode(0)}>
@@ -1452,7 +1446,7 @@ export const LinkedViz = React.memo(function LinkedViz({
         ref={svgRef}
         viewBox={`0 0 ${TW} ${TH}`}
         width="100%"
-        style={{ maxWidth: "min(460px, calc(100vw - 24px))" }}
+        style={{ maxWidth: "min(500px, calc(100vw - 24px))" }}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}

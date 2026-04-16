@@ -44,7 +44,7 @@ export const ComplementPairs = React.memo(function ComplementPairs({ activePair,
         strokeDasharray="3,2"
         opacity={0.6}
       />
-      <text x={CX} y={TOP - 6} textAnchor="middle" fontSize={7} fontFamily="monospace" fill={C.accent} opacity={0.8}>
+      <text x={CX} y={TOP - 6} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.accent} opacity={0.8}>
         550Hz
       </text>
       {COMPLEMENT_PAIRS.map(([a, b], i) => {
@@ -88,7 +88,7 @@ export const ComplementPairs = React.memo(function ComplementPairs({ activePair,
                 y={y + BAR_H / 2}
                 textAnchor="end"
                 dominantBaseline="central"
-                fontSize={7}
+                fontSize={8}
                 fontFamily="monospace"
                 fill={C.textMuted}
               >
@@ -99,7 +99,7 @@ export const ComplementPairs = React.memo(function ComplementPairs({ activePair,
         );
       })}
       {/* Theorem label */}
-      <text x={CX} y={H - 4} textAnchor="middle" fontSize={7} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={CX} y={H - 4} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.textDimmer}>
         Y&#x2096; + Y&#x2087;&#x208b;&#x2096; = 255
       </text>
     </svg>
