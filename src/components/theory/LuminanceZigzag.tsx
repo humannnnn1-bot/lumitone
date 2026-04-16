@@ -36,7 +36,12 @@ const SEG_LABELS = ["G\u2191", "R\u2193", "B\u2191", "G\u2193", "R\u2191", "B\u2
 const LEVELS = [0, 29.07, 76.245, 105.315, 149.685, 178.755, 225.93, 255];
 
 // Find intersections of Y=target with the zigzag
-function findIntersections(target: number): { h: number; color: string }[] {
+function circularHueDistance(a: number, b: number): number {
+  const diff = Math.abs(a - b);
+  return Math.min(diff, 360 - diff);
+}
+
+export function findLumaIntersections(target: number): { h: number; color: string }[] {
   const hits: { h: number; color: string }[] = [];
   for (let i = 0; i < 6; i++) {
     const y0 = VERTS[i].Y;
@@ -45,7 +50,7 @@ function findIntersections(target: number): { h: number; color: string }[] {
     const hi = Math.max(y0, y1);
     if (target >= lo && target <= hi) {
       const t = y1 === y0 ? 0 : (target - y0) / (y1 - y0);
-      const h = VERTS[i].h + t * 60;
+      const h = (VERTS[i].h + t * 60) % 360;
       // Approximate hue to RGB for dot color
       const hNorm = h / 360;
       const r = Math.round(255 * Math.max(0, Math.min(1, Math.abs(hNorm * 6 - 3) - 1)));
@@ -54,10 +59,10 @@ function findIntersections(target: number): { h: number; color: string }[] {
       hits.push({ h, color: `rgb(${r},${g},${b})` });
     }
   }
-  // Deduplicate (vertex shared by two segments)
+  // Deduplicate vertices shared by two segments, including the 0°/360° seam.
   const unique: typeof hits = [];
   for (const hit of hits) {
-    if (!unique.some((u) => Math.abs(u.h - hit.h) < 0.5)) unique.push(hit);
+    if (!unique.some((u) => circularHueDistance(u.h, hit.h) < 0.5)) unique.push(hit);
   }
   return unique;
 }
@@ -75,7 +80,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
   const hlY = hlLevel !== null && hlLevel >= 0 && hlLevel <= 7 ? LEVELS[hlLevel] : null;
   const compLevel = hlLevel !== null ? 7 - hlLevel : null;
   const compY = compLevel !== null && compLevel >= 0 && compLevel <= 7 ? LEVELS[compLevel] : null;
-  const hits = hlY !== null ? findIntersections(hlY) : [];
+  const hits = hlY !== null ? findLumaIntersections(hlY) : [];
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4, width: "100%" }}>

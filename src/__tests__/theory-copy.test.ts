@@ -17,14 +17,12 @@ describe("theory copy", () => {
     expect(ja.theory_dice_footer_subtractive).toContain("a + b - 7 = a ∧ b");
   });
 
-  it("labels die views as XOR and AND readings within the model", () => {
+  it("labels die views as XOR and AND readings", () => {
     expect(en.theory_dice_additive_col).toBe("XOR view (additive reading)");
     expect(en.theory_dice_subtractive_col).toBe("AND view (subtractive reading)");
-    expect(en.theory_dice_ops_note.toLowerCase()).toContain("within this model");
 
     expect(ja.theory_dice_additive_col).toBe("XORの読み（加法的）");
     expect(ja.theory_dice_subtractive_col).toBe("ANDの読み（減法的）");
-    expect(ja.theory_dice_ops_note).toContain("このモデル上の演算的な読み");
   });
 
   it("describes Hamming as a position-error demo", () => {
@@ -60,7 +58,7 @@ describe("theory copy", () => {
     expect(en.theory_conn_cube_geometry_hook.toLowerCase()).toContain("even-parity tetrahedron");
     expect(en.theory_conn_cube_geometry_hook.toLowerCase()).not.toContain("7 fano lines are planar cross-sections");
 
-    expect(ja.theory_conn_cube_geometry_hook).toContain("2 次元部分空間");
+    expect(ja.theory_conn_cube_geometry_hook).toContain("2次元部分空間");
     expect(ja.theory_conn_cube_geometry_hook).toContain("偶数パリティ四面体");
   });
 
@@ -95,5 +93,49 @@ describe("theory copy", () => {
     expect(ja.theory_dice_desc3).toContain("R→Y→G→C→B→M");
     expect(ja.theory_dice_desc3).toContain("逆順");
     expect(ja.theory_dice_desc3).not.toContain("自由立方体展開図");
+  });
+
+  it("keeps reviewed Japanese copy precise and natural", () => {
+    expect(ja.theory_intro).toContain("本タブの出発点となる設計選択です");
+    expect(ja.theory_binary_desc).toContain("人間の色覚の帰結です");
+    expect(ja.theory_zigzag_desc).toContain("円周上では");
+    expect(ja.theory_gray_desc).toContain("原色から生成される三点線");
+    expect(ja.theory_conn_cube_geometry_hook).toContain("ユークリッド的な立方体");
+    expect(ja.theory_conn_polyhedra_desc).toContain("本タブの4つの多面体");
+    expect(ja.theory_conn_polyhedra_desc).not.toContain("§9");
+  });
+
+  it("keeps Japanese Theory prose in the agreed style", () => {
+    expect(ja.theory_intro).toBe(
+      "CHROMALUMの8段階ルマレベルは、RGBチャンネルを3ビット2進数として符号化します。これは本タブの出発点となる設計選択です。ここから、カラーキューブ、グレイコード、ハミング符号、ファノ平面が GF(2)^3 の構造として現れます。GF(2) は 0 と 1 だけから成る最小の有限体であり、1+1=0 が成り立ちます。GF(2)^3 はその3次元ベクトル空間であり、8つのベクトルが8色に対応します。",
+    );
+    expect(ja.theory_cube_desc).toContain("立方体");
+    expect(ja.theory_octa_desc).toContain("八面体");
+    expect(ja.theory_tetra_desc).toContain("四面体分解");
+    expect(ja.theory_tetra_desc).toContain("T0（偶数重み：K, M, C, Y）");
+    expect(ja.theory_tetra_desc).not.toContain("T0（偶数重み：Black, M, C, Y）");
+    expect(en.theory_tetra_desc).toContain("T0 (even weight: K, M, C, Y)");
+    expect(en.theory_tetra_desc).not.toContain("T0 (even weight: Black, M, C, Y)");
+    expect(en.theory_dice_tetra_subgroup).toContain("T0 = {K, M, C, Y}");
+    expect(en.theory_dice_tetra_subgroup).not.toContain("T0 = {Black, M, C, Y}");
+    expect(ja.theory_dice_tetra_subgroup).toContain("T0 = {K, M, C, Y}");
+    expect(ja.theory_stella_desc).toContain("星形八面体");
+    expect(ja.theory_cube_desc).toContain("Black(0)");
+    expect(ja.theory_hamming_desc2).toContain("Blue(1)");
+    expect(ja.theory_hamming_desc2).not.toContain("青(1)");
+    expect(ja.theory_dice_desc2).toContain("定理です：");
+    expect(ja.theory_dice_desc3).toContain("証明の要点：");
+    expect(ja.theory_conn_polyhedra_desc).toContain("可換です：");
+    expect(ja.theory_dice_desc2).not.toContain("定理です:");
+    expect(ja.theory_dice_desc3).not.toContain("証明の要点:");
+    expect(ja.theory_conn_polyhedra_desc).not.toContain("可換です:");
+  });
+
+  it("keeps the polyhedra section reference language-independent", () => {
+    expect(en.theory_zigzag_desc).toContain("On the hue circle");
+    expect(en.theory_conn_polyhedra_desc).toContain("the four polyhedra in this tab");
+    expect(en.theory_conn_polyhedra_desc).not.toContain("§9");
+    expect(en.theory_stella_desc).toContain("edge set of K₈");
+    expect(en.theory_stella_desc).not.toContain("K₈ = Cube + Color Star + Complements");
   });
 });
