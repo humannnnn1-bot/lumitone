@@ -368,16 +368,24 @@ export function MapCanvas({
     if (!c) return;
     c.toBlob((blob) => {
       if (!blob) return;
-      const file = new File([blob], `chromalum-map-${mode}.png`, { type: "image/png" });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        navigator.share({ files: [file] }).catch(() => {});
-      } else {
-        const url = URL.createObjectURL(blob);
+      const name = `chromalum-map-${mode}.png`;
+      const fallbackSave = (b: Blob) => {
+        const url = URL.createObjectURL(b);
         const a = document.createElement("a");
         a.href = url;
-        a.download = file.name;
+        a.download = name;
+        document.body.appendChild(a);
         a.click();
-        URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+        if (isIOS) window.open(url, "_blank");
+        setTimeout(() => URL.revokeObjectURL(url), 5000);
+      };
+      const file = new File([blob], name, { type: "image/png" });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        navigator.share({ files: [file] }).catch(() => fallbackSave(blob));
+      } else {
+        fallbackSave(blob);
       }
     });
   }, [mode]);

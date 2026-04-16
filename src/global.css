@@ -352,3 +352,13 @@ input[type="checkbox"]:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* LinkedViz responsive width */
+.linked-viz-root {
+  width: 90%;
+}
+@media (min-width: 1024px) {
+  .linked-viz-root {
+    width: 85%;
+  }
+}

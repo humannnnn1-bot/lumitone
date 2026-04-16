@@ -574,8 +574,9 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
           if (minD.d === maxD.d) return null;
           const info = THEORY_LEVELS[sf.color];
           const color = sf.color === 0 ? "#333" : info.color;
-          const opMin = 0.05 + (minD.d / 3) * 0.4;
-          const opMax = 0.05 + (maxD.d / 3) * 0.4;
+          const tetraScale = sf.tetra === 1 ? 0.5 : 1;
+          const opMin = (0.03 + (minD.d / 3) * 0.22) * tetraScale;
+          const opMax = (0.03 + (maxD.d / 3) * 0.22) * tetraScale;
           return (
             <linearGradient
               key={`${viewId}-fg-${sf.origIdx}`}
@@ -604,8 +605,9 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
         const ctr = { x: (p0.x + p1.x + p2.x) / 3, y: (p0.y + p1.y + p2.y) / 3 };
         const depths = sf.verts.map((vi) => vertexDepth(vi));
         const hasDepthDiff = Math.max(...depths) !== Math.min(...depths);
-        const baseOpacity = 0.06 + lighting.diffuse * 0.26;
-        const baseStrokeOpacity = 0.1 + lighting.diffuse * 0.3;
+        const tetraScale = sf.tetra === 1 ? 0.5 : 1;
+        const baseOpacity = (0.04 + lighting.diffuse * 0.16) * tetraScale;
+        const baseStrokeOpacity = (0.1 + lighting.diffuse * 0.3) * tetraScale;
         return (
           <g
             key={`${viewId}-f-${sf.origIdx}`}

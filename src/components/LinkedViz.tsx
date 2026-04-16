@@ -1401,7 +1401,7 @@ export const LinkedViz = React.memo(function LinkedViz({
   const isInverted = deltaAlpha === 180;
 
   return (
-    <div style={{ marginTop: SP.xl, textAlign: "center", width: "87%" }}>
+    <div className="linked-viz-root" style={{ marginTop: SP.xl, textAlign: "center" }}>
       {/* L0/L7 Toggle + Δα controls */}
       <div style={{ marginBottom: SP.md, display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center" }}>
         <button type="button" style={mode === 0 ? S_TOGGLE_ACTIVE : S_TOGGLE} onClick={() => setMode(0)}>

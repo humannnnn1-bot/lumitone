@@ -19,18 +19,27 @@ function downloadCanvas(
       showToast(t("toast_image_gen_failed"), "error");
       return;
     }
-    const file = new File([blob], name, { type: "image/png" });
-    if (navigator.share && navigator.canShare?.({ files: [file] })) {
-      navigator.share({ files: [file] }).catch(() => {});
-    } else {
-      const url = URL.createObjectURL(blob);
+    const fallbackSave = (b: Blob) => {
+      const url = URL.createObjectURL(b);
       const a = document.createElement("a");
       a.href = url;
       a.download = name;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // iOS Safari ignores <a download> — open in new tab as last resort
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+      if (isIOS) {
+        window.open(url, "_blank");
+        showToast(t("toast_save_long_press"), "info");
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    };
+    const file = new File([blob], name, { type: "image/png" });
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      navigator.share({ files: [file] }).catch(() => fallbackSave(blob));
+    } else {
+      fallbackSave(blob);
     }
   }, "image/png");
 }

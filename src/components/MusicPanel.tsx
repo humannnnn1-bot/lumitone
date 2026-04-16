@@ -926,7 +926,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
         {/* ═══ Right Column: Controls ═══ */}
         <div className="panel-sidebar">
           {/* ── Transport + Rotation ── */}
-          <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, width: "100%" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%" }}>
             {/* Scale mode */}
             <div style={{ display: "flex", justifyContent: "center", gap: SP.md, width: "100%" }}>
               {(["ji", "diatonic7", "octatonic", "12tet"] as ScaleMode[]).map((m) => (

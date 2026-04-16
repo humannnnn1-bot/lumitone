@@ -142,6 +142,7 @@ export const ja: Record<TranslationKey, string> = {
   toast_restore_failed: "保存データの復元に失敗しました",
   toast_autosave_failed: "自動保存に失敗しました",
   toast_image_gen_failed: "画像の生成に失敗しました（メモリ不足の可能性）",
+  toast_save_long_press: "画像を長押しして保存してください",
   toast_export_too_large: "{0}×{1}px — 安全にエクスポートするには大きすぎます",
   toast_memory_warning: "{0}×{1}px — メモリ負荷が高い可能性があります",
   toast_clipboard_unsupported: "ClipboardItem未対応",

@@ -142,6 +142,7 @@ export const en = {
   toast_restore_failed: "Failed to restore saved data",
   toast_autosave_failed: "Auto-save failed",
   toast_image_gen_failed: "Failed to generate image (possibly out of memory)",
+  toast_save_long_press: "Long-press the image to save",
   toast_export_too_large: "{0}×{1}px — Too large to export safely",
   toast_memory_warning: "{0}×{1}px — May cause high memory usage",
   toast_clipboard_unsupported: "ClipboardItem not supported",
