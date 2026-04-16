@@ -204,7 +204,7 @@ export const en = {
   theory_binary_luma_complement: "Complement luma: Y\u2096 + Y\u2087\u208b\u2096 = 255 (universal for any coefficients summing to 1)",
   theory_zigzag_title: "Luma Zigzag",
   theory_zigzag_desc:
-    "How does brightness change as you rotate through hues? Fully saturated colors (max channel = 255, min = 0) trace a 6-segment zigzag as hue rotates. Each segment toggles one channel; the slope is proportional to its BT.601 coefficient. Horizontal lines at each vertex luma value intersect the zigzag at 1 or 3 points \u2014 these are the equal-luma candidates. Between vertex luma values, the maximum is 4 candidates. For any hue angle h, Y(h) + Y(h+180\u00b0) = 255 \u2014 complementary colors always sum to the same luma (complement luma theorem).",
+    "How does brightness change as you rotate through hues? Fully saturated colors (max channel = 255, min = 0) trace a 6-segment zigzag as hue rotates. Each segment toggles one channel; the slope is proportional to its BT.601 coefficient. On the hue circle, horizontal lines at each vertex luma value intersect the zigzag at 1 or 3 points \u2014 these are the equal-luma candidates. Between vertex luma values, the maximum is 4 candidates. For any hue angle h, Y(h) + Y(h+180\u00b0) = 255 \u2014 complementary colors always sum to the same luma (complement luma theorem).",
   theory_dice_title: "Color Die",
   theory_dice_desc:
     "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule.",
@@ -216,7 +216,6 @@ export const en = {
   theory_dice_hint: "6 faces \u2192 8 vertices: add Black (0) and White (7) to get the Color Cube",
   theory_dice_additive_col: "XOR view (additive reading)",
   theory_dice_subtractive_col: "AND view (subtractive reading)",
-  theory_dice_ops_note: "These are operational readings within this model.",
   theory_dice_footer_ops: "\u2295 = XOR over GF(2)\u00b3 | \u2227 = AND in the Boolean lattice",
   theory_dice_footer_demorgan: "For disjoint colors (a \u2227 b = 0): (a \u2295 b)' = a' \u2227 b'  where x' = x \u2295 7",
   theory_dice_footer_subtractive: "For the displayed CMY pairs, a \u2228 b = 7, so a + b - 7 = a \u2227 b.",
@@ -281,7 +280,7 @@ export const en = {
     "Boolean view: XOR is addition and AND is multiplication on the same 3-bit lattice. Complement does not turn every XOR identity into an AND identity; for disjoint colors (a \u2227 b = 0), it gives (a \u2295 b)' = a' \u2227 b'.",
   theory_conn_polyhedra: "Polyhedra network",
   theory_conn_polyhedra_desc:
-    "The diamond diagram with Cube Q\u2083 at its apex shows how the four polyhedra of \u00a79\u2013\u00a711 are linked by geometric operations. Face-vertex reversal starts from the Color Dice\u2019s 6 faces; even-odd partition starts from the Color Cube\u2019s 8 vertices; both paths converge at the stella octangula. The diagram commutes: the left path (even-odd partition \u2192 compounding) and the right path (face-vertex reversal \u2192 stellation) yield the same stella octangula. The direct relationship from cube to stella \u2014 the 12 face diagonals \u2014 is the composition of these two paths.",
+    "The diamond diagram with Cube Q\u2083 at its apex shows how the four polyhedra in this tab are linked by geometric operations. Face-vertex reversal starts from the Color Dice\u2019s 6 faces; even-odd partition starts from the Color Cube\u2019s 8 vertices; both paths converge at the stella octangula. The diagram commutes: the left path (even-odd partition \u2192 compounding) and the right path (face-vertex reversal \u2192 stellation) yield the same stella octangula. The direct relationship from cube to stella \u2014 the 12 face diagonals \u2014 is the composition of these two paths.",
   theory_conn_polyhedra_legend: "solid = primitive operation \u2502 dashed = composition \u2502 \u27F3 = commutative",
   theory_pn_cube: "Cube Q\u2083",
   theory_pn_octa: "Octahedron",
@@ -313,17 +312,17 @@ export const en = {
   // §10 Color Tetra
   theory_tetra_title: "Color Tetra",
   theory_tetra_desc:
-    "Every pair of 8 colors is adjacent (1 channel apart), diagonal (2 channels), or complementary (3 channels). This three-way classification corresponds to three geometric structures. The cube\u2019s 8 vertices split into two tetrahedra: T0 (even weight: Black, M, C, Y) and T1 (odd weight: B, R, G, W). T0 forms the Klein four-group V\u2084, where any face\u2019s 3 vertices XOR to the opposite vertex \u2014 this is why each face is naturally colored.",
+    "Every pair of 8 colors is adjacent (1 channel apart), diagonal (2 channels), or complementary (3 channels). This three-way classification corresponds to three geometric structures. The cube\u2019s 8 vertices split into two tetrahedra: T0 (even weight: K, M, C, Y) and T1 (odd weight: B, R, G, W). T0 forms the Klein four-group V\u2084, where any face\u2019s 3 vertices XOR to the opposite vertex \u2014 this is why each face is naturally colored.",
 
   // §11 Color Star (Stella Octangula)
   theory_stella_desc:
-    "Compounding T0 and T1 yields the Color Star (Stella Octangula). Its 12 edges (all distance 2) produce CMY as XOR values, while the cube\u2019s 12 edges (distance 1) produce RGB, and the 4 complement diagonals (distance 3) produce White. K\u2088 = Cube + Color Star + Complements partitions all 28 color-pair relationships into three Hamming distance layers (d=1, d=2, d=3).",
+    "Compounding T0 and T1 yields the Color Star (Stella Octangula). Its 12 edges (all distance 2) produce CMY as XOR values, the cube\u2019s 12 edges (distance 1) produce RGB, and the 4 complement diagonals (distance 3) produce White (7). Thus the edge set of K\u2088 splits into the Color Cube\u2019s 12 edges (d=1), the Color Star\u2019s 12 edges (d=2), and the 4 complement diagonals (d=3).",
 
   // ColorDice tetrahedra
   theory_dice_tetra: "T0/T1 Tetrahedra",
   theory_dice_tetra_t0: "T0: even weight",
   theory_dice_tetra_t1: "T1: odd weight",
-  theory_dice_tetra_subgroup: "T0 = {Black, M, C, Y} = Klein four-group V\u2084 under XOR",
+  theory_dice_tetra_subgroup: "T0 = {K, M, C, Y} = Klein four-group V\u2084 under XOR",
   theory_dice_tetra_face_xor: "Face theorem: XOR of 3 face vertices = the opposite vertex",
 
   // Stella Octangula (sub-labels, used within merged §10)
