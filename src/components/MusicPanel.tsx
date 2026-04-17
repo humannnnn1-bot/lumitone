@@ -223,7 +223,8 @@ export const MusicPanel = React.memo(function MusicPanel() {
   // Fano plane sidebar state
   const [grayStep, setGrayStep] = useState<number | null>(null);
   const [rhythmPlaying, setRhythmPlaying] = useState(false);
-  const [rhythmBeat, setRhythmBeat] = useState(0);
+  // Multi-line state: each beat can trigger up to 3 Fano lines simultaneously.
+  const [rhythmFiringLines, setRhythmFiringLines] = useState<number[]>([]);
   const [rhythmTempo, setRhythmTempo] = useState(120);
   const [xorA, setXorA] = useState<number | null>(null);
   const [xorB, setXorB] = useState<number | null>(null);
@@ -238,7 +239,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
   const [resetSignal, setResetSignal] = useState(0);
 
   // Cross-card state: K8 layer ↔ TetraSplit phase
-  const [k8Layer, setK8Layer] = useState<1 | 2 | 3>(1);
+  const [k8Layer, setK8Layer] = useState<1 | 2 | 3 | null>(null);
   const [tetraPhase, setTetraPhase] = useState<"t0" | "t1" | null>(null);
 
   // Cross-card state: Parity ↔ Error Correction
@@ -340,7 +341,11 @@ export const MusicPanel = React.memo(function MusicPanel() {
     engine.setDroneMuted(false);
     setDroneMuted(false);
     setHueAngle(0);
-    setDirectCandidates(new Map());
+    // Force the canonical 6-color palette (RGB light primaries + CMY pigment primaries):
+    // L1=Blue, L2=Red, L3=Magenta, L4=Green, L5=Cyan, L6=Yellow.
+    const canonical = new Map<number, number>();
+    for (let lv = 1; lv <= 6; lv++) canonical.set(lv, DEFAULT_CC[lv]);
+    setDirectCandidates(canonical);
     setSelectedLevels(new Set());
     setVolume(0.7);
     setScaleMode("diatonic7");
@@ -355,7 +360,8 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setFanoContextPoint(1);
     setPartitionLineIndex(0);
     engine.resetGL32Transform?.((perm) => setGl32Perm(perm));
-    setHoveredFanoLine(0);
+    // null (not 0): 0 would trigger engine's fano-line-0 gain boost → audible "chord".
+    setHoveredFanoLine(null);
     setDistA(5);
     setDistB(3);
     setDistC(6);
@@ -445,7 +451,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
 
   // Sequence handlers
   const grayStepCbRef = useRef<(lv: number | null) => void>((lv) => setGrayStep(lv));
-  const fanoBeatCbRef = useRef<(line: number, pos: number) => void>((_line, pos) => setRhythmBeat(pos % 7));
+  const fanoBeatCbRef = useRef<(lines: number[], pos: number) => void>((lines) => setRhythmFiringLines(lines));
 
   const handleGrayMelody = useCallback(() => {
     if (grayStep !== null) {
@@ -755,7 +761,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                       border: `2px solid ${C.border}`,
                       boxSizing: "border-box" as const,
                       boxShadow: isSwatchHovered ? SHADOW.glow(C.accent) : "none",
-                      transition: "box-shadow 0.15s, border-color 0.15s",
+                      transition: "background 0.4s, box-shadow 0.15s, border-color 0.15s",
                     }}
                   />
                 );
@@ -866,7 +872,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                           boxSizing: "border-box" as const,
                           cursor: "pointer",
                           boxShadow: isBurst ? SHADOW.glow("#ffffff") : isMainHovered ? SHADOW.glow(C.accent) : "none",
-                          transition: isBurst ? "none" : "box-shadow 0.5s, border-color 0.5s",
+                          transition: isBurst ? "none" : "background 0.4s, box-shadow 0.5s, border-color 0.5s",
                         }}
                       />
                     );
@@ -1090,7 +1096,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
             onLineClick={handleFanoLineClick}
             activeLevels={activeLevels}
             playingLevel={grayStep ?? xorStep}
-            playingLine={rhythmPlaying ? rhythmBeat : null}
+            playingLines={rhythmPlaying ? rhythmFiringLines : null}
             partitionPhase={partitionPhase}
             partitionLineIndex={partitionLineIndex}
           />
@@ -1292,6 +1298,23 @@ export const MusicPanel = React.memo(function MusicPanel() {
               </button>
             </div>
             <DistributiveFlow a={distA} b={distB} c={distC} phase={distPhase} activeLevels={activeLevels} />
+            {(() => {
+              const bxc = distB ^ distC;
+              const left = distA & bxc;
+              const ab = distA & distB;
+              const ac = distA & distC;
+              const right = ab ^ ac;
+              const ok = left === right;
+              return (
+                <div style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDim, textAlign: "center", lineHeight: 1.5 }}>
+                  <div>{`${distA} \u2227 (${distB}\u2295${distC}) = ${distA}\u2227${bxc} = ${left}`}</div>
+                  <div>
+                    {`(${distA}\u2227${distB}) \u2295 (${distA}\u2227${distC}) = ${ab}\u2295${ac} = ${right}`}
+                    <span style={{ color: ok ? C.accent : C.error, marginLeft: 4 }}>{ok ? "\u2713" : "\u2717"}</span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
 
           {/* 4. AND Triads */}
@@ -1404,7 +1427,11 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 >
                   {weightPlaying ? t("music_weight_stop") : t("music_weight_play")}
                 </button>
-                {weightStep && weightStep.weight >= 0 && <span style={{ fontSize: FS.md, color: C.accent }}>w={weightStep.weight}</span>}
+                {weightStep && weightStep.weight >= 0 && (
+                  <span style={{ fontSize: FS.md, color: C.accent, fontFamily: "monospace" }}>
+                    {`w=${weightStep.weight} · {${weightStep.positions.join(",")}}`}
+                  </span>
+                )}
               </div>
             </div>
             <WeightHistogram
@@ -1564,11 +1591,11 @@ export const MusicPanel = React.memo(function MusicPanel() {
           </div>
 
           <div style={S_CARD_LUMA}>
-            <ComplementPairsCard engine={engine} activeLevels={activeLevels} stopSignal={stopSignal} />
+            <ComplementPairsCard engine={engine} stopSignal={stopSignal} />
           </div>
 
           <div style={S_CARD_LUMA}>
-            <ZigzagCard engine={engine} activeLevels={activeLevels} stopSignal={stopSignal} />
+            <ZigzagCard engine={engine} stopSignal={stopSignal} />
           </div>
         </div>
       </div>

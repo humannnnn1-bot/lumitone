@@ -33,7 +33,14 @@ export const S_BTN_ACTIVE: React.CSSProperties = {
   fontWeight: FW.bold,
 };
 export const S_BTN_SM: React.CSSProperties = { ...S_BTN, padding: `${SP.xs}px ${SP.md}px`, fontSize: FS.md };
-export const S_BTN_SM_ACTIVE: React.CSSProperties = { ...S_BTN_ACTIVE, padding: `${SP.xs}px ${SP.md}px`, fontSize: FS.md };
+// SM-active drops the font-weight bold (kept on larger S_BTN_ACTIVE) so toggle buttons
+// don't reflow between play/stop states. Active is still clearly marked via color+border+bg.
+export const S_BTN_SM_ACTIVE: React.CSSProperties = {
+  ...S_BTN_ACTIVE,
+  padding: `${SP.xs}px ${SP.md}px`,
+  fontSize: FS.md,
+  fontWeight: FW.normal,
+};
 export const S_NAV_ARROW: React.CSSProperties = {
   background: "none",
   border: "none",
