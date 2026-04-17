@@ -100,7 +100,7 @@ export const DistributiveFlow = React.memo(function DistributiveFlow({ a, b, c, 
               r={DOT_R}
               fill={pointColor(n.lv, activeLevels)}
               fillOpacity={active ? 0.9 : 0.4}
-              stroke={active ? "#fff" : LV_COLORS[n.lv]}
+              stroke={active ? "#fff" : pointColor(n.lv, activeLevels)}
               strokeWidth={active ? 2 : 0.8}
             />
             <text

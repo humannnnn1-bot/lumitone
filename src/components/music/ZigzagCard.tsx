@@ -7,14 +7,13 @@ import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
 
 interface Props {
   engine: MusicEngineReturn;
-  activeLevels: { lv: number; rgb: [number, number, number] }[];
   stopSignal: number;
 }
 
 const S_COL: React.CSSProperties = { display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" };
 const S_LABEL: React.CSSProperties = { fontSize: FS.lg, color: C.textDim, whiteSpace: "nowrap" };
 
-export const ZigzagCard = React.memo(function ZigzagCard({ engine, activeLevels, stopSignal }: Props) {
+export const ZigzagCard = React.memo(function ZigzagCard({ engine, stopSignal }: Props) {
   const { t } = useTranslation();
   const [zigzagStep, setZigzagStep] = useState<number | null>(null);
 
@@ -45,7 +44,7 @@ export const ZigzagCard = React.memo(function ZigzagCard({ engine, activeLevels,
           {zigzagStep !== null ? t("music_zigzag_stop") : t("music_zigzag_play")}
         </button>
       </div>
-      <ZigzagGraph currentStep={zigzagStep} activeLevels={activeLevels} />
+      <ZigzagGraph currentStep={zigzagStep} />
     </div>
   );
 });

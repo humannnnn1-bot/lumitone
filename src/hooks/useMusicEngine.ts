@@ -31,7 +31,7 @@ export interface MusicEngineReturn {
   triggerToneBurst: (lv: number, angle: number) => void;
   playGrayMelody: (tempo: number, onStep: (lv: number | null) => void) => void;
   stopGrayMelody: () => void;
-  startFanoRhythm: (tempo: number, onBeat: (line: number, pos: number) => void) => void;
+  startFanoRhythm: (tempo: number, onBeat: (lines: number[], pos: number) => void) => void;
   stopFanoRhythm: () => void;
   analyserNode: AnalyserNode | null;
   playXorTriple: (lvA: number, lvB: number, onStep: (lv: number | null) => void) => void;
@@ -123,8 +123,13 @@ function gl32GenC(lv: number): number {
   return (g << 2) | (r << 1) | (r ^ b);
 }
 
-/** 3-voice frequencies for Gray code decomposition */
-const GRAY_VOICE_FREQS = [550, 440, 330]; // bit0=B, bit1=R, bit2=G
+/**
+ * 3-voice frequencies for Gray code decomposition. bit0=B, bit1=R, bit2=G.
+ * Ratio 330:440:550 = 3:4:5 = just-intonation minor triad (E4, A4, C#5).
+ * Assignment is NOT luma-ordered — chosen so the 8 possible bit-sum chords
+ * form consonant subsets of the same triad, independent of per-bit luma.
+ */
+const GRAY_VOICE_FREQS = [550, 440, 330];
 
 /* ── Extended algebra constants ── */
 const AND_TRIADS: [number, number, number][] = [
@@ -165,7 +170,7 @@ function extendedHammingCodewords(): { positions: number[]; weight: number }[] {
 }
 
 /* ── Frequency mapping ── */
-function angleToFreq(angle: number, mode: ScaleMode): number {
+export function angleToFreq(angle: number, mode: ScaleMode): number {
   if (mode === "12tet") {
     return BASE_FREQ * Math.pow(2, ((((angle % 360) + 360) % 360) / 360) * 2);
   }
@@ -744,7 +749,7 @@ export function useMusicEngine({
   }, []);
 
   /* ── Fano Rhythm Canon ── */
-  const startFanoRhythm = useCallback((tempo: number, onBeat: (line: number, pos: number) => void) => {
+  const startFanoRhythm = useCallback((tempo: number, onBeat: (lines: number[], pos: number) => void) => {
     const nodes = nodesRef.current;
     if (!nodes) return;
 
@@ -762,9 +767,13 @@ export function useMusicEngine({
       const ctx = currentNodes.ctx;
       const now = ctx.currentTime;
 
-      // Check each line for onset at this position
+      // Each beat may trigger up to 3 Fano lines simultaneously (difference set {0,1,3}
+      // guarantees exactly 3 firings per beat). Collect them all so the UI can highlight
+      // the full set of audible lines in sync with the noise bursts.
+      const firingLines: number[] = [];
       for (let line = 0; line < 7; line++) {
         if (FANO_RHYTHM_PATTERNS[line].includes(pos % 7)) {
+          firingLines.push(line);
           // Short noise burst filtered at different frequency per line
           const bufLen = Math.floor(ctx.sampleRate * 0.05); // 50ms
           const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
@@ -786,10 +795,9 @@ export function useMusicEngine({
           source.connect(filter).connect(gain).connect(currentNodes.master);
           source.start(now);
           source.stop(now + 0.06);
-
-          onBeat(line, pos % 7);
         }
       }
+      onBeat(firingLines, pos % 7);
       pos++;
     }, subdivisionMs);
 

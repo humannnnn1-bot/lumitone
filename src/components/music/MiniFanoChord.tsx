@@ -10,8 +10,8 @@ interface MiniFanoChordProps {
   activeLevels: { lv: number; rgb: [number, number, number] }[];
   /** Currently playing level from Gray melody (1-7 or null) */
   playingLevel?: number | null;
-  /** Currently playing line index from Fano rhythm (0-6 or null) */
-  playingLine?: number | null;
+  /** Currently firing Fano line indices from rhythm (each beat triggers up to 3). */
+  playingLines?: number[] | null;
   /** Line+Complement partition phase */
   partitionPhase?: "line" | "complement" | null;
   /** Which line index is being partitioned */
@@ -33,12 +33,15 @@ export const MiniFanoChord = React.memo(function MiniFanoChord({
   onLineClick,
   activeLevels,
   playingLevel,
-  playingLine,
+  playingLines,
   partitionPhase,
   partitionLineIndex,
 }: MiniFanoChordProps) {
   const anyHovered = hoveredLine !== null;
-  const playingLineLevels = playingLine != null ? FANO_LINES[playingLine] : null;
+  const playingLineSet = playingLines && playingLines.length > 0 ? new Set(playingLines) : null;
+  // Union of all levels on any firing line — a level is "playing" if it lies on
+  // at least one currently firing line (difference-set {0,1,3} guarantees 3 lines).
+  const playingLineLevels = playingLineSet !== null ? new Set(playingLines!.flatMap((li) => FANO_LINES[li] as readonly number[])) : null;
   const partitionLine = partitionPhase != null && partitionLineIndex != null ? FANO_LINES[partitionLineIndex] : null;
   const partitionActive = partitionPhase != null;
 
@@ -60,7 +63,7 @@ export const MiniFanoChord = React.memo(function MiniFanoChord({
       {/* Lines */}
       {FANO_LINES.map((_, i) => {
         const isHovered = hoveredLine === i;
-        const isPlayingLine = playingLine === i;
+        const isPlayingLine = playingLineSet !== null && playingLineSet.has(i);
         const isPartitionLine = partitionActive && partitionLineIndex === i;
         const active = isHovered || isPlayingLine || isPartitionLine;
         const opacity = anyHovered ? (isHovered ? 1 : 0.2) : isPlayingLine || isPartitionLine ? 1 : partitionActive ? 0.2 : 0.5;
@@ -91,7 +94,7 @@ export const MiniFanoChord = React.memo(function MiniFanoChord({
       {[1, 2, 3, 4, 5, 6, 7].map((lv) => {
         const [px, py] = FANO_POINT_POSITIONS[lv];
         const isOnHoveredLine = hoveredLine !== null && FANO_LINES[hoveredLine].includes(lv);
-        const isPlaying = playingLevel === lv || (playingLineLevels !== null && playingLineLevels.includes(lv));
+        const isPlaying = playingLevel === lv || (playingLineLevels !== null && playingLineLevels.has(lv));
         const isOnPartitionLine = partitionLine !== null && partitionLine.includes(lv);
         const isPartitionHighlighted =
           partitionActive && ((partitionPhase === "line" && isOnPartitionLine) || (partitionPhase === "complement" && !isOnPartitionLine));

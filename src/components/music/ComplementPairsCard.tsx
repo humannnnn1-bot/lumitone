@@ -7,14 +7,13 @@ import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
 
 interface Props {
   engine: MusicEngineReturn;
-  activeLevels: { lv: number; rgb: [number, number, number] }[];
   stopSignal: number;
 }
 
 const S_COL: React.CSSProperties = { display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" };
 const S_LABEL: React.CSSProperties = { fontSize: FS.lg, color: C.textDim, whiteSpace: "nowrap" };
 
-export const ComplementPairsCard = React.memo(function ComplementPairsCard({ engine, activeLevels, stopSignal }: Props) {
+export const ComplementPairsCard = React.memo(function ComplementPairsCard({ engine, stopSignal }: Props) {
   const { t } = useTranslation();
   const [activePair, setActivePair] = useState(-1);
 
@@ -43,7 +42,7 @@ export const ComplementPairsCard = React.memo(function ComplementPairsCard({ eng
           {t("music_complement_play")}
         </button>
       </div>
-      <ComplementPairs activePair={activePair} activeLevels={activeLevels} />
+      <ComplementPairs activePair={activePair} />
     </div>
   );
 });

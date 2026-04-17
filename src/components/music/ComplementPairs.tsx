@@ -2,6 +2,8 @@ import React from "react";
 import { C, FS } from "../../tokens";
 import { COMPLEMENT_PAIRS, LUMA_VALUES } from "./music-data";
 
+// Theorem Y_k + Y_{7-k} = 255 is a pure luma identity; keep all colors canonical
+// (hue-invariant) so the visual matches the luma-based sonification.
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
 const W = 180,
   H = 100;
@@ -11,17 +13,11 @@ const BAR_H = 14,
   TOP = 18;
 const MAX_BAR = 70; // max bar width for luma 226
 
-function pointColor(lv: number, activeLevels: { lv: number; rgb: [number, number, number] }[]): string {
-  const al = activeLevels.find((a) => a.lv === lv);
-  return al ? `rgb(${al.rgb.join(",")})` : LV_COLORS[lv];
-}
-
 interface Props {
   activePair: number;
-  activeLevels: { lv: number; rgb: [number, number, number] }[];
 }
 
-export const ComplementPairs = React.memo(function ComplementPairs({ activePair, activeLevels }: Props) {
+export const ComplementPairs = React.memo(function ComplementPairs({ activePair }: Props) {
   return (
     <svg viewBox={`8 0 ${W - 16} ${H}`} style={{ width: "100%" }}>
       <defs>
@@ -55,9 +51,9 @@ export const ComplementPairs = React.memo(function ComplementPairs({ activePair,
         return (
           <g key={i} filter={isActive ? "url(#cp-glow)" : undefined} opacity={activePair >= 0 && !isActive ? 0.25 : 1}>
             {/* Left bar (lower luma) */}
-            <rect x={CX - wA} y={y} width={wA} height={BAR_H} rx={2} fill={pointColor(a, activeLevels)} fillOpacity={0.8} />
+            <rect x={CX - wA} y={y} width={wA} height={BAR_H} rx={2} fill={LV_COLORS[a]} fillOpacity={0.8} />
             {/* Right bar (higher luma) */}
-            <rect x={CX} y={y} width={wB} height={BAR_H} rx={2} fill={pointColor(b, activeLevels)} fillOpacity={0.8} />
+            <rect x={CX} y={y} width={wB} height={BAR_H} rx={2} fill={LV_COLORS[b]} fillOpacity={0.8} />
             {/* Labels */}
             <text
               x={CX - wA - 4}
@@ -81,14 +77,14 @@ export const ComplementPairs = React.memo(function ComplementPairs({ activePair,
             >
               {b}
             </text>
-            {/* Sum label */}
+            {/* Sum label — placed on the left to avoid overlapping the (longer) right bar */}
             {isActive && (
               <text
-                x={W - 4}
+                x={8}
                 y={y + BAR_H / 2}
-                textAnchor="end"
+                textAnchor="start"
                 dominantBaseline="central"
-                fontSize={8}
+                fontSize={7}
                 fontFamily="monospace"
                 fill={C.textMuted}
               >

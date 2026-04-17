@@ -2,6 +2,8 @@ import React from "react";
 import { C, FS, FW } from "../../tokens";
 import { LUMA_VALUES, ZIGZAG_CHANNELS, ZIGZAG_PATH } from "./music-data";
 
+// Zigzag path is a luma sequence (hue-invariant); colors stay canonical to match
+// the luma-based sonification (`triggerLumaBurst`).
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
 const NAMES = ["", "B", "R", "M", "G", "C", "Y"];
 const CH_COLORS: Record<string, string> = { G: "#00cc00", R: "#cc0000", B: "#4466ff" };
@@ -18,17 +20,11 @@ const PW = W - ML - MR,
 const xPos = (i: number) => ML + (i / (ZIGZAG_PATH.length - 1)) * PW;
 const yPos = (luma: number) => MT + PH - (luma / 255) * PH;
 
-function pointColor(lv: number, activeLevels: { lv: number; rgb: [number, number, number] }[]): string {
-  const al = activeLevels.find((a) => a.lv === lv);
-  return al ? `rgb(${al.rgb.join(",")})` : LV_COLORS[lv];
-}
-
 interface Props {
   currentStep: number | null;
-  activeLevels: { lv: number; rgb: [number, number, number] }[];
 }
 
-export const ZigzagGraph = React.memo(function ZigzagGraph({ currentStep, activeLevels }: Props) {
+export const ZigzagGraph = React.memo(function ZigzagGraph({ currentStep }: Props) {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%" }}>
       <defs>
@@ -99,7 +95,7 @@ export const ZigzagGraph = React.memo(function ZigzagGraph({ currentStep, active
               cx={x}
               cy={y}
               r={isActive ? 6 : 4}
-              fill={pointColor(lv, activeLevels)}
+              fill={LV_COLORS[lv]}
               fillOpacity={0.85}
               stroke="#fff"
               strokeWidth={isActive ? 2 : 1}
