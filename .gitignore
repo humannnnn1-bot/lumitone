@@ -24,3 +24,7 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Claude Code local state
+.claude/settings.local.json
+.claude/*.lock
