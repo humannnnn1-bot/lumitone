@@ -46,7 +46,7 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
       </div>
 
       {/* Result visualization */}
-      <svg viewBox="0 0 340 80" style={{ width: "100%", maxWidth: 340 }}>
+      <svg viewBox="0 6 340 74" style={{ width: "100%", maxWidth: 340 }}>
         {/* A */}
         <g transform="translate(50, 40)">
           <circle r={DOT_R} fill={a === 0 ? C.bgRoot : infoA.color} fillOpacity={0.85} stroke="#fff" strokeWidth={1.5} />

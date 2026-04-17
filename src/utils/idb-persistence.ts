@@ -16,6 +16,14 @@ export interface SavedState {
 
 const _db = { conn: null as IDBDatabase | null };
 
+/** Detect quota-exceeded errors across browsers (Chrome/Safari name + Firefox name + legacy code). */
+function isQuotaError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const name = (err as { name?: string }).name ?? "";
+  const code = (err as { code?: number }).code;
+  return name === "QuotaExceededError" || name === "NS_ERROR_DOM_QUOTA_REACHED" || code === 22 || code === 1014;
+}
+
 function openDB(): Promise<IDBDatabase> {
   if (_db.conn) return Promise.resolve(_db.conn);
   return new Promise((resolve, reject) => {
@@ -32,9 +40,14 @@ function openDB(): Promise<IDBDatabase> {
       // v1→v2: no schema changes, version bump for migration framework
       // Future migrations go here: if (oldVersion < 3) { ... }
     };
+    req.onblocked = () => reject(new Error("Database upgrade blocked by another tab. Close other tabs and retry."));
     req.onsuccess = () => {
       _db.conn = req.result;
       _db.conn.onclose = () => {
+        _db.conn = null;
+      };
+      _db.conn.onversionchange = () => {
+        _db.conn?.close();
         _db.conn = null;
       };
       resolve(_db.conn);
@@ -48,16 +61,22 @@ export async function saveState(state: SavedState): Promise<void> {
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
     tx.objectStore(STORE_NAME).put(state, KEY);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => {
-      const err = tx.error;
-      // Detect quota exceeded (DOMException name "QuotaExceededError")
-      if (err && err.name === "QuotaExceededError") {
-        reject(new Error("Storage quota exceeded. Try reducing canvas size or clearing browser data."));
+    let settled = false;
+    const settle = (fn: () => void) => {
+      if (settled) return;
+      settled = true;
+      fn();
+    };
+    const rejectWith = (err: DOMException | null) => {
+      if (isQuotaError(err)) {
+        settle(() => reject(new Error("Storage quota exceeded. Try reducing canvas size or clearing browser data.")));
       } else {
-        reject(err);
+        settle(() => reject(err ?? new Error("Transaction aborted")));
       }
     };
+    tx.oncomplete = () => settle(() => resolve());
+    tx.onerror = () => rejectWith(tx.error);
+    tx.onabort = () => rejectWith(tx.error);
   });
 }
 

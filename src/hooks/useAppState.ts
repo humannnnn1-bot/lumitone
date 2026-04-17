@@ -21,6 +21,7 @@ export function useAppState(t: import("../i18n").TranslationFn) {
   const [loaded, setLoaded] = useState(false);
 
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flushSaveRef = useRef<(() => void) | null>(null);
   const lastSavedRef = useRef<{ data: Uint8Array | null; colorMap: Uint8Array | null; cc: number[] | null; locked: boolean[] | null }>({
     data: null,
     colorMap: null,
@@ -60,7 +61,7 @@ export function useAppState(t: import("../i18n").TranslationFn) {
     const _cvs = cvs,
       _cc = cc,
       _locked = locked;
-    saveTimerRef.current = setTimeout(() => {
+    const doSave = () => {
       lastSavedRef.current = { data: _cvs.data, colorMap: _cvs.colorMap, cc: _cc, locked: _locked };
       saveState({
         w: _cvs.w,
@@ -71,11 +72,38 @@ export function useAppState(t: import("../i18n").TranslationFn) {
         locked: [..._locked],
         version: 1,
       }).catch(createErrorHandler("AutoSave", () => showToast(t("toast_autosave_failed"), "error")));
+    };
+    flushSaveRef.current = () => {
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+      }
+      flushSaveRef.current = null;
+      doSave();
+    };
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      flushSaveRef.current = null;
+      doSave();
     }, 1000);
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
   }, [cvs, cc, locked, loaded, showToast, t]);
+
+  // Flush pending save on tab hide / page unload to avoid data loss
+  useEffect(() => {
+    const flush = () => flushSaveRef.current?.();
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
 
   // Responsive display size based on viewport width AND height
   const computeDisplayMax = () => {
