@@ -22,6 +22,7 @@ interface GalleryPanelProps {
 }
 
 const BM_KEY = "chromalum_bookmarks";
+const BM_MAX = 500;
 const _genCache = { key: "" };
 
 function loadBookmarks(): number[][] {
@@ -206,19 +207,26 @@ export const GalleryPanel = React.memo(function GalleryPanel({
 
   const isBookmarked = useCallback((itemCc: number[]) => bookmarks.some((b) => ccEqual(b, itemCc)), [bookmarks]);
 
-  const toggleBookmark = useCallback((itemCc: number[]) => {
-    setBookmarks((prev) => {
-      const idx = prev.findIndex((b) => ccEqual(b, itemCc));
-      let next: number[][];
-      if (idx >= 0) {
-        next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
-      } else {
-        next = [...prev, [...itemCc]];
-      }
-      saveBookmarks(next);
-      return next;
-    });
-  }, []);
+  const toggleBookmark = useCallback(
+    (itemCc: number[]) => {
+      setBookmarks((prev) => {
+        const idx = prev.findIndex((b) => ccEqual(b, itemCc));
+        let next: number[][];
+        if (idx >= 0) {
+          next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
+        } else {
+          if (prev.length >= BM_MAX) {
+            showToast(t("toast_bookmark_limit", BM_MAX), "error");
+            return prev;
+          }
+          next = [...prev, [...itemCc]];
+        }
+        saveBookmarks(next);
+        return next;
+      });
+    },
+    [showToast, t],
+  );
 
   const applyScheme = useCallback(
     (itemCc: number[]) => {

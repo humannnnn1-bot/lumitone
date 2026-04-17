@@ -125,4 +125,6 @@ export interface DrawingHandlers {
 export interface SaveActions {
   saveColor: (ref: React.RefObject<HTMLCanvasElement | null>, name: string) => void;
   saveGlaze: (name: string) => void;
+  shareColor: (ref: React.RefObject<HTMLCanvasElement | null>, name: string) => void;
+  shareGlaze: (name: string) => void;
 }

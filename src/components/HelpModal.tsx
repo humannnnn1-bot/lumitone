@@ -75,7 +75,6 @@ export const HelpModal = React.memo(function HelpModal({ showHelp, setShowHelp, 
           // File operations
           ["Ctrl+N", t("help_new_canvas")],
           [t("help_save_key"), t("help_save")],
-          [t("help_save_as_combined_key"), t("help_save_as")],
           ["Ctrl+V", t("help_paste")],
           [t("help_drop_image_key"), t("help_drop_image")],
           // Edit

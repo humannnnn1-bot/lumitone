@@ -2,7 +2,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { TOAST_DURATION } from "../constants";
 import type { MapMode } from "../components/analyze-types";
 import type { TranslationFn } from "../i18n";
-import { useSyncRef } from "./useSyncRef";
 
 const LS_TAB = "chromalum-active-tab";
 const LS_SCROLL = "chromalum-scroll-y";
@@ -22,7 +21,6 @@ export function useUIState(_t: TranslationFn) {
   const [mapMode, setMapMode] = useState<MapMode>("luminance");
   const [hueAngle, setHueAngle] = useState(0);
   const [directCandidates, setDirectCandidates] = useState<Map<number, number>>(new Map());
-  const [promptState, setPromptState] = useState<{ defaultValue: string; resolve: (v: string | null) => void } | null>(null);
 
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -34,24 +32,6 @@ export function useUIState(_t: TranslationFn) {
       toastTimerRef.current = null;
     }, TOAST_DURATION);
   }, []);
-
-  const requestFilename = useCallback((defaultValue: string): Promise<string | null> => {
-    return new Promise((resolve) => {
-      setPromptState({ defaultValue, resolve });
-    });
-  }, []);
-
-  const promptRef = useSyncRef(promptState);
-
-  const handlePromptConfirm = useCallback((value: string) => {
-    promptRef.current?.resolve(value);
-    setPromptState(null);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handlePromptCancel = useCallback(() => {
-    promptRef.current?.resolve(null);
-    setPromptState(null);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   /* Persist scroll position on beforeunload, restore on mount */
   useEffect(() => {
@@ -82,11 +62,6 @@ export function useUIState(_t: TranslationFn) {
     setHueAngle,
     directCandidates,
     setDirectCandidates,
-    promptState,
-    setPromptState,
-    requestFilename,
-    handlePromptConfirm,
-    handlePromptCancel,
     toastTimerRef,
   };
 }

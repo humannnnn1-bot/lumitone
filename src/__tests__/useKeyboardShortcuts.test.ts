@@ -22,7 +22,6 @@ function makeArgs() {
   const t = ((key: string) => key) as import("../i18n").TranslationFn;
   const setZoom = vi.fn() as unknown as React.Dispatch<React.SetStateAction<number>>;
   const onSave = vi.fn() as () => void;
-  const onSaveAs = vi.fn() as () => void;
 
   const deps: KeyboardShortcutDeps = {
     setTool,
@@ -40,7 +39,6 @@ function makeArgs() {
     t,
     setZoom,
     onSave,
-    onSaveAs,
     activeTab: 0,
   };
 
@@ -60,7 +58,6 @@ function makeArgs() {
     setShowNewCanvas,
     setZoom,
     onSave,
-    onSaveAs,
   };
 }
 

@@ -5,6 +5,8 @@ import type { CanvasData, ImgCache } from "../types";
 export interface ExportResult {
   saveColor: (ref: React.RefObject<HTMLCanvasElement | null>, name: string) => void;
   saveGlaze: (name: string) => void;
+  shareColor: (ref: React.RefObject<HTMLCanvasElement | null>, name: string) => void;
+  shareGlaze: (name: string) => void;
 }
 
 /** Download a canvas element as PNG. Uses Web Share API on mobile, falls back to anchor download. */
@@ -19,6 +21,8 @@ function downloadCanvas(
       showToast(t("toast_image_gen_failed"), "error");
       return;
     }
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+    const isAndroid = /Android/i.test(navigator.userAgent);
     const fallbackSave = (b: Blob) => {
       const url = URL.createObjectURL(b);
       const a = document.createElement("a");
@@ -28,8 +32,6 @@ function downloadCanvas(
       a.click();
       document.body.removeChild(a);
       // iOS Safari ignores <a download> — open in new tab as last resort
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-      const isAndroid = /Android/i.test(navigator.userAgent);
       if (isIOS) {
         window.open(url, "_blank");
         showToast(t("toast_save_long_press"), "info");
@@ -39,11 +41,38 @@ function downloadCanvas(
       setTimeout(() => URL.revokeObjectURL(url), 5000);
     };
     const file = new File([blob], name, { type: "image/png" });
-    const isAndroid = /Android/i.test(navigator.userAgent);
-    if (!isAndroid && navigator.share && navigator.canShare?.({ files: [file] })) {
-      navigator.share({ files: [file] }).catch(() => fallbackSave(blob));
+    // Share sheet only on iOS; desktop Chrome/Edge also expose navigator.share but
+    // users expect an immediate download there.
+    if (isIOS && navigator.share && navigator.canShare?.({ files: [file] })) {
+      navigator.share({ files: [file] }).catch((err: unknown) => {
+        // AbortError = user dismissed the share sheet; don't surprise them with a download.
+        if ((err as { name?: string })?.name !== "AbortError") fallbackSave(blob);
+      });
     } else {
       fallbackSave(blob);
+    }
+  }, "image/png");
+}
+
+/** Share a canvas via the Web Share API. Desktop power-user entry (right-click on save). */
+function shareCanvas(
+  canvas: HTMLCanvasElement,
+  name: string,
+  showToast: (message: string, type: "error" | "success" | "info") => void,
+  t: import("../i18n").TranslationFn,
+): void {
+  canvas.toBlob((blob) => {
+    if (!blob) {
+      showToast(t("toast_image_gen_failed"), "error");
+      return;
+    }
+    const file = new File([blob], name, { type: "image/png" });
+    if (navigator.share && navigator.canShare?.({ files: [file] })) {
+      navigator.share({ files: [file] }).catch(() => {
+        // User cancelled or share target rejected — silent.
+      });
+    } else {
+      showToast(t("toast_share_unsupported"), "error");
     }
   }, "image/png");
 }
@@ -80,5 +109,21 @@ export function useExport(
     [cvs, colorLUT, showToast, t],
   );
 
-  return { saveColor, saveGlaze };
+  const shareColor = useCallback(
+    (ref: React.RefObject<HTMLCanvasElement | null>, name: string) => {
+      const c = ref.current ?? renderToTempCanvas(cvs, colorLUT);
+      shareCanvas(c, name, showToast, t);
+    },
+    [cvs, colorLUT, showToast, t],
+  );
+
+  const shareGlaze = useCallback(
+    (name: string) => {
+      const c = renderToTempCanvas(cvs, colorLUT);
+      shareCanvas(c, name, showToast, t);
+    },
+    [cvs, colorLUT, showToast, t],
+  );
+
+  return { saveColor, saveGlaze, shareColor, shareGlaze };
 }

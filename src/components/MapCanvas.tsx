@@ -373,6 +373,8 @@ export function MapCanvas({
     c.toBlob((blob) => {
       if (!blob) return;
       const name = `chromalum-map-${mode}.png`;
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
+      const isAndroid = /Android/i.test(navigator.userAgent);
       const fallbackSave = (b: Blob) => {
         const url = URL.createObjectURL(b);
         const a = document.createElement("a");
@@ -381,20 +383,22 @@ export function MapCanvas({
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
-        const androidUA = /Android/i.test(navigator.userAgent);
         if (isIOS) {
           window.open(url, "_blank");
           showToast?.(t("toast_save_long_press"), "info");
-        } else if (androidUA) {
+        } else if (isAndroid) {
           showToast?.(t("toast_saved"), "success");
         }
         setTimeout(() => URL.revokeObjectURL(url), 5000);
       };
       const file = new File([blob], name, { type: "image/png" });
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      if (!isAndroid && navigator.share && navigator.canShare?.({ files: [file] })) {
-        navigator.share({ files: [file] }).catch(() => fallbackSave(blob));
+      // Share sheet only on iOS; desktop Chrome/Edge also expose navigator.share but
+      // users expect an immediate download there.
+      if (isIOS && navigator.share && navigator.canShare?.({ files: [file] })) {
+        navigator.share({ files: [file] }).catch((err: unknown) => {
+          // AbortError = user dismissed the share sheet; don't surprise them with a download.
+          if ((err as { name?: string })?.name !== "AbortError") fallbackSave(blob);
+        });
       } else {
         fallbackSave(blob);
       }

@@ -23,7 +23,6 @@ import { GlazePanel } from "./components/GlazePanel";
 import { HelpModal } from "./components/HelpModal";
 import { NewCanvasModal } from "./components/NewCanvasModal";
 import { CropModal } from "./components/CropModal";
-import { PromptModal } from "./components/PromptModal";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { AnalyzePanel } from "./components/AnalyzePanel";
 import { GalleryPanel } from "./components/GalleryPanel";
@@ -122,7 +121,6 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     setGlazeTool,
     directCandidates,
     setDirectCandidates,
-    promptState,
     colorLUT,
     displayW,
     displayH,
@@ -131,9 +129,6 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     handleUnlockAll,
     canRandomize,
     patternInfo,
-    requestFilename,
-    handlePromptConfirm,
-    handlePromptCancel,
   } = app;
 
   const hist = state.hist;
@@ -232,17 +227,11 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   const undo = useCallback(() => dispatch({ type: "undo" }), [dispatch]);
   const redo = useCallback(() => dispatch({ type: "redo" }), [dispatch]);
 
-  const { saveColor, saveGlaze } = useExport(cvs, colorLUT, showToast, t);
+  const { saveColor, saveGlaze, shareColor, shareGlaze } = useExport(cvs, colorLUT, showToast, t);
 
   const handleKbSave = useCallback(() => {
     saveColor(prvRef, `chromalum_color_${Date.now()}.png`);
   }, [saveColor, prvRef]);
-
-  const handleKbSaveAs = useCallback(() => {
-    requestFilename(`chromalum_color_${Date.now()}`).then((name) => {
-      if (name) saveColor(prvRef, name.endsWith(".png") ? name : name + ".png");
-    });
-  }, [saveColor, prvRef, requestFilename]);
 
   useKeyboardShortcuts({
     setTool,
@@ -260,7 +249,6 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     t,
     setZoom: panZoom.setZoom,
     onSave: handleKbSave,
-    onSaveAs: handleKbSaveAs,
     activeTab,
   });
 
@@ -361,8 +349,10 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     () => ({
       saveColor,
       saveGlaze,
+      shareColor,
+      shareGlaze,
     }),
-    [saveColor, saveGlaze],
+    [saveColor, saveGlaze, shareColor, shareGlaze],
   );
 
   const handleNewCanvas = useCallback(() => setShowNewCanvas(true), [setShowNewCanvas]);
@@ -415,14 +405,6 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
       {cropImage && (
         <CropModal img={cropImage.img} imgW={cropImage.w} imgH={cropImage.h} onConfirm={handleCropConfirm} onCancel={handleCropCancel} />
       )}
-      <PromptModal
-        open={!!promptState}
-        title={t("prompt_custom_filename")}
-        defaultValue={promptState?.defaultValue ?? ""}
-        onConfirm={handlePromptConfirm}
-        onCancel={handlePromptCancel}
-      />
-
       {fileDrop.dragging && (
         <div style={S_DROP_OVERLAY}>
           <div style={S_DROP_TEXT}>{t("drop_image")}</div>
@@ -483,7 +465,6 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
               schedCursor={schedCursorFn}
               prvRef={prvRef}
               onNewCanvas={handleNewCanvas}
-              requestFilename={requestFilename}
               panZoomMode={panZoom.panZoomMode}
               setPanZoomMode={panZoom.setPanZoomMode}
               handleMiddleDown={panZoom.handleMiddleDown}

@@ -21,7 +21,6 @@ export interface KeyboardShortcutDeps {
   t: TranslationFn;
   setZoom: React.Dispatch<React.SetStateAction<number>>;
   onSave: () => void;
-  onSaveAs: () => void;
   activeTab: number;
 }
 
@@ -49,7 +48,6 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps) {
     t,
     setZoom,
     onSave,
-    onSaveAs,
     activeTab,
   } = deps;
 
@@ -60,14 +58,6 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps) {
         ctrl: true,
         action: () => {
           setShowNewCanvas(true);
-        },
-      },
-      {
-        key: "s",
-        ctrl: true,
-        shift: true,
-        action: () => {
-          onSaveAs();
         },
       },
       {
@@ -250,19 +240,5 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps) {
       window.removeEventListener("blur", blur);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- spaceRef, panningRef, brushSizeRef are stable refs
-  }, [
-    setTool,
-    setBrushLevel,
-    setBrushSize,
-    dispatch,
-    announce,
-    endPan,
-    setShowHelp,
-    setCursorMode,
-    setShowNewCanvas,
-    t,
-    setZoom,
-    onSave,
-    onSaveAs,
-  ]);
+  }, [setTool, setBrushLevel, setBrushSize, dispatch, announce, endPan, setShowHelp, setCursorMode, setShowNewCanvas, t, setZoom, onSave]);
 }

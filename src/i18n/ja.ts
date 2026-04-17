@@ -117,8 +117,6 @@ export const ja: Record<TranslationKey, string> = {
   help_zoom_key: "ホイール / +/-",
   help_save: "カラーPNG保存",
   help_save_key: "Ctrl+S",
-  help_save_as: "ファイル名指定保存",
-  help_save_as_key: "Ctrl+Shift+S",
   help_eyedropper: "レベル取得（スポイト）",
   help_eyedropper_key: "右クリック / Alt+クリック",
   help_dblclick_level: "レベル選択+ブラシ切替",
@@ -126,9 +124,6 @@ export const ja: Record<TranslationKey, string> = {
   help_zoom_pixel: "ピクセル等倍ズーム",
   help_zoom_pixel_key: "ズームボタン右クリック",
   help_pan_combined_key: "Space / 中クリック+ドラッグ",
-  help_save_as_combined_key: "Ctrl+Shift+S / 保存右クリック",
-  help_save_custom: "カスタムファイル名で保存",
-  help_save_custom_key: "保存ボタン右クリック",
   help_middle_pan: "パン",
   help_middle_pan_key: "中クリック+ドラッグ",
   help_middle_reset: "ズーム＆パンリセット",
@@ -144,6 +139,8 @@ export const ja: Record<TranslationKey, string> = {
   toast_image_gen_failed: "画像の生成に失敗しました（メモリ不足の可能性）",
   toast_save_long_press: "画像を長押しして保存してください",
   toast_saved: "保存しました",
+  toast_bookmark_limit: "ブックマークの上限（{0}件）に達しました",
+  toast_share_unsupported: "このブラウザは共有に対応していません",
   toast_export_too_large: "{0}×{1}px — 安全にエクスポートするには大きすぎます",
   toast_memory_warning: "{0}×{1}px — メモリ負荷が高い可能性があります",
   toast_clipboard_unsupported: "ClipboardItem未対応",
@@ -155,7 +152,6 @@ export const ja: Record<TranslationKey, string> = {
   toast_unlocked: "L{0} のロックを解除しました",
   toast_all_unlocked: "全ての色のロックを解除しました",
   btn_unlock_all: "🔓全解除",
-  prompt_custom_filename: "ファイル名を入力:",
   toast_fill_truncated: "メモリ制限により塗りつぶしが途中で打ち切られました",
   toast_fill_error: "塗りつぶし操作に失敗しました",
   toast_cleared: "クリアしました (Ctrl+Zで元に戻せます)",
@@ -197,10 +193,10 @@ export const ja: Record<TranslationKey, string> = {
   label_theory: "ALGEBRAIC COLOR THEORY",
   theory_title: "色彩理論",
   theory_intro:
-    "CHROMALUMの8段階ルマレベルは、RGBチャンネルを3ビット2進数として符号化します。これは本タブの出発点となる設計選択です。ここから、カラーキューブ、グレイコード、ハミング符号、ファノ平面が GF(2)^3 の構造として現れます。GF(2) は 0 と 1 だけから成る最小の有限体であり、1+1=0 が成り立ちます。GF(2)^3 はその3次元ベクトル空間であり、8つのベクトルが8色に対応します。",
+    "CHROMALUMの8段階ルマレベルは、RGBチャンネルを3ビット2進数として符号化します。これは本タブの出発点となる設計選択です。ここから、カラーキューブ、グレイコード、ハミング符号、ファノ平面が GF(2)³ の構造として現れます。GF(2) は 0 と 1 だけから成る最小の有限体であり、1+1=0 が成り立ちます。GF(2)³ はその3次元ベクトル空間であり、8つのベクトルが8色に対応します。",
   theory_binary_title: "バイナリレベル",
   theory_binary_desc:
-    "各レベルは3ビット数値です。ビットとチャンネルの割り当て6通りのうち、レベル番号がルマ値に対して単調増加するのは GRB（ビット2=Green, ビット1=Red, ビット0=Blue）だけです。これは Green のルマ係数が Red+Blue を超えるためです（0.587 > 0.413）。任意の設計ではなく、人間の色覚の帰結です。原色の番号 {1, 2, 4} は、元・ペア和・全体和が {1, \u2026, 7} を重複なく生成する唯一の3元集合です。",
+    "各レベルは3ビット数値です。ビットとチャンネルの割り当て6通りのうち、レベル番号がルマ値に対して単調増加するのは GRB（ビット2=Green, ビット1=Red, ビット0=Blue）だけです。これは Green のルマ係数が Red+Blue を超えるためです（0.587 > 0.413）。任意の設計ではなく、人間の色覚の帰結です。原色の番号 {1, 2, 4} は、元・ペア和・全体和（いずれも通常の整数加算）が {1, \u2026, 7} を重複なく生成する唯一の3元集合です。",
   theory_binary_color: "色",
   theory_binary_luma_formula: "Luma (BT.601): Y = 0.299R + 0.587G + 0.114B",
   theory_binary_luma_complement: "補色ルマ定理: Y\u2096 + Y\u2087\u208b\u2096 = 255（係数の和が1であれば任意の係数で成立）",
@@ -209,7 +205,7 @@ export const ja: Record<TranslationKey, string> = {
     "色相を回転させると、明るさはどのように変わるのでしょうか。完全飽和色（最大チャンネル=255、最小=0）は、色相の回転に従って6区間のジグザグを描きます。各区間では1チャンネルが変化し、傾きはBT.601係数に比例します。円周上では、各頂点ルマ値の水平線はジグザグと1点または3点で交わり、その交点が等ルマ候補です。頂点間では最大4点で交わります。任意の色相角 h で Y(h) + Y(h+180\u00b0) = 255 が成り立つため、補色のルマ和は常に一定です（補色ルマ定理）。",
   theory_dice_title: "カラーダイス",
   theory_dice_desc:
-    "6つの有彩色を暗い順に1\u20136とナンバリングし、正六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。",
+    "6つの有彩色を暗い順に1\u20136とナンバリングし、六面体の面に配置します。補色ペアは対面に位置し、どの対面の和も7 \u2014 標準的なサイコロの規則と同一です。",
   theory_dice_desc2:
     "これは条件付きで一般に成り立つ定理です：任意の正のルマ係数に対し、同順位がなければ、補色の順序反転性から d(c) + d(c\u0304) = 7 が成立します。",
   theory_dice_net_title: "\u30ab\u30e9\u30fc\u30c0\u30a4\u30b9\u306e\u8272\u76f8\u5c55\u958b",
@@ -276,7 +272,7 @@ export const ja: Record<TranslationKey, string> = {
   theory_conn_fano_hamming_hook:
     "Fano \u2245 Hamming：ファノ平面の7点はパリティ検査行列の7列に対応します。射影幾何と符号理論は同一構造の二つの読み方です。",
   theory_conn_cube_geometry_hook:
-    "立方体の幾何：ファノ平面の7線は、Black(0) を含む GF(2)^3 の7つの2次元部分空間に対応します。ユークリッド的な立方体では、そのうち6つは実際の平面断面（3つの座標平面と3つの対角平面）として現れ、残る CMY 線は偶数パリティ四面体 {0,3,5,6} に対応します。3つのパリティ検査は G=0, R=0, B=0 の座標平面です。",
+    "立方体の幾何：ファノ平面の7線は、Black(0) を含む GF(2)³ の7つの2次元部分空間に対応します。ユークリッド的な立方体では、そのうち6つは実際の平面断面（3つの座標平面と3つの対角平面）として現れ、残る CMY 線は偶数パリティ四面体 {0,3,5,6} に対応します。3つのパリティ検査は G=0, R=0, B=0 の座標平面です。",
   theory_conn_gray_hook:
     "グレイコード：色相環 R\u2192Y\u2192G\u2192C\u2192B\u2192M は立方体の有彩色頂点と八面体頂点グラフの両方におけるハミルトン閉路です。",
   theory_conn_boolean_hook:
@@ -309,7 +305,7 @@ export const ja: Record<TranslationKey, string> = {
   // Octahedron (chromatic cross-polytope)
   theory_octa_title: "カラーダイヤ",
   theory_octa_desc:
-    "6つの有彩色とその補色対称性を最も対称的に表す図形が八面体です。各補色軸（R\u2194C, G\u2194M, B\u2194Y）が対頂点を結び、原色が + 軸、CMY が \u2212 軸に配置されます。八面体は色立方体の双対であり、6頂点は8面（各 GF(2)^3 元）に対応し、面隣接グラフは立方体グラフそのものです。八面体の12辺は6つの有彩色 XOR 結果を各2回ずつ与え、各非補色ペア {a,b} には離散的な第三の色 a\u2295b が定まります。",
+    "6つの有彩色とその補色対称性を最も対称的に表す図形が八面体です。各補色軸（R\u2194C, G\u2194M, B\u2194Y）が対頂点を結び、原色が + 軸、CMY が \u2212 軸に配置されます。八面体は色立方体の双対であり、6頂点は8面（各 GF(2)³ 元）に対応し、面隣接グラフは立方体グラフそのものです。立方体の12辺はXOR値を3種しか与えないのに対し、八面体の12辺は6つの有彩色 XOR 結果を各2回ずつ網羅し、各非補色ペア {a,b} には離散的な第三の色 a\u2295b が定まります。",
   theory_octa_axes: "補色軸",
 
   // §10 カラーテトラ
@@ -461,9 +457,9 @@ export const ja: Record<TranslationKey, string> = {
   stats_level_tooltip: "L{0} {1}: {2} ({3}%)",
 
   // Hidden feature hints
-  title_save_gray: "グレースケールPNG保存 (右クリック: カスタムファイル名)",
-  title_save_color: "カラーPNG保存 (右クリック: カスタムファイル名)",
-  title_save_glaze: "グレーズPNG保存 (右クリック: カスタムファイル名)",
+  title_save_gray: "グレースケールPNG保存",
+  title_save_color: "カラーPNG保存",
+  title_save_glaze: "グレーズPNG保存",
   title_level_btn: "レベル{0} {1} (ダブルクリック: ブラシ/消しゴム切替)",
   title_zoom_pixel: "右クリック: ピクセル等倍ズーム",
 

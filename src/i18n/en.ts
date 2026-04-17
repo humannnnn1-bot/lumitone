@@ -117,8 +117,6 @@ export const en = {
   help_zoom_key: "Wheel / +/-",
   help_save: "Save color PNG",
   help_save_key: "Ctrl+S",
-  help_save_as: "Save with custom filename",
-  help_save_as_key: "Ctrl+Shift+S",
   help_eyedropper: "Pick level (eyedropper)",
   help_eyedropper_key: "Right-click / Alt+click",
   help_dblclick_level: "Select level + Brush tool",
@@ -126,9 +124,6 @@ export const en = {
   help_zoom_pixel: "Pixel-perfect zoom",
   help_zoom_pixel_key: "Right-click zoom btn",
   help_pan_combined_key: "Space / Mid-click drag",
-  help_save_as_combined_key: "Ctrl+Shift+S / R-click save",
-  help_save_custom: "Save with custom filename",
-  help_save_custom_key: "Right-click save btn",
   help_middle_pan: "Pan",
   help_middle_pan_key: "Middle-click drag",
   help_middle_reset: "Reset zoom & pan",
@@ -144,6 +139,8 @@ export const en = {
   toast_image_gen_failed: "Failed to generate image (possibly out of memory)",
   toast_save_long_press: "Long-press the image to save",
   toast_saved: "Saved",
+  toast_bookmark_limit: "Bookmark limit reached ({0})",
+  toast_share_unsupported: "Share is not supported in this browser",
   toast_export_too_large: "{0}×{1}px — Too large to export safely",
   toast_memory_warning: "{0}×{1}px — May cause high memory usage",
   toast_clipboard_unsupported: "ClipboardItem not supported",
@@ -155,7 +152,6 @@ export const en = {
   toast_unlocked: "L{0} color unlocked",
   toast_all_unlocked: "All colors unlocked",
   btn_unlock_all: "\uD83D\uDD13Unlock all",
-  prompt_custom_filename: "Enter filename:",
   toast_fill_truncated: "Fill was truncated due to memory limits",
   toast_fill_error: "Fill operation failed",
   toast_cleared: "Cleared (Ctrl+Z to undo)",
@@ -200,7 +196,7 @@ export const en = {
     "CHROMALUM\u2019s 8 luma levels encode RGB channels as 3-bit binary \u2014 a single design choice. From this, the color cube, Gray codes, Hamming codes, and the Fano plane all emerge as mathematical consequences of GF(2)\u00b3. GF(2) is the simplest number system: just 0 and 1, where 1+1=0. GF(2)\u00b3 is its 3-dimensional extension \u2014 8 vectors corresponding to our 8 colors.",
   theory_binary_title: "Binary Levels",
   theory_binary_desc:
-    "Each level is a 3-bit number. Of the 6 possible bit-to-channel assignments, only GRB (Bit 2 = Green, Bit 1 = Red, Bit 0 = Blue) makes level numbers increase monotonically with luma \u2014 because Green\u2019s luma coefficient alone exceeds Red + Blue (0.587 > 0.413). This is not a design choice but a consequence of human color vision. The primary set {1, 2, 4} is the unique 3-element subset of naturals whose elements, pairwise sums, and total sum partition {1, \u2026, 7} without overlap.",
+    "Each level is a 3-bit number. Of the 6 possible bit-to-channel assignments, only GRB (Bit 2 = Green, Bit 1 = Red, Bit 0 = Blue) makes level numbers increase monotonically with luma \u2014 because Green\u2019s luma coefficient alone exceeds Red + Blue (0.587 > 0.413). This is not a design choice but a consequence of human color vision. The primary set {1, 2, 4} is the unique 3-element subset of naturals whose elements, pairwise sums, and total sum (all under ordinary integer addition) partition {1, \u2026, 7} without overlap.",
   theory_binary_color: "Color",
   theory_binary_luma_formula: "Luma (BT.601): Y = 0.299R + 0.587G + 0.114B",
   theory_binary_luma_complement: "Complement luma: Y\u2096 + Y\u2087\u208b\u2096 = 255 (universal for any coefficients summing to 1)",
@@ -275,7 +271,7 @@ export const en = {
   theory_conn_fano_hamming_hook:
     "Fano \u2245 Hamming: the 7 Fano points are the 7 columns of the parity-check matrix. Projective geometry and coding theory are two readings of the same structure.",
   theory_conn_cube_geometry_hook:
-    "Cube geometry: the 7 Fano lines correspond to the 7 two-dimensional subspaces of GF(2)^3 through Black. In the Euclidean cube, 6 of them appear as literal plane slices (3 coordinate planes and 3 diagonal planes); the remaining CMY line corresponds to the even-parity tetrahedron {0,3,5,6}. The three parity checks are the coordinate planes G=0, R=0, and B=0.",
+    "Cube geometry: the 7 Fano lines correspond to the 7 two-dimensional subspaces of GF(2)\u00b3 through Black. In the Euclidean cube, 6 of them appear as literal plane slices (3 coordinate planes and 3 diagonal planes); the remaining CMY line corresponds to the even-parity tetrahedron {0,3,5,6}. The three parity checks are the coordinate planes G=0, R=0, and B=0.",
   theory_conn_gray_hook:
     "Gray code: the hue wheel R\u2192Y\u2192G\u2192C\u2192B\u2192M is a Hamiltonian cycle on both the cube\u2019s chromatic vertices and the octahedron\u2019s vertex graph.",
   theory_conn_boolean_hook:
@@ -460,9 +456,9 @@ export const en = {
   stats_level_tooltip: "L{0} {1}: {2} ({3}%)",
 
   // Hidden feature hints
-  title_save_gray: "Save grayscale PNG (Right-click: custom filename)",
-  title_save_color: "Save color PNG (Right-click: custom filename)",
-  title_save_glaze: "Save glaze PNG (Right-click: custom filename)",
+  title_save_gray: "Save grayscale PNG",
+  title_save_color: "Save color PNG",
+  title_save_glaze: "Save glaze PNG",
   title_level_btn: "Level {0} {1} (Double-click: switch to Brush/Eraser)",
   title_zoom_pixel: "Right-click: pixel-perfect zoom",
 

@@ -138,8 +138,5 @@ export function useAppState(t: import("../i18n").TranslationFn) {
     handleUnlockAll: colorState.handleUnlockAll,
     canRandomize: colorState.canRandomize,
     patternInfo: colorState.patternInfo,
-    requestFilename: uiState.requestFilename,
-    handlePromptConfirm: uiState.handlePromptConfirm,
-    handlePromptCancel: uiState.handlePromptCancel,
   };
 }

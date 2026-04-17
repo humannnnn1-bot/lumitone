@@ -108,43 +108,4 @@ describe("useUIState", () => {
     });
     expect(result.current.mapMode).toBe("luminance");
   });
-
-  it("requestFilename returns a promise that resolves via handlePromptConfirm", async () => {
-    const { result } = renderHook(() => useUIState(t));
-
-    let resolved: string | null = null;
-    act(() => {
-      result.current.requestFilename("default.png").then((v) => {
-        resolved = v;
-      });
-    });
-
-    // promptState should be set
-    expect(result.current.promptState).not.toBeNull();
-    expect(result.current.promptState?.defaultValue).toBe("default.png");
-
-    // Confirm with a value
-    await act(async () => {
-      result.current.handlePromptConfirm("myfile.png");
-    });
-    expect(resolved).toBe("myfile.png");
-    expect(result.current.promptState).toBeNull();
-  });
-
-  it("handlePromptCancel resolves requestFilename with null", async () => {
-    const { result } = renderHook(() => useUIState(t));
-
-    let resolved: string | null = "not-set";
-    act(() => {
-      result.current.requestFilename("default.png").then((v) => {
-        resolved = v;
-      });
-    });
-
-    await act(async () => {
-      result.current.handlePromptCancel();
-    });
-    expect(resolved).toBeNull();
-    expect(result.current.promptState).toBeNull();
-  });
 });

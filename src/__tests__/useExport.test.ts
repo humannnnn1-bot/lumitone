@@ -39,6 +39,11 @@ function fakeCanvasWithBlob(blob: Blob | null) {
 describe("useExport", () => {
   const origShare = navigator.share;
   const origCanShare = navigator.canShare;
+  const origUA = navigator.userAgent;
+
+  const setUA = (ua: string) => {
+    Object.defineProperty(navigator, "userAgent", { value: ua, writable: true, configurable: true });
+  };
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -48,6 +53,8 @@ describe("useExport", () => {
     // Default: no Web Share API
     Object.defineProperty(navigator, "share", { value: undefined, writable: true, configurable: true });
     Object.defineProperty(navigator, "canShare", { value: undefined, writable: true, configurable: true });
+    // Default UA = desktop Chrome on Windows
+    setUA("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36");
   });
 
   afterEach(() => {
@@ -57,6 +64,7 @@ describe("useExport", () => {
   afterAll(() => {
     Object.defineProperty(navigator, "share", { value: origShare, writable: true, configurable: true });
     Object.defineProperty(navigator, "canShare", { value: origCanShare, writable: true, configurable: true });
+    Object.defineProperty(navigator, "userAgent", { value: origUA, writable: true, configurable: true });
   });
 
   /* ---------- saveColor ---------- */
@@ -123,7 +131,8 @@ describe("useExport", () => {
       expect(URL.revokeObjectURL).toHaveBeenCalledWith(fakeUrl);
     });
 
-    it("uses navigator.share when available", () => {
+    it("uses navigator.share on iOS when available", () => {
+      setUA("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1");
       const mockShare = vi.fn().mockResolvedValue(undefined);
       Object.defineProperty(navigator, "share", { value: mockShare, writable: true, configurable: true });
       Object.defineProperty(navigator, "canShare", { value: () => true, writable: true, configurable: true });
@@ -139,6 +148,130 @@ describe("useExport", () => {
       const arg = mockShare.mock.calls[0][0];
       expect(arg.files).toHaveLength(1);
       expect(arg.files[0].name).toBe("shared.png");
+    });
+
+    it("does NOT fall back to anchor download when user cancels share (AbortError) on iOS", async () => {
+      setUA("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1");
+      const abortErr = Object.assign(new Error("cancelled"), { name: "AbortError" });
+      const mockShare = vi.fn().mockRejectedValue(abortErr);
+      Object.defineProperty(navigator, "share", { value: mockShare, writable: true, configurable: true });
+      Object.defineProperty(navigator, "canShare", { value: () => true, writable: true, configurable: true });
+
+      const { result } = setup();
+      const canvas = fakeCanvasWithBlob(new Blob(["x"], { type: "image/png" }));
+      const ref = { current: canvas } as React.RefObject<HTMLCanvasElement | null>;
+
+      const mockAnchor = { href: "", download: "", click: vi.fn() } as unknown as HTMLAnchorElement;
+      vi.spyOn(document, "createElement").mockReturnValue(mockAnchor as unknown as HTMLElement);
+      vi.spyOn(document.body, "appendChild").mockReturnValue(mockAnchor as unknown as Node);
+      vi.spyOn(document.body, "removeChild").mockReturnValue(mockAnchor as unknown as Node);
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:http://localhost/fake");
+
+      result.current.saveColor(ref, "abort.png");
+      await vi.waitFor(() => expect(mockShare).toHaveBeenCalled());
+
+      expect(mockAnchor.click).not.toHaveBeenCalled();
+    });
+
+    it("DOES fall back when share fails with non-abort error on iOS", async () => {
+      setUA("Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1");
+      const notAllowedErr = Object.assign(new Error("blocked"), { name: "NotAllowedError" });
+      const mockShare = vi.fn().mockRejectedValue(notAllowedErr);
+      Object.defineProperty(navigator, "share", { value: mockShare, writable: true, configurable: true });
+      Object.defineProperty(navigator, "canShare", { value: () => true, writable: true, configurable: true });
+
+      const { result } = setup();
+      const canvas = fakeCanvasWithBlob(new Blob(["x"], { type: "image/png" }));
+      const ref = { current: canvas } as React.RefObject<HTMLCanvasElement | null>;
+
+      const mockAnchor = { href: "", download: "", click: vi.fn() } as unknown as HTMLAnchorElement;
+      vi.spyOn(document, "createElement").mockReturnValue(mockAnchor as unknown as HTMLElement);
+      vi.spyOn(document.body, "appendChild").mockReturnValue(mockAnchor as unknown as Node);
+      vi.spyOn(document.body, "removeChild").mockReturnValue(mockAnchor as unknown as Node);
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:http://localhost/fake");
+      vi.spyOn(window, "open").mockReturnValue(null);
+
+      result.current.saveColor(ref, "blocked.png");
+      await vi.waitFor(() => expect(mockAnchor.click).toHaveBeenCalled());
+    });
+
+    it("uses navigator.share on iPadOS 13+ (Mac UA + ontouchend)", () => {
+      // iPadOS 13+ reports a Mac user-agent. Touch support is detected via document.ontouchend.
+      setUA("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 Safari/605.1.15");
+      Object.defineProperty(document, "ontouchend", { value: null, configurable: true });
+      const mockShare = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "share", { value: mockShare, writable: true, configurable: true });
+      Object.defineProperty(navigator, "canShare", { value: () => true, writable: true, configurable: true });
+
+      const { result } = setup();
+      const canvas = fakeCanvasWithBlob(new Blob(["x"], { type: "image/png" }));
+      const ref = { current: canvas } as React.RefObject<HTMLCanvasElement | null>;
+
+      result.current.saveColor(ref, "ipad.png");
+
+      expect(mockShare).toHaveBeenCalledTimes(1);
+
+      // Clean up the ontouchend property
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (document as any).ontouchend;
+    });
+
+    it("does NOT use navigator.share on desktop even when API is available", () => {
+      // Default UA (from beforeEach) is desktop Chrome on Windows.
+      const mockShare = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "share", { value: mockShare, writable: true, configurable: true });
+      Object.defineProperty(navigator, "canShare", { value: () => true, writable: true, configurable: true });
+
+      const { result } = setup();
+      const blob = new Blob(["x"], { type: "image/png" });
+      const canvas = fakeCanvasWithBlob(blob);
+      const ref = { current: canvas } as React.RefObject<HTMLCanvasElement | null>;
+
+      const mockAnchor = { href: "", download: "", click: vi.fn() } as unknown as HTMLAnchorElement;
+      vi.spyOn(document, "createElement").mockReturnValue(mockAnchor as unknown as HTMLElement);
+      vi.spyOn(document.body, "appendChild").mockReturnValue(mockAnchor as unknown as Node);
+      vi.spyOn(document.body, "removeChild").mockReturnValue(mockAnchor as unknown as Node);
+      vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:http://localhost/fake");
+      vi.spyOn(URL, "revokeObjectURL").mockReturnValue();
+
+      result.current.saveColor(ref, "desktop.png");
+
+      expect(mockShare).not.toHaveBeenCalled();
+      expect(mockAnchor.click).toHaveBeenCalled();
+    });
+  });
+
+  /* ---------- shareColor ---------- */
+
+  describe("shareColor", () => {
+    it("calls navigator.share with file when API is available (desktop)", () => {
+      const mockShare = vi.fn().mockResolvedValue(undefined);
+      Object.defineProperty(navigator, "share", { value: mockShare, writable: true, configurable: true });
+      Object.defineProperty(navigator, "canShare", { value: () => true, writable: true, configurable: true });
+
+      const { result } = setup();
+      const blob = new Blob(["x"], { type: "image/png" });
+      const canvas = fakeCanvasWithBlob(blob);
+      const ref = { current: canvas } as React.RefObject<HTMLCanvasElement | null>;
+
+      result.current.shareColor(ref, "shared.png");
+
+      expect(mockShare).toHaveBeenCalledTimes(1);
+      const arg = mockShare.mock.calls[0][0];
+      expect(arg.files).toHaveLength(1);
+      expect(arg.files[0].name).toBe("shared.png");
+    });
+
+    it("shows toast_share_unsupported when navigator.share is absent", () => {
+      // Default beforeEach clears share/canShare to undefined.
+      const { result } = setup();
+      const blob = new Blob(["x"], { type: "image/png" });
+      const canvas = fakeCanvasWithBlob(blob);
+      const ref = { current: canvas } as React.RefObject<HTMLCanvasElement | null>;
+
+      result.current.shareColor(ref, "nope.png");
+
+      expect(mockShowToast).toHaveBeenCalledWith("toast_share_unsupported", "error");
     });
   });
 

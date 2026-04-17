@@ -29,7 +29,6 @@ interface SourcePanelProps {
   schedCursor: () => void;
   prvRef: React.RefObject<HTMLCanvasElement | null>;
   onNewCanvas: () => void;
-  requestFilename: (defaultValue: string) => Promise<string | null>;
   panZoomMode: boolean;
   setPanZoomMode: React.Dispatch<React.SetStateAction<boolean>>;
   handleMiddleDown: (e: React.PointerEvent) => void;
@@ -58,7 +57,6 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
     schedCursor,
     prvRef,
     onNewCanvas,
-    requestFilename,
     panZoomMode,
     setPanZoomMode,
     handleMiddleDown,
@@ -68,7 +66,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
   } = props;
   const { tool, setTool, brushLevel, setBrushLevel, brushSize, setBrushSize } = props.toolState;
   const { zoom, setZoom, setPan, displayW, displayH, canvasTransform, canvasCursor } = props.viewState;
-  const { saveColor, saveGlaze } = props.saveActions;
+  const { saveColor, saveGlaze, shareColor, shareGlaze } = props.saveActions;
   const { t } = useTranslation();
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => e.preventDefault(), []);
@@ -100,6 +98,33 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
   const handleSaveColor = useCallback(() => saveColor(prvRef, `chromalum_color_${timestamp()}.png`), [saveColor, prvRef]);
   const handleSaveGray = useCallback(() => saveColor(srcRef, `chromalum_gray_${timestamp()}.png`), [saveColor, srcRef]);
   const handleSaveGlaze = useCallback(() => saveGlaze(`chromalum_glaze_${timestamp()}.png`), [saveGlaze]);
+
+  // Right-click on desktop opens the OS share sheet. Suppressed on touch-primary devices
+  // (mobile/tablet) since their default left-tap already routes to the share sheet on iOS.
+  const handleShareColor = useCallback(
+    (e: React.MouseEvent) => {
+      if (!window.matchMedia("(pointer: fine)").matches) return;
+      e.preventDefault();
+      shareColor(prvRef, `chromalum_color_${timestamp()}.png`);
+    },
+    [shareColor, prvRef],
+  );
+  const handleShareGray = useCallback(
+    (e: React.MouseEvent) => {
+      if (!window.matchMedia("(pointer: fine)").matches) return;
+      e.preventDefault();
+      shareColor(srcRef, `chromalum_gray_${timestamp()}.png`);
+    },
+    [shareColor, srcRef],
+  );
+  const handleShareGlaze = useCallback(
+    (e: React.MouseEvent) => {
+      if (!window.matchMedia("(pointer: fine)").matches) return;
+      e.preventDefault();
+      shareGlaze(`chromalum_glaze_${timestamp()}.png`);
+    },
+    [shareGlaze],
+  );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -136,36 +161,6 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
       schedCursor();
     },
     [state.cvs.w, displayW, setZoom, setPan, schedCursor],
-  );
-
-  const handleSaveColorCustom = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      requestFilename(`chromalum_color_${timestamp()}`).then((name) => {
-        if (name) saveColor(prvRef, name.endsWith(".png") ? name : name + ".png");
-      });
-    },
-    [saveColor, prvRef, requestFilename],
-  );
-
-  const handleSaveGrayCustom = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      requestFilename(`chromalum_gray_${timestamp()}`).then((name) => {
-        if (name) saveColor(srcRef, name.endsWith(".png") ? name : name + ".png");
-      });
-    },
-    [saveColor, srcRef, requestFilename],
-  );
-
-  const handleSaveGlazeCustom = useCallback(
-    (e: React.MouseEvent) => {
-      e.preventDefault();
-      requestFilename(`chromalum_glaze_${timestamp()}`).then((name) => {
-        if (name) saveGlaze(name.endsWith(".png") ? name : name + ".png");
-      });
-    },
-    [saveGlaze, requestFilename],
   );
 
   return (
@@ -442,12 +437,12 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
           </div>
 
           <div style={{ display: "flex", gap: SP.md, justifyContent: "center", flexWrap: "wrap", marginTop: SP["5xl"] }}>
-            <button onClick={handleSaveGray} onContextMenu={handleSaveGrayCustom} style={S_BTN} title={t("title_save_gray")}>
+            <button onClick={handleSaveGray} onContextMenu={handleShareGray} style={S_BTN} title={t("title_save_gray")}>
               {t("btn_save_gray")}
             </button>
             <button
               onClick={handleSaveColor}
-              onContextMenu={handleSaveColorCustom}
+              onContextMenu={handleShareColor}
               style={{ ...S_BTN, color: C.saveColor }}
               title={t("title_save_color")}
             >
@@ -455,7 +450,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             </button>
             <button
               onClick={handleSaveGlaze}
-              onContextMenu={handleSaveGlazeCustom}
+              onContextMenu={handleShareGlaze}
               style={{ ...S_BTN, color: C.saveGlaze }}
               title={t("title_save_glaze")}
             >

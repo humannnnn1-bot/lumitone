@@ -30,8 +30,6 @@ vi.mock("../i18n", () => ({
         help_zoom_key: "Wheel / +/-",
         help_save: "Save color PNG",
         help_save_key: "Ctrl+S",
-        help_save_as: "Save with custom filename",
-        help_save_as_key: "Ctrl+Shift+S",
         help_eyedropper: "Pick level (eyedropper)",
         help_eyedropper_key: "Right-click / Alt+click",
         help_dblclick_level: "Select level + Brush tool",
@@ -53,31 +51,23 @@ describe("HelpModal", () => {
   const helpRef = React.createRef<HTMLDivElement>();
 
   it("does not render when showHelp is false", () => {
-    const { container } = render(
-      <HelpModal showHelp={false} setShowHelp={() => {}} helpRef={helpRef} />,
-    );
+    const { container } = render(<HelpModal showHelp={false} setShowHelp={() => {}} helpRef={helpRef} />);
     expect(container.innerHTML).toBe("");
   });
 
   it("renders when showHelp is true", () => {
-    render(
-      <HelpModal showHelp={true} setShowHelp={() => {}} helpRef={helpRef} />,
-    );
+    render(<HelpModal showHelp={true} setShowHelp={() => {}} helpRef={helpRef} />);
     expect(screen.getByRole("dialog")).toBeTruthy();
   });
 
   it("shows help title", () => {
-    render(
-      <HelpModal showHelp={true} setShowHelp={() => {}} helpRef={helpRef} />,
-    );
+    render(<HelpModal showHelp={true} setShowHelp={() => {}} helpRef={helpRef} />);
     expect(screen.getByText("Keyboard Shortcuts")).toBeTruthy();
   });
 
   it("has close button", () => {
     const setShowHelp = vi.fn();
-    render(
-      <HelpModal showHelp={true} setShowHelp={setShowHelp} helpRef={helpRef} />,
-    );
+    render(<HelpModal showHelp={true} setShowHelp={setShowHelp} helpRef={helpRef} />);
     const closeBtns = screen.getAllByText("Close");
     const closeBtn = closeBtns.find((el) => el.tagName === "BUTTON")!;
     expect(closeBtn).toBeTruthy();
