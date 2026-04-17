@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "eslint": {
+      "command": "npx",
+      "args": ["@eslint/mcp@latest"]
+    },
+    "context7": {
+      "command": "npx",
+      "args": ["-y", "@upstash/context7-mcp@latest"]
+    },
+    "lighthouse": {
+      "command": "npx",
+      "args": ["-y", "@danielsogl/lighthouse-mcp@latest"]
+    },
+    "i18n": {
+      "command": "npx",
+      "args": ["-y", "i18n-mcp", "--dir", "./src/i18n", "--project-root", "."]
+    }
+  }
+}
