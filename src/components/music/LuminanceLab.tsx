@@ -8,7 +8,6 @@ import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
 
 interface LuminanceLabProps {
   engine: MusicEngineReturn;
-  activeLevels: { lv: number; rgb: [number, number, number] }[];
   stopSignal: number;
 }
 
@@ -49,7 +48,7 @@ const S_SUBTITLE: React.CSSProperties = {
   textAlign: "center",
 };
 
-export const LuminanceLab = React.memo(function LuminanceLab({ engine, activeLevels, stopSignal }: LuminanceLabProps) {
+export const LuminanceLab = React.memo(function LuminanceLab({ engine, stopSignal }: LuminanceLabProps) {
   const { t } = useTranslation();
 
   const [activePair, setActivePair] = useState(-1);
@@ -98,11 +97,11 @@ export const LuminanceLab = React.memo(function LuminanceLab({ engine, activeLev
       <div style={S_GRID}>
         <div style={S_PANEL}>
           <div style={S_SUBTITLE}>{t("music_complement_title")}</div>
-          <ComplementPairs activePair={activePair} activeLevels={activeLevels} />
+          <ComplementPairs activePair={activePair} />
         </div>
         <div style={S_PANEL}>
           <div style={S_SUBTITLE}>{t("music_zigzag_title")}</div>
-          <ZigzagGraph currentStep={zigzagStep} activeLevels={activeLevels} />
+          <ZigzagGraph currentStep={zigzagStep} />
         </div>
       </div>
     </div>

@@ -21,7 +21,7 @@ function renderWithLanguage(node: ReactNode) {
 
 describe("LuminanceLab", () => {
   it("groups the luminance views under one wrapper", () => {
-    renderWithLanguage(<LuminanceLab engine={mockEngine} activeLevels={[]} stopSignal={0} />);
+    renderWithLanguage(<LuminanceLab engine={mockEngine} stopSignal={0} />);
 
     expect(screen.getByText("Luminance Lab")).toBeTruthy();
     expect(screen.getByText("Die Opposites")).toBeTruthy();
