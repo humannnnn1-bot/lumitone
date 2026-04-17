@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from "react";
-import { LEVEL_INFO, LEVEL_CANDIDATES } from "../color-engine";
+import { LEVEL_INFO, LEVEL_CANDIDATES, rgb2hue } from "../color-engine";
 import { rgbStr, hexStr } from "../utils";
 import { C, FS, SP } from "../tokens";
 import { LEVEL_MASK } from "../constants";
@@ -113,7 +113,7 @@ export const CompositionDonut = React.memo(function CompositionDonut({ cvs, hist
       grayEntries.push({
         count: hist[lv],
         color: `rgb(${g},${g},${g})`,
-        info: [`L${lv} ${LEVEL_INFO[lv].name}`, t("donut_tone_value", g), `${hist[lv].toLocaleString()} px (${pct(hist[lv])}%)`],
+        info: [`L${lv} ${LEVEL_INFO[lv].name}`, t("donut_tone_value", g), t("donut_count_pct", pct(hist[lv]), hist[lv].toLocaleString())],
       });
     }
 
@@ -132,7 +132,7 @@ export const CompositionDonut = React.memo(function CompositionDonut({ cvs, hist
           `L${lv} ${LEVEL_INFO[lv].name}`,
           `${hexStr(rgb)} (${t("donut_hue", hueLabel)})`,
           t("donut_candidate", ci + 1, alts.length),
-          `${hist[lv].toLocaleString()} px (${pct(hist[lv])}%)`,
+          t("donut_count_pct", pct(hist[lv]), hist[lv].toLocaleString()),
         ],
       });
     }
@@ -183,24 +183,40 @@ export const CompositionDonut = React.memo(function CompositionDonut({ cvs, hist
     for (let lv = 0; lv < 8; lv++) {
       // Check if this level has any glaze changes at all
       const levelHasGlaze = [...glazePerLevel[lv].values()].some((g) => g.isGlazed);
+      const levelTotal = hist[lv];
+      const levelPct = (n: number) => (levelTotal > 0 ? ((n / levelTotal) * 100).toFixed(1) : "0.0");
       for (const [, g] of glazePerLevel[lv]) {
+        // Find candidate index of actual color (for L1-L6; L0/L7 have single candidate)
+        const alts = LEVEL_CANDIDATES[lv];
+        const candIdx = alts.findIndex((a) => a.rgb[0] === g.rgb[0] && a.rgb[1] === g.rgb[1] && a.rgb[2] === g.rgb[2]);
+        const hasCandidate = lv >= 1 && lv <= 6 && alts.length > 1 && candIdx >= 0;
+        const countLine = `${t("donut_count_pct", pct(g.count), g.count.toLocaleString())} · ${t("donut_level_pct", lv, levelPct(g.count))}`;
+
         // For levels with no glaze changes, draw with same color but no border
         if (!levelHasGlaze && !g.isGlazed) {
-          glazeEntries.push({
-            count: g.count,
-            color: rgbStr(g.rgb),
-            info: [`L${lv} ${hexStr(g.rgb)}`, `${g.count.toLocaleString()} px (${pct(g.count)}%)`],
-            isGlazed: false,
-          });
+          const lines = [`L${lv} ${hexStr(g.rgb)}`];
+          if (hasCandidate) lines.push(t("donut_candidate", candIdx + 1, alts.length));
+          lines.push(countLine);
+          glazeEntries.push({ count: g.count, color: rgbStr(g.rgb), info: lines, isGlazed: false });
           continue;
         }
         const defaultColor = hexStr(colorLUT[lv]);
         const actualColor = hexStr(g.rgb);
         const lines = [`L${lv} ${actualColor}`];
+        if (hasCandidate) lines.push(t("donut_candidate", candIdx + 1, alts.length));
         if (g.isGlazed) {
           lines.push(t("donut_glaze_changed", defaultColor));
+          // Hue delta vs default (shortest signed difference, -180..+180)
+          if (lv >= 1 && lv <= 6) {
+            const hueActual = rgb2hue(g.rgb[0], g.rgb[1], g.rgb[2]);
+            const def = colorLUT[lv];
+            const hueDef = rgb2hue(def[0], def[1], def[2]);
+            let d = hueActual - hueDef;
+            d = ((d + 540) % 360) - 180;
+            lines.push(t("donut_hue_delta", (d >= 0 ? "+" : "") + d.toFixed(0)));
+          }
         }
-        lines.push(`${g.count.toLocaleString()} px (${pct(g.count)}%)`);
+        lines.push(countLine);
         glazeEntries.push({ count: g.count, color: rgbStr(g.rgb), info: lines, isGlazed: g.isGlazed });
       }
     }
@@ -243,8 +259,7 @@ export const CompositionDonut = React.memo(function CompositionDonut({ cvs, hist
       {/* Info text */}
       <div
         style={{
-          height: 56,
-          overflow: "hidden",
+          minHeight: 56,
           marginTop: SP.xl,
           padding: `${SP.lg}px ${SP.xl}px`,
           fontSize: FS.sm,
