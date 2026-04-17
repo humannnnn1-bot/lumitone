@@ -47,6 +47,11 @@ export const ColorMappingList = memo(
             has = alts.length > 1;
           const isActive = brushLevel === i;
           const tl = THEORY_LEVELS[i];
+          // L1/L6 are single-candidate chromatic — size row height to the midpoint
+          // of achromatic (L0/L7) and multi-candidate (L2–L5) neighbors.
+          // L2–L5 height is driven by S_NAV_ARROW minHeight (tap target), constant across breakpoints.
+          const isSingleChromatic = i === 1 || i === 6;
+          const vPad = has ? 0 : isSingleChromatic ? SP.xl : mobile ? SP.sm : SP.md;
           return (
             <div
               key={i}
@@ -54,7 +59,7 @@ export const ColorMappingList = memo(
                 display: "flex",
                 alignItems: "center",
                 gap: mobile ? SP.md : SP.lg,
-                padding: mobile ? `${has ? 0 : SP.sm}px ${SP.xs}px` : `${has ? 0 : SP.md}px ${SP.lg}px`,
+                padding: `${vPad}px ${mobile ? SP.xs : SP.lg}px`,
                 background: isActive ? C.bgSurface : C.bgPanelAlt,
                 borderRadius: R.lg,
                 border: isActive ? `1px solid ${C.borderAccent}` : "1px solid transparent",
