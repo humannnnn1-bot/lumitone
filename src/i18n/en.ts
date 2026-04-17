@@ -161,6 +161,7 @@ export const en = {
   // FileDrop
   toast_image_load_failed: "Failed to load image",
   toast_image_process_failed: "Image processing failed",
+  toast_image_too_large: "Image too large",
   toast_image_resized: "Resized: {0}×{1} → {2}×{3}",
   drop_image: "Drop image",
   drop_announce: "Drop an image here",

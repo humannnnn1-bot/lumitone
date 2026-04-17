@@ -5,7 +5,7 @@ import { usePinReset } from "./pin-reset";
 import { S_BTN } from "../../styles";
 import { useTranslation } from "../../i18n";
 
-const DOT_R = 12;
+const DOT_R = 11;
 
 function edgesOf(v: number): number[] {
   return CUBE_EDGES.map((e, i) => (e[0] === v || e[1] === v ? i : -1)).filter((i) => i >= 0);
@@ -69,7 +69,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
-      <svg viewBox="55 30 190 205" style={{ width: "100%", maxWidth: 220 }} role="img" aria-label={t("theory_cube_title")}>
+      <svg viewBox="55 35 190 195" style={{ width: "100%", maxWidth: 235 }} role="img" aria-label={t("theory_cube_title")}>
         {/* Equator path (toggle overlay) */}
         {equatorMode && (
           <path d={equatorPath} fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.40)" strokeWidth={1.5} strokeDasharray="4,3" />
@@ -260,7 +260,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                 y={p.y}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fontSize={FS.lg}
+                fontSize={FS.md}
                 fontWeight={900}
                 fontFamily="monospace"
                 fill={lv >= 4 ? "#000" : "#fff"}

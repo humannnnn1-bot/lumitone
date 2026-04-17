@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MAX_IMAGE_SIZE } from "../constants";
+import { MAX_IMAGE_SIZE, MAX_FILE_BYTES, MAX_IMAGE_PIXELS } from "../constants";
 import { LUMA_R, LUMA_G, LUMA_B, GRAY_LUT } from "../color-engine";
 import { useSyncRef } from "./useSyncRef";
 
@@ -29,6 +29,10 @@ export function useFileDrop(
   const loadImg = useCallback(
     (file: File) => {
       if (!file || !ALLOWED_IMAGE_TYPES.has(file.type)) return;
+      if (file.size > MAX_FILE_BYTES) {
+        showToast(t("toast_image_too_large"), "error");
+        return;
+      }
       const url = URL.createObjectURL(file);
       const img = new Image();
       img.onerror = () => {
@@ -39,6 +43,10 @@ export function useFileDrop(
         URL.revokeObjectURL(url);
         const iw = Math.max(1, img.width),
           ih = Math.max(1, img.height);
+        if (iw * ih > MAX_IMAGE_PIXELS) {
+          showToast(t("toast_image_too_large"), "error");
+          return;
+        }
         const scale = Math.min(1, MAX_IMAGE_SIZE / iw, MAX_IMAGE_SIZE / ih);
         const w = Math.min(MAX_IMAGE_SIZE, Math.max(1, Math.round(iw * scale)));
         const h = Math.min(MAX_IMAGE_SIZE, Math.max(1, Math.round(ih * scale)));

@@ -9,7 +9,7 @@ const ML = 40; // left margin
 const MT = 12; // top margin
 const PW = 420; // plot width
 const PH = 200; // plot height (maps 0-255)
-const MB = 28; // bottom margin
+const MB = 36; // bottom margin
 const MR = 10;
 const VB_W = ML + PW + MR;
 const VB_H = MT + PH + MB;
@@ -300,7 +300,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
 
         {/* N count on hover */}
         {hlLevel !== null && hits.length > 0 && (
-          <text x={ML + PW / 2} y={MT + PH + MB - 2} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textMuted}>
+          <text x={ML + PW / 2} y={MT + PH + MB - 4} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textMuted}>
             N = {hits.length} candidate{hits.length > 1 ? "s" : ""}
           </text>
         )}

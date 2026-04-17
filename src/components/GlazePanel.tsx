@@ -282,6 +282,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
       setHighlightUrl(null);
       return;
     }
+    let cancelled = false;
     if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
     highlightTimerRef.current = setTimeout(() => {
       const c = document.createElement("canvas");
@@ -301,14 +302,19 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
       }
       ctx.putImageData(img, 0, 0);
       c.toBlob((blob) => {
-        if (!blob) return;
+        if (cancelled || !blob) return;
         const url = URL.createObjectURL(blob);
+        if (cancelled) {
+          URL.revokeObjectURL(url);
+          return;
+        }
         if (prevHighlightUrlRef.current) URL.revokeObjectURL(prevHighlightUrlRef.current);
         prevHighlightUrlRef.current = url;
         setHighlightUrl(url);
       });
     }, 150);
     return () => {
+      cancelled = true;
       if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
       if (prevHighlightUrlRef.current) {
         URL.revokeObjectURL(prevHighlightUrlRef.current);

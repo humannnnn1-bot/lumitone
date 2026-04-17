@@ -592,6 +592,18 @@ export function useMusicEngine({
         clearInterval(zigzagIntervalRef.current);
         zigzagIntervalRef.current = null;
       }
+      if (gray3IntervalRef.current !== null) {
+        clearInterval(gray3IntervalRef.current);
+        gray3IntervalRef.current = null;
+      }
+      if (cayleyIntervalRef.current !== null) {
+        clearInterval(cayleyIntervalRef.current);
+        cayleyIntervalRef.current = null;
+      }
+      if (k8IntervalRef.current !== null) {
+        clearInterval(k8IntervalRef.current);
+        k8IntervalRef.current = null;
+      }
       for (const t of algebraTimersRef.current) clearTimeout(t);
       algebraTimersRef.current = [];
       if (nodesRef.current) {

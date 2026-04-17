@@ -6,8 +6,9 @@ import { S_BTN } from "../../styles";
 import { useTranslation } from "../../i18n";
 
 const W = 300,
-  H = 270;
-const DOT_R = 16;
+  H = 245,
+  VB_Y = 10;
+const DOT_R = 14;
 const CX = 150,
   CY = 160;
 
@@ -22,13 +23,6 @@ function linesThrough(point: number): number[] {
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
-
-// Target positions when CMY tries to become the outer triangle
-const CMY_TRIANGLE_TARGETS: Record<number, { x: number; y: number }> = {
-  3: { x: CX, y: CY - 120 }, // M → top
-  5: { x: CX - 104, y: CY + 60 }, // C → bottom-left
-  6: { x: CX + 104, y: CY + 60 }, // Y → bottom-right
-};
 
 // Collapsed line positions (all on one horizontal line — the CMY line)
 const CMY_LINE_TARGETS: Record<number, { x: number; y: number }> = {
@@ -48,43 +42,29 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
   usePinReset(setPinned);
   const [lineFilter, setLineFilter] = useState<LineFilter>("all");
   const [cmyMode, setCmyMode] = useState(false);
-  const [animT, setAnimT] = useState(0); // 0=normal, 0.5=triangle attempt, 1=collapsed
-  const animRef = useRef(0);
+  const [animT, setAnimT] = useState(0); // 0=normal Fano, 1=CMY collapsed to line
+  const animTRef = useRef(0);
   const reducedMotion = useRef(typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
   useEffect(() => {
     if (reducedMotion.current) {
-      setAnimT(cmyMode ? 1 : 0);
+      const target = cmyMode ? 1 : 0;
+      animTRef.current = target;
+      setAnimT(target);
       return;
     }
-    if (!cmyMode) {
-      // Animate back to 0
-      let raf: number;
-      const animate = () => {
-        setAnimT((prev) => {
-          if (prev <= 0) return 0;
-          const next = prev - 0.03;
-          if (next <= 0) return 0;
-          raf = requestAnimationFrame(animate);
-          return next;
-        });
-      };
-      raf = requestAnimationFrame(animate);
-      return () => cancelAnimationFrame(raf);
-    }
-    // Animate: 0 → 0.5 (triangle attempt) → 1 (collapse to line)
-    let raf: number;
+    let raf = 0;
+    const step = cmyMode ? 0.02 : -0.03;
     const animate = () => {
-      setAnimT((prev) => {
-        if (prev >= 1) return 1;
-        const next = prev + 0.02;
-        if (next >= 1) return 1;
+      const prev = animTRef.current;
+      const next = Math.max(0, Math.min(1, prev + step));
+      animTRef.current = next;
+      setAnimT(next);
+      if ((cmyMode && next < 1) || (!cmyMode && next > 0)) {
         raf = requestAnimationFrame(animate);
-        return next;
-      });
+      }
     };
     raf = requestAnimationFrame(animate);
-    animRef.current = raf;
     return () => cancelAnimationFrame(raf);
   }, [cmyMode]);
 
@@ -115,22 +95,12 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
     return FANO_LINE_CATEGORIES[li] === lineFilter;
   };
 
-  // Compute animated positions for CMY points
+  // Compute animated positions for CMY points: direct lerp from Fano midpoints to collapsed line
   const getPos = (lv: number): { x: number; y: number } => {
     if (animT <= 0 || ![3, 5, 6].includes(lv)) return FANO_POINTS[lv];
-
     const orig = FANO_POINTS[lv];
-    const triTarget = CMY_TRIANGLE_TARGETS[lv];
     const lineTarget = CMY_LINE_TARGETS[lv];
-
-    if (animT <= 0.5) {
-      // Phase 1: move toward triangle positions
-      const t = animT / 0.5;
-      return { x: lerp(orig.x, triTarget.x, t), y: lerp(orig.y, triTarget.y, t) };
-    }
-    // Phase 2: collapse from triangle to line
-    const t = (animT - 0.5) / 0.5;
-    return { x: lerp(triTarget.x, lineTarget.x, t), y: lerp(triTarget.y, lineTarget.y, t) };
+    return { x: lerp(orig.x, lineTarget.x, animT), y: lerp(orig.y, lineTarget.y, animT) };
   };
 
   const isCmyAnimating = animT > 0;
@@ -141,7 +111,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
-      <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W }} role="img" aria-label={t("theory_fano_title")}>
+      <svg viewBox={`0 ${VB_Y} ${W} ${H}`} style={{ width: "100%", maxWidth: W }} role="img" aria-label={t("theory_fano_title")}>
         {/* Lines (fade during CMY animation) */}
         {FANO_LINES.map((_, li) => {
           if (!isLineVisible(li)) return null;
@@ -156,17 +126,18 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
 
           if (isCmyLine) {
             if (isCmyAnimating) {
-              // Draw as a line through the animated CMY points
               const p3 = getPos(3),
-                p5 = getPos(5),
                 p6 = getPos(6);
-              // Draw connecting path between the 3 CMY points
+              // Crossfade circle → straight line over second half of animation,
+              // once points are near-collinear
               const collapseT = Math.max(0, (animT - 0.5) / 0.5);
               const circleOpacity = baseOpacity * (1 - collapseT);
               const lineOp = baseOpacity * collapseT;
+              // Extend the line 30% beyond p3 and p6 on each side
+              const dx = p6.x - p3.x,
+                dy = p6.y - p3.y;
               return (
                 <g key={"fl" + li}>
-                  {/* Fading inscribed circle */}
                   {circleOpacity > 0.01 && (
                     <circle
                       cx={FANO_CIRCLE.cx}
@@ -178,27 +149,15 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
                       opacity={circleOpacity}
                     />
                   )}
-                  {/* Growing line through CMY */}
                   {lineOp > 0.01 && (
                     <line
-                      x1={p3.x - (p3.x - p6.x) * 0.3}
-                      y1={p3.y - (p3.y - p6.y) * 0.3}
-                      x2={p6.x + (p6.x - p3.x) * 0.3}
-                      y2={p6.y + (p6.y - p3.y) * 0.3}
+                      x1={p3.x - dx * 0.3}
+                      y1={p3.y - dy * 0.3}
+                      x2={p6.x + dx * 0.3}
+                      y2={p6.y + dy * 0.3}
                       stroke="#ff4444"
                       strokeWidth={2.5}
                       opacity={lineOp * 0.8}
-                    />
-                  )}
-                  {/* Ghost triangle attempt (dashed) during phase 1 */}
-                  {animT > 0.1 && animT < 0.8 && (
-                    <polygon
-                      points={`${p3.x},${p3.y} ${p5.x},${p5.y} ${p6.x},${p6.y}`}
-                      fill="none"
-                      stroke="#ff4444"
-                      strokeWidth={1}
-                      strokeDasharray="4,4"
-                      opacity={0.3 * (1 - collapseT)}
                     />
                   )}
                 </g>
@@ -296,13 +255,13 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
         {/* CMY collapse equation label */}
         {isCmyAnimating && animT > 0.6 && (
           <g opacity={Math.min(1, (animT - 0.6) * 3)}>
-            <text x={CX} y={CY - 136} textAnchor="middle" fontSize={FS.md} fontFamily="monospace" fontWeight={FW.bold} fill="#ff6644">
+            <text x={CX} y={CY - 60} textAnchor="middle" fontSize={FS.md} fontFamily="monospace" fontWeight={FW.bold} fill="#ff6644">
               {t("theory_fano_cmy_eq")}
             </text>
             {animT > 0.85 && (
               <text
                 x={CX}
-                y={CY - 122}
+                y={CY - 46}
                 textAnchor="middle"
                 fontSize={FS.xs}
                 fontFamily="monospace"
@@ -326,7 +285,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
           // Dim node 7 when CMY closure line (li=6) is highlighted, so equation label is readable
           const cmyLineActive = hlLines.includes(6) && isLineVisible(6);
           const pointOpacity = isCmyAnimating && isRgbOrW ? rgbOpacity : lv === 7 && cmyLineActive ? 0.25 : 1;
-          const pointR = isCmyAnimating && isCmy ? DOT_R + animT * 2 : DOT_R;
+          const pointR = DOT_R;
           return (
             <g
               key={"fp" + lv}
@@ -365,7 +324,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
                 y={p.y}
                 textAnchor="middle"
                 dominantBaseline="central"
-                fontSize={FS.xl}
+                fontSize={FS.lg}
                 fontWeight={900}
                 fontFamily="monospace"
                 fill={lv >= 4 ? "#000" : "#fff"}
@@ -387,7 +346,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
               <text
                 key={"bl" + lv}
                 x={p.x}
-                y={p.y + DOT_R + 14}
+                y={Math.min(p.y + DOT_R + 14, 244)}
                 textAnchor="middle"
                 fontSize={FS.xs}
                 fontFamily="monospace"
@@ -398,57 +357,95 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
               </text>
             );
           })}
+
+        {/* XOR decomposition labels above each CMY point */}
+        {isCmyAnimating &&
+          animT > 0.65 &&
+          (
+            [
+              [3, "M = C⊕Y"],
+              [5, "C = M⊕Y"],
+              [6, "Y = M⊕C"],
+            ] as const
+          ).map(([lv, eq]) => {
+            const p = getPos(lv);
+            const info = THEORY_LEVELS[lv];
+            return (
+              <text
+                key={"xq" + lv}
+                x={p.x}
+                y={p.y - DOT_R - 6}
+                textAnchor="middle"
+                fontSize={FS.xs}
+                fontFamily="monospace"
+                fill={info.color}
+                opacity={Math.min(1, (animT - 0.65) * 3) * 0.85}
+              >
+                {eq}
+              </text>
+            );
+          })}
       </svg>
 
       {/* Legend */}
-      {!isCmyAnimating && (
-        <div style={{ display: "flex", gap: SP.xl, justifyContent: "center", flexWrap: "wrap" }}>
-          {[
-            { label: t("theory_fano_primary"), color: "#80a0ff", dash: "none" },
-            { label: t("theory_fano_complement"), color: "#ffa060", dash: "none" },
-            { label: t("theory_fano_secondary"), color: "#60ffa0", dash: "none" },
-          ].map((item, i) => (
-            <span
-              key={"lg" + i}
-              className="theory-annotation"
-              style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: FS.xs, fontFamily: "monospace", color: item.color }}
-            >
-              <svg width={18} height={2}>
-                <line x1={0} y1={1} x2={18} y2={1} stroke={item.color} strokeWidth={2} strokeDasharray={item.dash} />
-              </svg>
-              {item.label}
-            </span>
-          ))}
-        </div>
-      )}
+      <div
+        style={{
+          display: "flex",
+          gap: SP.xl,
+          justifyContent: "center",
+          flexWrap: "wrap",
+          visibility: isCmyAnimating ? "hidden" : "visible",
+        }}
+        aria-hidden={isCmyAnimating || undefined}
+      >
+        {[
+          { label: t("theory_fano_primary"), color: "#80a0ff", dash: "none" },
+          { label: t("theory_fano_complement"), color: "#ffa060", dash: "none" },
+          { label: t("theory_fano_secondary"), color: "#60ffa0", dash: "none" },
+        ].map((item, i) => (
+          <span
+            key={"lg" + i}
+            className="theory-annotation"
+            style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: FS.xs, fontFamily: "monospace", color: item.color }}
+          >
+            <svg width={18} height={2}>
+              <line x1={0} y1={1} x2={18} y2={1} stroke={item.color} strokeWidth={2} strokeDasharray={item.dash} />
+            </svg>
+            {item.label}
+          </span>
+        ))}
+      </div>
 
       {/* Buttons */}
       <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>
-        {!cmyMode &&
-          (["all", "primary", "complement", "secondary"] as const).map((f) => {
-            const label =
-              f === "all"
-                ? t("theory_fano_show_all")
-                : f === "primary"
-                  ? t("theory_fano_show_primary")
-                  : f === "complement"
-                    ? t("theory_fano_show_complement")
-                    : t("theory_fano_show_secondary");
-            return (
-              <button
-                key={f}
-                className="theory-annotation"
-                style={{
-                  ...S_BTN,
-                  opacity: lineFilter === f ? 1 : 0.5,
-                  borderColor: lineFilter === f ? "rgba(255,255,255,0.5)" : undefined,
-                }}
-                onClick={() => setLineFilter(f)}
-              >
-                {label}
-              </button>
-            );
-          })}
+        {(["all", "primary", "complement", "secondary"] as const).map((f) => {
+          const label =
+            f === "all"
+              ? t("theory_fano_show_all")
+              : f === "primary"
+                ? t("theory_fano_show_primary")
+                : f === "complement"
+                  ? t("theory_fano_show_complement")
+                  : t("theory_fano_show_secondary");
+          return (
+            <button
+              key={f}
+              className="theory-annotation"
+              style={{
+                ...S_BTN,
+                opacity: lineFilter === f ? 1 : 0.5,
+                borderColor: lineFilter === f ? "rgba(255,255,255,0.5)" : undefined,
+                visibility: cmyMode ? "hidden" : "visible",
+              }}
+              onClick={() => setLineFilter(f)}
+              disabled={cmyMode}
+              aria-hidden={cmyMode || undefined}
+              tabIndex={cmyMode ? -1 : undefined}
+            >
+              {label}
+            </button>
+          );
+        })}
         <button
           className="theory-annotation"
           style={{

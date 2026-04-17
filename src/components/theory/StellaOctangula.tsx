@@ -774,8 +774,9 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
           const info = THEORY_LEVELS[sf.color];
           const pts = sf.verts2D.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
           const depthNorm = sf.depth / 3;
-          const fillOp = 0.08 + depthNorm * 0.22;
-          const strokeOp = 0.15 + depthNorm * 0.35;
+          const tetraScale = sf.tetra === 1 ? 0.5 : 1;
+          const fillOp = (0.08 + depthNorm * 0.22) * tetraScale;
+          const strokeOp = (0.15 + depthNorm * 0.35) * tetraScale;
           const tipActive = hl === sf.tipVertex;
           const dim = anyHl && !tipActive;
           return (
