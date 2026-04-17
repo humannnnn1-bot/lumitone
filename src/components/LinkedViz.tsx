@@ -2,6 +2,8 @@ import React, { useState, useRef, useCallback, useMemo } from "react";
 import { LEVEL_INFO, LEVEL_CANDIDATES, findClosestCandidate, hue2rgb } from "../color-engine";
 import { SP, C, R } from "../tokens";
 import { useTranslation } from "../i18n";
+import { angleToFreq } from "../hooks/useMusicEngine";
+import { freqToNote } from "./music/music-data";
 
 interface LinkedVizProps {
   hueAngle: number;
@@ -237,7 +239,10 @@ function renderWheel({ cx, cy, alpha, radiusFn, dots, hueAngle, hoveredDot, onHo
             strokeWidth={d.act ? (hov ? 1.4 : 1.0) : hov ? 1.0 : 0.5}
             opacity={d.act ? (dimmed ? 0.25 : 1) : hov ? 0.9 : 0.3}
             filter={hov ? "url(#dot-glow)" : undefined}
-            style={d.act || hov ? { cursor: "pointer" } : undefined}
+            style={{
+              transition: "r 0.3s, opacity 0.3s, stroke 0.3s, stroke-width 0.3s",
+              ...(d.act || hov ? { cursor: "pointer" } : {}),
+            }}
             onPointerEnter={
               d.act
                 ? (e) => {
@@ -1257,6 +1262,7 @@ export const LinkedViz = React.memo(function LinkedViz({
             const FS_ROW = 14;
             const LABEL_W = 32;
 
+            type RatioMember = { lv: number; rgb: [number, number, number]; ci: number };
             type RatioEntry = {
               label: string;
               value: string;
@@ -1264,24 +1270,47 @@ export const LinkedViz = React.memo(function LinkedViz({
               color?: string | undefined;
               lv?: number | undefined;
               ci?: number | undefined;
+              members?: RatioMember[] | undefined;
             };
             let title = "";
             const rows: RatioEntry[] = [];
 
+            // Helper: live frequency for a level (chromatic L1–L6).
+            const levelFreq = (d: Dot) => angleToFreq(d.a + activeAlpha, scaleMode);
+
             if (scaleMode === "ji") {
               title = "Palindromic JI";
-              const ratios = ["1:1", "8:7", "7:5", "8:5", "2:1"];
-              const cents = ["0", "231", "583", "814", "1200"];
-              const jiLvs = [2, 3, 4, 5, 6];
-              const labels = ["L2", "L3", "L4", "L5", "L6"];
-              for (let i = 0; i < 5; i++) {
-                const d = dots.find((dd) => dd.lv === jiLvs[i]);
+              const jiRatios = [1, 8 / 7, 7 / 5, 8 / 5, 2];
+              const jiRatioLabels = ["1:1", "8:7", "7:5", "8:5", "2:1"];
+              const jiAngles = [0, 72, 144, 216, 288];
+              const NOTE_JI = ["C", "C\u266f", "D", "D\u266f", "E", "F", "F\u266f", "G", "G\u266f", "A", "A\u266f", "B"];
+              // Fixed-width "note" (3 chars, padded when no sharp) for row stability at snap transitions.
+              // Cents omitted — JI deviation from equal-tempered is implicit in the ratio label.
+              const notePad3 = (hz: number) => {
+                const midi = Math.round(69 + 12 * Math.log2(hz / 440));
+                const n = NOTE_JI[((midi % 12) + 12) % 12];
+                const oct = Math.floor(midi / 12) - 1;
+                return (n.length === 1 ? n + " " : n) + oct; // 3 chars
+              };
+              const chromatic = activeDots.filter((d) => d.lv !== 0 && d.lv !== 7).sort((a, b) => a.lv - b.lv);
+              for (const d of chromatic) {
+                const live = (((d.a + activeAlpha) % 360) + 360) % 360;
+                let snapIdx = 0;
+                let minDist = 360;
+                for (let j = 0; j < jiAngles.length; j++) {
+                  const di = Math.min(Math.abs(live - jiAngles[j]), 360 - Math.abs(live - jiAngles[j]));
+                  if (di < minDist) {
+                    minDist = di;
+                    snapIdx = j;
+                  }
+                }
+                const hz = 220 * jiRatios[snapIdx];
                 rows.push({
-                  label: labels[i],
-                  value: `${ratios[i]}  (${cents[i]}¢)`,
-                  color: d ? `rgb(${d.rgb.join(",")})` : undefined,
-                  lv: d?.lv,
-                  ci: d?.ci,
+                  label: `L${d.lv}`,
+                  value: `${notePad3(hz)} ${String(Math.round(hz)).padStart(3, " ")}Hz ${jiRatioLabels[snapIdx]}`,
+                  color: `rgb(${d.rgb.join(",")})`,
+                  lv: d.lv,
+                  ci: d.ci,
                 });
               }
               rows.push({ label: "", value: "" });
@@ -1290,37 +1319,52 @@ export const LinkedViz = React.memo(function LinkedViz({
               rows.push({ label: "", value: "2:1 \u00b7 8:5 \u00b7 7:5 \u00b7 8:7", dim: true });
             } else if (scaleMode === "12tet") {
               title = "12-TET (Equal)";
-              const activeDeg = activeDots.map((d) => Math.round((d.a / 360) * 2 * 1200));
-              activeDeg.sort((a, b) => a - b);
-              for (let i = 0; i < activeDeg.length; i++) {
-                const prev = i === 0 ? 0 : activeDeg[i - 1];
-                const diff = activeDeg[i] - prev;
-                const d = activeDots[i];
+              // 12-TET is continuous → cents offset would change every frame (layout-shift noise).
+              // Display the snapped semitone only; Hz is always 3 digits in the 220–880 Hz range.
+              // Sort by L number (matches JI) for stable identity-based lookup;
+              // pitch ordering by canonical angle would only be correct at α=0 anyway.
+              const NOTE = ["C", "C\u266f", "D", "D\u266f", "E", "F", "F\u266f", "G", "G\u266f", "A", "A\u266f", "B"];
+              const sorted = [...activeDots].sort((a, b) => a.lv - b.lv);
+              for (let i = 0; i < sorted.length; i++) {
+                const d = sorted[i];
+                const f = levelFreq(d);
+                const hz = Math.round(f);
+                const midi = Math.round(69 + 12 * Math.log2(f / 440));
+                const name = NOTE[((midi % 12) + 12) % 12];
+                const octave = Math.floor(midi / 12) - 1;
+                // Pad to 3 chars (e.g., "A 4", "A\u266f4") for monospace column stability.
+                const noteStr = (name.length === 1 ? name + " " : name) + octave;
                 rows.push({
-                  label: `L${d?.lv ?? "?"}`,
-                  value: `${activeDeg[i]}¢  (\u0394${diff}¢)`,
-                  color: d ? `rgb(${d.rgb.join(",")})` : undefined,
-                  lv: d?.lv,
-                  ci: d?.ci,
+                  label: `L${d.lv}`,
+                  value: `${noteStr}  ${hz}Hz`,
+                  color: `rgb(${d.rgb.join(",")})`,
+                  lv: d.lv,
+                  ci: d.ci,
                 });
               }
-            } else if (scaleMode === "octatonic") {
-              title = "Octatonic Scale";
-              const steps = [0, 1, 3, 4, 6, 7, 9, 10];
-              const names = ["C", "C\u266f", "E\u266d", "E", "F\u266f", "G", "A", "B\u266d"];
-              for (let i = 0; i < 8; i++) {
-                const next = steps[(i + 1) % 8];
-                const diff = (next - steps[i] + 12) % 12;
-                rows.push({ label: names[i], value: `${steps[i]}st  (\u0394${diff})` });
+            } else if (scaleMode === "octatonic" || scaleMode === "diatonic7") {
+              const isOcta = scaleMode === "octatonic";
+              title = isOcta ? "Octatonic Scale" : "Diatonic (7-note)";
+              const steps = isOcta ? [0, 1, 3, 4, 6, 7, 9, 10] : [0, 2, 4, 5, 7, 9, 11];
+              const N = steps.length;
+              // Collect active chromatic L's per degree via angle → idx mapping
+              const perDegree: RatioMember[][] = steps.map(() => []);
+              for (const d of activeDots) {
+                if (d.lv === 0 || d.lv === 7) continue;
+                const norm = (((d.a + activeAlpha) % 360) + 360) % 360;
+                const idx = Math.round((norm / 360) * N) % N;
+                perDegree[idx].push({ lv: d.lv, rgb: d.rgb, ci: d.ci });
               }
-            } else {
-              title = "Diatonic (7-note)";
-              const steps = [0, 2, 4, 5, 7, 9, 11];
-              const names = ["C", "D", "E", "F", "G", "A", "B"];
-              for (let i = 0; i < 7; i++) {
-                const next = steps[(i + 1) % 7];
+              for (let i = 0; i < N; i++) {
+                const hz = 261.63 * Math.pow(2, steps[i] / 12);
+                const note = freqToNote(hz);
+                const next = steps[(i + 1) % N];
                 const diff = (next - steps[i] + 12) % 12;
-                rows.push({ label: names[i], value: `${steps[i]}st  (\u0394${diff})` });
+                rows.push({
+                  label: note,
+                  value: `${Math.round(hz)}Hz · \u0394${diff}`,
+                  members: perDegree[i].length > 0 ? perDegree[i] : undefined,
+                });
               }
             }
 
@@ -1343,6 +1387,8 @@ export const LinkedViz = React.memo(function LinkedViz({
                   const SQ = FS_ROW - 2;
                   const sqX = ix;
                   const textX = r.color ? ix + SQ + 4 : ix;
+                  const memberSq = 12;
+                  const memberGap = 2;
                   return (
                     <g
                       key={i}
@@ -1365,9 +1411,51 @@ export const LinkedViz = React.memo(function LinkedViz({
                       >
                         {r.label}
                       </text>
-                      <text x={textX + LABEL_W} y={iy + (i + 1) * ROW} fontSize={FS_ROW} fill={textFill} fontFamily="system-ui, sans-serif">
+                      <text
+                        x={textX + LABEL_W}
+                        y={iy + (i + 1) * ROW}
+                        fontSize={FS_ROW}
+                        fill={textFill}
+                        fontFamily="'SF Mono','Cascadia Mono',Consolas,Menlo,monospace"
+                        style={{ fontVariantNumeric: "tabular-nums" }}
+                      >
                         {r.value}
                       </text>
+                      {/* Degree members (Diatonic/Octatonic): which active L's land here */}
+                      {r.members?.map((m, mi) => {
+                        const mx = TW - 4 - (r.members!.length - mi) * (memberSq + memberGap);
+                        const my = iy + (i + 1) * ROW - memberSq;
+                        const isMHovered = hoveredDot !== null && hoveredDot.lv === m.lv;
+                        return (
+                          <g
+                            key={`m${mi}`}
+                            style={{ cursor: "pointer" }}
+                            onPointerEnter={() => setHoveredDot({ lv: m.lv, ci: m.ci })}
+                            onPointerLeave={() => setHoveredDot(null)}
+                          >
+                            <rect
+                              x={mx}
+                              y={my}
+                              width={memberSq}
+                              height={memberSq}
+                              rx={2}
+                              fill={`rgb(${m.rgb.join(",")})`}
+                              stroke={isMHovered ? "#fff" : C.border}
+                              strokeWidth={isMHovered ? 1.5 : 0.5}
+                            />
+                            <text
+                              x={mx + memberSq / 2}
+                              y={my - 1}
+                              fontSize={8}
+                              fill={C.textDim}
+                              textAnchor="middle"
+                              fontFamily="system-ui, sans-serif"
+                            >
+                              {m.lv}
+                            </text>
+                          </g>
+                        );
+                      })}
                     </g>
                   );
                 })}
