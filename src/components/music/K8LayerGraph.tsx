@@ -36,7 +36,8 @@ function textColor(lv: number): string {
 }
 
 interface Props {
-  layer: 1 | 2 | 3;
+  /** `null` = no layer playing → render nodes only, no edges. */
+  layer: 1 | 2 | 3 | null;
   activeEdgeIndex: number;
   activeLevels: { lv: number; rgb: [number, number, number] }[];
   tetraPhase?: "t0" | "t1" | null;
@@ -44,7 +45,7 @@ interface Props {
 
 export const K8LayerGraph = React.memo(function K8LayerGraph({ layer, activeEdgeIndex, activeLevels, tetraPhase }: Props) {
   const { t } = useTranslation();
-  const layerInfo = LAYERS[layer];
+  const layerInfo = layer !== null ? LAYERS[layer] : null;
   const t0Split = TETRA_T0_EDGES.length; // 6
   const t0Set = new Set(TETRA_T0 as readonly number[]);
 
@@ -60,11 +61,13 @@ export const K8LayerGraph = React.memo(function K8LayerGraph({ layer, activeEdge
         </filter>
       </defs>
 
-      <text x={135} y={128} textAnchor="end" fontSize={8} fill={C.textDimmer}>
-        {t(layerInfo.labelKey)}
-      </text>
+      {layerInfo && (
+        <text x={135} y={128} textAnchor="end" fontSize={8} fill={C.textDimmer}>
+          {t(layerInfo.labelKey)}
+        </text>
+      )}
 
-      {layerInfo.edges.map(([a, b], i) => {
+      {layerInfo?.edges.map(([a, b], i) => {
         const active = activeEdgeIndex === i;
         const isT0Edge = layer === 2 && i < t0Split;
         const isT1Edge = layer === 2 && i >= t0Split;
@@ -88,7 +91,7 @@ export const K8LayerGraph = React.memo(function K8LayerGraph({ layer, activeEdge
 
       {[0, 1, 2, 3, 4, 5, 6, 7].map((lv) => {
         const [x, y] = VERTS[lv];
-        const active = activeEdgeIndex >= 0 && layerInfo.edges[activeEdgeIndex]?.includes(lv);
+        const active = activeEdgeIndex >= 0 && layerInfo?.edges[activeEdgeIndex]?.includes(lv);
         const vertDimmed = layer === 2 && tetraPhase !== null && (tetraPhase === "t0" ? !t0Set.has(lv) : t0Set.has(lv));
         return (
           <g key={lv} filter={active ? "url(#k8-glow)" : undefined} opacity={vertDimmed ? 0.25 : 1}>

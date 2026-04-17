@@ -11,7 +11,8 @@ interface K8ExplorerProps {
   stopSignal: number;
   resetSignal: number;
   tetraPhase: "t0" | "t1" | null;
-  onLayerChange?: (layer: 1 | 2 | 3) => void;
+  /** `null` when no layer is playing (graph shows only nodes). */
+  onLayerChange?: (layer: 1 | 2 | 3 | null) => void;
 }
 
 const S_LABEL: React.CSSProperties = {
@@ -30,7 +31,8 @@ export const K8Explorer = React.memo(function K8Explorer({
 }: K8ExplorerProps) {
   const { t } = useTranslation();
 
-  const [layer, setLayer] = useState<1 | 2 | 3>(1);
+  // null = no layer playing → graph shows only nodes (no edges).
+  const [activeLayer, setActiveLayer] = useState<1 | 2 | 3 | null>(null);
   const [edgeIndex, setEdgeIndex] = useState(-1);
 
   // Stop signal from parent (parent already calls engine stops)
@@ -40,33 +42,29 @@ export const K8Explorer = React.memo(function K8Explorer({
       mountedRef.current = true;
       return;
     }
+    setActiveLayer(null);
     setEdgeIndex(-1);
-  }, [stopSignal]);
+    onLayerChange?.(null);
+  }, [stopSignal, onLayerChange]);
 
-  const handleSelectLayer = useCallback(
-    (newLayer: 1 | 2 | 3) => {
-      if (edgeIndex >= 0) {
-        engine.stopAlgebra?.();
-        setEdgeIndex(-1);
-      }
-      setLayer(newLayer);
-      onLayerChange?.(newLayer);
-    },
-    [engine, edgeIndex, onLayerChange],
-  );
-
-  const handleToggleLayerPlayback = useCallback(() => {
-    if (edgeIndex >= 0) {
+  // Each d=N button is both selector and play toggle for that layer.
+  const handleLayerToggle = useCallback(
+    (targetLayer: 1 | 2 | 3) => {
       engine.stopAlgebra?.();
-      setEdgeIndex(-1);
-    } else {
+      if (activeLayer === targetLayer) {
+        setActiveLayer(null);
+        setEdgeIndex(-1);
+        onLayerChange?.(null);
+        return;
+      }
       engine.initAudio();
+      setActiveLayer(targetLayer);
       setEdgeIndex(-1);
-      engine.playK8Layer?.(layer, (ei) => {
-        setEdgeIndex(ei);
-      });
-    }
-  }, [engine, edgeIndex, layer]);
+      onLayerChange?.(targetLayer);
+      engine.playK8Layer?.(targetLayer, (ei) => setEdgeIndex(ei));
+    },
+    [engine, activeLayer, onLayerChange],
+  );
 
   // Reset defaults signal from parent
   const resetRef = useRef(false);
@@ -75,8 +73,9 @@ export const K8Explorer = React.memo(function K8Explorer({
       resetRef.current = true;
       return;
     }
-    setLayer(1);
-    onLayerChange?.(1);
+    setActiveLayer(null);
+    setEdgeIndex(-1);
+    onLayerChange?.(null);
   }, [resetSignal, onLayerChange]);
 
   return (
@@ -84,21 +83,23 @@ export const K8Explorer = React.memo(function K8Explorer({
       <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
         <span style={S_LABEL}>{t("music_k8_explorer_title")}</span>
         <div style={{ display: "flex", gap: SP.sm, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
-          <button type="button" style={layer === 1 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleSelectLayer(1)}>
-            {t("music_k8_d1")}
+          <button type="button" style={activeLayer === 1 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleLayerToggle(1)}>
+            {`${activeLayer === 1 ? "\u23f9" : "\u25b6"} ${t("music_k8_d1")}`}
           </button>
-          <button type="button" style={layer === 2 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleSelectLayer(2)}>
-            {t("music_k8_d2")}
+          <button type="button" style={activeLayer === 2 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleLayerToggle(2)}>
+            {`${activeLayer === 2 ? "\u23f9" : "\u25b6"} ${t("music_k8_d2")}`}
           </button>
-          <button type="button" style={layer === 3 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleSelectLayer(3)}>
-            {t("music_k8_d3")}
-          </button>
-          <button type="button" style={edgeIndex >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handleToggleLayerPlayback}>
-            {edgeIndex >= 0 ? t("music_k8_stop") : t("music_k8_play")}
+          <button type="button" style={activeLayer === 3 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleLayerToggle(3)}>
+            {`${activeLayer === 3 ? "\u23f9" : "\u25b6"} ${t("music_k8_d3")}`}
           </button>
         </div>
       </div>
-      <K8LayerGraph layer={layer} activeEdgeIndex={edgeIndex} activeLevels={activeLevels} tetraPhase={layer === 2 ? tetraPhase : null} />
+      <K8LayerGraph
+        layer={activeLayer}
+        activeEdgeIndex={edgeIndex}
+        activeLevels={activeLevels}
+        tetraPhase={activeLayer === 2 ? tetraPhase : null}
+      />
     </div>
   );
 });

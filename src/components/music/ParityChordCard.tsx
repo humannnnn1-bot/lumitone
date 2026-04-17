@@ -59,6 +59,12 @@ export const ParityChordCard = React.memo(function ParityChordCard({
     [engine],
   );
 
+  const PARITY_ROWS: { name: string; bit: number; set: string; color: string; group: 0 | 1 | 2 }[] = [
+    { name: "P1", bit: 0, set: "{1,3,5,7}", color: "#0000ff", group: 0 },
+    { name: "P2", bit: 1, set: "{2,3,6,7}", color: "#ff0000", group: 1 },
+    { name: "P4", bit: 2, set: "{4,5,6,7}", color: "#00ff00", group: 2 },
+  ];
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%", flex: 1 }}>
       <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
@@ -77,6 +83,17 @@ export const ParityChordCard = React.memo(function ParityChordCard({
         </div>
       </div>
       <ParityGrid activeGroups={activeGroups} activeLevels={activeLevels} />
+      <div style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDim, lineHeight: 1.5, textAlign: "center" }}>
+        {PARITY_ROWS.map((r) => {
+          const active = activeGroups.includes(r.group);
+          return (
+            <div key={r.name} style={{ opacity: activeGroups.length === 0 || active ? 1 : 0.4 }}>
+              <span style={{ color: r.color, fontWeight: active ? 700 : 400 }}>{r.name}</span>
+              {`: bit ${r.bit} = ${r.set}`}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 });

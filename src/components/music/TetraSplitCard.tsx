@@ -76,7 +76,7 @@ export const TetraSplitCard = React.memo(function TetraSplitCard({
     >
       <div style={S_COL}>
         <span style={S_TITLE}>{t("music_tetra_title")}</span>
-        <div style={{ display: "flex", gap: SP.sm }}>
+        <div style={{ display: "flex", gap: SP.lg }}>
           <button type="button" style={tetraPhase === "t0" ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handlePlayT0}>
             {"\u25b6 T0"}
           </button>

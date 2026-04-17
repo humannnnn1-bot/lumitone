@@ -57,7 +57,7 @@ export const FanoRhythmGrid = React.memo(function FanoRhythmGrid({ playing, curr
         </text>
       ))}
 
-      {/* Row labels */}
+      {/* Row labels — Fano line point sets (curly braces to distinguish from beat-position sets on the x-axis) */}
       {Array.from({ length: ROWS }, (_, row) => (
         <text
           key={`r${row}`}
@@ -67,7 +67,7 @@ export const FanoRhythmGrid = React.memo(function FanoRhythmGrid({ playing, curr
           fill={C.textDimmer}
           textAnchor="end"
         >
-          {FANO_LINES[row].join("-")}
+          {`{${FANO_LINES[row].join(",")}}`}
         </text>
       ))}
 
