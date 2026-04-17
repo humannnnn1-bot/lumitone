@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useLayoutEffect } from "react";
 import { THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
 import { useTranslation } from "../../i18n";
@@ -18,9 +18,10 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
   const [b, setB] = useState(2);
   const containerRef = useRef<HTMLDivElement>(null);
   const [compact, setCompact] = useState(false);
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    setCompact(el.getBoundingClientRect().width < 520);
     const ro = new ResizeObserver((entries) => {
       for (const e of entries) setCompact(e.contentRect.width < 520);
     });
@@ -41,7 +42,19 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
       {/* Selectors */}
       <div style={{ display: "flex", gap: compact ? SP.sm : SP["3xl"], alignItems: "center" }}>
         <LevelSelector value={a} onChange={setA} label="A" onHover={onHover} compact={compact} />
-        <span style={{ fontSize: compact ? FS.xl : FS["2xl"], fontFamily: "monospace", color: C.textMuted }}>{"\u2295"}</span>
+        <span
+          style={{
+            fontSize: compact ? FS.xl : FS["2xl"],
+            fontFamily: "monospace",
+            color: C.textMuted,
+            alignSelf: "flex-end",
+            height: compact ? 20 : 32,
+            display: "inline-flex",
+            alignItems: "center",
+          }}
+        >
+          {"\u2295"}
+        </span>
         <LevelSelector value={b} onChange={setB} label="B" onHover={onHover} compact={compact} />
       </div>
 
@@ -118,7 +131,7 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
         {[0, 1, 2].map((bi) => {
           const ax = 50 + (bi - 1) * 10,
             bx = 170 + (bi - 1) * 10;
-          const y = -4;
+          const y = 12;
           const bitA = infoA.bits[bi],
             bitB = infoB.bits[bi],
             bitR = infoR.bits[bi];
@@ -164,12 +177,10 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
 
       {/* Complement pairs */}
       <div style={{ display: "flex", gap: SP["2xl"], justifyContent: "center", flexWrap: "wrap" }}>
-        {a > 0 && a < 7 && (
-          <div className="theory-annotation" style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
-            {t("theory_xor_complement", infoA.name, THEORY_LEVELS[complementA].name)}
-          </div>
-        )}
-        {b > 0 && b < 7 && b !== a && (
+        <div className="theory-annotation" style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
+          {t("theory_xor_complement", infoA.name, THEORY_LEVELS[complementA].name)}
+        </div>
+        {b !== a && (
           <div className="theory-annotation" style={{ fontSize: FS.sm, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
             {t("theory_xor_complement", infoB.name, THEORY_LEVELS[complementB].name)}
           </div>
@@ -207,6 +218,8 @@ function LevelSelector({
               onClick={() => onChange(lv.lv)}
               onMouseEnter={() => onHover?.(lv.lv)}
               onMouseLeave={() => onHover?.(null)}
+              onFocus={() => onHover?.(lv.lv)}
+              onBlur={() => onHover?.(null)}
               style={{
                 width: sz,
                 height: sz,
