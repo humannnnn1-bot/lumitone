@@ -239,7 +239,7 @@ export const en = {
   theory_gray_pause: "\u23f8 Pause",
   theory_xor_title: "XOR Mixing",
   theory_xor_desc:
-    "XOR defines every color relationship in this system. The three primaries {G, R, B} are the basis: every color is their unique XOR combination, and each color c has a complement c \u2295 7 with c \u2295 (c \u2295 7) = 7 (White). Arithmetically, XOR is carry-free binary addition (1+1 = 0). For disjoint primaries, integer addition agrees with XOR directly (1+4 = 5 = 1\u22954). In general, a + b = (a \u2295 b) + 2(a \u2227 b): the overlap term a \u2227 b is what ordinary arithmetic counts twice. The subtractive CMY examples in the die are Boolean-AND identities. Because the displayed pairs satisfy a \u2228 b = 7, they obey a + b - 7 = a \u2227 b.",
+    "XOR defines every color relationship in this system. The three primaries {G, R, B} are the basis: every color is their unique XOR combination, and each color c has a complement c \u2295 7 with c \u2295 (c \u2295 7) = 7 (White). Arithmetically, XOR is carry-free binary addition (1+1 = 0). For disjoint primaries, integer addition agrees with XOR directly (1+4 = 5 = 1\u22954). In general, a + b = (a \u2295 b) + 2(a \u2227 b): the overlap term a \u2227 b is what ordinary arithmetic counts twice. When two operands jointly cover all three channels (a \u2228 b = 7), this reduces to a + b - 7 = a \u2227 b \u2014 the Boolean-AND identities underlying subtractive CMY mixing.",
   theory_hamming_title: "Hamming Code",
   theory_hamming_desc:
     "The positions 1..7 used here are the same nonzero 3-bit labels as the Fano plane\u2019s 7 points. The RGB primaries (B=1, R=2, G=4) are exactly the powers of 2 \u2014 each has a single 1-bit, making them natural parity checks.",
