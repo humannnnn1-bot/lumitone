@@ -436,6 +436,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
                 opacity: lineFilter === f ? 1 : 0.5,
                 borderColor: lineFilter === f ? "rgba(255,255,255,0.5)" : undefined,
                 visibility: cmyMode ? "hidden" : "visible",
+                marginLeft: f === "primary" ? SP.xl : undefined,
               }}
               onClick={() => setLineFilter(f)}
               disabled={cmyMode}
@@ -453,6 +454,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
             opacity: cmyMode ? 1 : 0.5,
             borderColor: cmyMode ? "rgba(255,100,100,0.6)" : undefined,
             color: cmyMode ? "#ff6644" : C.textMuted,
+            marginLeft: SP.xl,
           }}
           onClick={() => setCmyMode((v) => !v)}
         >
