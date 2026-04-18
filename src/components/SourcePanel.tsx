@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { TOOLS, BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX } from "../constants";
 import { LEVEL_INFO } from "../color-engine";
 import { S_BTN, S_BTN_ACTIVE, S_CHECKERBOARD } from "../styles";
@@ -6,6 +6,7 @@ import { rgbStr, timestamp } from "../utils";
 import type { AppState, ToolState, ViewState, SaveActions } from "../types";
 import { useTranslation } from "../i18n";
 import { C, Z, SP, FS, FW, R, O } from "../tokens";
+import { ConfirmModal } from "./ConfirmModal";
 
 interface SourcePanelProps {
   srcRef: React.RefObject<HTMLCanvasElement | null>;
@@ -95,9 +96,41 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
     },
     [loadImg],
   );
-  const handleSaveColor = useCallback(() => saveColor(prvRef, `chromalum_color_${timestamp()}.png`), [saveColor, prvRef]);
-  const handleSaveGray = useCallback(() => saveColor(srcRef, `chromalum_gray_${timestamp()}.png`), [saveColor, srcRef]);
-  const handleSaveGlaze = useCallback(() => saveGlaze(`chromalum_glaze_${timestamp()}.png`), [saveGlaze]);
+  const [confirmSave, setConfirmSave] = useState<"gray" | "color" | "glaze" | null>(null);
+  const doSave = useCallback(
+    (kind: "gray" | "color" | "glaze") => {
+      const ts = timestamp();
+      if (kind === "gray") saveColor(srcRef, `chromalum_gray_${ts}.png`);
+      else if (kind === "color") saveColor(prvRef, `chromalum_color_${ts}.png`);
+      else saveGlaze(`chromalum_glaze_${ts}.png`);
+    },
+    [saveColor, saveGlaze, srcRef, prvRef],
+  );
+  // Touch devices get a confirm step (hard to cancel an accidental share sheet on mobile);
+  // pointer-fine (mouse) saves immediately as before.
+  const requestSave = useCallback(
+    (kind: "gray" | "color" | "glaze") => {
+      if (window.matchMedia("(pointer: fine)").matches) doSave(kind);
+      else setConfirmSave(kind);
+    },
+    [doSave],
+  );
+  const handleSaveColor = useCallback(() => requestSave("color"), [requestSave]);
+  const handleSaveGray = useCallback(() => requestSave("gray"), [requestSave]);
+  const handleSaveGlaze = useCallback(() => requestSave("glaze"), [requestSave]);
+  const handleConfirmSave = useCallback(() => {
+    if (confirmSave) doSave(confirmSave);
+    setConfirmSave(null);
+  }, [confirmSave, doSave]);
+  const handleCancelSave = useCallback(() => setConfirmSave(null), []);
+  const confirmMsg =
+    confirmSave === "gray"
+      ? t("confirm_save_gray")
+      : confirmSave === "color"
+        ? t("confirm_save_color")
+        : confirmSave === "glaze"
+          ? t("confirm_save_glaze")
+          : "";
 
   // Right-click on desktop opens the OS share sheet. Suppressed on touch-primary devices
   // (mobile/tablet) since their default left-tap already routes to the share sheet on iOS.
@@ -461,6 +494,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
         {/* panel-sidebar */}
       </div>
       {/* panel-layout */}
+      <ConfirmModal open={confirmSave !== null} message={confirmMsg} onConfirm={handleConfirmSave} onCancel={handleCancelSave} />
     </div>
   );
 });
