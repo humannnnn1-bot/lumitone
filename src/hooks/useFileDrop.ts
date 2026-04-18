@@ -33,25 +33,8 @@ export function useFileDrop(
         showToast(t("toast_image_too_large"), "error");
         return;
       }
-      const url = URL.createObjectURL(file);
-      const img = new Image();
-      let retried = false;
-      img.onerror = () => {
-        // Android Chrome intermittently fails to decode on the first attempt
-        // (cold decoder / memory pressure / content:// read race). Retry once.
-        if (!retried) {
-          retried = true;
-          setTimeout(() => {
-            img.src = "";
-            img.src = url;
-          }, 100);
-          return;
-        }
-        URL.revokeObjectURL(url);
-        showToast(t("toast_image_load_failed"), "error");
-      };
-      img.onload = () => {
-        URL.revokeObjectURL(url);
+
+      const processImg = (img: HTMLImageElement) => {
         const iw = Math.max(1, img.width),
           ih = Math.max(1, img.height);
         if (iw * ih > MAX_IMAGE_PIXELS) {
@@ -97,6 +80,37 @@ export function useFileDrop(
           setZoom(1);
           setPan({ x: 0, y: 0 });
         }
+      };
+
+      // Fallback: read the file fully into memory as a data URL. Decouples from
+      // the picker's content:// URI (which can be read-raced / disconnected on
+      // Android Chrome), giving the decoder a stable self-contained source.
+      const tryDataUrlFallback = () => {
+        const fr = new FileReader();
+        fr.onerror = () => showToast(t("toast_image_load_failed"), "error");
+        fr.onload = () => {
+          const img2 = new Image();
+          img2.onload = () => processImg(img2);
+          img2.onerror = () => showToast(t("toast_image_load_failed"), "error");
+          img2.src = fr.result as string;
+        };
+        fr.readAsDataURL(file);
+      };
+
+      // Primary path: object URL is zero-copy and fast.
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+        processImg(img);
+      };
+      img.onerror = () => {
+        // Android Chrome intermittently fails to decode on the first attempt
+        // (cold decoder / memory pressure / content:// read race). Wait briefly
+        // for transient pressure to ease, then retry via a different mechanism
+        // (FileReader) so we aren't re-driving the same failing source.
+        URL.revokeObjectURL(url);
+        setTimeout(tryDataUrlFallback, 100);
       };
       img.src = url;
     },

@@ -298,9 +298,17 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
 
         {/* Rank labels + Pascal counts with column headers (Hasse mode) */}
         {animT > 0 && (
-          <g opacity={animT * 0.7} pointerEvents="none">
+          <g opacity={animT} pointerEvents="none">
             {/* Column headers */}
-            <text x={42} y={40} textAnchor="middle" dominantBaseline="central" fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer}>
+            <text
+              x={42}
+              y={40}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={FS.xxs}
+              fontFamily="monospace"
+              fill={C.textPrimary}
+            >
               rank
             </text>
             <text
@@ -310,7 +318,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
               dominantBaseline="central"
               fontSize={FS.xxs}
               fontFamily="monospace"
-              fill={C.textDimmer}
+              fill={C.textPrimary}
             >
               Pascal
             </text>
@@ -329,7 +337,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                   dominantBaseline="central"
                   fontSize={FS.xxs}
                   fontFamily="monospace"
-                  fill={C.textDimmer}
+                  fill={C.textPrimary}
                 >
                   {rank}
                 </text>
@@ -340,7 +348,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                   dominantBaseline="central"
                   fontSize={FS.xxs}
                   fontFamily="monospace"
-                  fill={C.textDimmer}
+                  fill={C.textPrimary}
                 >
                   {count}
                 </text>
