@@ -2,6 +2,7 @@ import React, { useState, useCallback } from "react";
 import { C, SP, FS, FW } from "../tokens";
 import { useTranslation } from "../i18n";
 import { PinResetContext } from "./theory/pin-reset";
+import { VennDiagram } from "./theory/VennDiagram";
 import { BinaryTable } from "./theory/BinaryTable";
 import { ColorDice } from "./theory/ColorDice";
 import { FanoPlane } from "./theory/FanoPlane";
@@ -142,14 +143,21 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
            ═══════════════════════════════════════ */}
         <div style={S_GROUP_LABEL}>{t("theory_group_foundations")}</div>
 
-        {/* §1 Binary Levels */}
+        {/* §1 Venn Diagram — Rosetta stone: 8 colors = P({G,R,B}) */}
+        <Section title={t("theory_venn_title")} desc={t("theory_venn_desc")}>
+          <VennDiagram hlLevel={hlLevel} onHover={onHover} />
+        </Section>
+
+        <hr style={S_DIVIDER} />
+
+        {/* §2 Binary Levels */}
         <Section title={t("theory_binary_title")} desc={t("theory_binary_desc")}>
           <BinaryTable hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
         <hr style={S_DIVIDER} />
 
-        {/* §2 XOR Mixing */}
+        {/* §3 XOR Mixing */}
         <Section title={t("theory_xor_title")} desc={t("theory_xor_desc")}>
           <XorDemo hlLevel={hlLevel} onHover={onHover} />
         </Section>
@@ -160,7 +168,7 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
         <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_geometry")}</div>
 
         {/* §3 Color Cube */}
-        <Section title={t("theory_cube_title")} desc={t("theory_cube_desc")}>
+        <Section title={t("theory_cube_title")} desc={[t("theory_cube_desc"), t("theory_cube_desc2")]}>
           <ColorCube hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
