@@ -4,14 +4,14 @@ import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
 
 const W = 300;
-const H = 260;
+const H = 220;
 const RAD = 60;
 
 // 3 circles in equilateral arrangement: R on top, G bottom-right, B bottom-left.
 // Hue-wheel consistent: clockwise R → (R∩G=Y) → G → (G∩B=C) → B → (R∩B=M) → R.
-const R_CENTER = { x: 150, y: 113 };
-const G_CENTER = { x: 182, y: 168 };
-const B_CENTER = { x: 118, y: 168 };
+const R_CENTER = { x: 150, y: 93 };
+const G_CENTER = { x: 182, y: 148 };
+const B_CENTER = { x: 118, y: 148 };
 
 interface RegionInfo {
   lv: number;
@@ -22,14 +22,14 @@ interface RegionInfo {
 
 // Label positions pre-computed to fall within the corresponding region's interior.
 const REGIONS: RegionInfo[] = [
-  { lv: 0, x: 40, y: 32, setLabel: "\u2205" },
-  { lv: 2, x: 150, y: 82, setLabel: "{R}" },
-  { lv: 4, x: 212, y: 185, setLabel: "{G}" },
-  { lv: 1, x: 88, y: 185, setLabel: "{B}" },
-  { lv: 6, x: 177, y: 135, setLabel: "{R,G}" },
-  { lv: 3, x: 123, y: 135, setLabel: "{R,B}" },
-  { lv: 5, x: 150, y: 188, setLabel: "{G,B}" },
-  { lv: 7, x: 150, y: 150, setLabel: "{R,G,B}" },
+  { lv: 0, x: 40, y: 12, setLabel: "\u2205" },
+  { lv: 2, x: 150, y: 62, setLabel: "{R}" },
+  { lv: 4, x: 212, y: 165, setLabel: "{G}" },
+  { lv: 1, x: 88, y: 165, setLabel: "{B}" },
+  { lv: 6, x: 186, y: 108, setLabel: "{G,R}" },
+  { lv: 3, x: 114, y: 108, setLabel: "{R,B}" },
+  { lv: 5, x: 150, y: 170, setLabel: "{G,B}" },
+  { lv: 7, x: 150, y: 135, setLabel: "{G,R,B}" },
 ];
 
 function regionOf(x: number, y: number): number {

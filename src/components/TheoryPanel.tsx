@@ -33,6 +33,16 @@ const S_HEADING: React.CSSProperties = {
   margin: 0,
 };
 
+const S_SUBHEADING: React.CSSProperties = {
+  fontSize: 14,
+  fontWeight: FW.bold,
+  fontFamily: "monospace",
+  color: C.accent,
+  textAlign: "center",
+  margin: 0,
+  marginTop: SP.md,
+};
+
 const S_DESC: React.CSSProperties = {
   fontSize: 13,
   fontFamily: "monospace",
@@ -168,8 +178,12 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
         <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_geometry")}</div>
 
         {/* §3 Color Cube */}
-        <Section title={t("theory_cube_title")} desc={[t("theory_cube_desc"), t("theory_cube_desc2")]}>
+        <Section title={t("theory_cube_title")} desc={t("theory_cube_desc")}>
           <ColorCube hlLevel={hlLevel} onHover={onHover} />
+          <h4 style={S_SUBHEADING}>{t("theory_cube_hasse")}</h4>
+          <p className="theory-desc" style={S_DESC}>
+            {t("theory_cube_desc2")}
+          </p>
         </Section>
 
         <hr style={S_DIVIDER} />
