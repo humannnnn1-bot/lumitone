@@ -34,9 +34,9 @@ function downloadCanvas(
       // iOS Safari ignores <a download> — open in new tab as last resort
       if (isIOS) {
         window.open(url, "_blank");
-        showToast(t("toast_save_long_press"), "info");
+        showToast(t("toast_save_long_press", name), "info");
       } else if (isAndroid) {
-        showToast(t("toast_saved"), "success");
+        showToast(t("toast_saved", name), "success");
       }
       setTimeout(() => URL.revokeObjectURL(url), 5000);
     };

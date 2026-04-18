@@ -14,6 +14,7 @@ import { useExport } from "./hooks/useExport";
 import { useAppState } from "./hooks/useAppState";
 import { DrawingContextProvider } from "./contexts/DrawingContext";
 import { GlazeContextProvider } from "./contexts/GlazeContext";
+import { timestamp } from "./utils";
 import { S_TAB_ACTIVE, S_TAB_INACTIVE } from "./styles";
 import { C, Z, FS, FW, FONT } from "./tokens";
 import { Toast } from "./components/Toast";
@@ -230,7 +231,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   const { saveColor, saveGlaze, shareColor, shareGlaze } = useExport(cvs, colorLUT, showToast, t);
 
   const handleKbSave = useCallback(() => {
-    saveColor(prvRef, `chromalum_color_${Date.now()}.png`);
+    saveColor(prvRef, `chromalum_color_${timestamp()}.png`);
   }, [saveColor, prvRef]);
 
   useKeyboardShortcuts({

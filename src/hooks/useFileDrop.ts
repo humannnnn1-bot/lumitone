@@ -35,7 +35,18 @@ export function useFileDrop(
       }
       const url = URL.createObjectURL(file);
       const img = new Image();
+      let retried = false;
       img.onerror = () => {
+        // Android Chrome intermittently fails to decode on the first attempt
+        // (cold decoder / memory pressure / content:// read race). Retry once.
+        if (!retried) {
+          retried = true;
+          setTimeout(() => {
+            img.src = "";
+            img.src = url;
+          }, 100);
+          return;
+        }
         URL.revokeObjectURL(url);
         showToast(t("toast_image_load_failed"), "error");
       };

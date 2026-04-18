@@ -23,8 +23,12 @@ export const NewCanvasModal = React.memo(function NewCanvasModal({ open, onConfi
     if (open) {
       setW(320);
       setH(320);
-      // Focus width input when modal opens
-      requestAnimationFrame(() => widthRef.current?.focus());
+      // Focus width input on desktop only; skip on touch to avoid popping up the
+      // virtual keyboard before the user asks for it.
+      const isTouch = navigator.maxTouchPoints > 0 || "ontouchstart" in window || !window.matchMedia("(pointer: fine)").matches;
+      if (!isTouch) {
+        requestAnimationFrame(() => widthRef.current?.focus());
+      }
     }
   }, [open]);
 
@@ -39,6 +43,7 @@ export const NewCanvasModal = React.memo(function NewCanvasModal({ open, onConfi
   if (!open) return null;
 
   const presets = [
+    { label: "8\u00D78", w: 8, h: 8 },
     { label: "16\u00D716", w: 16, h: 16 },
     { label: "32\u00D732", w: 32, h: 32 },
     { label: "64\u00D764", w: 64, h: 64 },
@@ -130,7 +135,7 @@ export const NewCanvasModal = React.memo(function NewCanvasModal({ open, onConfi
           {MAX_IMAGE_SIZE}
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center", marginBottom: SP["2xl"] }}>
-          {[presets.slice(0, 4), presets.slice(4)].map((row, ri) => (
+          {[presets.slice(0, 5), presets.slice(5)].map((row, ri) => (
             <div key={ri} style={{ display: "flex", gap: SP.md, justifyContent: "center" }}>
               {row.map((p) => (
                 <button
