@@ -22,6 +22,6 @@ describe("HammingDiagram", () => {
     fireEvent.click(screen.getByTestId("hamming-position-5"));
 
     expect(screen.getByText("Error at position 5 (Cyan)")).toBeTruthy();
-    expect(screen.getByText(/syndrome = 101/)).toBeTruthy();
+    expect(screen.getByTestId("hamming-syndrome").textContent?.replace(/\s+/g, " ")).toMatch(/syndrome = 101/);
   });
 });

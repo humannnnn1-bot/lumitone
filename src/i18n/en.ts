@@ -195,6 +195,9 @@ export const en = {
   theory_title: "Color Theory",
   theory_intro:
     "CHROMALUM\u2019s 8 luma levels encode RGB channels as 3-bit binary \u2014 a single design choice. From this, the color cube, Gray codes, Hamming codes, and the Fano plane all emerge as mathematical consequences of GF(2)\u00b3. GF(2) is the simplest number system: just 0 and 1, where 1+1=0. GF(2)\u00b3 is its 3-dimensional extension \u2014 8 vectors corresponding to our 8 colors.",
+  theory_venn_title: "Venn Diagram",
+  theory_venn_desc:
+    "The 3 channels {G, R, B} admit 2\u00b3 = 8 subsets. The 8 regions formed by 3 overlapping circles correspond exactly to the 8 colors: the outside is the empty set \u2205 (Black); the triple overlap is the full set {G, R, B} (White). Each color is a characteristic function \u03c7_A: {G,R,B} \u2192 {0,1}, and every section below views this same 8-element set through a different lens.",
   theory_binary_title: "Binary Levels",
   theory_binary_desc:
     "Each level is a 3-bit number. Of the 6 possible bit-to-channel assignments, only GRB (Bit 2 = Green, Bit 1 = Red, Bit 0 = Blue) makes level numbers increase monotonically with luma \u2014 because Green\u2019s luma coefficient alone exceeds Red + Blue (0.587 > 0.413). This is not a design choice but a consequence of human color vision. The primary set {1, 2, 4} is the unique 3-element subset of naturals whose elements, pairwise sums, and total sum (all under ordinary integer addition) partition {1, \u2026, 7} without overlap.",
@@ -230,6 +233,8 @@ export const en = {
   theory_cube_title: "Color Cube",
   theory_cube_desc:
     "8 levels sit at the vertices of a 3D cube (RGB axes). Each edge toggles one channel. The 6 chromatic vertices (excluding Black and White) form an equatorial belt between the two poles \u2014 weight-1 primaries on one layer, weight-2 secondaries on the other. From the Black pole, primaries combine by XOR (additive mixing); from the White pole, colors filter by AND (subtractive mixing). The complement map (XOR 7) swaps these two perspectives.",
+  theory_cube_desc2:
+    "The Hasse toggle projects the same cube along its body diagonal (topologically the same Q\u2083 graph). K at the bottom, W at the top, with rank = |A| (channels in the color) stratifying the 8 colors into 4 layers \u2014 Pascal\u2019s 1, 3, 3, 1 is directly visible. Atoms (rank 1 = RGB primaries) and coatoms (rank 2 = CMY) correspond via complementation \u2014 this is the algebraic origin of complementary pairs. The 12 edges decompose into 3 perfect matchings by channel (G/R/B). Reading upward is additive mixing; downward is subtractive \u2014 the Hasse self-duality encodes this equivalence.",
   theory_gray_title: "Gray Code Cycle",
   theory_gray_desc:
     "The 6 chromatic colors arranged in hue-wheel order toggle exactly one channel per step: G \u2192 R \u2192 B, forming a hexagonal cycle. Structurally, these 6 vertices form K\u2083,\u2083 (primaries \u2194 secondaries) minus the 3 complement pairs \u2014 leaving exactly this hexagon with no other edges. Each edge lies on a primary triple line, using all 3 lines twice. Complements are always antipodal (distance 3) \u2014 the geometric reason die-opposite faces sum to 7.",
@@ -250,7 +255,6 @@ export const en = {
   theory_hamming_flip: "Click a position to inject an error",
   theory_hamming_reset: "Reset",
   theory_hamming_error: "Error at position {0}",
-  theory_hamming_ok: "No error",
   theory_hamming_corrected: "Corrected position {0}",
   theory_hamming_correct: "Correct \u2713",
   theory_connections_title: "Connections",
@@ -268,11 +272,12 @@ export const en = {
 
   theory_cube_equator: "Equatorial belt",
   theory_cube_complements: "Complements",
+  theory_cube_hasse: "Hasse",
   theory_conn_conclusion_2: "GF(2)\u00b3 \u2014 the common algebraic source",
   theory_conn_fano_hamming_hook:
-    "Fano \u2245 Hamming: the 7 Fano points are the 7 columns of the parity-check matrix. Projective geometry and coding theory are two readings of the same structure.",
+    "Fano \u2194 Hamming: the 7 Fano points are the 7 columns of the parity-check matrix. Projective geometry and coding theory are two readings of the same structure.",
   theory_conn_cube_geometry_hook:
-    "Cube geometry: the 7 Fano lines correspond to the 7 two-dimensional subspaces of GF(2)\u00b3 through Black. In the Euclidean cube, 6 of them appear as literal plane slices (3 coordinate planes and 3 diagonal planes); the remaining CMY line corresponds to the even-parity tetrahedron {0,3,5,6}. The three parity checks are the coordinate planes G=0, R=0, and B=0.",
+    "Cube geometry: the 7 Fano lines correspond to the 7 two-dimensional subspaces of GF(2)\u00b3 through Black. In the Euclidean cube, 6 of them appear as literal plane slices (3 coordinate planes and 3 diagonal planes); the remaining CMY line corresponds to the even-parity tetrahedron {0,3,5,6}. The coordinate planes G=0, R=0, and B=0 are the kernels of Hamming\u2019s three parity checks.",
   theory_conn_gray_hook:
     "Gray code: the hue wheel R\u2192Y\u2192G\u2192C\u2192B\u2192M is a Hamiltonian cycle on both the cube\u2019s chromatic vertices and the octahedron\u2019s vertex graph.",
   theory_conn_boolean_hook:

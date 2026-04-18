@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { THEORY_LEVELS, CUBE_EDGES, CUBE_POINTS, GRAY_PATH, edgeChannel, isBackEdge, STELLA_EDGES, COMPLEMENT_EDGES } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
 import { usePinReset } from "./pin-reset";
@@ -19,6 +19,54 @@ const AXIS_LABELS: { ch: "G" | "R" | "B"; from: number; to: number }[] = [
 
 const CHANNEL_COLORS: Record<string, string> = { G: "#00ff00", R: "#ff0000", B: "#0000ff" };
 
+// Hasse diagram target positions = pure linear projection of the cube onto a
+// body-diagonal-vertical viewpoint. x-coordinates match the isometric cube exactly
+// (so the transform is "camera rotation", no vertex crosses horizontally).
+// y = 210 − 50·(g+r+b), putting rank-0 at y=210 and rank-3 at y=60.
+const HASSE_POINTS: Record<number, { x: number; y: number }> = {
+  0: { x: 150, y: 210 },
+  1: { x: 89.37822173508928, y: 160 },
+  2: { x: 150, y: 160 },
+  3: { x: 89.37822173508928, y: 110 },
+  4: { x: 210.62177826491072, y: 160 },
+  5: { x: 150, y: 110 },
+  6: { x: 210.62177826491072, y: 110 },
+  7: { x: 150, y: 60 },
+};
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
+}
+
+// Smoothstep easing for camera-rotation feel.
+function smoothstep(t: number) {
+  return t * t * (3 - 2 * t);
+}
+
+// Set notation labels shown when Hasse mode is active.
+const SET_LABELS: Record<number, string> = {
+  0: "\u2205",
+  1: "{B}",
+  2: "{R}",
+  3: "{R, B}",
+  4: "{G}",
+  5: "{G, B}",
+  6: "{G, R}",
+  7: "{G, R, B}",
+};
+
+// Placement relative to each vertex in Hasse layout.
+const SET_LABEL_OFFSETS: Record<number, { dx: number; dy: number; anchor: "start" | "middle" | "end" }> = {
+  0: { dx: 0, dy: 18, anchor: "middle" },
+  1: { dx: -14, dy: 0, anchor: "end" },
+  2: { dx: 0, dy: -16, anchor: "middle" },
+  3: { dx: -13, dy: 0, anchor: "end" },
+  4: { dx: 14, dy: 0, anchor: "start" },
+  5: { dx: 0, dy: 16, anchor: "middle" },
+  6: { dx: 13, dy: 0, anchor: "start" },
+  7: { dx: 0, dy: -16, anchor: "middle" },
+};
+
 interface Props {
   hlLevel: number | null;
   onHover: (lv: number | null) => void;
@@ -31,6 +79,32 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
   const [equatorMode, setEquatorMode] = useState(false);
   const [showComplements, setShowComplements] = useState(false);
   const [showK8, setShowK8] = useState(false);
+  const [hasseMode, setHasseMode] = useState(false);
+  const [animT, setAnimT] = useState(0);
+  const animTRef = useRef(0);
+  const reducedMotion = useRef(typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+
+  useEffect(() => {
+    if (reducedMotion.current) {
+      const target = hasseMode ? 1 : 0;
+      animTRef.current = target;
+      setAnimT(target);
+      return;
+    }
+    let raf = 0;
+    const step = hasseMode ? 0.03 : -0.04;
+    const animate = () => {
+      const prev = animTRef.current;
+      const next = Math.max(0, Math.min(1, prev + step));
+      animTRef.current = next;
+      setAnimT(next);
+      if ((hasseMode && next < 1) || (!hasseMode && next > 0)) {
+        raf = requestAnimationFrame(animate);
+      }
+    };
+    raf = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(raf);
+  }, [hasseMode]);
 
   const hl = hlLevel !== null && hlLevel >= 0 && hlLevel <= 7 ? hlLevel : pinned;
   const hlEdges = hl !== null ? edgesOf(hl) : [];
@@ -56,7 +130,13 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
     [onHover],
   );
 
-  const getPos = (lv: number) => CUBE_POINTS[lv];
+  const getPos = (lv: number) => {
+    const cube = CUBE_POINTS[lv];
+    if (animT <= 0) return cube;
+    const hasse = HASSE_POINTS[lv];
+    const t = smoothstep(animT);
+    return { x: lerp(cube.x, hasse.x, t), y: lerp(cube.y, hasse.y, t) };
+  };
 
   const isEquator = (lv: number) => lv !== 0 && lv !== 7;
 
@@ -69,7 +149,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
-      <svg viewBox="55 35 190 195" style={{ width: "100%", maxWidth: 235 }} role="img" aria-label={t("theory_cube_title")}>
+      <svg viewBox="30 35 240 195" style={{ width: "100%", maxWidth: 360 }} role="img" aria-label={t("theory_cube_title")}>
         {/* Equator path (toggle overlay) */}
         {equatorMode && (
           <path d={equatorPath} fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.40)" strokeWidth={1.5} strokeDasharray="4,3" />
@@ -98,7 +178,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
               fontFamily="monospace"
               fontWeight={FW.bold}
               fill={chColor}
-              opacity={0.5}
+              opacity={0.5 * (1 - animT)}
             >
               {ch}
             </text>
@@ -132,19 +212,6 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                   strokeDasharray="6,4"
                   opacity={0.7}
                 />
-                <text
-                  x={(pa.x + pb.x) / 2}
-                  y={(pa.y + pb.y) / 2 - 8}
-                  textAnchor="middle"
-                  fontSize={FS.xxs}
-                  fontFamily="monospace"
-                  fill={C.textDimmer}
-                  opacity={0.6}
-                >
-                  {a}
-                  {"\u2295"}
-                  {b}=7
-                </text>
               </g>
             );
           })}
@@ -199,7 +266,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
           const ch = edgeChannel(e[0], e[1]);
           const chColor = CHANNEL_COLORS[ch];
           const isEqEdge = isEquator(e[0]) && isEquator(e[1]);
-          const edgeOpacity = dim ? 0.15 : active ? 0.9 : isEqEdge && equatorMode ? 0.6 : 0.4;
+          const edgeOpacity = dim ? 0.15 : active ? 0.9 : isEqEdge && equatorMode ? 0.6 : animT > 0.5 ? 0.55 : 0.4;
           return (
             <g key={"ce" + ei}>
               <line
@@ -207,9 +274,9 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                 y1={p0.y}
                 x2={p1.x}
                 y2={p1.y}
-                stroke={active ? chColor : C.textDimmer}
+                stroke={active || animT > 0.5 ? chColor : C.textDimmer}
                 strokeWidth={active ? 2 : 1}
-                strokeDasharray={back && !active ? "3,3" : undefined}
+                strokeDasharray={back && !active && animT < 0.5 ? "3,3" : undefined}
                 opacity={edgeOpacity}
               />
               {active && (
@@ -228,6 +295,84 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
             </g>
           );
         })}
+
+        {/* Rank labels + Pascal counts with column headers (Hasse mode) */}
+        {animT > 0 && (
+          <g opacity={animT * 0.7} pointerEvents="none">
+            {/* Column headers */}
+            <text x={42} y={40} textAnchor="middle" dominantBaseline="central" fontSize={FS.xxs} fontFamily="monospace" fill={C.textDimmer}>
+              rank
+            </text>
+            <text
+              x={258}
+              y={40}
+              textAnchor="middle"
+              dominantBaseline="central"
+              fontSize={FS.xxs}
+              fontFamily="monospace"
+              fill={C.textDimmer}
+            >
+              Pascal
+            </text>
+            {/* Rank + Pascal values per row */}
+            {[
+              { rank: 0, y: 210, count: 1 },
+              { rank: 1, y: 160, count: 3 },
+              { rank: 2, y: 110, count: 3 },
+              { rank: 3, y: 60, count: 1 },
+            ].map(({ rank, y, count }) => (
+              <React.Fragment key={"rank" + rank}>
+                <text
+                  x={42}
+                  y={y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={FS.xxs}
+                  fontFamily="monospace"
+                  fill={C.textDimmer}
+                >
+                  {rank}
+                </text>
+                <text
+                  x={258}
+                  y={y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={FS.xxs}
+                  fontFamily="monospace"
+                  fill={C.textDimmer}
+                >
+                  {count}
+                </text>
+              </React.Fragment>
+            ))}
+          </g>
+        )}
+
+        {/* Set notation labels (fade in with Hasse mode) */}
+        {animT > 0 &&
+          [0, 1, 2, 3, 4, 5, 6, 7].map((lv) => {
+            const p = getPos(lv);
+            const { dx, dy, anchor } = SET_LABEL_OFFSETS[lv];
+            const active = hlVerts.has(lv);
+            const dim = hl !== null && !active;
+            return (
+              <text
+                key={"setlabel" + lv}
+                x={p.x + dx}
+                y={p.y + dy}
+                textAnchor={anchor}
+                dominantBaseline="central"
+                fontSize={FS.xxs}
+                fontFamily="monospace"
+                fill={C.textMuted}
+                opacity={animT * (dim ? 0.3 : active ? 1 : 0.85)}
+                pointerEvents="none"
+              >
+                {SET_LABELS[lv]}
+              </text>
+            );
+          })}
 
         {/* Vertices */}
         {[0, 1, 2, 3, 4, 5, 6, 7].map((lv) => {
@@ -264,10 +409,25 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                 fontWeight={900}
                 fontFamily="monospace"
                 fill={lv >= 4 ? "#000" : "#fff"}
-                opacity={dim ? 0.3 : 1}
+                opacity={(dim ? 0.3 : 1) * (1 - animT)}
               >
                 {lv}
               </text>
+              {animT > 0 && (
+                <text
+                  x={p.x}
+                  y={p.y}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={FS.sm}
+                  fontWeight={900}
+                  fontFamily="monospace"
+                  fill={lv >= 4 ? "#000" : "#fff"}
+                  opacity={(dim ? 0.3 : 1) * animT}
+                >
+                  {THEORY_LEVELS[lv].bits.join("")}
+                </text>
+              )}
             </g>
           );
         })}
@@ -306,6 +466,13 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
           onClick={() => setShowK8((v) => !v)}
         >
           {"K\u2088"}
+        </button>
+        <button
+          className="theory-annotation"
+          style={{ ...S_BTN, opacity: hasseMode ? 1 : 0.5, borderColor: hasseMode ? "rgba(255,255,255,0.5)" : undefined }}
+          onClick={() => setHasseMode((v) => !v)}
+        >
+          {t("theory_cube_hasse")}
         </button>
       </div>
     </div>

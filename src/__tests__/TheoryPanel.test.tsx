@@ -27,6 +27,7 @@ describe("TheoryPanel", () => {
     expect(screen.getAllByText("K₈").length).toBeGreaterThan(0);
 
     expect(Array.from(container.querySelectorAll(".theory-heading")).map((el) => el.textContent)).toEqual([
+      "Venn Diagram",
       "Binary Levels",
       "XOR Mixing",
       "Color Cube",

@@ -177,6 +177,7 @@ function MiniCube({
               fontFamily="monospace"
               fill={isDim ? C.textDimmer : lv >= 4 ? "#000" : "#fff"}
               opacity={isDim ? 0.3 : 0.9}
+              pointerEvents="none"
             >
               {lv}
             </text>
@@ -234,7 +235,7 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
       {/* 8 isometric cube views: 2 columns × 4 rows */}
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
         {/* Column headers */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220, marginTop: SP.sm }}>
           <div className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: "monospace", color: C.textDimmer, textAlign: "center" }}>
             {t("theory_dice_additive_col")}
           </div>

@@ -81,7 +81,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                 r={9}
                 fill={lv.color}
                 fillOpacity={0.8}
-                stroke={errorPosition === lv.lv ? "#ff4444" : isParity ? C.accentBright : "transparent"}
+                stroke={errorPosition === lv.lv ? C.error : isParity ? C.accentBright : "transparent"}
                 strokeWidth={errorPosition === lv.lv ? 2 : 1.5}
               />
               <text
@@ -160,7 +160,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                   r={DOT_R}
                   fill={parityInfo.color}
                   fillOpacity={parityActive ? 0.9 : 0.7}
-                  stroke={parityActive ? "#fff" : pg.failed ? "#ff4444" : parityInfo.color}
+                  stroke={parityActive ? "#fff" : pg.failed ? C.error : parityInfo.color}
                   strokeWidth={parityActive ? 2.5 : pg.failed ? 2.5 : 1}
                 />
                 <text
@@ -181,23 +181,28 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                   textAnchor="middle"
                   fontSize={FS.xs}
                   fontFamily="monospace"
-                  fill={pg.failed ? "#ff4444" : parityInfo.color}
+                  fill={pg.failed ? C.error : parityInfo.color}
                   opacity={0.7}
                 >
                   {pg.label}
                 </text>
-                {/* Parity check result indicator */}
+                {/* Parity check result indicator — badge */}
                 {errorPosition !== null && (
-                  <text
-                    x={8}
-                    y={y}
-                    textAnchor="middle"
-                    dominantBaseline="central"
-                    fontSize={FS.xs}
-                    fill={pg.failed ? "#ff4444" : "#44ff44"}
-                  >
-                    {pg.failed ? "\u2717" : "\u2713"}
-                  </text>
+                  <g>
+                    <circle cx={8} cy={y} r={6} fill={pg.failed ? C.error : C.success} />
+                    <text
+                      x={8}
+                      y={y}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize={FS.sm}
+                      fontFamily="monospace"
+                      fontWeight={FW.bold}
+                      fill="#fff"
+                    >
+                      {pg.failed ? "\u2717" : "\u2713"}
+                    </text>
+                  </g>
                 )}
               </g>
 
@@ -223,7 +228,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                       r={DOT_R - (isParity ? 0 : 2)}
                       fill={info.color}
                       fillOpacity={dim ? 0.15 : 0.8}
-                      stroke={isErrored ? "#ff4444" : isHl ? "#fff" : info.color}
+                      stroke={isErrored ? C.error : isHl ? "#fff" : info.color}
                       strokeWidth={isErrored ? 2.5 : isHl ? 2 : isParity ? 1.5 : 1}
                       strokeDasharray={isParity ? "3,2" : undefined}
                       opacity={dim ? 0.3 : 1}
@@ -258,16 +263,39 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
               fontSize={FS.md}
               fontFamily="monospace"
               fontWeight={FW.bold}
-              fill={corrected ? "#44ff44" : syndrome > 0 ? "#ff4444" : "#44ff44"}
+              fill={corrected ? C.success : C.error}
             >
               {corrected
                 ? t("theory_hamming_corrected", `${errorPosition} (${THEORY_LEVELS[errorPosition].name})`)
-                : syndrome > 0
-                  ? t("theory_hamming_error", `${syndrome} (${THEORY_LEVELS[syndrome].name})`)
-                  : t("theory_hamming_ok")}
+                : t("theory_hamming_error", `${syndrome} (${THEORY_LEVELS[syndrome].name})`)}
             </text>
-            <text x={W / 2} y={204} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textDimmer}>
-              syndrome = {syndrome.toString(2).padStart(3, "0")}
+            <text
+              data-testid="hamming-syndrome"
+              x={W / 2}
+              y={204}
+              textAnchor="middle"
+              fontSize={FS.xs}
+              fontFamily="monospace"
+              fill={C.textDimmer}
+            >
+              {"syndrome = "}
+              {[4, 2, 1].map((parity) => {
+                const bit = (syndrome >> Math.log2(parity)) & 1;
+                const bitActive = hlLevel === parity;
+                const parityColor = THEORY_LEVELS[parity].color;
+                return (
+                  <tspan
+                    key={`sb${parity}`}
+                    fontWeight={FW.bold}
+                    style={{ cursor: "pointer" }}
+                    onMouseEnter={() => enter(parity)}
+                    onMouseLeave={leave}
+                    fill={bitActive ? "#fff" : bit ? parityColor : C.textDimmer}
+                  >
+                    {bit}
+                  </tspan>
+                );
+              })}
               {corrected ? " \u2192 corrected" : ""}
             </text>
           </g>
@@ -283,7 +311,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
             {!corrected && (
               <button
                 className="theory-annotation"
-                style={{ ...S_BTN_SM, color: "#44ff44", borderColor: "rgba(68,255,68,0.4)" }}
+                style={{ ...S_BTN_SM, color: C.success, borderColor: "rgba(64,204,96,0.4)" }}
                 onClick={handleCorrect}
               >
                 {t("theory_hamming_correct")}

@@ -3,15 +3,23 @@ import { THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW } from "../../tokens";
 import { useTranslation } from "../../i18n";
 
-const SVG_W = 420,
+const SVG_W = 390,
   H = 224;
 const ROW_H = 24,
   HEADER_Y = 18;
-const COL = { lv: 20, bin: 56, dot: 96, g: 136, r: 164, b: 192, wt: 224, hamming: 278, luma: 370 };
+const COL = { lv: 18, bin: 46, dot: 78, set: 120, g: 170, r: 196, b: 222, wt: 250, hamming: 282, luma: 340 };
 const BIT_R = 6;
 const CHANNEL_COLORS = ["#00ff00", "#ff0000", "#0000ff"];
 const LUMA_VALUES = [0, 29, 76, 105, 150, 179, 226, 255];
 const LUMA_MAX = 255;
+
+function setNotation(bits: readonly number[]): string {
+  const elems: string[] = [];
+  if (bits[0]) elems.push("G");
+  if (bits[1]) elems.push("R");
+  if (bits[2]) elems.push("B");
+  return elems.length === 0 ? "\u2205" : `{${elems.join(", ")}}`;
+}
 
 interface Props {
   hlLevel: number | null;
@@ -56,6 +64,9 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
             {ch}
           </text>
         ))}
+        <text x={COL.set} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+          A
+        </text>
         <text x={COL.wt} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
           Wt
         </text>
@@ -139,6 +150,17 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                   opacity={bit ? 1 : 0.3}
                 />
               ))}
+              <text
+                x={COL.set}
+                y={y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={FS.sm}
+                fill={C.textDimmer}
+                fontFamily="monospace"
+              >
+                {setNotation(lv.bits)}
+              </text>
               <text
                 x={COL.wt}
                 y={y}
