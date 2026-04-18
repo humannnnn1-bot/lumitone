@@ -12,7 +12,16 @@ export function useFocusTrap(ref: React.RefObject<HTMLElement | null>, active: b
     if (!el) return;
     const focusable = el.querySelectorAll<HTMLElement>('button, input, select, textarea, [tabindex]:not([tabindex="-1"])');
     previousActiveRef.current = document.activeElement as HTMLElement | null;
-    if (focusable.length) focusable[0].focus();
+    if (focusable.length) {
+      const first = focusable[0];
+      // On touch devices, auto-focusing a form field pops up the virtual keyboard,
+      // which is intrusive when the user hasn't asked for it. Combine multiple
+      // signals because no single check is reliable across DevTools emulation,
+      // hybrid devices, and real mobile browsers.
+      const isFormField = first.tagName === "INPUT" || first.tagName === "TEXTAREA" || first.tagName === "SELECT";
+      const isTouch = navigator.maxTouchPoints > 0 || "ontouchstart" in window || !window.matchMedia("(pointer: fine)").matches;
+      if (!(isFormField && isTouch)) first.focus();
+    }
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape" && onEscape) {
         onEscape();

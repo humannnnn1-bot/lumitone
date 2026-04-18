@@ -89,6 +89,14 @@ export const en = {
   btn_create: "Create",
   btn_cancel: "Cancel",
 
+  // ConfirmModal
+  btn_yes: "Yes",
+  btn_no: "No",
+  confirm_save_gray: "Save grayscale image?",
+  confirm_save_color: "Save color image?",
+  confirm_save_glaze: "Save glaze image?",
+  confirm_save_map: "Save this map?",
+
   // ErrorBoundary
   error_occurred: "An error occurred",
   btn_retry: "Retry",
@@ -137,8 +145,8 @@ export const en = {
   toast_restore_failed: "Failed to restore saved data",
   toast_autosave_failed: "Auto-save failed",
   toast_image_gen_failed: "Failed to generate image (possibly out of memory)",
-  toast_save_long_press: "Long-press the image to save",
-  toast_saved: "Saved",
+  toast_save_long_press: "Long-press to save: {0}",
+  toast_saved: "Saved: {0}",
   toast_bookmark_limit: "Bookmark limit reached ({0})",
   toast_share_unsupported: "Share is not supported in this browser",
   toast_export_too_large: "{0}×{1}px — Too large to export safely",

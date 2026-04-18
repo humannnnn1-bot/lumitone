@@ -5,7 +5,9 @@ import type { CanvasData } from "../types";
 import type { MapMode } from "./analyze-types";
 import type { PixelMaps } from "../hooks/usePixelMaps";
 import { C, SP, FS, R } from "../tokens";
+import { timestamp } from "../utils";
 import { useTranslation } from "../i18n";
+import { ConfirmModal } from "./ConfirmModal";
 
 /* ── Scientific colormaps (32-stop LUTs, interpolated to 256) ── */
 function buildLUT(stops: [number, number, number][]): Uint8Array {
@@ -366,13 +368,14 @@ export function MapCanvas({
   // Long-press to save map image (mobile)
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [showSaveHint, setShowSaveHint] = useState(false);
+  const [confirmSaveOpen, setConfirmSaveOpen] = useState(false);
 
   const saveMap = useCallback(() => {
     const c = ref.current;
     if (!c) return;
     c.toBlob((blob) => {
       if (!blob) return;
-      const name = `chromalum-map-${mode}.png`;
+      const name = `chromalum_map_${mode}_${timestamp()}.png`;
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && "ontouchend" in document);
       const isAndroid = /Android/i.test(navigator.userAgent);
       const fallbackSave = (b: Blob) => {
@@ -385,9 +388,9 @@ export function MapCanvas({
         document.body.removeChild(a);
         if (isIOS) {
           window.open(url, "_blank");
-          showToast?.(t("toast_save_long_press"), "info");
+          showToast?.(t("toast_save_long_press", name), "info");
         } else if (isAndroid) {
-          showToast?.(t("toast_saved"), "success");
+          showToast?.(t("toast_saved", name), "success");
         }
         setTimeout(() => URL.revokeObjectURL(url), 5000);
       };
@@ -414,10 +417,8 @@ export function MapCanvas({
       longPressTimer.current = setTimeout(() => {
         longPressTimer.current = null;
         longPressOrigin.current = null;
-        setShowSaveHint(true);
-        setTimeout(() => setShowSaveHint(false), 1500);
-        saveMap();
-      }, 600);
+        setConfirmSaveOpen(true);
+      }, 1000);
     },
     [saveMap],
   );
@@ -485,6 +486,17 @@ export function MapCanvas({
       <div style={{ fontSize: FS.xs, color: C.textDimmer, fontFamily: "monospace", textAlign: "center", minHeight: 14, marginTop: SP.xs }}>
         {hoverInfo ?? "\u00A0"}
       </div>
+      <ConfirmModal
+        open={confirmSaveOpen}
+        message={t("confirm_save_map")}
+        onConfirm={() => {
+          setConfirmSaveOpen(false);
+          setShowSaveHint(true);
+          setTimeout(() => setShowSaveHint(false), 1500);
+          saveMap();
+        }}
+        onCancel={() => setConfirmSaveOpen(false)}
+      />
     </div>
   );
 }

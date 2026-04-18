@@ -89,6 +89,14 @@ export const ja: Record<TranslationKey, string> = {
   btn_create: "作成",
   btn_cancel: "キャンセル",
 
+  // ConfirmModal
+  btn_yes: "はい",
+  btn_no: "いいえ",
+  confirm_save_gray: "モノクロ画像を保存しますか？",
+  confirm_save_color: "カラー画像を保存しますか？",
+  confirm_save_glaze: "グレーズ画像を保存しますか？",
+  confirm_save_map: "このマップを保存しますか？",
+
   // ErrorBoundary
   error_occurred: "エラーが発生しました",
   btn_retry: "再試行",
@@ -137,8 +145,8 @@ export const ja: Record<TranslationKey, string> = {
   toast_restore_failed: "保存データの復元に失敗しました",
   toast_autosave_failed: "自動保存に失敗しました",
   toast_image_gen_failed: "画像の生成に失敗しました（メモリ不足の可能性）",
-  toast_save_long_press: "画像を長押しして保存してください",
-  toast_saved: "保存しました",
+  toast_save_long_press: "画像を長押しして保存してください: {0}",
+  toast_saved: "保存しました: {0}",
   toast_bookmark_limit: "ブックマークの上限（{0}件）に達しました",
   toast_share_unsupported: "このブラウザは共有に対応していません",
   toast_export_too_large: "{0}×{1}px — 安全にエクスポートするには大きすぎます",
