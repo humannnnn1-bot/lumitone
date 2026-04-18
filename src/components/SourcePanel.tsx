@@ -41,7 +41,9 @@ interface SourcePanelProps {
 type FilePickerHandle = { getFile: () => Promise<File> };
 type WindowWithFilePicker = Window & {
   showOpenFilePicker?: (options?: {
+    excludeAcceptAllOption?: boolean;
     multiple?: boolean;
+    startIn?: "desktop" | "documents" | "downloads" | "music" | "pictures" | "videos";
     types?: Array<{ description?: string; accept: Record<string, string[]> }>;
   }) => Promise<FilePickerHandle[]>;
 };
@@ -140,11 +142,19 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
     const picker = (window as WindowWithFilePicker).showOpenFilePicker;
     if (window.isSecureContext && typeof picker === "function") {
       void picker({
+        excludeAcceptAllOption: true,
         multiple: false,
+        startIn: "pictures",
         types: [
           {
             description: "Images",
-            accept: { "image/*": [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"] },
+            accept: {
+              "image/bmp": [".bmp"],
+              "image/gif": [".gif"],
+              "image/jpeg": [".jpg", ".jpeg"],
+              "image/png": [".png"],
+              "image/webp": [".webp"],
+            },
           },
         ],
       })
