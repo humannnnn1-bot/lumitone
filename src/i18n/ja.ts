@@ -168,6 +168,7 @@ export const ja: Record<TranslationKey, string> = {
 
   // FileDrop
   toast_image_load_failed: "画像の読み込みに失敗しました",
+  toast_image_permission_failed: "このファイルを読み取れません。AndroidではFiles/ダウンロード内のローカル画像を選んでください",
   toast_image_process_failed: "画像処理に失敗しました",
   toast_image_too_large: "画像が大きすぎます",
   toast_image_resized: "{0}×{1} → {2}×{3} にリサイズ",

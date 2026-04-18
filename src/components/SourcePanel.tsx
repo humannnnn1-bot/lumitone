@@ -25,7 +25,7 @@ interface SourcePanelProps {
   undo: () => void;
   redo: () => void;
   handleClear: () => void;
-  loadImg: (file: File) => void;
+  loadImg: (file: File) => Promise<void>;
   announce: (msg: string) => void;
   schedCursor: () => void;
   prvRef: React.RefObject<HTMLCanvasElement | null>;
@@ -37,6 +37,14 @@ interface SourcePanelProps {
   onPinchMove: (e: React.PointerEvent) => void;
   onPinchUp: (e: React.PointerEvent) => void;
 }
+
+type FilePickerHandle = { getFile: () => Promise<File> };
+type WindowWithFilePicker = Window & {
+  showOpenFilePicker?: (options?: {
+    multiple?: boolean;
+    types?: Array<{ description?: string; accept: Record<string, string[]> }>;
+  }) => Promise<FilePickerHandle[]>;
+};
 
 export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelProps) {
   const {
@@ -89,13 +97,70 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
   const handleSizeDown = useCallback(() => setBrushSize((v) => Math.max(BRUSH_MIN, v - BRUSH_STEP)), [setBrushSize]);
   const handleSizeUp = useCallback(() => setBrushSize((v) => Math.min(BRUSH_MAX, v + BRUSH_STEP)), [setBrushSize]);
   const handleSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setBrushSize(+e.target.value), [setBrushSize]);
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files?.[0]) loadImg(e.target.files[0]);
-      e.target.value = "";
-    },
-    [loadImg],
-  );
+  const handleOpenImage = useCallback(() => {
+    const openWithInput = () => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "image/*";
+      input.style.position = "fixed";
+      input.style.left = "-10000px";
+      input.style.top = "0";
+      document.body.appendChild(input);
+
+      let cleaned = false;
+      const cleanup = () => {
+        if (cleaned) return;
+        cleaned = true;
+        window.removeEventListener("focus", handleFocus);
+        input.remove();
+      };
+      const handleFocus = () => {
+        window.setTimeout(() => {
+          if (!input.files?.length) cleanup();
+        }, 1000);
+      };
+
+      input.addEventListener(
+        "change",
+        () => {
+          window.removeEventListener("focus", handleFocus);
+          const file = input.files?.[0];
+          if (!file) {
+            cleanup();
+            return;
+          }
+          void loadImg(file).finally(cleanup);
+        },
+        { once: true },
+      );
+      window.addEventListener("focus", handleFocus, { once: true });
+      input.click();
+    };
+
+    const picker = (window as WindowWithFilePicker).showOpenFilePicker;
+    if (window.isSecureContext && typeof picker === "function") {
+      void picker({
+        multiple: false,
+        types: [
+          {
+            description: "Images",
+            accept: { "image/*": [".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp"] },
+          },
+        ],
+      })
+        .then(async (handles) => {
+          const file = await handles[0]?.getFile();
+          if (file) await loadImg(file);
+        })
+        .catch((err: unknown) => {
+          if (err instanceof DOMException && err.name === "AbortError") return;
+          openWithInput();
+        });
+      return;
+    }
+
+    openWithInput();
+  }, [loadImg]);
   const [confirmSave, setConfirmSave] = useState<"gray" | "color" | "glaze" | null>(null);
   const doSave = useCallback(
     (kind: "gray" | "color" | "glaze") => {
@@ -444,7 +509,10 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             <button onClick={onNewCanvas} style={S_BTN} title={t("title_new_canvas")}>
               {t("btn_new")}
             </button>
-            <label
+            <button
+              type="button"
+              onClick={handleOpenImage}
+              aria-label={t("aria_open_image")}
               style={{
                 ...S_BTN,
                 border: `1px solid ${C.accentDim}`,
@@ -456,14 +524,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
               }}
             >
               {t("btn_load")}
-              <input
-                type="file"
-                accept="image/*"
-                aria-label={t("aria_open_image")}
-                onChange={handleFileChange}
-                style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)" }}
-              />
-            </label>
+            </button>
             <button onClick={handleClear} style={S_BTN} title={t("title_clear")}>
               {t("btn_clear")}
             </button>
