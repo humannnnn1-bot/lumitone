@@ -98,6 +98,10 @@ describe("theory copy", () => {
   it("keeps reviewed Japanese copy precise and natural", () => {
     expect(ja.theory_intro).toContain("本タブの出発点となる設計選択です");
     expect(ja.theory_binary_desc).toContain("人間の色覚の帰結です");
+    expect(ja.theory_binary_desc).toContain("0.587 > 0.299 + 0.114");
+    expect(ja.theory_binary_desc).toContain("0.299 > 0.114");
+    expect(en.theory_binary_desc).toContain("0.587 > 0.299 + 0.114");
+    expect(en.theory_binary_desc).toContain("0.299 > 0.114");
     expect(ja.theory_zigzag_desc).toContain("円周上では");
     expect(ja.theory_gray_desc).toContain("原色から生成される三点線");
     expect(ja.theory_conn_cube_geometry_hook).toContain("ユークリッド的な立方体");
