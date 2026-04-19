@@ -43,5 +43,16 @@ describe("TheoryPanel", () => {
       "Connections",
       "Scope and Limits",
     ]);
+
+    const polyhedraDiagram = screen.getByRole("img", { name: "Polyhedra network" });
+    expect(polyhedraDiagram.querySelector("desc")?.textContent).toContain("common composition");
+    const polyhedraLabels = Array.from(polyhedraDiagram.querySelectorAll("text")).map((el) => el.textContent);
+    for (const label of ["Cube Q\u2083", "Octahedron", "T\u2080/T\u2081", "Stella Oct."]) {
+      expect(polyhedraLabels).toContain(label);
+    }
+    for (const label of ["F-V reversal", "parity split", "stellation", "compounding"]) {
+      expect(polyhedraLabels).toContain(label);
+    }
+    expect(polyhedraDiagram.querySelector('line[stroke-dasharray="4,3"]')).toBeTruthy();
   });
 });
