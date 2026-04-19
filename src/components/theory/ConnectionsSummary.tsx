@@ -46,9 +46,14 @@ export const ScopeSummary = React.memo(function ScopeSummary() {
 /** Polyhedra transformation network SVG — displayed in Tetra&Stella §10 */
 export const PolyhedraNetwork = React.memo(function PolyhedraNetwork() {
   const { t } = useTranslation();
+  const titleId = React.useId();
+  const descId = React.useId();
+
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md, width: "100%" }}>
-      <svg viewBox="0 0 400 340" style={{ width: "100%", maxWidth: 360 }}>
+      <svg viewBox="0 0 400 340" style={{ width: "100%", maxWidth: 360 }} role="img" aria-labelledby={titleId} aria-describedby={descId}>
+        <title id={titleId}>{t("theory_conn_polyhedra")}</title>
+        <desc id={descId}>{t("theory_conn_polyhedra_svg_desc")}</desc>
         {(() => {
           const nodes = [
             { id: "cube", label: t("theory_pn_cube"), x: 200, y: 35, color: "#ffa060" },
