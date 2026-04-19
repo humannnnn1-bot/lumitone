@@ -230,7 +230,7 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
         <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_polyhedra")}</div>
 
         {/* §9 Chromatic Octahedron */}
-        <Section title={t("theory_octa_title")} desc={[t("theory_octa_desc"), t("theory_octa_desc2")]}>
+        <Section title={t("theory_octa_title")} desc={`${t("theory_octa_desc")}${t("theory_octa_desc2")}`}>
           <Octahedron hlLevel={hlLevel} onHover={onHover} />
         </Section>
 
