@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { THEORY_LEVELS } from "./theory-data";
+import { DICE_NET_FACES, THEORY_LEVELS } from "./theory-data";
 import { C, FS, FW, SP } from "../../tokens";
 import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
@@ -18,15 +18,6 @@ const NET_GAP = 3;
 const NET_STEP = NET_CELL + NET_GAP;
 const NET_W = 4 * NET_STEP + NET_GAP;
 const NET_H = 3 * NET_STEP + NET_GAP;
-
-const NET_FACES: { lv: number; col: number; row: number }[] = [
-  { lv: 2, col: 0, row: 0 },
-  { lv: 6, col: 1, row: 0 },
-  { lv: 4, col: 1, row: 1 },
-  { lv: 5, col: 2, row: 1 },
-  { lv: 1, col: 2, row: 2 },
-  { lv: 3, col: 3, row: 2 },
-];
 
 const PAIRS: [number, number][] = [
   [1, 6],
@@ -277,7 +268,7 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
         {t("theory_dice_desc3")}
       </p>
       <svg viewBox={`0 0 ${NET_W} ${NET_H}`} style={{ width: "100%", maxWidth: NET_W }} role="img" aria-label={t("theory_dice_title")}>
-        {NET_FACES.map(({ lv, col, row }) => {
+        {DICE_NET_FACES.map(({ lv, col, row }) => {
           const info = THEORY_LEVELS[lv];
           const x = NET_GAP + col * (NET_CELL + NET_GAP);
           const y = NET_GAP + row * (NET_CELL + NET_GAP);
