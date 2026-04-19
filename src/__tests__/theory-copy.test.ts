@@ -21,14 +21,14 @@ describe("theory copy", () => {
     expect(en.theory_dice_additive_col).toBe("XOR view (additive reading)");
     expect(en.theory_dice_subtractive_col).toBe("AND view (subtractive reading)");
     expect(en.theory_dice_desc).toContain("BT.601 luma");
-    expect(en.theory_dice_desc).toContain("c ↦ c xor 7 reverses luma order");
+    expect(en.theory_dice_desc).toContain("c ↦ c ⊕ 7 reverses luma order");
     expect(en.theory_dice_desc).toContain("every opposite pair sums to 7");
 
     expect(ja.theory_dice_additive_col).toBe("XORの読み（加法的）");
     expect(ja.theory_dice_subtractive_col).toBe("ANDの読み（減法的）");
-    expect(ja.theory_dice_desc).toContain("6つの有彩色 RGB 頂点を暗い順に1–6とナンバリング");
+    expect(ja.theory_dice_desc).toContain("光の三原色と色の三原色を合わせた６つの色を暗い順に1～6とナンバリング");
     expect(ja.theory_dice_desc).not.toContain("BT.601 luma で6つの有彩色");
-    expect(ja.theory_dice_desc).toContain("補色写像 c ↦ c xor 7 はルマ順を反転");
+    expect(ja.theory_dice_desc).toContain("補色写像 c ↦ c ⊕ 7 はルマ順を反転");
     expect(ja.theory_dice_desc).toContain("どの対面の和も7");
   });
 
@@ -57,7 +57,7 @@ describe("theory copy", () => {
     expect(en.theory_conn_extended.toLowerCase()).toContain("not codewords");
 
     expect(ja.theory_conn_extended).toContain("座標");
-    expect(ja.theory_conn_extended).toContain("符号語の各座標位置");
+    expect(ja.theory_conn_extended).toContain("符号語の 8 つの座標位置");
   });
 
   it("describes the cube-Fano link as subspaces rather than seven literal plane slices", () => {
@@ -118,11 +118,11 @@ describe("theory copy", () => {
     expect(ja.theory_title).toBe("色彩理論");
     expect(ja.color_detail_luma).toBe("ルマ");
     expect(ja.theory_intro).toContain("本タブの出発点となる設計選択です");
-    expect(ja.theory_binary_desc).toContain("RGB 各チャンネルが 0/255 の8頂点だけ");
-    expect(ja.theory_binary_desc).toContain("色番号 0..7 を3ビット数 4x₂ + 2x₁ + x₀");
-    expect(ja.theory_binary_desc).toContain("番号順 0,1,2,...,7 が BT.601 luma 順に単調増加");
+    expect(ja.theory_binary_desc).toContain("RGB 各チャンネルが 0 または 255 の8頂点だけ");
+    expect(ja.theory_binary_desc).toContain("色番号 0..7 を3ビット整数 4x₂ + 2x₁ + x₀");
+    expect(ja.theory_binary_desc).toContain("番号順に並べるとルマも昇順になる");
     expect(ja.theory_binary_desc).toContain("唯一の割当は bit2=Green, bit1=Red, bit0=Blue、つまり GRB");
-    expect(ja.theory_binary_desc).toContain("人間の視覚感度を反映した、BT.601 luma 係数の不等式から決まる帰結です");
+    expect(ja.theory_binary_desc).toContain("人間の視覚感度に由来する BT.601 係数の不等式から一意に決まる帰結です");
     expect(ja.theory_binary_desc).not.toContain("人間の色覚の帰結です");
     expect(en.theory_binary_desc).toContain("the eight RGB vertices where each channel is 0 or 255");
     expect(en.theory_binary_desc).toContain("4x₂ + 2x₁ + x₀");
@@ -133,7 +133,7 @@ describe("theory copy", () => {
     expect(en.theory_binary_desc).toContain("0.587 > 0.299 + 0.114");
     expect(en.theory_binary_desc).toContain("0.299 > 0.114");
     expect(ja.theory_zigzag_desc).toContain("円周上では");
-    expect(ja.theory_gray_desc).toContain("原色から生成される三点線");
+    expect(ja.theory_gray_desc).toContain("2 つの原色を含むファノ平面の三点線");
     expect(ja.theory_conn_cube_geometry_hook).toContain("ユークリッド的な立方体");
     expect(ja.theory_conn_polyhedra_desc).toContain("本タブの4つの多面体");
     expect(ja.theory_conn_polyhedra_desc).not.toContain("§9");
