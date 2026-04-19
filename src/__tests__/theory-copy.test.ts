@@ -26,7 +26,8 @@ describe("theory copy", () => {
 
     expect(ja.theory_dice_additive_col).toBe("XORの読み（加法的）");
     expect(ja.theory_dice_subtractive_col).toBe("ANDの読み（減法的）");
-    expect(ja.theory_dice_desc).toContain("BT.601 luma");
+    expect(ja.theory_dice_desc).toContain("6つの有彩色 RGB 頂点を暗い順に1–6とナンバリング");
+    expect(ja.theory_dice_desc).not.toContain("BT.601 luma で6つの有彩色");
     expect(ja.theory_dice_desc).toContain("補色写像 c ↦ c xor 7 はルマ順を反転");
     expect(ja.theory_dice_desc).toContain("どの対面の和も7");
   });
@@ -146,7 +147,7 @@ describe("theory copy", () => {
     expect(ja.theory_hamming_desc2).not.toContain("青(1)");
     expect(ja.theory_dice_desc2).toContain("定理です：");
     expect(ja.theory_dice_desc3).toContain("証明の要点：");
-    expect(ja.theory_conn_polyhedra_desc).toContain("可換です：");
+    expect(ja.theory_conn_polyhedra_desc).toContain("この意味で図式は可換です。");
     expect(ja.theory_dice_desc2).not.toContain("定理です:");
     expect(ja.theory_dice_desc3).not.toContain("証明の要点:");
     expect(ja.theory_conn_polyhedra_desc).not.toContain("可換です:");
@@ -154,7 +155,10 @@ describe("theory copy", () => {
 
   it("keeps the polyhedra section reference language-independent", () => {
     expect(en.theory_zigzag_desc).toContain("On the hue circle");
-    expect(en.theory_conn_polyhedra_desc).toContain("the four polyhedra in this tab");
+    expect(en.theory_conn_polyhedra_desc).toContain("the four polyhedral structures in this tab");
+    expect(en.theory_conn_polyhedra_desc).toContain("Color Dice and Color Cube");
+    expect(en.theory_conn_polyhedra_desc).toContain("In this sense the diagram commutes");
+    expect(en.theory_conn_polyhedra_svg_desc).toContain("common composition");
     expect(en.theory_conn_polyhedra_desc).not.toContain("§9");
     expect(en.theory_stella_desc).toContain("edge set of K₈");
     expect(en.theory_stella_desc).not.toContain("K₈ = Cube + Color Star + Complements");

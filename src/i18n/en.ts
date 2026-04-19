@@ -293,7 +293,9 @@ export const en = {
     "Boolean view: XOR is addition and AND is multiplication on the same 3-bit lattice. Complement does not turn every XOR identity into an AND identity; for disjoint colors (a \u2227 b = 0), it gives (a \u2295 b)' = a' \u2227 b'.",
   theory_conn_polyhedra: "Polyhedra network",
   theory_conn_polyhedra_desc:
-    "The diamond diagram with Cube Q\u2083 at its apex shows how the four polyhedra in this tab are linked by geometric operations. Face-vertex reversal starts from the Color Dice\u2019s 6 faces; even-odd partition starts from the Color Cube\u2019s 8 vertices; both paths converge at the stella octangula. The diagram commutes: the left path (even-odd partition \u2192 compounding) and the right path (face-vertex reversal \u2192 stellation) yield the same stella octangula. The direct relationship from cube to stella \u2014 the 12 face diagonals \u2014 is the composition of these two paths.",
+    "The diamond diagram with Cube Q\u2083 at its apex shows how the four polyhedral structures in this tab are linked by geometric operations. In face-vertex reversal, the Color Dice\u2019s 6 faces are reversed into the octahedron\u2019s 6 vertices; in parity split, the Color Cube\u2019s 8 vertices split into the two tetrahedra T\u2080/T\u2081. The two paths then converge at the stella octangula. When the Color Dice and Color Cube are matched as the same Q\u2083 vertex-face structure, the left path (parity split \u2192 compounding) and the right path (face-vertex reversal \u2192 stellation) both yield a stella octangula with the same 12 face diagonals. In this sense the diagram commutes. The dashed direct arrow denotes this common composition.",
+  theory_conn_polyhedra_svg_desc:
+    "Commutative diagram from Cube Q\u2083 through either face-vertex reversal to the octahedron or parity split to T\u2080/T\u2081; both paths converge at the stella octangula. The dashed arrow denotes the common composition.",
   theory_conn_polyhedra_legend: "solid = primitive operation \u2502 dashed = composition \u2502 \u27F3 = commutative",
   theory_pn_cube: "Cube Q\u2083",
   theory_pn_octa: "Octahedron",
