@@ -209,7 +209,7 @@ export const en = {
     "The 3 channels {G,R,B} admit 2\u00b3 = 8 subsets. The 8 regions formed by 3 overlapping circles correspond exactly to the 8 colors: the outside is the empty set \u2205 (Black); the triple overlap is the full set {G,R,B} (White). Each color is a characteristic function \u03c7_A: {G,R,B} \u2192 {0,1}, and every section below views this same 8-element set through a different lens.",
   theory_binary_title: "Binary Levels",
   theory_binary_desc:
-    "Each level is a 3-bit number. Of the 6 possible bit-to-channel assignments, only GRB (Bit 2 = Green, Bit 1 = Red, Bit 0 = Blue) makes level numbers increase monotonically with luma \u2014 because Green\u2019s luma coefficient exceeds Red + Blue and Red exceeds Blue (0.587 > 0.299 + 0.114, 0.299 > 0.114). This is not a design choice but a consequence of human color vision. The primary set {1, 2, 4} is the unique 3-element subset of naturals whose elements, pairwise sums, and total sum (all under ordinary integer addition) partition {1, \u2026, 7} without overlap.",
+    "Here we restrict the model to the eight RGB vertices where each channel is 0 or 255, and use the color number 0..7 as the 3-bit value 4x₂ + 2x₁ + x₀. There are 6 ways to assign RGB channels to those bits; if numeric order 0,1,2,...,7 is required to increase monotonically with BT.601 luma, the unique assignment is bit2=Green, bit1=Red, bit0=Blue, namely GRB. This follows because Green\u2019s luma coefficient exceeds Red + Blue and Red exceeds Blue (0.587 > 0.299 + 0.114, 0.299 > 0.114). It is not arbitrary: it follows from the BT.601 luma coefficient inequalities, which reflect human visual sensitivity. The primary set {1, 2, 4} is the unique 3-element subset of naturals whose elements, pairwise sums, and total sum (all under ordinary integer addition) partition {1, \u2026, 7} without overlap.",
   theory_binary_color: "Color",
   theory_binary_luma_formula: "Luma (BT.601): Y = 0.299R + 0.587G + 0.114B",
   theory_binary_luma_complement: "Complement luma: Y\u2096 + Y\u2087\u208b\u2096 = 255 (universal for any coefficients summing to 1)",
@@ -218,7 +218,7 @@ export const en = {
     "How does brightness change as you rotate through hues? Fully saturated colors (max channel = 255, min = 0) trace a 6-segment zigzag as hue rotates. Each segment toggles one channel; the slope is proportional to its BT.601 coefficient. On the hue circle, horizontal lines at each vertex luma value intersect the zigzag at 1 or 3 points \u2014 these are the equal-luma candidates. Between vertex luma values, the maximum is 4 candidates. For any hue angle h, Y(h) + Y(h+180\u00b0) = 255 \u2014 complementary colors always sum to the same luma (complement luma theorem).",
   theory_dice_title: "Color Die",
   theory_dice_desc:
-    "Place the 6 chromatic colors on a cube\u2019s faces, darkest to brightest (1\u20136). Complementary pairs land on opposite faces, and every opposite pair sums to 7 \u2014 exactly the standard-die rule.",
+    "Rank the 6 chromatic RGB vertices by BT.601 luma, darkest to brightest (1\u20136), and place them on a cube\u2019s faces. The complement map c \u21a6 c xor 7 reverses luma order, so complementary pairs land on opposite faces and every opposite pair sums to 7 \u2014 exactly the standard-die rule.",
   theory_dice_desc2:
     "This is a universal theorem: for any positive luma coefficients with no tied luma values, the order-reversing nature of complementation forces d(c) + d(c\u0304) = 7.",
   theory_dice_net_title: "Hue unfolding",

@@ -48,6 +48,16 @@ export const FANO_LINE_CATEGORIES: ("primary" | "complement" | "secondary")[] = 
 export const GRAY_PATH = [2, 6, 4, 5, 1, 3] as const;
 export const GRAY_TOGGLES = ["G", "R", "B", "G", "R", "B"] as const;
 
+/** 2-2-2 staircase die net following the chromatic Gray path R→Y→G→C→B→M */
+export const DICE_NET_FACES = [
+  { lv: 2, col: 0, row: 0 },
+  { lv: 6, col: 1, row: 0 },
+  { lv: 4, col: 1, row: 1 },
+  { lv: 5, col: 2, row: 1 },
+  { lv: 1, col: 2, row: 2 },
+  { lv: 3, col: 3, row: 2 },
+] as const;
+
 /** 12 edges of the 3-cube (pairs of vertices differing by 1 bit) */
 export const CUBE_EDGES: [number, number][] = [
   [0, 1],
