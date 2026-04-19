@@ -321,9 +321,9 @@ export const en = {
   // Octahedron (chromatic cross-polytope)
   theory_octa_title: "Color Diamond",
   theory_octa_desc:
-    "The octahedron is the most symmetric shape for displaying the 6 chromatic colors and their complement symmetry. Its 6 vertices correspond to B, R, M, G, C, Y, and the three antipodal axes B↔Y, R↔C, M↔G represent the complement map c ↦ c⊕7. This is not a perceptually uniform color space; it geometrizes the discrete complement symmetry that comes from RGB channel on/off states.",
+    "The octahedron is the most symmetric shape for displaying the 6 chromatic colors and their complement symmetry. Its 6 vertices correspond to B, R, M, G, C, Y, and the three antipodal axes B↔Y, R↔C, M↔G represent the complement map c ↦ c⊕7. It geometrizes the discrete complement symmetry that comes from RGB channel on/off states.",
   theory_octa_desc2:
-    "The octahedron's 12 edges connect only chromatic pairs that are not complements. Each edge {a,b} determines a third chromatic color a⊕b, and across all 12 edges the 6 chromatic XOR results appear exactly twice. Its 8 faces correspond to the 8 ways to choose one side from each of the three complement axes, so they represent the 8 elements of GF(2)³. The face-adjacency graph is the cube graph itself; in this sense the Color Diamond is dual to the Color Cube.",
+    "The octahedron's 12 edges connect only chromatic pairs that are not complements. Each edge {a,b} determines a third chromatic color a⊕b, and across all 12 edges the 6 chromatic XOR results appear exactly twice.",
   theory_octa_axes: "Complement axes",
 
   // §10 Color Tetra

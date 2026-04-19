@@ -82,17 +82,11 @@ describe("theory copy", () => {
   });
 
   it("describes the Color Diamond as the Color Cube dual with chromatic XOR edges", () => {
-    expect(en.theory_octa_desc).toContain("not a perceptually uniform color space");
     expect(en.theory_octa_desc).toContain("B↔Y, R↔C, M↔G");
     expect(en.theory_octa_desc2).toContain("6 chromatic XOR results appear exactly twice");
-    expect(en.theory_octa_desc2).toContain("dual to the Color Cube");
-    expect(en.theory_octa_desc2).not.toContain("dual to the Color Die");
 
-    expect(ja.theory_octa_desc).toContain("知覚均等色空間ではなく");
     expect(ja.theory_octa_desc).toContain("B↔Y、R↔C、M↔G");
     expect(ja.theory_octa_desc2).toContain("6つの有彩色 XOR 結果が各2回ずつ");
-    expect(ja.theory_octa_desc2).toContain("カラーダイヤはカラーキューブの双対");
-    expect(ja.theory_octa_desc2).not.toContain("カラーダイスの双対");
   });
 
   it("explains subtractive examples as Boolean AND identities instead of carry-corrected XOR", () => {
