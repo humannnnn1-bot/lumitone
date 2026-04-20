@@ -24,7 +24,20 @@ interface GalleryPanelProps {
 
 const BM_KEY = "chromalum_bookmarks";
 const BM_MAX = 500;
-const _genCache = { key: "" };
+// Gallery-regeneration cache. Tracks cvs.data by reference identity rather than by
+// sampled pixels: canvas-reducer returns a fresh Uint8Array on every mutation
+// (stroke_end/undo/redo/clear/new_canvas/load_image), so identity equality is a
+// reliable invalidation signal. hist is included because patternCount depends on
+// it — without it, drawing on an all-black canvas could leave the thumbnail set
+// out of sync with the "N patterns" label.
+const _genCache = {
+  data: null as Uint8Array | null,
+  w: 0,
+  h: 0,
+  cc: "",
+  locked: "",
+  hist: "",
+};
 
 function loadBookmarks(): number[][] {
   try {
@@ -183,20 +196,28 @@ export const GalleryPanel = React.memo(function GalleryPanel({
     }
   }, [scrollToCurrent, active, onScrollDone]);
 
-  // Auto-generate when canvas, colors, locks, or glaze toggle change
-  const genKey = useMemo(() => {
-    const d = cvs.data,
-      n = d.length;
-    const sample = n > 0 ? `${d[0]}_${d[n >> 2]}_${d[n >> 1]}_${d[(3 * n) >> 2]}_${d[n - 1]}` : "0";
-    return `${cvs.w}x${cvs.h}_${sample}_${n}_${cc.join(",")}_${locked.join(",")}`;
-  }, [cvs, cc, locked]);
-
+  // Auto-generate when canvas pixels, colors, locks, or histogram change.
   useEffect(() => {
-    if (_genCache.key !== genKey) {
-      _genCache.key = genKey;
+    const ccStr = cc.join(",");
+    const lockedStr = locked.join(",");
+    const histStr = hist.join(",");
+    if (
+      _genCache.data !== cvs.data ||
+      _genCache.w !== cvs.w ||
+      _genCache.h !== cvs.h ||
+      _genCache.cc !== ccStr ||
+      _genCache.locked !== lockedStr ||
+      _genCache.hist !== histStr
+    ) {
+      _genCache.data = cvs.data;
+      _genCache.w = cvs.w;
+      _genCache.h = cvs.h;
+      _genCache.cc = ccStr;
+      _genCache.locked = lockedStr;
+      _genCache.hist = histStr;
       generate();
     }
-  }, [genKey, generate]);
+  }, [cvs, cc, locked, hist, generate]);
 
   const patternCount = useMemo(() => {
     let total = 1;
