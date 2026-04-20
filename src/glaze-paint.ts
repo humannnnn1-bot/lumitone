@@ -91,7 +91,7 @@ export function paintGlazeLine(
   const sx = x0 < x1 ? 1 : -1,
     sy = y0 < y1 ? 1 : -1;
   let e = ax - ay;
-  const skipDist = Math.max(1, Math.floor(r / 2));
+  const skipDist = Math.max(1, Math.floor(r / 4));
   const skipDist2 = skipDist * skipDist;
   let lastPX = x0,
     lastPY = y0;
@@ -166,7 +166,7 @@ export function eraseGlazeLine(
   const sx = x0 < x1 ? 1 : -1,
     sy = y0 < y1 ? 1 : -1;
   let e = ax - ay;
-  const skipDist = Math.max(1, Math.floor(r / 2));
+  const skipDist = Math.max(1, Math.floor(r / 4));
   const skipDist2 = skipDist * skipDist;
   let lastPX = x0,
     lastPY = y0;

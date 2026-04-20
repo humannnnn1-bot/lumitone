@@ -19,9 +19,10 @@ import { hexStr } from "../utils";
 import type { BufferPool } from "./useStrokeManager";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
-import { trySetPointerCapture, cPosFromRefs, updateStatusBase } from "./useDrawingBase";
+import { trySetPointerCapture, cPosFromRefs, canvasPos, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
-import type { CanvasData, StrokeState, ImgCache, CanvasAction } from "../types";
+import { unionBBox } from "../dirty-rect";
+import type { CanvasData, StrokeState, ImgCache, CanvasAction, DirtyRect } from "../types";
 import { useDrawingContext } from "../contexts/DrawingContext";
 
 export interface CanvasDrawingResult {
@@ -194,8 +195,6 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     if (!st || st.params.tool === "fill") return;
     e.preventDefault();
     const sp = st.params;
-    const pos = cPos(e, refEl),
-      last = lastRef.current || pos;
     const buf = st.buf;
     const lv = resolveLevel(sp.tool, sp.brushLevel);
     const cv = cvsRef.current;
@@ -203,6 +202,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
       H = cv.h;
 
     if (isShapeTool(sp.tool)) {
+      const pos = cPos(e, refEl);
       const origin = st.shapeStart || pos;
       const { shapeBBox: newBB, dirtyBBox: dirtyBB } = applyShapeStroke(
         buf,
@@ -220,21 +220,38 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
       lastRef.current = pos;
       renderBuf(buf, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB);
       return;
-    } else {
-      const dirtyBB = applyBrushStroke(buf, last, pos, sp.brushSize, lv, W, H);
-      lastRef.current = pos;
-      // Throttle rendering to animation frame rate
-      if (paintRafRef.current !== null) cancelAnimationFrame(paintRafRef.current);
-      const lutSnap = s.current.colorLUT,
-        srcSnap = srcRef.current,
-        prvSnap = prvRef.current,
-        cacheSnap = imgCacheRef.current;
-      paintRafRef.current = requestAnimationFrame(() => {
-        paintRafRef.current = null;
-        renderBuf(buf, W, H, lutSnap, srcSnap, prvSnap, cacheSnap, dirtyBB);
-      });
-      return;
     }
+
+    // Brush / eraser: iterate coalesced pointer events to capture sub-frame
+    // samples so fast strokes don't render as a long straight segment.
+    const nativeEvent = e.nativeEvent;
+    const canvasEl = refEl ?? activeCanvasRef.current ?? cursor.curRef.current;
+    const zoom = zoomRef.current,
+      pan = panRef.current;
+    const coalesced = typeof nativeEvent.getCoalescedEvents === "function" ? nativeEvent.getCoalescedEvents() : [];
+    const events: Array<{ clientX: number; clientY: number }> = coalesced.length > 0 ? coalesced : [nativeEvent];
+
+    let last = lastRef.current;
+    let dirtyBB: DirtyRect | null = null;
+    for (const ev of events) {
+      const p = canvasPos(ev, canvasEl, zoom, pan, cv);
+      if (!last) last = p;
+      const bb = applyBrushStroke(buf, last, p, sp.brushSize, lv, W, H);
+      dirtyBB = unionBBox(dirtyBB, bb);
+      last = p;
+    }
+    lastRef.current = last;
+
+    if (paintRafRef.current !== null) cancelAnimationFrame(paintRafRef.current);
+    const lutSnap = s.current.colorLUT,
+      srcSnap = srcRef.current,
+      prvSnap = prvRef.current,
+      cacheSnap = imgCacheRef.current;
+    const dirtySnap = dirtyBB;
+    paintRafRef.current = requestAnimationFrame(() => {
+      paintRafRef.current = null;
+      renderBuf(buf, W, H, lutSnap, srcSnap, prvSnap, cacheSnap, dirtySnap);
+    });
   }
 
   const onDown = useCallback((e: React.PointerEvent) => {
