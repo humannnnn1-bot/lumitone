@@ -228,7 +228,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   const undo = useCallback(() => dispatch({ type: "undo" }), [dispatch]);
   const redo = useCallback(() => dispatch({ type: "redo" }), [dispatch]);
 
-  const { saveColor, saveGlaze, shareColor, shareGlaze } = useExport(cvs, colorLUT, showToast, t);
+  const { saveColor, saveColorWithLUT, saveGlaze, shareColor, shareGlaze } = useExport(cvs, colorLUT, showToast, t);
 
   const handleKbSave = useCallback(() => {
     saveColor(prvRef, `chromalum_color_${timestamp()}.png`);
@@ -349,11 +349,12 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   const saveActionsObj = useMemo(
     () => ({
       saveColor,
+      saveColorWithLUT,
       saveGlaze,
       shareColor,
       shareGlaze,
     }),
-    [saveColor, saveGlaze, shareColor, shareGlaze],
+    [saveColor, saveColorWithLUT, saveGlaze, shareColor, shareGlaze],
   );
 
   const handleNewCanvas = useCallback(() => setShowNewCanvas(true), [setShowNewCanvas]);
@@ -592,6 +593,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             locked={locked}
             hist={hist}
             showToast={showToast}
+            saveColorWithLUT={saveColorWithLUT}
             active={activeTab === 0}
             scrollToCurrent={scrollToGallery}
             onScrollDone={() => setScrollToGallery(false)}

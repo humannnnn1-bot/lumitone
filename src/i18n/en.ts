@@ -420,6 +420,7 @@ export const en = {
   gallery_patterns: "{0} patterns",
   gallery_apply: "Applied",
   gallery_apply_btn: "Apply",
+  gallery_save_btn: "Save",
   gallery_preview: "Click to preview",
   gallery_close_preview: "Click to close preview",
   gallery_bookmark: "Bookmark",

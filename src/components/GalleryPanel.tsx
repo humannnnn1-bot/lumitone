@@ -1,7 +1,7 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { LEVEL_CANDIDATES, buildColorLUT, hue2rgb } from "../color-engine";
 import { S_BTN, S_BTN_ACTIVE, S_BTN_SM, S_BTN_SM_ACTIVE } from "../styles";
-import { rgbStr } from "../utils";
+import { rgbStr, timestamp } from "../utils";
 import { useGallery, renderThumbnail } from "../hooks/useGallery";
 import type { GalleryItem } from "../hooks/useGallery";
 import type { CanvasData } from "../types";
@@ -16,6 +16,7 @@ interface GalleryPanelProps {
   locked: boolean[];
   hist: number[];
   showToast: (message: string, type: "error" | "success" | "info") => void;
+  saveColorWithLUT: (lut: [number, number, number][], name: string) => void;
   active?: boolean;
   scrollToCurrent?: boolean;
   onScrollDone?: () => void;
@@ -151,6 +152,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
   locked,
   hist,
   showToast,
+  saveColorWithLUT,
   active,
   scrollToCurrent,
   onScrollDone,
@@ -523,6 +525,22 @@ export const GalleryPanel = React.memo(function GalleryPanel({
               >
                 {isBookmarked(displayItems[expandedIndex].cc) ? t("gallery_unbookmark") : t("gallery_bookmark")}
               </button>
+              <button
+                onClick={() => {
+                  const lut = buildColorLUT(displayItems[expandedIndex].cc);
+                  saveColorWithLUT(lut, `chromalum_color_${timestamp()}.png`);
+                }}
+                style={{
+                  ...S_BTN,
+                  padding: `${SP.lg}px ${SP.xl}px`,
+                  fontSize: FS["2xl"],
+                  background: C.bgSurfaceAlt,
+                  color: C.textPrimary,
+                  border: `1px solid ${C.borderHover}`,
+                }}
+              >
+                {t("gallery_save_btn")}
+              </button>
             </div>
           </div>
         </div>
@@ -570,25 +588,19 @@ export const GalleryPanel = React.memo(function GalleryPanel({
               }}
             >
               <div
-                onClick={() => {
-                  if (filter === "bookmarks") {
-                    applyScheme(item.cc);
-                  } else {
-                    setExpandedIndex(expandedIndex === i ? null : i);
-                  }
-                }}
-                onContextMenu={(e) => {
-                  e.preventDefault();
-                  toggleBookmark(item.cc);
-                }}
+                onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}
+                onContextMenu={
+                  filter === "bookmarks"
+                    ? undefined
+                    : (e) => {
+                        e.preventDefault();
+                        toggleBookmark(item.cc);
+                      }
+                }
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
                     e.preventDefault();
-                    if (filter === "bookmarks") {
-                      applyScheme(item.cc);
-                    } else {
-                      setExpandedIndex(expandedIndex === i ? null : i);
-                    }
+                    setExpandedIndex(expandedIndex === i ? null : i);
                   } else if (e.key === "b" || e.key === "B") {
                     e.preventDefault();
                     toggleBookmark(item.cc);
@@ -596,8 +608,8 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                 }}
                 tabIndex={0}
                 role="button"
-                aria-label={filter === "bookmarks" ? t("gallery_apply") + ` (${i + 1})` : t("gallery_preview") + ` (${i + 1})`}
-                title={filter === "bookmarks" ? t("gallery_apply") : t("gallery_preview")}
+                aria-label={t("gallery_preview") + ` (${i + 1})`}
+                title={t("gallery_preview")}
                 style={{
                   outline: expandedIndex === i ? `2px solid ${C.accent}` : "none",
                   borderRadius: R.sm,
