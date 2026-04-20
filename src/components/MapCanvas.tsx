@@ -96,26 +96,6 @@ const INFERNO = buildLUT([
   [252, 255, 164],
 ]);
 
-// plasma: deep blue → purple → red → orange → yellow
-const PLASMA = buildLUT([
-  [13, 8, 135],
-  [50, 10, 162],
-  [84, 15, 176],
-  [115, 24, 180],
-  [143, 38, 174],
-  [167, 55, 162],
-  [188, 73, 145],
-  [204, 93, 125],
-  [217, 113, 106],
-  [227, 135, 87],
-  [235, 157, 68],
-  [240, 180, 50],
-  [243, 203, 35],
-  [242, 226, 30],
-  [237, 248, 46],
-  [240, 249, 33],
-]);
-
 // turbo: dark blue → cyan → green → yellow → red → dark red
 const TURBO = buildLUT([
   [48, 18, 59],
