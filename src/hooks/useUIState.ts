@@ -3,13 +3,13 @@ import { TOAST_DURATION } from "../constants";
 import type { MapMode } from "../components/analyze-types";
 import type { TranslationFn } from "../i18n";
 
-const LS_TAB = "chromalum-active-tab";
+const LS_TAB = "chromalum-active-tab-v2";
 const LS_SCROLL = "chromalum-scroll-y";
 
 export function useUIState(_t: TranslationFn) {
   const [activeTab, setActiveTabRaw] = useState(() => {
     const saved = localStorage.getItem(LS_TAB);
-    return saved !== null ? Number(saved) : 0;
+    return saved !== null ? Number(saved) : 2;
   });
   const setActiveTab = useCallback((tab: number) => {
     setActiveTabRaw(tab);

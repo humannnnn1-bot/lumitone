@@ -39,7 +39,7 @@ const MusicPanel = lazy(async () => {
 /* ═══════════════════════════════════════════
    LAYOUT STYLE CONSTANTS
    ═══════════════════════════════════════════ */
-const TAB_KEYS = ["tab_source", "tab_color", "tab_hex", "tab_glaze", "tab_stats", "tab_gallery", "tab_theory", "tab_music"] as const;
+const TAB_KEYS = ["tab_gallery", "tab_hex", "tab_source", "tab_color", "tab_glaze", "tab_stats", "tab_theory", "tab_music"] as const;
 
 const S_ROOT: React.CSSProperties = { minHeight: "100vh", background: C.bgRoot, color: C.textPrimary, fontFamily: FONT.mono };
 const S_HEADER: React.CSSProperties = { textAlign: "center", marginBottom: "var(--sp-header-mb)" };
@@ -134,10 +134,10 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
 
   const hist = state.hist;
   const [scrollToGallery, setScrollToGallery] = useState(false);
-  const [hasOpenedStats, setHasOpenedStats] = useState(() => activeTab === 4);
+  const [hasOpenedStats, setHasOpenedStats] = useState(() => activeTab === 5);
 
   useEffect(() => {
-    if (activeTab === 4) setHasOpenedStats(true);
+    if (activeTab === 5) setHasOpenedStats(true);
   }, [activeTab]);
 
   const prvRef = useRef<HTMLCanvasElement | null>(null);
@@ -442,8 +442,8 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
       </div>
 
       <div style={S_TAB_CENTER}>
-        {activeTab === 0 && (
-          <div id="tabpanel-0" role="tabpanel">
+        {activeTab === 2 && (
+          <div id="tabpanel-2" role="tabpanel">
             <SourcePanel
               srcRef={drawing.srcRef}
               curRef={drawing.curRef}
@@ -475,8 +475,8 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             />
           </div>
         )}
-        {activeTab === 1 && (
-          <div id="tabpanel-1" role="tabpanel">
+        {activeTab === 3 && (
+          <div id="tabpanel-3" role="tabpanel">
             <ColorPanel
               prvRef={prvRef}
               prvCurRef={drawing.prvCurRef}
@@ -495,8 +495,8 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             />
           </div>
         )}
-        {activeTab === 2 && (
-          <div id="tabpanel-2" role="tabpanel">
+        {activeTab === 1 && (
+          <div id="tabpanel-1" role="tabpanel">
             <HexTab
               hexPrvRef={hexPrvRef}
               displayW={displayW}
@@ -514,13 +514,13 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
               t={t}
               onPatternClick={() => {
                 setScrollToGallery(true);
-                setActiveTab(5);
+                setActiveTab(0);
               }}
             />
           </div>
         )}
-        {activeTab === 3 && (
-          <div id="tabpanel-3" role="tabpanel">
+        {activeTab === 4 && (
+          <div id="tabpanel-4" role="tabpanel">
             <GlazeContextProvider
               hueAngle={hueAngle}
               setHueAngle={setHueAngle}
@@ -565,8 +565,8 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             </GlazeContextProvider>
           </div>
         )}
-        {(activeTab === 4 || hasOpenedStats) && (
-          <div id="tabpanel-4" role="tabpanel" style={{ display: activeTab === 4 ? undefined : "none" }}>
+        {(activeTab === 5 || hasOpenedStats) && (
+          <div id="tabpanel-5" role="tabpanel" style={{ display: activeTab === 5 ? undefined : "none" }}>
             <AnalyzePanel
               hist={hist}
               total={cvs.w * cvs.h}
@@ -577,14 +577,14 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
               cvs={cvs}
               displayW={displayW}
               displayH={displayH}
-              active={activeTab === 4}
+              active={activeTab === 5}
               mapMode={mapMode}
               setMapMode={setMapMode}
               showToast={showToast}
             />
           </div>
         )}
-        <div id="tabpanel-5" role="tabpanel" style={{ width: "100%", display: activeTab === 5 ? undefined : "none" }}>
+        <div id="tabpanel-0" role="tabpanel" style={{ width: "100%", display: activeTab === 0 ? undefined : "none" }}>
           <GalleryPanel
             cvs={cvs}
             cc={cc}
@@ -592,7 +592,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             locked={locked}
             hist={hist}
             showToast={showToast}
-            active={activeTab === 5}
+            active={activeTab === 0}
             scrollToCurrent={scrollToGallery}
             onScrollDone={() => setScrollToGallery(false)}
           />

@@ -16,9 +16,9 @@ describe("useUIState", () => {
     vi.useRealTimers();
   });
 
-  it("initial activeTab is 0", () => {
+  it("initial activeTab is 2 (Source)", () => {
     const { result } = renderHook(() => useUIState(t));
-    expect(result.current.activeTab).toBe(0);
+    expect(result.current.activeTab).toBe(2);
   });
 
   it("setActiveTab changes tab", () => {

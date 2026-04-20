@@ -107,7 +107,7 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): CanvasCo
 
   // Glaze tab effect
   useEffect(() => {
-    if (activeTab === 3) renderGlazeCanvas();
+    if (activeTab === 4) renderGlazeCanvas();
   }, [activeTab, renderGlazeCanvas]);
 
   return { sharedSchedCursorRef };
