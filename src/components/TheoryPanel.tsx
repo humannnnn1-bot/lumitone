@@ -77,8 +77,12 @@ interface SectionProps {
   children: React.ReactNode;
 }
 
+function splitParagraphs(desc: string): string[] {
+  return desc.split(/\n\s*\n/).filter(Boolean);
+}
+
 function Section({ title, desc, children }: SectionProps) {
-  const descs = Array.isArray(desc) ? desc : [desc];
+  const descs = Array.isArray(desc) ? desc : splitParagraphs(desc);
   return (
     <section style={S_SECTION}>
       <h3 className="theory-heading" style={S_HEADING}>
@@ -135,9 +139,11 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
           >
             {t("theory_title")}
           </h2>
-          <p className="theory-desc theory-intro" style={{ ...S_DESC, marginTop: SP.xl, textAlign: "center" }}>
-            {t("theory_intro")}
-          </p>
+          {splitParagraphs(t("theory_intro")).map((paragraph, i) => (
+            <p key={i} className="theory-desc theory-intro" style={{ ...S_DESC, marginTop: i === 0 ? SP.xl : SP.md, textAlign: "center" }}>
+              {paragraph}
+            </p>
+          ))}
         </div>
 
         {/* Pin hint */}

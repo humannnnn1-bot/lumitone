@@ -6,12 +6,14 @@ describe("theory copy", () => {
   it("restricts De Morgan claims to disjoint colors", () => {
     expect(en.theory_dice_footer_demorgan).toMatch(/disjoint colors/i);
     expect(en.theory_dice_footer_demorgan).toContain("a ∧ b = 0");
-    expect(en.theory_conn_boolean_hook).toContain("a ∧ b = 0");
+    expect(en.theory_conn_boolean_hook).toContain("a∧b=0");
+    expect(en.theory_conn_boolean_hook).toContain("a⊕b=a∨b");
     expect(en.theory_dice_footer_subtractive).toContain("a ∨ b = 7");
     expect(en.theory_dice_footer_subtractive).toContain("a + b - 7 = a ∧ b");
 
     expect(ja.theory_dice_footer_demorgan).toContain("a ∧ b = 0");
-    expect(ja.theory_conn_boolean_hook).toContain("a ∧ b = 0");
+    expect(ja.theory_conn_boolean_hook).toContain("a∧b=0");
+    expect(ja.theory_conn_boolean_hook).toContain("a⊕b=a∨b");
     expect(ja.theory_conn_boolean_hook).toContain("重なりのない2色");
     expect(ja.theory_dice_footer_subtractive).toContain("a ∨ b = 7");
     expect(ja.theory_dice_footer_subtractive).toContain("a + b - 7 = a ∧ b");
@@ -53,16 +55,20 @@ describe("theory copy", () => {
   });
 
   it("clarifies that the [8,4,4] note is about coordinates, not codewords", () => {
-    expect(en.theory_conn_extended.toLowerCase()).toContain("coordinate");
-    expect(en.theory_conn_extended.toLowerCase()).toContain("not codewords");
+    expect(en.theory_conn_extended).toContain("extra coordinate for overall parity");
+    expect(en.theory_conn_extended).toContain("does not make the colors codewords");
+    expect(en.theory_conn_extended).toContain("length-8 bit string");
 
     expect(ja.theory_conn_extended).toContain("座標");
-    expect(ja.theory_conn_extended).toContain("符号語の 8 つの座標位置");
+    expect(ja.theory_conn_extended).toContain("長さ8のビット列");
+    expect(ja.theory_conn_extended).toContain("その8座標を識別するための名前");
   });
 
   it("describes the cube-Fano link as subspaces rather than seven literal plane slices", () => {
-    expect(en.theory_conn_cube_geometry_hook.toLowerCase()).toContain("two-dimensional subspaces");
+    expect(en.theory_conn_cube_geometry_hook.toLowerCase()).toContain("two-dimensional subspace");
     expect(en.theory_conn_cube_geometry_hook.toLowerCase()).toContain("even-parity tetrahedron");
+    expect(en.theory_conn_cube_geometry_hook).toContain("actual four-vertex planes");
+    expect(en.theory_conn_cube_geometry_hook).toContain("not a Euclidean plane");
     expect(en.theory_conn_cube_geometry_hook.toLowerCase()).not.toContain("7 fano lines are planar cross-sections");
 
     expect(ja.theory_conn_cube_geometry_hook).toContain("2次元部分空間");
@@ -117,16 +123,25 @@ describe("theory copy", () => {
   it("keeps reviewed Japanese copy precise and natural", () => {
     expect(ja.theory_title).toBe("色彩理論");
     expect(ja.color_detail_luma).toBe("ルマ");
-    expect(ja.theory_intro).toContain("本タブの出発点となる設計選択です");
-    expect(ja.theory_binary_desc).toContain("RGB 各チャンネルが 0 または 255 の8頂点だけ");
-    expect(ja.theory_binary_desc).toContain("色番号 0..7 を3ビット整数 4x₂ + 2x₁ + x₀");
-    expect(ja.theory_binary_desc).toContain("番号順に並べるとルマも昇順になる");
-    expect(ja.theory_binary_desc).toContain("唯一の割当は bit2=Green, bit1=Red, bit0=Blue、つまり GRB");
-    expect(ja.theory_binary_desc).toContain("人間の視覚感度に由来する BT.601 係数の不等式から一意に決まる帰結です");
+    expect(ja.theory_intro).toContain("3ビットベクトル `[G,R,B]` として符号化します");
+    expect(ja.theory_intro).toContain("ベクトルの加法はビットごとの XOR");
+    expect(ja.theory_intro).toContain("ハミング符号の位置ラベル");
+    expect(en.theory_intro).toContain("encoded as the 3-bit vector `[G,R,B]`");
+    expect(en.theory_intro).toContain("vector addition becomes bitwise XOR");
+    expect(en.theory_intro).toContain("position labels for the Hamming code");
+    expect(en.theory_intro).not.toContain("8 luma levels encode RGB channels");
+    expect(ja.theory_binary_desc).toContain("RGB 各チャンネルが 0 または 255 の 8 頂点だけ");
+    expect(ja.theory_binary_desc).toContain("各色を3ビット整数 4x₂ + 2x₁ + x₀ として番号付け");
+    expect(ja.theory_binary_desc).toContain("番号順と BT.601 luma 順が一致する割当");
+    expect(ja.theory_binary_desc).toContain("bit2=Green, bit1=Red, bit0=Blue、つまり GRB だけ");
+    expect(ja.theory_binary_desc).toContain("人間の視覚感度に由来する BT.601 係数の不等式");
+    expect(ja.theory_binary_desc).toContain("この8色モデルにおける最小の2進基底そのものです");
     expect(ja.theory_binary_desc).not.toContain("人間の色覚の帰結です");
     expect(en.theory_binary_desc).toContain("the eight RGB vertices where each channel is 0 or 255");
-    expect(en.theory_binary_desc).toContain("4x₂ + 2x₁ + x₀");
-    expect(en.theory_binary_desc).toContain("the unique assignment is bit2=Green, bit1=Red, bit0=Blue, namely GRB");
+    expect(en.theory_binary_desc).toContain("number each color as the 3-bit integer 4x₂ + 2x₁ + x₀");
+    expect(en.theory_binary_desc).toContain("numeric order and BT.601 luma order agree");
+    expect(en.theory_binary_desc).toContain("bit2=Green, bit1=Red, bit0=Blue, namely GRB");
+    expect(en.theory_binary_desc).toContain("the minimal binary basis for this 8-color model");
     expect(en.theory_binary_desc).not.toContain("consequence of human color vision");
     expect(ja.theory_binary_desc).toContain("0.587 > 0.299 + 0.114");
     expect(ja.theory_binary_desc).toContain("0.299 > 0.114");
@@ -134,14 +149,29 @@ describe("theory copy", () => {
     expect(en.theory_binary_desc).toContain("0.299 > 0.114");
     expect(ja.theory_zigzag_desc).toContain("円周上では");
     expect(ja.theory_gray_desc).toContain("2 つの原色を含むファノ平面の三点線");
-    expect(ja.theory_conn_cube_geometry_hook).toContain("ユークリッド的な立方体");
+    expect(ja.theory_connections_desc).toContain("RGB 0/255 の8頂点をまとめる共通のベクトル空間");
+    expect(ja.theory_connections_desc).toContain("同じ8色モデルを代数・幾何・符号の視点から読み替えたもの");
+    expect(en.theory_connections_desc).toContain("the common vector space that gathers the eight RGB 0/255 vertices");
+    expect(en.theory_connections_desc).toContain("not a juxtaposition of separate theories");
+    expect(en.theory_conn_fano_hamming_hook).toContain("Hamming(7,4) parity-check matrix");
+    expect(en.theory_conn_gray_hook).toContain("induced subgraph on the six chromatic vertices");
+    expect(en.theory_conn_boundary).toContain("invertible linear transformations of GF(2)³");
+    expect(en.theory_conn_boundary).toContain("does not preserve their meaning as RGB primary channels");
+    expect(en.theory_conn_boundary).toContain("different coordinate system or algebraic structure");
+    expect(ja.theory_conn_fano_hamming_hook).toContain("Hamming(7,4) のパリティ検査行列の7列（位置ラベル）");
+    expect(ja.theory_conn_cube_geometry_hook).toContain("実際の4頂点平面");
+    expect(ja.theory_conn_cube_geometry_hook).toContain("ユークリッド平面ではありません");
+    expect(ja.theory_conn_gray_hook).toContain("有彩色6頂点の誘導部分グラフ");
+    expect(ja.theory_conn_boundary).toContain("GF(2)³ の可逆線形変換全体");
+    expect(ja.theory_conn_boundary).toContain("基底 {B,R,G} を互いに置換する S₃（6通り）");
+    expect(ja.theory_conn_boundary).toContain("別の座標系や代数構造が必要");
     expect(ja.theory_conn_polyhedra_desc).toContain("本タブの4つの多面体");
     expect(ja.theory_conn_polyhedra_desc).not.toContain("§9");
   });
 
   it("keeps Japanese Theory prose in the agreed style", () => {
     expect(ja.theory_intro).toBe(
-      "CHROMALUMの8段階ルマレベルは、RGBチャンネルを3ビット2進数として符号化します。これは本タブの出発点となる設計選択です。ここから、カラーキューブ、グレイコード、ハミング符号、ファノ平面が GF(2)³ の構造として現れます。GF(2) は 0 と 1 だけから成る最小の有限体であり、1+1=0 が成り立ちます。GF(2)³ はその3次元ベクトル空間であり、8つのベクトルが8色に対応します。",
+      "CHROMALUMでは、RGB 各チャンネルが 0 または 255 の 8 頂点を、3ビットベクトル `[G,R,B]` として符号化します。各ビットは Green, Red, Blue のオン/オフを表し、この8つのベクトルが8色に対応します。\n\nこの8点集合は、GF(2) 上の3次元ベクトル空間 GF(2)³ として読めます。GF(2) は 0 と 1 だけから成る最小の有限体であり、1+1=0 が成り立つため、ベクトルの加法はビットごとの XOR になります。\n\n8点全体はカラーキューブ、6つの有彩色はグレイコード巡回、非零7点はファノ平面、同じ7点はハミング符号の位置ラベルとして読めます。Theoryタブでは、これらを同じ8色モデルの複数の読み方として、代数的色彩体系に統合します。",
     );
     expect(ja.theory_cube_desc).toContain("立方体");
     expect(ja.theory_octa_desc).toContain("八面体");
