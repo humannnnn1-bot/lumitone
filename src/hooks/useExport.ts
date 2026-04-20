@@ -4,6 +4,7 @@ import type { CanvasData, ImgCache } from "../types";
 
 export interface ExportResult {
   saveColor: (ref: React.RefObject<HTMLCanvasElement | null>, name: string) => void;
+  saveColorWithLUT: (lut: [number, number, number][], name: string) => void;
   saveGlaze: (name: string) => void;
   shareColor: (ref: React.RefObject<HTMLCanvasElement | null>, name: string) => void;
   shareGlaze: (name: string) => void;
@@ -101,6 +102,14 @@ export function useExport(
     [cvs, colorLUT, showToast, t],
   );
 
+  const saveColorWithLUT = useCallback(
+    (lut: [number, number, number][], name: string) => {
+      const c = renderToTempCanvas(cvs, lut);
+      downloadCanvas(c, name, showToast, t);
+    },
+    [cvs, showToast, t],
+  );
+
   const saveGlaze = useCallback(
     (name: string) => {
       const c = renderToTempCanvas(cvs, colorLUT);
@@ -125,5 +134,5 @@ export function useExport(
     [cvs, colorLUT, showToast, t],
   );
 
-  return { saveColor, saveGlaze, shareColor, shareGlaze };
+  return { saveColor, saveColorWithLUT, saveGlaze, shareColor, shareGlaze };
 }
