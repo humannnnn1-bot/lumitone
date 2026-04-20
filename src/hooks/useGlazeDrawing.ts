@@ -10,7 +10,7 @@ import { renderBuf } from "../render-buf";
 import { hexStr } from "../utils";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
-import { trySetPointerCapture, cPosFromRefs, updateStatusBase } from "./useDrawingBase";
+import { trySetPointerCapture, cPosFromRefs, canvasPos, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
 import type { CanvasData, ImgCache, CanvasAction, DirtyRect } from "../types";
 import { useDrawingContext } from "../contexts/DrawingContext";
@@ -204,8 +204,6 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     const st = strokeRef.current;
     if (!st || s.current.glazeTool === "glaze_fill") return;
     e.preventDefault();
-    const pos = cPos(e),
-      last = lastRef.current || pos;
     const cmBuf = st.cmBuf;
     const cv = cvsRef.current;
     const r = Math.floor(brushSizeRef.current / 2);
@@ -215,6 +213,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
 
     // Shape tools: restore only the dirty region from cmPre, then redraw shape
     if (st.shapeStart && curTool !== "glaze_brush" && curTool !== "glaze_eraser") {
+      const pos = cPos(e);
       const origin = st.shapeStart;
       const newBB = shapeBBox(origin.x, origin.y, pos.x, pos.y, r, W, H);
       const prevBB = st.prevShapeBBox;
@@ -227,28 +226,49 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
       return;
     }
 
-    // Brush / eraser: incremental paint, no restoration needed
-    if (curTool === "glaze_eraser") {
-      eraseGlazeLine(cmBuf, last.x, last.y, pos.x, pos.y, r, W, H);
-    } else {
-      paintGlazeLine(cmBuf, cv.data, last.x, last.y, pos.x, pos.y, r, W, H, st.glazeLUT);
+    // Brush / eraser: iterate coalesced pointer events so fast strokes keep
+    // sub-frame sample fidelity instead of collapsing to one straight segment.
+    const nativeEvent = e.nativeEvent;
+    const canvasEl = cursor.curRef.current;
+    const zoom = zoomRef.current,
+      pan = panRef.current;
+    const coalesced = typeof nativeEvent.getCoalescedEvents === "function" ? nativeEvent.getCoalescedEvents() : [];
+    const events: Array<{ clientX: number; clientY: number }> = coalesced.length > 0 ? coalesced : [nativeEvent];
+
+    let last = lastRef.current;
+    let dirtyBB: DirtyRect | null = null;
+    for (const ev of events) {
+      const p = canvasPos(ev, canvasEl, zoom, pan, cv);
+      if (!last) last = p;
+      if (curTool === "glaze_eraser") {
+        eraseGlazeLine(cmBuf, last.x, last.y, p.x, p.y, r, W, H);
+      } else {
+        paintGlazeLine(cmBuf, cv.data, last.x, last.y, p.x, p.y, r, W, H, st.glazeLUT);
+      }
+      const bb = brushBBox(
+        [
+          [last.x, last.y],
+          [p.x, p.y],
+        ],
+        r,
+        W,
+        H,
+      );
+      dirtyBB = unionBBox(dirtyBB, bb);
+      last = p;
     }
-    const allPts: [number, number][] = [
-      [last.x, last.y],
-      [pos.x, pos.y],
-    ];
-    const dirtyBB = brushBBox(allPts, r, W, H);
-    lastRef.current = pos;
-    // Throttle rendering to animation frame rate
+    lastRef.current = last;
+
     if (paintRafRef.current !== null) cancelAnimationFrame(paintRafRef.current);
     const lutSnap = s.current.colorLUT,
       srcSnap = srcRef.current,
       prvSnap = prvRef.current,
       cacheSnap = imgCacheRef.current;
     const dataSnap = cv.data;
+    const dirtySnap = dirtyBB;
     paintRafRef.current = requestAnimationFrame(() => {
       paintRafRef.current = null;
-      renderBuf(dataSnap, W, H, lutSnap, srcSnap, prvSnap, cacheSnap, dirtyBB, cmBuf);
+      renderBuf(dataSnap, W, H, lutSnap, srcSnap, prvSnap, cacheSnap, dirtySnap, cmBuf);
     });
   }
 
