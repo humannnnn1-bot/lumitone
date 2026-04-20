@@ -581,6 +581,8 @@ export const ja: Record<TranslationKey, string> = {
   music_section_algebra: "構造音響",
   music_complement_title: "対面ペア",
   music_complement_play: "\u25b6 d(c) + d(c\u0304) = 7",
+  music_complement_play_reverse: "\u25c0 d(c) + d(c\u0304) = 7",
+  music_complement_stop: "\u23f9 d(c) + d(c\u0304) = 7",
   music_zigzag_title: "\u30eb\u30de\u30b8\u30b0\u30b6\u30b0",
   music_zigzag_play: "\u25b6 \u30b8\u30b0\u30b6\u30b0",
   music_zigzag_stop: "\u23f9 \u30b8\u30b0\u30b6\u30b0",

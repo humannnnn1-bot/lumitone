@@ -47,7 +47,7 @@ export interface MusicEngineReturn {
   setLuminanceMode: (mode: "symmetric" | "luminance") => void;
   stopAlgebra: () => void;
   setDroneMuted: (muted: boolean) => void;
-  playComplementCanon: (onStep: (pairIndex: number, phase: "playing" | null) => void) => void;
+  playComplementCanon: (onStep: (pairIndex: number, phase: "playing" | null) => void, reverse?: boolean) => void;
   playZigzagMelody: (onStep: (stepIndex: number | null) => void) => void;
   stopZigzagMelody: () => void;
   playPointFanoContext: (point: number, onStep: (lineIdx: number | null) => void) => void;
@@ -1208,17 +1208,18 @@ export function useMusicEngine({
 
   /* ── 12. playComplementCanon ── */
   const playComplementCanon = useCallback(
-    (onStep: (pairIndex: number, phase: "playing" | null) => void) => {
+    (onStep: (pairIndex: number, phase: "playing" | null) => void, reverse = false) => {
       const nodes = nodesRef.current;
       if (!nodes) return;
       clearAlgebraTimers();
-      for (let i = 0; i < 3; i++) {
+      for (let step = 0; step < 3; step++) {
+        const i = reverse ? 2 - step : step;
         scheduleAlgebra(() => {
           const [a, b] = COMPLEMENT_PAIRS[i];
           triggerLumaBurst(nodes, LUMA_VALUES[a]);
           triggerLumaBurst(nodes, LUMA_VALUES[b]);
           onStep(i, "playing");
-        }, i * 600);
+        }, step * 600);
       }
       scheduleAlgebra(() => onStep(-1, null), 1800);
     },

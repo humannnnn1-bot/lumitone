@@ -580,6 +580,8 @@ export const en = {
   music_section_algebra: "Structural Sonification",
   music_complement_title: "Die Opposites",
   music_complement_play: "\u25b6 d(c) + d(c\u0304) = 7",
+  music_complement_play_reverse: "\u25c0 d(c) + d(c\u0304) = 7",
+  music_complement_stop: "\u23f9 d(c) + d(c\u0304) = 7",
   music_zigzag_title: "Luma Zigzag",
   music_zigzag_play: "\u25b6 Zigzag",
   music_zigzag_stop: "\u23f9 Zigzag",
