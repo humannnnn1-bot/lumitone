@@ -147,6 +147,11 @@ input[type="checkbox"]:focus-visible {
   font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Yu Gothic UI", "Meiryo", "Noto Sans CJK JP", system-ui, sans-serif !important;
 }
 
+/* Theory body text: slightly brighter than the intro preface */
+.theory-desc:not(.theory-intro) {
+  color: #a8a8c8 !important;
+}
+
 [role="tablist"] {
   max-width: 380px;
   margin: 0 auto;
@@ -271,6 +276,9 @@ input[type="checkbox"]:focus-visible {
     max-width: 620px !important;
     font-size: 15px !important;
     line-height: 1.8 !important;
+  }
+  .theory-intro {
+    max-width: 540px !important;
   }
   .theory-title {
     font-size: 24px !important;
