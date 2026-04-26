@@ -25,6 +25,8 @@ Thumbs.db
 *.swp
 *.swo
 
-# Claude Code local state
-.claude/settings.local.json
-.claude/*.lock
+# Claude Code (shared + local state)
+.claude/
+
+# MCP shared config (avoid future secret leak if a server gains an API key)
+.mcp.json
