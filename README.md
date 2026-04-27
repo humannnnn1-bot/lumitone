@@ -69,3 +69,7 @@ npm run format:check
 
 - **Source code**: [MIT License](./LICENSE)
 - **Documentation in `docs/`**: [Creative Commons Attribution 4.0 International (CC BY 4.0)](./docs/LICENSE.md)
+
+When reusing material from `docs/`, see the
+[citation templates](./docs/LICENSE.md#how-to-cite) for academic, blog,
+book, slide, translation, and short-form attribution formats.
