@@ -1,11 +1,11 @@
 import React, { memo, useState, useEffect } from "react";
 import { LEVEL_INFO, LEVEL_CANDIDATES } from "../color-engine";
 import { rgbStr, hexStr } from "../utils";
-import { S_NAV_ARROW, S_SWATCH } from "../styles";
-import type { ColorAction } from "../color-reducer";
+import { S_NAV_ARROW, S_SWATCH } from "../styles/shared";
+import type { ColorAction } from "../state/color-reducer";
 import { useTranslation } from "../i18n";
-import { C, SP, FS, R, DUR } from "../tokens";
-import { THEORY_LEVELS } from "./theory/theory-data";
+import { C, SP, FS, R, DUR } from "../styles/tokens";
+import { THEORY_LEVELS } from "../data/theory-data";
 import { HEX_CANDIDATE_ANGLES } from "../hex-data";
 
 const MOBILE_BP = 600;

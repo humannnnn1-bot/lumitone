@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from "react";
-import { COMPLEMENT_EDGES, CUBE_EDGES, FANO_LINES, STELLA_EDGES, TETRA_T0, TETRA_T1 } from "../components/theory/theory-data";
-import { COMPLEMENT_PAIRS, FANO_RHYTHM_PATTERNS, LUMA_VALUES, ZIGZAG_PATH, fanoLinesThrough } from "../components/music/music-data";
+import { COMPLEMENT_EDGES, CUBE_EDGES, FANO_LINES, STELLA_EDGES, TETRA_T0, TETRA_T1 } from "../data/theory-data";
+import { COMPLEMENT_PAIRS, FANO_RHYTHM_PATTERNS, LUMA_VALUES, ZIGZAG_PATH, fanoLinesThrough } from "../data/music-data";
 
 /* ── Types ── */
 export interface SonificationLevel {

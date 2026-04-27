@@ -2,11 +2,11 @@ import React, { useCallback } from "react";
 import { ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from "../constants";
 import type { ToolId } from "../constants";
 import { ColorMappingList } from "./ColorMappingList";
-import type { ColorAction } from "../color-reducer";
+import type { ColorAction } from "../state/color-reducer";
 import type { PanZoomHandlers, DrawingHandlers } from "../types";
 import { useTranslation } from "../i18n";
-import { S_CHECKERBOARD } from "../styles";
-import { C, Z, SP, FS, R } from "../tokens";
+import { S_CHECKERBOARD } from "../styles/shared";
+import { C, Z, SP, FS, R } from "../styles/tokens";
 
 interface ColorPanelProps {
   prvRef: React.RefObject<HTMLCanvasElement | null>;

@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { canvasReducer, initialState } from "../canvas-reducer";
+import { canvasReducer, initialState } from "../state/canvas-reducer";
 import { computeDiff, computeGlazeDiff } from "../undo-diff";
-import { paintCircle, paintLine } from "../paint";
+import { paintCircle, paintLine } from "../drawing/paint";
 
 /**
  * Integration tests for the stroke → undo → redo lifecycle.

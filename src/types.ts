@@ -3,7 +3,9 @@
    ═══════════════════════════════════════════ */
 
 import type React from "react";
-import type { RingBuffer } from "./ring-buffer";
+import type { RingBuffer } from "./utils/ring-buffer";
+
+export type MapMode = "entropy" | "noise" | "depth" | "gradient" | "region" | "luminance" | "colorlum";
 
 export interface Diff {
   idx: Uint32Array;

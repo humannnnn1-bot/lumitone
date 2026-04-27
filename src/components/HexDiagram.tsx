@@ -13,9 +13,9 @@ import {
   HEX_R,
   HEX_VP,
 } from "../hex-data";
-import type { ColorAction } from "../color-reducer";
+import type { ColorAction } from "../state/color-reducer";
 import { useTranslation } from "../i18n";
-import { C, FS, FW, O } from "../tokens";
+import { C, FS, FW, O } from "../styles/tokens";
 
 interface Props {
   cc: number[];

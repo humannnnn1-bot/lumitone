@@ -4,8 +4,8 @@
  */
 export class RingBuffer<T> {
   private _buf: (T | undefined)[];
-  private _head = 0;  // index of first element
-  private _len = 0;   // current number of elements
+  private _head = 0; // index of first element
+  private _len = 0; // current number of elements
   readonly capacity: number;
 
   constructor(capacity: number) {
@@ -13,7 +13,9 @@ export class RingBuffer<T> {
     this._buf = new Array(capacity);
   }
 
-  get length(): number { return this._len; }
+  get length(): number {
+    return this._len;
+  }
 
   /** Push to end. If full, overwrites oldest element. */
   push(item: T): void {

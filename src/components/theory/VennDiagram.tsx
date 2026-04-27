@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { FS, FW, SP } from "../../tokens";
+import { FS, FW, SP } from "../../styles/tokens";
 import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
 

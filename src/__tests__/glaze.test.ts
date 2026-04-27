@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { findClosestCandidate, LEVEL_CANDIDATES } from "../color-engine";
 import { computeGlazeDiff, applyDiffToColorMap, buildDiffFromGlazeFill } from "../undo-diff";
-import { glazeFloodFill } from "../flood-fill";
-import { buildGlazeLUT, paintGlazeCircle, eraseGlazeCircle } from "../glaze-paint";
-import { renderBuf } from "../render-buf";
+import { glazeFloodFill } from "../drawing/flood-fill";
+import { buildGlazeLUT, paintGlazeCircle, eraseGlazeCircle } from "../drawing/glaze-paint";
+import { renderBuf } from "../drawing/render-buf";
 
 describe("findClosestCandidate", () => {
   it("returns 0 for level 0 (black, achromatic)", () => {
@@ -27,7 +27,7 @@ describe("findClosestCandidate", () => {
       const candidates = LEVEL_CANDIDATES[lv];
       if (candidates.length <= 1) continue;
       // Find if there's a candidate near 0° (or near 360°)
-      const nearZero = candidates.findIndex(c => c.angle < 30 || c.angle > 330);
+      const nearZero = candidates.findIndex((c) => c.angle < 30 || c.angle > 330);
       if (nearZero >= 0) {
         const idx = findClosestCandidate(lv, 355);
         const selected = candidates[idx];
@@ -93,12 +93,7 @@ describe("glazeFloodFill", () => {
     // L1 L1 L2 L2
     // L3 L3 L3 L3
     // L3 L3 L3 L3
-    const data = new Uint8Array([
-      1, 1, 2, 2,
-      1, 1, 2, 2,
-      3, 3, 3, 3,
-      3, 3, 3, 3,
-    ]);
+    const data = new Uint8Array([1, 1, 2, 2, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3]);
     const colorMap = new Uint8Array(16);
     const result = glazeFloodFill(data, colorMap, 0, 0, 5, 4, 4);
     expect(result).not.toBeNull();
@@ -197,7 +192,7 @@ describe("renderBuf with colorMap", () => {
     expect(cache.prv).not.toBeNull();
     const prv32 = new Uint32Array(cache.prv!.data.buffer);
     const expectedRgb = candidates[variantIdx].rgb;
-    const expected = (0xFF000000 | (expectedRgb[2] << 16) | (expectedRgb[1] << 8) | expectedRgb[0]) >>> 0;
+    const expected = (0xff000000 | (expectedRgb[2] << 16) | (expectedRgb[1] << 8) | expectedRgb[0]) >>> 0;
     expect(prv32[0]).toBe(expected);
   });
 });

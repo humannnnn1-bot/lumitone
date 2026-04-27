@@ -1,5 +1,5 @@
 import React from "react";
-import { C } from "../../tokens";
+import { C } from "../../styles/tokens";
 
 interface GL32ArrowsProps {
   perm: number[]; // current permutation [0,1,2,3,4,5,6,7] or permuted

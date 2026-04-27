@@ -1,13 +1,13 @@
 import React, { useRef, useEffect, useState, useCallback, useMemo } from "react";
 import { LEVEL_CANDIDATES, buildColorLUT, hue2rgb } from "../color-engine";
-import { S_BTN, S_BTN_ACTIVE, S_BTN_SM, S_BTN_SM_ACTIVE } from "../styles";
+import { S_BTN, S_BTN_ACTIVE, S_BTN_SM, S_BTN_SM_ACTIVE } from "../styles/shared";
 import { rgbStr, timestamp } from "../utils";
 import { useGallery, renderThumbnail } from "../hooks/useGallery";
 import type { GalleryItem } from "../hooks/useGallery";
 import type { CanvasData } from "../types";
-import type { ColorAction } from "../color-reducer";
+import type { ColorAction } from "../state/color-reducer";
 import { useTranslation } from "../i18n";
-import { C, SP, FS, R, DUR, Z, HUE_GRADIENT } from "../tokens";
+import { C, SP, FS, R, DUR, Z, HUE_GRADIENT } from "../styles/tokens";
 
 interface GalleryPanelProps {
   cvs: CanvasData;

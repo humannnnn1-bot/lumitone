@@ -1,7 +1,7 @@
 import React from "react";
-import { C, FS, FW } from "../../tokens";
+import { C, FS, FW } from "../../styles/tokens";
 import { useTranslation } from "../../i18n";
-import { COMPLEMENT_EDGES, CUBE_EDGES, STELLA_EDGES, TETRA_T0, TETRA_T0_EDGES } from "../theory/theory-data";
+import { COMPLEMENT_EDGES, CUBE_EDGES, STELLA_EDGES, TETRA_T0, TETRA_T0_EDGES } from "../../data/theory-data";
 
 export const COLOR_T0 = "#ffd36e";
 export const COLOR_T1 = "#90c8ff";

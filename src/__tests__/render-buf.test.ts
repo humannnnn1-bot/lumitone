@@ -1,8 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { GRAY_VALUES, renderBuf } from "../render-buf";
+import { GRAY_VALUES, renderBuf } from "../drawing/render-buf";
 import { LEVEL_INFO, buildColorLUT, DEFAULT_CC } from "../color-engine";
 import type { ImgCache } from "../types";
-
 
 describe("GRAY_VALUES", () => {
   it("has 8 entries", () => {
@@ -34,11 +33,11 @@ describe("GRAY_VALUES", () => {
 
 /** Build ABGR pixel as unsigned 32-bit (matches Uint32Array storage). */
 function rgba32(r: number, g: number, b: number): number {
-  return (0xFF000000 | (b << 16) | (g << 8) | r) >>> 0;
+  return (0xff000000 | (b << 16) | (g << 8) | r) >>> 0;
 }
 
 function gray32(g: number): number {
-  return (0xFF000000 | (g << 16) | (g << 8) | g) >>> 0;
+  return (0xff000000 | (g << 16) | (g << 8) | g) >>> 0;
 }
 
 /* ─── Minimal HTMLCanvasElement / CanvasRenderingContext2D stubs ─── */
@@ -76,7 +75,8 @@ describe("renderBuf", () => {
   });
 
   it("creates ImageData cache on first call", () => {
-    const w = 4, h = 4;
+    const w = 4,
+      h = 4;
     const data = new Uint8Array(w * h); // all zeros (level 0)
     const { canvas: srcCanvas } = createStubCanvas(w, h);
     const cache: ImgCache = { src: null, prv: null, s32: null, p32: null };
@@ -105,7 +105,8 @@ describe("renderBuf", () => {
   });
 
   it("writes correct gray values for level 0 (black)", () => {
-    const w = 2, h = 2;
+    const w = 2,
+      h = 2;
     const data = new Uint8Array(w * h); // all level 0
     const { canvas: srcCanvas } = createStubCanvas(w, h);
     const cache: ImgCache = { src: null, prv: null, s32: null, p32: null };
@@ -120,7 +121,8 @@ describe("renderBuf", () => {
   });
 
   it("writes correct gray values for level 7 (white)", () => {
-    const w = 2, h = 2;
+    const w = 2,
+      h = 2;
     const data = new Uint8Array(w * h).fill(7);
     const { canvas: srcCanvas } = createStubCanvas(w, h);
     const cache: ImgCache = { src: null, prv: null, s32: null, p32: null };
@@ -135,7 +137,8 @@ describe("renderBuf", () => {
   });
 
   it("applies color LUT correctly to preview canvas", () => {
-    const w = 2, h = 2;
+    const w = 2,
+      h = 2;
     const data = new Uint8Array(w * h).fill(2); // level 2 = Red
     const { canvas: prvCanvas } = createStubCanvas(w, h);
     const cache: ImgCache = { src: null, prv: null, s32: null, p32: null };
@@ -151,7 +154,8 @@ describe("renderBuf", () => {
   });
 
   it("masks pixel data to 3 bits (LEVEL_MASK)", () => {
-    const w = 2, h = 2;
+    const w = 2,
+      h = 2;
     // Value 15 = 0b1111, should be masked to 7 = 0b0111
     const data = new Uint8Array(w * h).fill(15);
     const { canvas: srcCanvas } = createStubCanvas(w, h);
@@ -167,7 +171,8 @@ describe("renderBuf", () => {
   });
 
   it("handles mixed levels correctly", () => {
-    const w = 4, h = 1;
+    const w = 4,
+      h = 1;
     const data = new Uint8Array([0, 3, 5, 7]);
     const { canvas: srcCanvas } = createStubCanvas(w, h);
     const cache: ImgCache = { src: null, prv: null, s32: null, p32: null };
@@ -182,7 +187,8 @@ describe("renderBuf", () => {
 
   describe("dirty rect rendering", () => {
     it("only updates pixels within dirty rect bounds", () => {
-      const w = 4, h = 4;
+      const w = 4,
+        h = 4;
       const data = new Uint8Array(w * h).fill(7); // all white
 
       const { canvas: srcCanvas } = createStubCanvas(w, h);
@@ -212,7 +218,8 @@ describe("renderBuf", () => {
     });
 
     it("clamps dirty rect to canvas bounds", () => {
-      const w = 4, h = 4;
+      const w = 4,
+        h = 4;
       const data = new Uint8Array(w * h).fill(3);
       const { canvas: srcCanvas } = createStubCanvas(w, h);
       const cache: ImgCache = { src: null, prv: null, s32: null, p32: null };
@@ -224,7 +231,8 @@ describe("renderBuf", () => {
     });
 
     it("skips rendering when dirty rect has zero area", () => {
-      const w = 4, h = 4;
+      const w = 4,
+        h = 4;
       const data = new Uint8Array(w * h).fill(5);
       const { canvas: srcCanvas } = createStubCanvas(w, h);
       const cache: ImgCache = { src: null, prv: null, s32: null, p32: null };
@@ -243,7 +251,8 @@ describe("renderBuf", () => {
   });
 
   it("renders to both src and prv canvases simultaneously", () => {
-    const w = 2, h = 2;
+    const w = 2,
+      h = 2;
     const data = new Uint8Array(w * h).fill(4); // level 4 = Green
     const { canvas: srcCanvas } = createStubCanvas(w, h);
     const { canvas: prvCanvas } = createStubCanvas(w, h);
@@ -265,7 +274,8 @@ describe("renderBuf", () => {
   });
 
   it("handles data shorter than w*h gracefully", () => {
-    const w = 4, h = 4;
+    const w = 4,
+      h = 4;
     const data = new Uint8Array(8); // only 8 pixels for 16-pixel canvas
     const { canvas: srcCanvas } = createStubCanvas(w, h);
     const cache: ImgCache = { src: null, prv: null, s32: null, p32: null };

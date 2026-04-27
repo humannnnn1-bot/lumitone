@@ -1,7 +1,7 @@
 import React from "react";
-import { C } from "../../tokens";
-import { FANO_LINES } from "../theory/theory-data";
-import { FANO_RHYTHM_PATTERNS } from "./music-data";
+import { C } from "../../styles/tokens";
+import { FANO_LINES } from "../../data/theory-data";
+import { FANO_RHYTHM_PATTERNS } from "../../data/music-data";
 
 interface FanoRhythmGridProps {
   playing: boolean;

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useReducer, useMemo } from "react";
 import { DISPLAY_MIN, DISPLAY_MAX_LIMIT } from "../constants";
-import { canvasReducer, initialState } from "../canvas-reducer";
+import { canvasReducer, initialState } from "../state/canvas-reducer";
 import { saveState, loadState } from "../utils/idb-persistence";
 import { createErrorHandler } from "../error-handler";
 import { useToolState } from "./useToolState";

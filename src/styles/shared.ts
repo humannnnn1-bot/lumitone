@@ -1,5 +1,5 @@
 import type React from "react";
-import { MIN_TAP_SIZE } from "./constants";
+import { MIN_TAP_SIZE } from "../constants";
 import { C, SP, FS, FW, R, DUR } from "./tokens";
 
 /* ═══════════════════════════════════════════

@@ -1,5 +1,5 @@
 import React from "react";
-import { C, FS, FW } from "../../tokens";
+import { C, FS, FW } from "../../styles/tokens";
 
 const TRIADS: [number, number, number][] = [
   [3, 5, 1],

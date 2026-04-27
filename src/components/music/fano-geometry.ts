@@ -1,4 +1,4 @@
-import { FANO_LINES } from "../theory/theory-data";
+import { FANO_LINES } from "../../data/theory-data";
 
 export const FANO_VIEWBOX_WIDTH = 180;
 export const FANO_VIEWBOX_HEIGHT = 162;

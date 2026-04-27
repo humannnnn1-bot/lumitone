@@ -14,7 +14,7 @@ import {
   TETRA_T0,
   THEORY_LEVELS,
   hammingDist,
-} from "../components/theory/theory-data";
+} from "../data/theory-data";
 
 function edgeKey(a: number, b: number): string {
   return a < b ? `${a}-${b}` : `${b}-${a}`;

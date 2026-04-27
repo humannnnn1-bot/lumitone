@@ -1,5 +1,5 @@
 import React from "react";
-import { C, FS, SP } from "../../tokens";
+import { C, FS, SP } from "../../styles/tokens";
 import { useTranslation } from "../../i18n";
 
 const S_ITEM: React.CSSProperties = {

@@ -1,4 +1,4 @@
-import { C, Z, SP, FS, FW, R, SHADOW, DUR } from "../tokens";
+import { C, Z, SP, FS, FW, R, SHADOW, DUR } from "../styles/tokens";
 
 interface ToastProps {
   message: string;

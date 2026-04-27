@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { S_BTN, S_BTN_ACTIVE } from "../styles";
+import { S_BTN, S_BTN_ACTIVE } from "../styles/shared";
 import { useTranslation } from "../i18n";
 import { useFocusTrap } from "../hooks/useFocusTrap";
-import { C, Z, SP, FS, R } from "../tokens";
+import { C, Z, SP, FS, R } from "../styles/tokens";
 
 interface CropModalProps {
   img: HTMLImageElement;

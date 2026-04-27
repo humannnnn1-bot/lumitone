@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { S_BTN, S_BTN_ACTIVE } from "../styles";
+import { S_BTN, S_BTN_ACTIVE } from "../styles/shared";
 import { MAX_IMAGE_SIZE } from "../constants";
 import { useTranslation } from "../i18n";
 import { useFocusTrap } from "../hooks/useFocusTrap";
-import { C, Z, SP, FS, R } from "../tokens";
+import { C, Z, SP, FS, R } from "../styles/tokens";
 
 interface NewCanvasModalProps {
   open: boolean;

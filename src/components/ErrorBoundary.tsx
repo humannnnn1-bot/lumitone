@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { useTranslation } from "../i18n";
-import { C, SP, FS, R } from "../tokens";
+import { C, SP, FS, R } from "../styles/tokens";
 
 interface Props {
   children: React.ReactNode;

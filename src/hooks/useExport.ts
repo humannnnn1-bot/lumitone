@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { renderBuf } from "../render-buf";
+import { renderBuf } from "../drawing/render-buf";
 import type { CanvasData, ImgCache } from "../types";
 
 export interface ExportResult {

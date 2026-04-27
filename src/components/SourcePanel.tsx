@@ -1,11 +1,11 @@
 import React, { useCallback, useState } from "react";
 import { TOOLS, BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX } from "../constants";
 import { LEVEL_INFO } from "../color-engine";
-import { S_BTN, S_BTN_ACTIVE, S_CHECKERBOARD } from "../styles";
+import { S_BTN, S_BTN_ACTIVE, S_CHECKERBOARD } from "../styles/shared";
 import { rgbStr, timestamp } from "../utils";
 import type { AppState, ToolState, ViewState, SaveActions } from "../types";
 import { useTranslation } from "../i18n";
-import { C, Z, SP, FS, FW, R, O } from "../tokens";
+import { C, Z, SP, FS, FW, R, O } from "../styles/tokens";
 import { ConfirmModal } from "./ConfirmModal";
 
 interface SourcePanelProps {

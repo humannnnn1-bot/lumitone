@@ -1,7 +1,7 @@
 import React from "react";
-import { C, FS, FW } from "../../tokens";
+import { C, FS, FW } from "../../styles/tokens";
 import { useTranslation } from "../../i18n";
-import { TETRA_T0, TETRA_T1 } from "../theory/theory-data";
+import { TETRA_T0, TETRA_T1 } from "../../data/theory-data";
 import { COLOR_T0, COLOR_T1 } from "./K8LayerGraph";
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];

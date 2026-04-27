@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
 import { LEVEL_INFO, LEVEL_CANDIDATES, DEFAULT_CC, findClosestCandidate } from "../color-engine";
-import { SP, C, R, FS, SHADOW, HUE_GRADIENT, FONT } from "../tokens";
-import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../styles";
+import { SP, C, R, FS, SHADOW, HUE_GRADIENT, FONT } from "../styles/tokens";
+import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../styles/shared";
 import { useTranslation } from "../i18n";
 import { LinkedVisualization, ACTIVE_LEVELS } from "./LinkedVisualization";
 import { useMusicEngine, type ScaleMode } from "../hooks/useMusicEngine";
@@ -21,7 +21,7 @@ import { ParityChordCard } from "./music/ParityChordCard";
 import { ErrorCorrectionCard } from "./music/ErrorCorrectionCard";
 import type { DecoderPhase } from "./music/HammingDecoder";
 import { MiniFanoChord } from "./music/MiniFanoChord";
-import { FANO_LINES } from "./theory/theory-data";
+import { FANO_LINES } from "../data/theory-data";
 
 /* ── Style constants ── */
 

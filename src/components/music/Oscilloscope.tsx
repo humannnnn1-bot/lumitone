@@ -1,5 +1,5 @@
 import React, { useRef, useEffect } from "react";
-import { C, R } from "../../tokens";
+import { C, R } from "../../styles/tokens";
 
 interface OscilloscopeProps {
   analyserNode: AnalyserNode | null;

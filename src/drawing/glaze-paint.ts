@@ -1,5 +1,5 @@
-import { LEVEL_MASK } from "./constants";
-import { findClosestCandidate } from "./color-engine";
+import { LEVEL_MASK } from "../constants";
+import { findClosestCandidate } from "../color-engine";
 
 /* ═══════════════════════════════════════════
    GLAZE PAINT FUNCTIONS

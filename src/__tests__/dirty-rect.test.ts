@@ -1,11 +1,11 @@
 import { describe, it, expect } from "vitest";
-import { shapeBBox, unionBBox, brushBBox, restoreRect } from "../dirty-rect";
+import { shapeBBox, unionBBox, brushBBox, restoreRect } from "../drawing/dirty-rect";
 
 describe("shapeBBox", () => {
   it("computes correct bounding box", () => {
     const bb = shapeBBox(5, 5, 10, 10, 2, 20, 20);
     expect(bb).not.toBeNull();
-    expect(bb!.x).toBe(3);  // min(5,10) - 2
+    expect(bb!.x).toBe(3); // min(5,10) - 2
     expect(bb!.y).toBe(3);
     expect(bb!.w).toBe(10); // (12 - 3 + 1)
     expect(bb!.h).toBe(10);
@@ -78,7 +78,15 @@ describe("brushBBox", () => {
   });
 
   it("multiple points covers all", () => {
-    const bb = brushBBox([[2, 3], [8, 7]], 1, 20, 20);
+    const bb = brushBBox(
+      [
+        [2, 3],
+        [8, 7],
+      ],
+      1,
+      20,
+      20,
+    );
     expect(bb).not.toBeNull();
     expect(bb!.x).toBeLessThanOrEqual(1);
     expect(bb!.y).toBeLessThanOrEqual(2);

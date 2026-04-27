@@ -14,7 +14,7 @@ const mockAnnounce = vi.fn();
 const mockPanningRef = { current: false };
 const mockSpaceRef = { current: false };
 
-vi.mock("../contexts/DrawingContext", () => ({
+vi.mock("../state/DrawingContext", () => ({
   useDrawingContext: () => ({
     displayW: 320,
     displayH: 320,

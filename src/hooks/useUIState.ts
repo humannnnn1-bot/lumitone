@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { TOAST_DURATION } from "../constants";
-import type { MapMode } from "../components/analyze-types";
+import type { MapMode } from "../types";
 import type { TranslationFn } from "../i18n";
 
 const LS_TAB = "chromalum-active-tab-v2";

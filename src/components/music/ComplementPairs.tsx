@@ -1,6 +1,6 @@
 import React from "react";
-import { C, FS } from "../../tokens";
-import { COMPLEMENT_PAIRS, LUMA_VALUES } from "./music-data";
+import { C, FS } from "../../styles/tokens";
+import { COMPLEMENT_PAIRS, LUMA_VALUES } from "../../data/music-data";
 
 // Theorem Y_k + Y_{7-k} = 255 is a pure luma identity; keep all colors canonical
 // (hue-invariant) so the visual matches the luma-based sonification.

@@ -2,18 +2,25 @@ import { useRef, useCallback } from "react";
 import { LEVEL_MASK } from "../constants";
 import type { GlazeToolId } from "../constants";
 import { LEVEL_CANDIDATES, findClosestCandidate, rgb2hue } from "../color-engine";
-import { buildGlazeLUT, buildMultiDirectLUT, paintGlazeCircle, paintGlazeLine, eraseGlazeCircle, eraseGlazeLine } from "../glaze-paint";
-import { brushBBox, dirtyFromChanged, shapeBBox, unionBBox, restoreRect } from "../dirty-rect";
+import {
+  buildGlazeLUT,
+  buildMultiDirectLUT,
+  paintGlazeCircle,
+  paintGlazeLine,
+  eraseGlazeCircle,
+  eraseGlazeLine,
+} from "../drawing/glaze-paint";
+import { brushBBox, dirtyFromChanged, shapeBBox, unionBBox, restoreRect } from "../drawing/dirty-rect";
 import { computeGlazeDiff, buildDiffFromGlazeFill } from "../undo-diff";
 import { useFloodFillWorker } from "./useFloodFillWorker";
-import { renderBuf } from "../render-buf";
+import { renderBuf } from "../drawing/render-buf";
 import { hexStr } from "../utils";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
 import { trySetPointerCapture, cPosFromRefs, canvasPos, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
 import type { CanvasData, ImgCache, CanvasAction, DirtyRect } from "../types";
-import { useDrawingContext } from "../contexts/DrawingContext";
+import { useDrawingContext } from "../state/DrawingContext";
 
 export interface GlazeDrawingOptions {
   cvs: CanvasData;

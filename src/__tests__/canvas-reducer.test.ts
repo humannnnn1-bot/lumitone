@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { canvasReducer, initialState } from "../canvas-reducer";
+import { canvasReducer, initialState } from "../state/canvas-reducer";
 import { computeDiff } from "../undo-diff";
 import { MAX_UNDO } from "../constants";
 
@@ -123,7 +123,8 @@ describe("canvasReducer", () => {
   describe("load_image", () => {
     it("loads image data and resets stacks", () => {
       const data = new Uint8Array(16);
-      data[0] = 2; data[1] = 5;
+      data[0] = 2;
+      data[1] = 5;
       const next = canvasReducer(initialState, { type: "load_image", w: 4, h: 4, data });
       expect(next.cvs.w).toBe(4);
       expect(next.cvs.h).toBe(4);

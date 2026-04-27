@@ -1,5 +1,5 @@
 import { useRef, useEffect, useLayoutEffect, useCallback } from "react";
-import { renderBuf } from "../render-buf";
+import { renderBuf } from "../drawing/render-buf";
 import type { CanvasData } from "../types";
 import type { CanvasDrawingResult } from "./useCanvasDrawing";
 import type { GlazeDrawingResult } from "./useGlazeDrawing";

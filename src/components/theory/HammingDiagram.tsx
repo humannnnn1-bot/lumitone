@@ -1,7 +1,7 @@
 import React, { useCallback, useState, useEffect, useRef } from "react";
-import { THEORY_LEVELS } from "./theory-data";
-import { C, FS, FW, SP } from "../../tokens";
-import { S_BTN_SM } from "../../styles";
+import { THEORY_LEVELS } from "../../data/theory-data";
+import { C, FS, FW, SP } from "../../styles/tokens";
+import { S_BTN_SM } from "../../styles/shared";
 import { useTranslation } from "../../i18n";
 
 const W = 340,

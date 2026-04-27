@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { colorReducer } from "../color-reducer";
+import { colorReducer } from "../state/color-reducer";
 import { LEVEL_CANDIDATES, DEFAULT_CC } from "../color-engine";
 
 describe("colorReducer", () => {

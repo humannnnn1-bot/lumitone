@@ -1,12 +1,11 @@
 import React from "react";
 import { useTranslation } from "../i18n";
-import type { CanvasData } from "../types";
-import { S_BTN, S_BTN_ACTIVE } from "../styles";
+import type { CanvasData, MapMode } from "../types";
+import { S_BTN, S_BTN_ACTIVE } from "../styles/shared";
 import { MapCanvas } from "./MapCanvas";
-import type { MapMode } from "./analyze-types";
 import { usePixelMaps } from "../hooks/usePixelMaps";
 import { CompositionDonut } from "./CompositionDonut";
-import { C, SP, FS, FW } from "../tokens";
+import { C, SP, FS, FW } from "../styles/tokens";
 
 interface AnalyzePanelProps {
   hist: number[];

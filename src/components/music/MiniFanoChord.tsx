@@ -1,5 +1,5 @@
 import React from "react";
-import { FANO_LINES } from "../theory/theory-data";
+import { FANO_LINES } from "../../data/theory-data";
 import { FANO_LINE_DUAL_POINTS, FANO_POINT_POSITIONS, FANO_VIEWBOX_HEIGHT, FANO_VIEWBOX_WIDTH, fanoLineSvgPath } from "./fano-geometry";
 
 interface MiniFanoChordProps {

@@ -1,4 +1,4 @@
-import { FANO_LINES } from "../theory/theory-data";
+import { FANO_LINES } from "./theory-data";
 
 export const CHROMA_LEVELS = [1, 2, 3, 4, 5, 6] as const;
 

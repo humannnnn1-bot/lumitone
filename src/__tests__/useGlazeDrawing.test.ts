@@ -11,7 +11,7 @@ const mockEndPan = vi.fn();
 const mockSetHueAngle = vi.fn();
 const mockPanningRef = { current: false };
 
-vi.mock("../contexts/DrawingContext", () => ({
+vi.mock("../state/DrawingContext", () => ({
   useDrawingContext: () => ({
     displayW: 320,
     displayH: 320,

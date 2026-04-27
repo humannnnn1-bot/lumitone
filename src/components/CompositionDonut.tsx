@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { LEVEL_INFO, LEVEL_CANDIDATES, rgb2hue } from "../color-engine";
 import { rgbStr, hexStr } from "../utils";
-import { C, FS, SP } from "../tokens";
+import { C, FS, SP } from "../styles/tokens";
 import { LEVEL_MASK } from "../constants";
 import type { CanvasData } from "../types";
 import { useTranslation } from "../i18n";

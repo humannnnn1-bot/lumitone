@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from "react";
-import { C, SP, FS, FW } from "../tokens";
+import { C, SP, FS, FW } from "../styles/tokens";
 import { useTranslation } from "../i18n";
 import { PinResetContext } from "./theory/pin-reset";
 import { VennDiagram } from "./theory/VennDiagram";

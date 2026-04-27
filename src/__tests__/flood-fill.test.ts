@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { floodFill } from "../flood-fill";
+import { floodFill } from "../drawing/flood-fill";
 
 function mkBuf(w: number, h: number, fill = 0): Uint8Array {
   const buf = new Uint8Array(w * h);
@@ -72,8 +72,11 @@ describe("floodFill", () => {
   it("fills L-shaped region", () => {
     const buf = mkBuf(5, 5, 1);
     // Create L-shape of 0s
-    buf[0 * 5 + 0] = 0; buf[1 * 5 + 0] = 0; buf[2 * 5 + 0] = 0;
-    buf[2 * 5 + 1] = 0; buf[2 * 5 + 2] = 0;
+    buf[0 * 5 + 0] = 0;
+    buf[1 * 5 + 0] = 0;
+    buf[2 * 5 + 0] = 0;
+    buf[2 * 5 + 1] = 0;
+    buf[2 * 5 + 2] = 0;
     const result = floodFill(buf, 0, 0, 3, 5, 5);
     expect(result).not.toBeNull();
     expect(result!.changed.length).toBe(5);
@@ -83,8 +86,8 @@ describe("floodFill", () => {
 
   it("does not cross diagonally (4-connectivity)", () => {
     const buf = mkBuf(3, 3, 1);
-    buf[0] = 0;              // (0,0)
-    buf[1 * 3 + 1] = 0;      // (1,1) diagonal from (0,0)
+    buf[0] = 0; // (0,0)
+    buf[1 * 3 + 1] = 0; // (1,1) diagonal from (0,0)
     const result = floodFill(buf, 0, 0, 5, 3, 3);
     expect(result).not.toBeNull();
     expect(result!.changed.length).toBe(1); // only (0,0)

@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from "react";
-import { THEORY_LEVELS } from "./theory-data";
-import { C, FS, FW } from "../../tokens";
+import { THEORY_LEVELS } from "../../data/theory-data";
+import { C, FS, FW } from "../../styles/tokens";
 import { useTranslation } from "../../i18n";
 
 const CELL = 40;

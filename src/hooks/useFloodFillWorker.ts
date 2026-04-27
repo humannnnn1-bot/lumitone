@@ -4,7 +4,7 @@
  * Falls back to synchronous execution if Worker creation fails (e.g. test env).
  */
 import { useRef, useEffect, useCallback } from "react";
-import { floodFill, glazeFloodFill } from "../flood-fill";
+import { floodFill, glazeFloodFill } from "../drawing/flood-fill";
 import type { FloodFillWorkerRequest, FloodFillWorkerResponse } from "../workers/flood-fill.worker";
 
 // Lazy worker constructor — Vite ?worker import

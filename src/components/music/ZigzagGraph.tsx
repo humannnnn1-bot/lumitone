@@ -1,6 +1,6 @@
 import React from "react";
-import { C, FS, FW } from "../../tokens";
-import { LUMA_VALUES, ZIGZAG_CHANNELS, ZIGZAG_PATH } from "./music-data";
+import { C, FS, FW } from "../../styles/tokens";
+import { LUMA_VALUES, ZIGZAG_CHANNELS, ZIGZAG_PATH } from "../../data/music-data";
 
 // Zigzag path is a luma sequence (hue-invariant); colors stay canonical to match
 // the luma-based sonification (`triggerLumaBurst`).

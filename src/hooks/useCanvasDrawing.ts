@@ -14,16 +14,16 @@ import {
   isShapeTool,
 } from "./useStrokeManager";
 import { useFloodFillWorker } from "./useFloodFillWorker";
-import { renderBuf } from "../render-buf";
+import { renderBuf } from "../drawing/render-buf";
 import { hexStr } from "../utils";
 import type { BufferPool } from "./useStrokeManager";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
 import { trySetPointerCapture, cPosFromRefs, canvasPos, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
-import { unionBBox } from "../dirty-rect";
+import { unionBBox } from "../drawing/dirty-rect";
 import type { CanvasData, StrokeState, ImgCache, CanvasAction, DirtyRect } from "../types";
-import { useDrawingContext } from "../contexts/DrawingContext";
+import { useDrawingContext } from "../state/DrawingContext";
 
 export interface CanvasDrawingResult {
   srcRef: React.MutableRefObject<HTMLCanvasElement | null>;

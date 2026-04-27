@@ -1,10 +1,10 @@
 import React, { useMemo, useEffect } from "react";
-import { S_BTN } from "../styles";
+import { S_BTN } from "../styles/shared";
 import { LEVEL_CANDIDATES } from "../color-engine";
 import { rgbStr } from "../utils";
-import { C, SP, FS, R } from "../tokens";
+import { C, SP, FS, R } from "../styles/tokens";
 import { HexDiagram } from "./HexDiagram";
-import type { ColorAction } from "../color-reducer";
+import type { ColorAction } from "../state/color-reducer";
 import type { TranslationFn } from "../i18n";
 
 interface HexPanelProps {

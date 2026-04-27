@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { THEORY_LEVELS, GRAY_PATH, GRAY_TOGGLES, GRAY_POINTS } from "./theory-data";
-import { C, FS, FW, SP } from "../../tokens";
-import { S_BTN } from "../../styles";
+import { THEORY_LEVELS, GRAY_PATH, GRAY_TOGGLES, GRAY_POINTS } from "../../data/theory-data";
+import { C, FS, FW, SP } from "../../styles/tokens";
+import { S_BTN } from "../../styles/shared";
 import { useTranslation } from "../../i18n";
 
 const W = 300,

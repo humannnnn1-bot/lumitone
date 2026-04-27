@@ -1,9 +1,9 @@
 import React, { useState, useRef, useCallback, useMemo } from "react";
 import { LEVEL_INFO, LEVEL_CANDIDATES, findClosestCandidate, hue2rgb } from "../color-engine";
-import { SP, C, R } from "../tokens";
+import { SP, C, R } from "../styles/tokens";
 import { useTranslation } from "../i18n";
 import { angleToFreq } from "../hooks/useMusicEngine";
-import { freqToNote } from "./music/music-data";
+import { freqToNote } from "../data/music-data";
 
 interface LinkedVisualizationProps {
   hueAngle: number;

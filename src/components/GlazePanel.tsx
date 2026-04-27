@@ -3,12 +3,12 @@ import { LEVEL_INFO, LEVEL_CANDIDATES, findClosestCandidate } from "../color-eng
 import { LinkedVisualization } from "./LinkedVisualization";
 import { BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from "../constants";
 import type { GlazeToolId } from "../constants";
-import { S_BTN, S_BTN_ACTIVE, S_CHECKERBOARD } from "../styles";
+import { S_BTN, S_BTN_ACTIVE, S_CHECKERBOARD } from "../styles/shared";
 import type { PanZoomHandlers, CanvasAction, CanvasData } from "../types";
 import type { GlazeDrawingResult } from "../hooks/useGlazeDrawing";
 import { useTranslation } from "../i18n";
-import { useGlazeContext } from "../contexts/GlazeContext";
-import { C, Z, SP, FS, R, SHADOW, HUE_GRADIENT } from "../tokens";
+import { useGlazeContext } from "../state/GlazeContext";
+import { C, Z, SP, FS, R, SHADOW, HUE_GRADIENT } from "../styles/tokens";
 
 interface GlazePanelProps {
   prvRef: React.RefObject<HTMLCanvasElement | null>;

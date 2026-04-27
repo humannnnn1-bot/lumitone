@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { LEVEL_MASK } from "../constants";
-import type { CanvasData } from "../types";
-import type { MapMode } from "../components/analyze-types";
+import type { CanvasData, MapMode } from "../types";
 import { computeNoiseLevelNorm, computeDiversity, computeEdgeDepth, computeGradient, computeRegion } from "../utils/pixel-analysis";
 import type { WorkerRequest, WorkerResponse } from "../workers/pixel-analysis.worker";
 

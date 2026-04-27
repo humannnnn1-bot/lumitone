@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "../../i18n";
-import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles";
-import { C, FS, R, SP } from "../../tokens";
+import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
+import { C, FS, R, SP } from "../../styles/tokens";
 import { SyndromeTimeline } from "./SyndromeTimeline";
 import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
 import type { DecoderPhase } from "./HammingDecoder";

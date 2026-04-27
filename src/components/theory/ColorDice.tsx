@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
-import { DICE_NET_FACES, THEORY_LEVELS } from "./theory-data";
-import { C, FS, FW, SP } from "../../tokens";
+import { DICE_NET_FACES, THEORY_LEVELS } from "../../data/theory-data";
+import { C, FS, FW, SP } from "../../styles/tokens";
 import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
 

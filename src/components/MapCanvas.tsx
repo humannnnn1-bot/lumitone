@@ -2,9 +2,9 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from "react"
 import { LEVEL_INFO, LUMA_R, LUMA_G, LUMA_B } from "../color-engine";
 import { LEVEL_MASK } from "../constants";
 import type { CanvasData } from "../types";
-import type { MapMode } from "./analyze-types";
+import type { MapMode } from "../types";
 import type { PixelMaps } from "../hooks/usePixelMaps";
-import { C, SP, FS, R } from "../tokens";
+import { C, SP, FS, R } from "../styles/tokens";
 import { timestamp } from "../utils";
 import { useTranslation } from "../i18n";
 import { ConfirmModal } from "./ConfirmModal";

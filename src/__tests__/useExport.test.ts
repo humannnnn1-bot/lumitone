@@ -5,10 +5,10 @@ import { useExport } from "../hooks/useExport";
 import type { CanvasData } from "../types";
 
 /* ── Mock renderBuf ─────────────────────────────────────────── */
-vi.mock("../render-buf", () => ({
+vi.mock("../drawing/render-buf", () => ({
   renderBuf: vi.fn(),
 }));
-import { renderBuf } from "../render-buf";
+import { renderBuf } from "../drawing/render-buf";
 const mockRenderBuf = vi.mocked(renderBuf);
 
 /* ── Helpers ────────────────────────────────────────────────── */

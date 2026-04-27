@@ -1,4 +1,4 @@
-import { LEVEL_CANDIDATES } from "./color-engine";
+import { LEVEL_CANDIDATES } from "../color-engine";
 
 export type ColorAction =
   | { type: "set_color"; lv: number; idx: number }

@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "../../i18n";
-import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles";
-import { C, FS, SP } from "../../tokens";
+import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
+import { C, FS, SP } from "../../styles/tokens";
 import { K8LayerGraph } from "./K8LayerGraph";
 import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
 

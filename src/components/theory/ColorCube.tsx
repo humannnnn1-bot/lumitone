@@ -1,8 +1,17 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { THEORY_LEVELS, CUBE_EDGES, CUBE_POINTS, GRAY_PATH, edgeChannel, isBackEdge, STELLA_EDGES, COMPLEMENT_EDGES } from "./theory-data";
-import { C, FS, FW, SP } from "../../tokens";
+import {
+  THEORY_LEVELS,
+  CUBE_EDGES,
+  CUBE_POINTS,
+  GRAY_PATH,
+  edgeChannel,
+  isBackEdge,
+  STELLA_EDGES,
+  COMPLEMENT_EDGES,
+} from "../../data/theory-data";
+import { C, FS, FW, SP } from "../../styles/tokens";
 import { usePinReset } from "./pin-reset";
-import { S_BTN } from "../../styles";
+import { S_BTN } from "../../styles/shared";
 import { useTranslation } from "../../i18n";
 
 const DOT_R = 11;

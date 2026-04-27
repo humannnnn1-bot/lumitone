@@ -1,7 +1,7 @@
 import { useState, useReducer, useMemo, useCallback } from "react";
 import { buildColorLUT, DEFAULT_CC, LEVEL_CANDIDATES } from "../color-engine";
 import { LEVEL_COUNT } from "../constants";
-import { colorReducer } from "../color-reducer";
+import { colorReducer } from "../state/color-reducer";
 
 export function useColorState(hist: number[]) {
   const [cc, ccDispatch] = useReducer(colorReducer, [...DEFAULT_CC]);

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { paintCircle, paintLine, paintRect, paintEllipse } from "../paint";
+import { paintCircle, paintLine, paintRect, paintEllipse } from "../drawing/paint";
 
 function mkBuf(w: number, h: number): Uint8Array {
   return new Uint8Array(w * h);
@@ -23,7 +23,8 @@ describe("paintCircle", () => {
     const buf = mkBuf(10, 10);
     paintCircle(buf, 0, 0, 5, 1, 10, 10);
     for (let i = 0; i < buf.length; i++) {
-      const x = i % 10, y = Math.floor(i / 10);
+      const x = i % 10,
+        y = Math.floor(i / 10);
       if (buf[i] === 1) {
         expect(x).toBeGreaterThanOrEqual(0);
         expect(y).toBeGreaterThanOrEqual(0);
@@ -146,9 +147,13 @@ describe("paintEllipse", () => {
   it("normal ellipse has 4-way symmetry", () => {
     const buf = mkBuf(30, 30);
     paintEllipse(buf, 5, 10, 25, 20, 0, 1, 30, 30);
-    const cx = 15, cy = 15;
+    const cx = 15,
+      cy = 15;
     // Check that painted pixels exist in all 4 quadrants
-    let q1 = false, q2 = false, q3 = false, q4 = false;
+    let q1 = false,
+      q2 = false,
+      q3 = false,
+      q4 = false;
     for (let y = 0; y < 30; y++) {
       for (let x = 0; x < 30; x++) {
         if (buf[y * 30 + x] === 1) {

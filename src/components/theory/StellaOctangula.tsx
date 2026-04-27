@@ -12,9 +12,9 @@ import {
   stellaEdgeChannels,
   vertexRadius,
   vertexDepth,
-} from "./theory-data";
-import { C, FS, FW, SP } from "../../tokens";
-import { S_BTN } from "../../styles";
+} from "../../data/theory-data";
+import { C, FS, FW, SP } from "../../styles/tokens";
+import { S_BTN } from "../../styles/shared";
 import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
 

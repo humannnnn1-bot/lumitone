@@ -1,8 +1,8 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
-import { THEORY_LEVELS, FANO_LINES, FANO_LINE_CATEGORIES, FANO_LINE_ENDPOINTS, FANO_POINTS, FANO_CIRCLE } from "./theory-data";
-import { C, FS, FW, SP } from "../../tokens";
+import { THEORY_LEVELS, FANO_LINES, FANO_LINE_CATEGORIES, FANO_LINE_ENDPOINTS, FANO_POINTS, FANO_CIRCLE } from "../../data/theory-data";
+import { C, FS, FW, SP } from "../../styles/tokens";
 import { usePinReset } from "./pin-reset";
-import { S_BTN } from "../../styles";
+import { S_BTN } from "../../styles/shared";
 import { useTranslation } from "../../i18n";
 
 const W = 300,

@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import "./global.css";
+import "./styles/global.css";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LanguageProvider } from "./i18n";
@@ -12,5 +12,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <App />
       </LanguageProvider>
     </ErrorBoundary>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

@@ -1,5 +1,5 @@
 import React from "react";
-import { C } from "../../tokens";
+import { C } from "../../styles/tokens";
 
 interface CayleyGridProps {
   row: number;

@@ -11,8 +11,8 @@ import {
   faceDiffuse,
   isBackEdge,
   vertexDepth,
-} from "./theory-data";
-import { C, FS, FW, SP } from "../../tokens";
+} from "../../data/theory-data";
+import { C, FS, FW, SP } from "../../styles/tokens";
 import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
 

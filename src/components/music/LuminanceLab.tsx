@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "../../i18n";
-import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles";
-import { C, FS, R, SP } from "../../tokens";
+import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
+import { C, FS, R, SP } from "../../styles/tokens";
 import { ComplementPairs } from "./ComplementPairs";
 import { ZigzagGraph } from "./ZigzagGraph";
 import type { MusicEngineReturn } from "../../hooks/useMusicEngine";

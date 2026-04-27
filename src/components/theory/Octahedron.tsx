@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from "react";
-import { THEORY_LEVELS, OCTA_POINTS, OCTA_EDGES, OCTA_FACES, OCTA_COMPLEMENT_AXES } from "./theory-data";
-import { C, FS, FW, SP } from "../../tokens";
-import { S_BTN } from "../../styles";
+import { THEORY_LEVELS, OCTA_POINTS, OCTA_EDGES, OCTA_FACES, OCTA_COMPLEMENT_AXES } from "../../data/theory-data";
+import { C, FS, FW, SP } from "../../styles/tokens";
+import { S_BTN } from "../../styles/shared";
 import { usePinReset } from "./pin-reset";
 import { useTranslation } from "../../i18n";
 

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useLayoutEffect } from "react";
-import { THEORY_LEVELS } from "./theory-data";
-import { C, FS, FW, SP } from "../../tokens";
+import { THEORY_LEVELS } from "../../data/theory-data";
+import { C, FS, FW, SP } from "../../styles/tokens";
 import { useTranslation } from "../../i18n";
 import { CayleyTable } from "./CayleyTable";
 
