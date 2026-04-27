@@ -256,10 +256,10 @@ export const CompositionDonut = React.memo(function CompositionDonut({ cvs, hist
         <span>{t("donut_layer_color")}</span>
         {hasGlaze && <span>{t("donut_layer_glaze")}</span>}
       </div>
-      {/* Info text */}
+      {/* Info text — minHeight reserves space for the tallest tooltip (5 lines × 14.4px lineHeight) so hover doesn't shift layout */}
       <div
         style={{
-          minHeight: 56,
+          minHeight: 76,
           marginTop: SP.xl,
           padding: `${SP.lg}px ${SP.xl}px`,
           fontSize: FS.sm,
