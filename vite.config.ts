@@ -25,7 +25,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],
-      exclude: ["src/__tests__/**", "src/main.tsx", "src/components/music/**", "src/components/MusicPanel.tsx", "src/hooks/useMusicEngine.ts", "src/hooks/useSonification.ts"],
+      exclude: ["**/__tests__/**", "src/main.tsx", "src/components/music/**", "src/components/MusicPanel.tsx", "src/hooks/useMusicEngine.ts", "src/hooks/useSonification.ts"],
       reporter: ["text", "html", "lcov"],
       reportsDirectory: "./coverage",
       thresholds: {
