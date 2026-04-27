@@ -28,8 +28,8 @@ interface Props {
   canRandomize: boolean;
 }
 
-export const HexDiag = memo(
-  function HexDiag({ cc, dispatch, hist, total, locked, onToggleLock, onRandomize, canRandomize }: Props) {
+export const HexDiagram = memo(
+  function HexDiagram({ cc, dispatch, hist, total, locked, onToggleLock, onRandomize, canRandomize }: Props) {
     const { t } = useTranslation();
     const [hl, setHl] = useState<number | null>(null);
     const [focusedLv, setFocusedLv] = useState<number | null>(null);

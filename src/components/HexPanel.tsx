@@ -3,11 +3,11 @@ import { S_BTN } from "../styles";
 import { LEVEL_CANDIDATES } from "../color-engine";
 import { rgbStr } from "../utils";
 import { C, SP, FS, R } from "../tokens";
-import { HexDiag } from "./HexDiag";
+import { HexDiagram } from "./HexDiagram";
 import type { ColorAction } from "../color-reducer";
 import type { TranslationFn } from "../i18n";
 
-interface HexTabProps {
+interface HexPanelProps {
   hexPrvRef: React.RefObject<HTMLCanvasElement | null>;
   displayW: number;
   displayH: number;
@@ -28,7 +28,7 @@ interface HexTabProps {
 const S_FLEX_COL_CENTER: React.CSSProperties = { display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg };
 const S_LABEL: React.CSSProperties = { fontSize: FS.md, color: C.textDim, lineHeight: "14px" };
 
-export const HexTab = React.memo(function HexTab(props: HexTabProps) {
+export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
   const {
     hexPrvRef,
     displayW,
@@ -86,7 +86,7 @@ export const HexTab = React.memo(function HexTab(props: HexTabProps) {
           </div>
         </div>
         <div className="panel-sidebar">
-          <HexDiag
+          <HexDiagram
             cc={cc}
             dispatch={ccDispatch}
             hist={hist}

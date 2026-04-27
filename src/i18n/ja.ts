@@ -71,7 +71,7 @@ export const ja: Record<TranslationKey, string> = {
   color_detail_xor: "XOR",
   color_detail_hamming: "Hamming",
 
-  // HexDiag
+  // HexDiagram
   hex_diagram_label: "色相環の六角形ダイアグラム",
   hex_luminance_seq: "一周のルマ列: 2,3,4,5,6,5,4,5,4,3,2,1,2,3",
   hex_title: "色相環の六角形 — ルマレベル配置図",
@@ -493,7 +493,7 @@ export const ja: Record<TranslationKey, string> = {
   aria_gallery_filter_hue: "フィルタ色相角度",
   aria_gallery_filter_range: "フィルタ色相範囲",
 
-  // LinkedViz
+  // LinkedVisualization (i18n key prefix kept as `linkedviz_` to avoid touching 17 keys × callsites)
   linkedviz_mode_l0: "L0=原点",
   linkedviz_mode_l7: "L7=原点",
   linkedviz_legend_l0_origin: "L0 r=0",

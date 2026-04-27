@@ -5,14 +5,14 @@ import { useTranslation } from "../i18n";
 import { angleToFreq } from "../hooks/useMusicEngine";
 import { freqToNote } from "./music/music-data";
 
-interface LinkedVizProps {
+interface LinkedVisualizationProps {
   hueAngle: number;
   brushLevel: number;
   onHueAngleChange?: (angle: number) => void;
   hoveredCandidate?: { lv: number; ci: number } | null;
   onHoverCandidate?: (d: { lv: number; ci: number } | null) => void;
   directCandidates?: Map<number, number>;
-  /** External audio engine — when provided, LinkedViz shows audio toggle button */
+  /** External audio engine — when provided, LinkedVisualization shows audio toggle button */
   externalAudio?: { initAudio: () => void; enabled: boolean; setEnabled: (b: boolean) => void };
   /** Rotation speed in degrees/second (default 36) */
   rotationSpeed?: number;
@@ -296,7 +296,7 @@ const S_TOGGLE_ACTIVE: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-export const LinkedViz = React.memo(function LinkedViz({
+export const LinkedVisualization = React.memo(function LinkedVisualization({
   hueAngle,
   brushLevel,
   onHueAngleChange,
@@ -311,7 +311,7 @@ export const LinkedViz = React.memo(function LinkedViz({
   alpha7: alpha7Prop,
   onAlpha7Change,
   onOriginModeChange,
-}: LinkedVizProps) {
+}: LinkedVisualizationProps) {
   const { t } = useTranslation();
   const [mode, setModeInternal] = useState<0 | 7>(0);
   const setMode = useCallback(
