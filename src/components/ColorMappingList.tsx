@@ -76,10 +76,7 @@ export const ColorMappingList = memo(
                   flexShrink: 0,
                 }}
               />
-              <span style={{ fontSize: FS.lg, color: C.textDimmer, width: 30, flexShrink: 0 }}>
-                L{i} {"KBRMGCYW"[i]}
-              </span>
-              <span style={{ fontSize: FS.sm, color: C.textDim, fontFamily: "monospace", flexShrink: 0 }}>{tl.bits.join("")}</span>
+              <span style={{ fontSize: FS.lg, color: C.textDimmer, width: 18, flexShrink: 0 }}>L{i}</span>
               <div style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0 }}>
                 {has && (
                   <button
@@ -120,20 +117,20 @@ export const ColorMappingList = memo(
                   if (hexAngle == null) return null;
                   const d = hueDelta(hexAngle, canon);
                   const ibs = { display: "inline-block" as const, textAlign: "right" as const };
-                  const ibc = { display: "inline-block" as const, textAlign: "center" as const, width: 8 };
+                  const ibc = { display: "inline-block" as const, textAlign: "center" as const, width: 9 };
                   return (
-                    <span style={{ fontSize: FS.sm, fontFamily: "monospace", whiteSpace: "nowrap" }}>
-                      <span style={{ ...ibs, color: tl.color, width: 32 }}>
+                    <span style={{ fontSize: FS.md, fontFamily: "monospace", whiteSpace: "nowrap" }}>
+                      <span style={{ ...ibs, color: tl.color, width: 36 }}>
                         {"\u2B21"}
                         {canon}°
                       </span>
                       <span style={{ ...ibc, color: C.textDim }}>{d >= 0 ? "+" : "\u2212"}</span>
-                      <span style={{ ...ibs, color: d === 0 ? C.textDim : C.textWhite, width: 32 }}>
+                      <span style={{ ...ibs, color: d === 0 ? C.textDim : C.textWhite, width: 36 }}>
                         {"\u0394"}
                         {Math.abs(d)}°
                       </span>
                       <span style={{ ...ibc, color: C.textDim }}>=</span>
-                      <span style={{ ...ibs, color: rgbStr(cur.rgb), width: 28 }}>{hexAngle}°</span>
+                      <span style={{ ...ibs, color: rgbStr(cur.rgb), width: 32 }}>{hexAngle}°</span>
                     </span>
                   );
                 })()}
