@@ -64,3 +64,8 @@ npm run format:check
 - [離散代数的色彩モデル 技術ノート](./docs/algebraic-color-model.md)
 - [離散代数的色彩モデル 先行研究調査ノート](./docs/prior-art-algebraic-color-model.md)
 - [Theoryタブ 先行研究調査と改善提案](./docs/theory-tab-prior-art-and-improvements.md)
+
+## License
+
+- **Source code**: [MIT License](./LICENSE)
+- **Documentation in `docs/`**: [Creative Commons Attribution 4.0 International (CC BY 4.0)](./docs/LICENSE.md)
