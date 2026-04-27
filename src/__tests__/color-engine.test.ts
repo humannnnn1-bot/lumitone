@@ -1,9 +1,16 @@
 import { describe, it, expect } from "vitest";
 import {
-  lum, LUMA_R, LUMA_G, LUMA_B,
-  hue2rgb, rgb2hue,
-  GRAY_LUT, LEVEL_INFO, LEVEL_CANDIDATES,
-  buildColorLUT, DEFAULT_CC,
+  lum,
+  LUMA_R,
+  LUMA_G,
+  LUMA_B,
+  hue2rgb,
+  rgb2hue,
+  GRAY_LUT,
+  LEVEL_INFO,
+  LEVEL_CANDIDATES,
+  buildColorLUT,
+  DEFAULT_CC,
 } from "../color-engine";
 
 describe("lum", () => {
@@ -31,11 +38,11 @@ describe("lum", () => {
 describe("hue2rgb / rgb2hue roundtrip", () => {
   const testAngles = [0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330];
 
-  testAngles.forEach(h => {
+  testAngles.forEach((h) => {
     it(`roundtrip at ${h}°`, () => {
       const rgb = hue2rgb(h);
       expect(rgb.length).toBe(3);
-      rgb.forEach(v => {
+      rgb.forEach((v) => {
         expect(v).toBeGreaterThanOrEqual(0);
         expect(v).toBeLessThanOrEqual(255);
       });
@@ -121,7 +128,7 @@ describe("LEVEL_CANDIDATES", () => {
 
   it("intermediate levels have pure color candidates", () => {
     for (let lv = 1; lv <= 6; lv++) {
-      LEVEL_CANDIDATES[lv].forEach(c => {
+      LEVEL_CANDIDATES[lv].forEach((c) => {
         // Each candidate should have max=255 and min=0 (pure color)
         expect(Math.max(...c.rgb)).toBe(255);
         expect(Math.min(...c.rgb)).toBe(0);
@@ -134,9 +141,9 @@ describe("buildColorLUT", () => {
   it("returns 8 RGB tuples with default config", () => {
     const lut = buildColorLUT(DEFAULT_CC);
     expect(lut.length).toBe(8);
-    lut.forEach(rgb => {
+    lut.forEach((rgb) => {
       expect(rgb.length).toBe(3);
-      rgb.forEach(v => {
+      rgb.forEach((v) => {
         expect(v).toBeGreaterThanOrEqual(0);
         expect(v).toBeLessThanOrEqual(255);
       });

@@ -27,7 +27,8 @@
 }
 
 /* ── Base reset ── */
-html, body {
+html,
+body {
   margin: 0;
   padding: 0;
   background: var(--c-bg-root, #0a0a12);
@@ -144,7 +145,8 @@ input[type="checkbox"]:focus-visible {
 .theory-desc,
 .theory-conn-card-body,
 .theory-conn-summary {
-  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Yu Gothic UI", "Meiryo", "Noto Sans CJK JP", system-ui, sans-serif !important;
+  font-family:
+    "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Yu Gothic UI", "Meiryo", "Noto Sans CJK JP", system-ui, sans-serif !important;
 }
 
 /* Theory body text: slightly brighter than the intro preface */
@@ -308,7 +310,7 @@ input[type="checkbox"]:focus-visible {
     max-width: 620px !important;
     font-size: 12px !important;
     padding: 10px !important;
-    line-height: 2.0 !important;
+    line-height: 2 !important;
   }
   .theory-conn-summary-title {
     font-size: 13px !important;

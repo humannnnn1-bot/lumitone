@@ -13,8 +13,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src",
-    "format": "prettier --write src",
-    "format:check": "prettier --check src",
+    "format": "prettier --write src e2e .github .lintstagedrc.json playwright.config.ts vite.config.ts",
+    "format:check": "prettier --check src e2e .github .lintstagedrc.json playwright.config.ts vite.config.ts",
     "prepare": "husky"
   },
   "volta": {

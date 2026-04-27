@@ -2,7 +2,9 @@ import { useRef, useLayoutEffect } from "react";
 
 export function useSyncRef<T>(value: T): React.MutableRefObject<T> {
   const ref = useRef(value);
-  useLayoutEffect(() => { ref.current = value; });
+  useLayoutEffect(() => {
+    ref.current = value;
+  });
   return ref;
 }
 
@@ -16,6 +18,8 @@ export function useSyncRef<T>(value: T): React.MutableRefObject<T> {
  */
 export function useSyncRefs<T extends Record<string, unknown>>(values: T): React.MutableRefObject<T> {
   const ref = useRef(values);
-  useLayoutEffect(() => { Object.assign(ref.current, values); });
+  useLayoutEffect(() => {
+    Object.assign(ref.current, values);
+  });
   return ref;
 }

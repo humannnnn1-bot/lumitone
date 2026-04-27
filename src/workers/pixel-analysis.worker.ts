@@ -52,7 +52,8 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
     isEdge: new Uint8Array(needsEdge ? n : 0),
     levelNorm: new Float32Array(needsLevelNorm ? n : 0),
     localDiversity: new Float32Array(needsDiversity ? n : 0),
-    w, h,
+    w,
+    h,
   };
 
   if (n === 0) {
@@ -86,8 +87,16 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
 
   // Transfer typed arrays for zero-copy (only non-empty buffers)
   const transfer: Transferable[] = [];
-  const arrays = [result.noise, result.depth, result.gradAngle, result.gradMag,
-                  result.regionId, result.isEdge, result.levelNorm, result.localDiversity];
+  const arrays = [
+    result.noise,
+    result.depth,
+    result.gradAngle,
+    result.gradMag,
+    result.regionId,
+    result.isEdge,
+    result.levelNorm,
+    result.localDiversity,
+  ];
   for (const arr of arrays) {
     if (arr.byteLength > 0) transfer.push(arr.buffer as ArrayBuffer);
   }

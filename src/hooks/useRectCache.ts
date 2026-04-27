@@ -13,7 +13,9 @@ export function useRectCache(ref: React.RefObject<HTMLElement | null>): () => DO
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const invalidate = () => { cacheRef.current = null; };
+    const invalidate = () => {
+      cacheRef.current = null;
+    };
     const observer = new ResizeObserver(invalidate);
     observer.observe(el);
     window.addEventListener("scroll", invalidate, { passive: true, capture: true });

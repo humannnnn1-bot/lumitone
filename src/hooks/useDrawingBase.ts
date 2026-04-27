@@ -15,13 +15,15 @@ import type { CanvasData, Point } from "../types";
 export function canvasPos(
   e: { clientX: number; clientY: number },
   refEl: HTMLCanvasElement | null,
-  zoom: number, pan: { x: number; y: number },
+  zoom: number,
+  pan: { x: number; y: number },
   cvs: CanvasData,
 ): Point {
   if (!refEl) return { x: 0, y: 0 };
   const r = refEl.getBoundingClientRect();
   if (r.width === 0 || r.height === 0) return { x: -1, y: -1 };
-  const rx = (e.clientX - r.left) / r.width, ry = (e.clientY - r.top) / r.height;
+  const rx = (e.clientX - r.left) / r.width,
+    ry = (e.clientY - r.top) / r.height;
   const vx = (rx - 0.5) / zoom + 0.5 - pan.x / cvs.w;
   const vy = (ry - 0.5) / zoom + 0.5 - pan.y / cvs.h;
   return {
@@ -36,7 +38,11 @@ export function canvasPos(
  */
 export function trySetPointerCapture(e: React.PointerEvent): void {
   if ((e.target as HTMLElement).setPointerCapture) {
-    try { (e.target as HTMLElement).setPointerCapture(e.pointerId); } catch { /* ignore */ }
+    try {
+      (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    } catch {
+      /* ignore */
+    }
   }
 }
 
@@ -49,8 +55,14 @@ export function tryStartPan(
   spaceRef: React.MutableRefObject<boolean>,
   startPanRef: React.MutableRefObject<(e: React.PointerEvent) => void>,
 ): boolean {
-  if (e.button === 1) { startPanRef.current(e); return true; }
-  if (spaceRef.current) { startPanRef.current(e); return true; }
+  if (e.button === 1) {
+    startPanRef.current(e);
+    return true;
+  }
+  if (spaceRef.current) {
+    startPanRef.current(e);
+    return true;
+  }
   return false;
 }
 
@@ -65,11 +77,7 @@ export interface DrawingRefs {
  * Compute canvas-pixel position from a pointer event using shared refs.
  * `refEl` is the canvas element used for bounding-rect lookup.
  */
-export function cPosFromRefs(
-  e: React.PointerEvent,
-  refEl: HTMLCanvasElement | null,
-  refs: DrawingRefs,
-): Point {
+export function cPosFromRefs(e: React.PointerEvent, refEl: HTMLCanvasElement | null, refs: DrawingRefs): Point {
   return canvasPos(e, refEl, refs.zoomRef.current, refs.panRef.current, refs.cvsRef.current);
 }
 
@@ -92,7 +100,10 @@ export function updateStatusBase(
   if (!statusEl) return;
   const cv = refs.cvsRef.current;
   const pos = cPosFromRefs(e, refEl, refs);
-  if (pos.x < 0 || pos.x >= cv.w || pos.y < 0 || pos.y >= cv.h) { statusEl.textContent = "\u2014"; return; }
+  if (pos.x < 0 || pos.x >= cv.w || pos.y < 0 || pos.y >= cv.h) {
+    statusEl.textContent = "\u2014";
+    return;
+  }
   const idx = pos.y * cv.w + pos.x;
   const lv = dataSource[idx] & LEVEL_MASK;
   const info = LEVEL_INFO[lv];
