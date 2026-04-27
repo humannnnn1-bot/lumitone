@@ -1,10 +1,15 @@
 # CHROMALUM
 
-CHROMALUM is a React/Vite pixel-art and color-theory application built around an 8-level BT.601 luma model. It includes drawing, color mapping, glaze variants, gallery/statistics views, and Theory/Music tabs that explore the same 8-color system through `GF(2)^3`, RGB cube geometry, Fano planes, Hamming codes, and related polyhedral structures.
+CHROMALUM is a React/Vite pixel-art and color-theory application built around
+an 8-level BT.601 luma model. It includes drawing, color mapping, glaze
+variants, gallery/statistics views, and Theory/Music tabs that explore the same
+8-color system through `GF(2)^3`, RGB cube geometry, Fano planes, Hamming codes,
+and related polyhedral structures.
 
 ## Development
 
-This project uses Node.js and npm. The repository declares the expected toolchain through Volta:
+This project uses Node.js and npm. The repository declares the expected
+toolchain through Volta:
 
 ```text
 node 24.14.1
@@ -73,9 +78,15 @@ The corpus is attributed to the pseudonym **Doctor Chromaticus**.
 
 ## License
 
-- **Source code**: [MIT License](./LICENSE)
-- **Documentation (*Tractatus Chromaticus*)**: [Creative Commons Attribution 4.0 International (CC BY 4.0)](./docs/LICENSE.md)
+- **Application source code, tests, build config, and non-scholarly app assets**:
+  [MIT License](./LICENSE)
+- **Scholarly/explanatory content**:
+  [Creative Commons Attribution 4.0 International (CC BY 4.0)](./docs/LICENSE.md)
 
-When reusing material from the *Tractatus Chromaticus*, see the
-[citation templates](./docs/LICENSE.md#how-to-cite) for academic, blog,
-book, slide, translation, and short-form attribution formats.
+The CC BY 4.0 content includes the *Tractatus Chromaticus* documents in
+`docs/` and the authored prose, labels, and rendered explanatory diagrams in
+the Theory tab. The code that implements those views remains MIT-licensed.
+
+When reusing material from the CC BY 4.0 content, see the
+[citation templates](./docs/LICENSE.md#how-to-cite) for academic, blog, book,
+slide, translation, and short-form attribution formats.

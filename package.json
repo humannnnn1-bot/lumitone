@@ -2,6 +2,7 @@
   "name": "chromalum",
   "version": "5.4.1",
   "private": true,
+  "license": "SEE LICENSE IN README.md",
   "type": "module",
   "scripts": {
     "dev": "vite",
