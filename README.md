@@ -61,15 +61,21 @@ npm run format:check
 
 ## Documentation
 
-- [離散代数的色彩モデル 技術ノート](./docs/algebraic-color-model.md)
-- [離散代数的色彩モデル 先行研究調査ノート](./docs/prior-art-algebraic-color-model.md)
-- [Theoryタブ 先行研究調査と改善提案](./docs/theory-tab-prior-art-and-improvements.md)
+The three documents in `docs/` form the *Tractatus Chromaticus*
+("Chromatic Treatise"), a unified treatise on the discrete algebraic
+color model that underlies the application:
+
+- Pars I — [離散代数的色彩モデル 技術ノート](./docs/algebraic-color-model.md)
+- Pars II — [離散代数的色彩モデル 先行研究調査ノート](./docs/prior-art-algebraic-color-model.md)
+- Pars III — [Theoryタブ 先行研究調査と改善提案](./docs/theory-tab-prior-art-and-improvements.md)
+
+The corpus is attributed to the pseudonym **Doctor Chromaticus**.
 
 ## License
 
 - **Source code**: [MIT License](./LICENSE)
-- **Documentation in `docs/`**: [Creative Commons Attribution 4.0 International (CC BY 4.0)](./docs/LICENSE.md)
+- **Documentation (*Tractatus Chromaticus*)**: [Creative Commons Attribution 4.0 International (CC BY 4.0)](./docs/LICENSE.md)
 
-When reusing material from `docs/`, see the
+When reusing material from the *Tractatus Chromaticus*, see the
 [citation templates](./docs/LICENSE.md#how-to-cite) for academic, blog,
 book, slide, translation, and short-form attribution formats.

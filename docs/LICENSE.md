@@ -43,27 +43,29 @@ verbatim (it is a mononym, in the manner of the medieval scholastic
 *Doctor [epithet]* tradition — e.g. *Doctor Angelicus* for Aquinas,
 *Doctor Subtilis* for Duns Scotus, *Doctor Mirabilis* for Roger Bacon).
 
-## Document Titles
+## The Corpus: *Tractatus Chromaticus*
 
-Each document in `docs/` has its own title, which should be used in
-specific citations rather than the umbrella term "CHROMALUM
-Documentation":
+The three documents in `docs/` are collectively known as the
+*Tractatus Chromaticus* ("Chromatic Treatise"). They are read as
+three parts of a single unified treatise on the discrete algebraic
+color model that underlies the CHROMALUM application:
 
-| File | English title | 日本語タイトル |
-|---|---|---|
-| `algebraic-color-model.md` | Algebraic Color Model: Technical Note | 離散代数的色彩モデル 技術ノート |
-| `prior-art-algebraic-color-model.md` | Algebraic Color Model: Prior Art Survey | 離散代数的色彩モデル 先行研究調査ノート |
-| `theory-tab-prior-art-and-improvements.md` | Theory Tab: Prior Art and Improvement Proposals | Theoryタブ 先行研究調査と改善提案 |
+| Part | File | English title | 日本語タイトル |
+|---|---|---|---|
+| Pars I | `algebraic-color-model.md` | Algebraic Color Model: Technical Note | 離散代数的色彩モデル 技術ノート |
+| Pars II | `prior-art-algebraic-color-model.md` | Algebraic Color Model: Prior Art Survey | 離散代数的色彩モデル 先行研究調査ノート |
+| Pars III | `theory-tab-prior-art-and-improvements.md` | Theory Tab: Prior Art and Improvement Proposals | Theoryタブ 先行研究調査と改善提案 |
 
-When citing the corpus as a whole, *CHROMALUM Documentation* is the
-collective title.
+When citing the corpus as a whole, *Tractatus Chromaticus* is the
+collective title. When citing a specific part, use the document title
+above and identify the corpus with *in Tractatus Chromaticus*.
 
 ## How to Cite
 
 Attribution under CC BY 4.0 must include four elements (TASL):
 
 - **T**itle of the work (use the specific document title from the table
-  above; *CHROMALUM Documentation* for the corpus)
+  above; *Tractatus Chromaticus* for the corpus)
 - **A**uthor: Doctor Chromaticus
 - **S**ource URL: <https://github.com/humannnnn1-bot/chromalum>
 - **L**icense: CC BY 4.0,
@@ -80,7 +82,7 @@ TASL elements are present.
 
 ```
 Doctor Chromaticus, "Algebraic Color Model: Technical Note,"
-CHROMALUM Documentation, 2026.
+in Tractatus Chromaticus, 2026.
 https://github.com/humannnnn1-bot/chromalum, licensed under
 CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/).
 ```
@@ -89,14 +91,14 @@ BibTeX (note the double braces — they prevent BibTeX from splitting
 the mononym into "first name / last name"):
 
 ```bibtex
-@misc{chromalum_acm_2026,
-  author = {{Doctor Chromaticus}},
-  title  = {Algebraic Color Model: Technical Note},
-  howpublished = {CHROMALUM Documentation},
-  year   = {2026},
-  url    = {https://github.com/humannnnn1-bot/chromalum},
-  note   = {Licensed under CC BY 4.0,
-            \url{https://creativecommons.org/licenses/by/4.0/}}
+@incollection{chromalum_acm_2026,
+  author    = {{Doctor Chromaticus}},
+  title     = {Algebraic Color Model: Technical Note},
+  booktitle = {Tractatus Chromaticus},
+  year      = {2026},
+  url       = {https://github.com/humannnnn1-bot/chromalum},
+  note      = {Licensed under CC BY 4.0,
+               \url{https://creativecommons.org/licenses/by/4.0/}}
 }
 ```
 
@@ -108,7 +110,7 @@ In-text citation: `Doctor Chromaticus (2026)`.
 > "<quoted text>"
 
 Source: "Algebraic Color Model: Technical Note," in
-[CHROMALUM Documentation](https://github.com/humannnnn1-bot/chromalum),
+[Tractatus Chromaticus](https://github.com/humannnnn1-bot/chromalum),
 by Doctor Chromaticus, licensed under
 [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 ```
@@ -116,15 +118,15 @@ by Doctor Chromaticus, licensed under
 ### Book / textbook (footnote or end-note)
 
 ```
-Adapted from "Algebraic Color Model: Technical Note," CHROMALUM
-Documentation by Doctor Chromaticus, CC BY 4.0.
+Adapted from "Algebraic Color Model: Technical Note," in
+Tractatus Chromaticus by Doctor Chromaticus, CC BY 4.0.
 Source: https://github.com/humannnnn1-bot/chromalum
 ```
 
 ### Slide deck (footer or final credits slide)
 
 ```
-Adapted from: CHROMALUM Documentation by Doctor Chromaticus,
+Adapted from: Tractatus Chromaticus by Doctor Chromaticus,
 CC BY 4.0, github.com/humannnnn1-bot/chromalum
 ```
 
@@ -132,7 +134,7 @@ CC BY 4.0, github.com/humannnnn1-bot/chromalum
 
 ```
 This document is a <translation | summary | abridgment> of
-"Algebraic Color Model: Technical Note" in CHROMALUM Documentation
+"Algebraic Color Model: Technical Note" in Tractatus Chromaticus
 by Doctor Chromaticus, CC BY 4.0
 (https://github.com/humannnnn1-bot/chromalum).
 Changes: <e.g. translated from Japanese to English; sections 3-4 abridged>.
@@ -141,14 +143,14 @@ Changes: <e.g. translated from Japanese to English; sections 3-4 abridged>.
 ### Figure or table only (caption credit)
 
 ```
-Figure N. <caption>. Adapted from CHROMALUM Documentation
+Figure N. <caption>. Adapted from Tractatus Chromaticus
 by Doctor Chromaticus, CC BY 4.0.
 ```
 
 ### Social media or short-form (where space is constrained)
 
 ```
-via Doctor Chromaticus · CHROMALUM Documentation · CC BY 4.0
+via Doctor Chromaticus · Tractatus Chromaticus · CC BY 4.0
 github.com/humannnnn1-bot/chromalum
 ```
 
@@ -156,7 +158,7 @@ github.com/humannnnn1-bot/chromalum
 
 ```
 出典: 「離散代数的色彩モデル 技術ノート」
-（CHROMALUM Documentation, Doctor Chromaticus 作）
+（Tractatus Chromaticus, Doctor Chromaticus 作）
 ライセンス: CC BY 4.0
 https://github.com/humannnnn1-bot/chromalum
 ```
