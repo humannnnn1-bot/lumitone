@@ -3,7 +3,7 @@ import { LEVEL_INFO, LEVEL_CANDIDATES, DEFAULT_CC, findClosestCandidate } from "
 import { SP, C, R, FS, SHADOW, HUE_GRADIENT, FONT } from "../tokens";
 import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../styles";
 import { useTranslation } from "../i18n";
-import { LinkedViz, ACTIVE_LEVELS } from "./LinkedViz";
+import { LinkedVisualization, ACTIVE_LEVELS } from "./LinkedVisualization";
 import { useMusicEngine, type ScaleMode } from "../hooks/useMusicEngine";
 import { Oscilloscope } from "./music/Oscilloscope";
 import { CayleyGrid } from "./music/CayleyGrid";
@@ -151,7 +151,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
   const [hueSpeed, setHueSpeed] = useState(36);
   const [hoveredFanoLine, setHoveredFanoLine] = useState<number | null>(null);
 
-  // LinkedViz alpha state (lifted here for audio engine access)
+  // LinkedVisualization alpha state (lifted here for audio engine access)
   const [alpha0, setAlpha0] = useState(0);
   const [alpha7, setAlpha7] = useState(0);
   const [originMode, setOriginMode] = useState<0 | 7>(0);
@@ -276,7 +276,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
     engine.initAudio();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Resume drone when user interacts with LinkedViz controls
+  // Resume drone when user interacts with LinkedVisualization controls
   const resumeDrone = useCallback(() => {
     if (droneMuted) {
       engine.setDroneMuted(false);
@@ -884,8 +884,8 @@ export const MusicPanel = React.memo(function MusicPanel() {
             })}
           </div>
 
-          {/* LinkedViz */}
-          <LinkedViz
+          {/* LinkedVisualization */}
+          <LinkedVisualization
             hueAngle={hueAngle}
             brushLevel={0}
             onHueAngleChange={(a) => {
@@ -998,7 +998,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
               />
               <span style={{ fontSize: FS.lg, color: C.textDim, fontVariantNumeric: "tabular-nums", width: 42 }}>{hueSpeed}&deg;/s</span>
             </div>
-            {/* Alpha rotation (bottom — near LinkedViz α display) */}
+            {/* Alpha rotation (bottom — near LinkedVisualization α display) */}
             <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
               <button
                 type="button"

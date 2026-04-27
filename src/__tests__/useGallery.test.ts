@@ -50,7 +50,8 @@ describe("generateAllVariants", () => {
   it("each variant has exactly 8 elements", () => {
     const locked = new Array(8).fill(false);
     const hist = new Array(8).fill(100);
-    locked[0] = true; locked[7] = true; // lock extremes
+    locked[0] = true;
+    locked[7] = true; // lock extremes
     const result = generateAllVariants([...DEFAULT_CC], locked, hist);
     for (const v of result) {
       expect(v.length).toBe(8);
@@ -60,7 +61,8 @@ describe("generateAllVariants", () => {
   it("variant indices are valid for each level's candidates", () => {
     const locked = new Array(8).fill(false);
     const hist = new Array(8).fill(100);
-    locked[0] = true; locked[7] = true;
+    locked[0] = true;
+    locked[7] = true;
     const result = generateAllVariants([...DEFAULT_CC], locked, hist);
     for (const v of result) {
       for (let lv = 0; lv < 8; lv++) {
@@ -111,10 +113,22 @@ describe("renderThumbnail", () => {
   it("downscales by nearest-neighbor sampling", () => {
     // 4x4 canvas with different levels in quadrants
     const data = new Uint8Array(16);
-    data[0] = 0; data[1] = 0; data[4] = 0; data[5] = 0; // top-left: level 0
-    data[2] = 3; data[3] = 3; data[6] = 3; data[7] = 3; // top-right: level 3
-    data[8] = 5; data[9] = 5; data[12] = 5; data[13] = 5; // bottom-left: level 5
-    data[10] = 7; data[11] = 7; data[14] = 7; data[15] = 7; // bottom-right: level 7
+    data[0] = 0;
+    data[1] = 0;
+    data[4] = 0;
+    data[5] = 0; // top-left: level 0
+    data[2] = 3;
+    data[3] = 3;
+    data[6] = 3;
+    data[7] = 3; // top-right: level 3
+    data[8] = 5;
+    data[9] = 5;
+    data[12] = 5;
+    data[13] = 5; // bottom-left: level 5
+    data[10] = 7;
+    data[11] = 7;
+    data[14] = 7;
+    data[15] = 7; // bottom-right: level 7
 
     const lut = buildColorLUT([...DEFAULT_CC]);
     const img = renderThumbnail(data, 4, 4, lut, 2, 2);
@@ -140,7 +154,7 @@ describe("renderThumbnail", () => {
 
   it("masks pixel values to 3 bits", () => {
     // Value 0xFF should be masked to 7
-    const data = new Uint8Array(4).fill(0xFF);
+    const data = new Uint8Array(4).fill(0xff);
     const lut = buildColorLUT([...DEFAULT_CC]);
     const img = renderThumbnail(data, 2, 2, lut, 2, 2);
     const rgb = lut[7]; // 0xFF & 7 = 7

@@ -27,7 +27,7 @@ import { CropModal } from "./components/CropModal";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { AnalyzePanel } from "./components/AnalyzePanel";
 import { GalleryPanel } from "./components/GalleryPanel";
-import { HexTab } from "./components/HexTab";
+import { HexPanel } from "./components/HexPanel";
 import { TheoryPanel } from "./components/TheoryPanel";
 import { useTranslation } from "./i18n";
 
@@ -500,7 +500,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
         )}
         {activeTab === 1 && (
           <div id="tabpanel-1" role="tabpanel">
-            <HexTab
+            <HexPanel
               hexPrvRef={hexPrvRef}
               displayW={displayW}
               displayH={displayH}

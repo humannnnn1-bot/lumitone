@@ -1,6 +1,6 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { LEVEL_INFO, LEVEL_CANDIDATES, findClosestCandidate } from "../color-engine";
-import { LinkedViz } from "./LinkedViz";
+import { LinkedVisualization } from "./LinkedVisualization";
 import { BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from "../constants";
 import type { GlazeToolId } from "../constants";
 import { S_BTN, S_BTN_ACTIVE, S_CHECKERBOARD } from "../styles";
@@ -780,7 +780,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
           </div>
 
           {/* ── Linked 4-View Visualization ── */}
-          <LinkedViz
+          <LinkedVisualization
             hueAngle={hueAngle}
             brushLevel={brushLevel}
             onHueAngleChange={setHueAngle}

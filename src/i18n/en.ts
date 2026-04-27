@@ -71,7 +71,7 @@ export const en = {
   color_detail_xor: "XOR",
   color_detail_hamming: "Hamming",
 
-  // HexDiag
+  // HexDiagram
   hex_diagram_label: "Hexagonal hue ring diagram",
   hex_luminance_seq: "Luminance cycle: 2,3,4,5,6,5,4,5,4,3,2,1,2,3",
   hex_title: "Hexagonal hue ring — Luminance level layout",
@@ -492,7 +492,7 @@ export const en = {
   aria_gallery_filter_hue: "Filter hue angle",
   aria_gallery_filter_range: "Filter hue range",
 
-  // LinkedViz
+  // LinkedVisualization (i18n key prefix kept as `linkedviz_` to avoid touching 17 keys × callsites)
   linkedviz_mode_l0: "L0=origin",
   linkedviz_mode_l7: "L7=origin",
   linkedviz_legend_l0_origin: "L0 r=0",

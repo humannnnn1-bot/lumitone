@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { HexDiag } from "../components/HexDiag";
+import { HexDiagram } from "../components/HexDiagram";
 
 vi.mock("../i18n", () => ({
   useTranslation: () => ({
@@ -9,7 +9,7 @@ vi.mock("../i18n", () => ({
   }),
 }));
 
-function makeProps(overrides?: Partial<Parameters<typeof HexDiag>[0]>) {
+function makeProps(overrides?: Partial<Parameters<typeof HexDiagram>[0]>) {
   return {
     cc: [0, 0, 0, 0, 0, 0, 0, 0],
     dispatch: vi.fn(),
@@ -23,22 +23,22 @@ function makeProps(overrides?: Partial<Parameters<typeof HexDiag>[0]>) {
   };
 }
 
-describe("HexDiag", () => {
+describe("HexDiagram", () => {
   it("renders an SVG element", () => {
-    const { container } = render(<HexDiag {...makeProps()} />);
+    const { container } = render(<HexDiagram {...makeProps()} />);
     const svg = container.querySelector("svg");
     expect(svg).not.toBeNull();
     expect(svg!.getAttribute("role")).toBe("img");
   });
 
   it("has interactive groups with role='button'", () => {
-    render(<HexDiag {...makeProps()} />);
+    render(<HexDiagram {...makeProps()} />);
     const buttons = screen.getAllByRole("button");
     expect(buttons.length).toBeGreaterThan(0);
   });
 
   it("has aria-pressed attributes on interactive groups", () => {
-    render(<HexDiag {...makeProps()} />);
+    render(<HexDiagram {...makeProps()} />);
     const buttons = screen.getAllByRole("button");
     const withAriaPressed = buttons.filter((b) => b.getAttribute("aria-pressed") !== null);
     expect(withAriaPressed.length).toBe(buttons.length);
@@ -46,7 +46,7 @@ describe("HexDiag", () => {
 
   it("keyboard Enter triggers onClick (dispatch)", () => {
     const dispatch = vi.fn();
-    render(<HexDiag {...makeProps({ dispatch })} />);
+    render(<HexDiagram {...makeProps({ dispatch })} />);
     const buttons = screen.getAllByRole("button");
     // Press Enter on the first button
     fireEvent.keyDown(buttons[0], { key: "Enter" });
