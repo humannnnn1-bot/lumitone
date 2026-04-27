@@ -76,7 +76,7 @@ export const ColorMappingList = memo(
                   flexShrink: 0,
                 }}
               />
-              <span style={{ fontSize: FS.lg, color: C.textDimmer, width: 18, flexShrink: 0 }}>L{i}</span>
+              <span style={{ fontSize: FS.lg, color: C.textDimmer, width: 18, flexShrink: 0, marginLeft: SP.xs }}>L{i}</span>
               <div style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0 }}>
                 {has && (
                   <button
