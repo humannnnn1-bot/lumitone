@@ -199,7 +199,8 @@ export const en = {
   tab_gallery_short: "Gallery",
   tab_theory_short: "Theory",
 
-  // Theory panel
+  // Theory panel — scholarly content (label_theory + theory_* keys below) is
+  // CC BY 4.0 (Doctor Chromaticus); see docs/LICENSE.md.
   label_theory: "ALGEBRAIC COLOR THEORY",
   theory_title: "Color Theory",
   theory_intro:

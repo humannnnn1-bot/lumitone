@@ -5,16 +5,19 @@ The scholarly and explanatory content of this repository is licensed under the
 
 This CC BY 4.0 content includes:
 
-- the documents in this `docs/` directory;
+- the documents in this `docs/` directory (excluding this `LICENSE.md`
+  itself, which is a license notice rather than scholarly content);
 - the authored prose, labels, and section text displayed in the Theory tab;
-- the rendered explanatory diagrams and theory visualizations displayed in the
-  Theory tab.
+- the rendered explanatory diagrams and theory visualizations displayed in
+  the Theory tab.
 
 This is separate from the [MIT License](../LICENSE), which covers the
 application source code, tests, build configuration, and non-scholarly app
-assets. The React/TypeScript code that implements the Theory tab remains
-MIT-licensed; this CC BY 4.0 license applies to the expressive scholarly
-content rendered by that code.
+assets. The React/TypeScript implementation of the Theory tab (component
+logic, hooks, styles, and rendering algorithms) remains MIT-licensed. The
+CC BY 4.0 license covers the expressive content surfaced by that
+implementation: authored prose, section labels, and the rendered diagrams
+when reused as visual artifacts (e.g., screenshots, embedded images).
 
 ## Summary (human-readable)
 
@@ -48,10 +51,10 @@ The CC BY 4.0 content is attributed to:
 
 > **Doctor Chromaticus**
 
-This is a pseudonymous attribution. Citations should use this name
-verbatim (it is a mononym, in the manner of the medieval scholastic
-*Doctor [epithet]* tradition — e.g. *Doctor Angelicus* for Aquinas,
-*Doctor Subtilis* for Duns Scotus, *Doctor Mirabilis* for Roger Bacon).
+This is a pseudonymous attribution. Citations should use the name
+verbatim — it is a mononym (no first/last name split), which has
+implications for BibTeX entries (see the double-brace handling in the
+template below).
 
 ## The Corpus: *Tractatus Chromaticus*
 

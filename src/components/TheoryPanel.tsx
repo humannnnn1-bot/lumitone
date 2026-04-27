@@ -1,3 +1,6 @@
+// Theory tab: dual-licensed. Implementation MIT; authored prose/labels and
+// rendered diagrams (when reused as content) CC BY 4.0 (Doctor Chromaticus).
+// See docs/LICENSE.md.
 import React, { useState, useCallback } from "react";
 import { C, SP, FS, FW } from "../styles/tokens";
 import { useTranslation } from "../i18n";
