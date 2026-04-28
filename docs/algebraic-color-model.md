@@ -372,12 +372,13 @@ The accurate claim is narrower:
 The current CHROMALUM implementation stores the core data and invariants in:
 
 ```text
-src/components/theory/theory-data.ts
+src/data/theory-data.ts
 src/components/TheoryPanel.tsx
 src/i18n/ja.ts
 src/i18n/en.ts
-src/__tests__/theory-data.test.ts
-src/__tests__/theory-copy.test.ts
+src/data/__tests__/theory-data.test.ts
+src/i18n/__tests__/theory-copy.test.ts
+src/components/__tests__/TheoryPanel.test.tsx
 ```
 
 Important invariants currently tested include:
@@ -395,10 +396,10 @@ Important invariants currently tested include:
 
 ## References
 
-- ITU-R, Recommendation BT.601: digital component video and luma construction.  
-  https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.601-6-200701-S!!PDF-E.pdf
-- W3C, WCAG relative luminance definition.  
-  https://www.w3.org/WAI/GL/2012/WD-wcag2ict-20121126/#relative-luminance
+- ITU-R, Recommendation BT.601-7: digital component video and luma construction.
+  https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.601-7-201103-I!!PDF-E.pdf
+- W3C, WCAG 2.2 relative luminance definition.
+  https://www.w3.org/TR/WCAG22/relative-luminance.html
 - GMT Documentation, Color systems and RGB cube hue path.  
   https://docs.generic-mapping-tools.org/6.2/cookbook/colorspace.html
 - Wolfram Programming Lab, Color Cube.  

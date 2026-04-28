@@ -265,8 +265,8 @@ Across exact searches for the inequality and for `GRB` + BT.601 luma, this resul
 
 - ITU-R Recommendation BT.601-7, official PDF.  
   https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.601-7-201103-I!!PDF-E.pdf
-- W3C, WCAG 2.0 relative luminance definition.  
-  https://www.w3.org/WAI/GL/2012/WD-wcag2ict-20121126/#relative-luminance
+- W3C, WCAG 2.2 relative luminance definition.
+  https://www.w3.org/TR/WCAG22/relative-luminance.html
 
 ## 5. Complement, Luma Reversal, and Standard Die
 
@@ -428,10 +428,10 @@ These should not be treated as direct prior art unless CHROMALUM starts making c
 5. `K8` edge decomposition by Hamming distance gives a compact atlas linking cube, stella octangula, and complement axes.
 6. The Theory tab is an integrated educational visualization of these structures rather than a standalone restatement of any one known result.
 
-### Claims that require more proof before publication
+### Claims and extensions that require more proof or implementation before publication
 
 1. Uniqueness of the die net under hue-path and complement constraints.
-2. Whether the `GRB` luma-monotone lemma remains unique under BT.709 / WCAG relative luminance.
+2. How to present and test coefficient families beyond BT.601, including BT.709 / WCAG relative luminance weights where `GRB` remains unique because `0.7152 > 0.2126 + 0.0722` and `0.2126 > 0.0722`.
 3. Whether alternate luma coefficients with `max > sum(other two)` produce analogous unique bit orders.
 4. Whether the CHROMALUM ordering has any perceptual advantages beyond luma ranking.
 5. Whether the model can be generalized from 8 vertices to continuous RGB surfaces without losing algebraic clarity.

@@ -1,11 +1,12 @@
 /* ═══════════════════════════════════════════
    COLOR ENGINE
-   8-level pure-color mapping using BT.601 luminance coefficients
+   8-level pure-color mapping using BT.601 luma coefficients
 
-   NOTE: These BT.601 luma coefficients are applied directly to sRGB [0-255]
-   values (gamma-compressed). Strictly, BT.601 assumes linear-light input;
-   for WCAG 2.0 relative luminance the sRGB transfer function should be
-   inverted first (coefficients 0.2126, 0.7152, 0.0722 on linear RGB).
+   NOTE: BT.601 defines luma Y' from gamma-corrected component signals
+   R', G', and B'. Here we apply the same coefficients directly to
+   sRGB-like [0-255] channel values as a discrete luma ranking.
+   For WCAG relative luminance, sRGB must be linearized first
+   (coefficients 0.2126, 0.7152, 0.0722 on linear RGB).
    We intentionally use the simpler BT.601 formula because:
      1. The relative ordering of the 8 binary colors is preserved.
      2. Complement symmetry Y_c + Y_(7−c) = 255 holds exactly.
