@@ -6,6 +6,7 @@
 
 - 技術定義・定理・実装対応: [離散代数的色彩モデル](./algebraic-color-model.md)
 - Theoryタブの改善提案: [Theoryタブ — 先行研究と改善提案](./theory-tab-prior-art-and-improvements.md)
+- Music/LinkedVisualization: [Music Linked Visualization](./music-linked-visualization.md)
 
 ## Executive Summary
 

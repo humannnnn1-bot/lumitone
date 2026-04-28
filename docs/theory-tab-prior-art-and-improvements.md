@@ -6,6 +6,7 @@
 
 - 技術定義・定理・実装対応: [離散代数的色彩モデル](./algebraic-color-model.md)
 - 先行研究・新規性評価: [離散代数的色彩モデル — 先行研究](./prior-art-algebraic-color-model.md)
+- Music/LinkedVisualization: [Music Linked Visualization](./music-linked-visualization.md)
 
 ## Executive Conclusion
 
