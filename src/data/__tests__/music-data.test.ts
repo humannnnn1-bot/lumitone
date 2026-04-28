@@ -8,6 +8,7 @@ import {
   LUMA_VALUES,
   ZIGZAG_CHANNELS,
   ZIGZAG_PATH,
+  bitSpectrumComponents,
   fanoLinesThrough,
   freqToNote,
 } from "../music-data";
@@ -69,6 +70,17 @@ describe("music-data invariants", () => {
       seen.add(b);
     }
     expect([...seen].sort((x, y) => x - y)).toEqual([...CHROMA_LEVELS]);
+  });
+
+  it("bitSpectrumComponents maps GF(2)^3 basis bits to reusable timbre components", () => {
+    expect(bitSpectrumComponents(0)).toEqual([]);
+    expect(bitSpectrumComponents(1).map((component) => component.name)).toEqual(["P1/B"]);
+    expect(bitSpectrumComponents(2).map((component) => component.name)).toEqual(["P2/R"]);
+    expect(bitSpectrumComponents(4).map((component) => component.name)).toEqual(["P4/G"]);
+    expect(bitSpectrumComponents(3).map((component) => component.name)).toEqual(["P1/B", "P2/R"]);
+    expect(bitSpectrumComponents(5).map((component) => component.name)).toEqual(["P1/B", "P4/G"]);
+    expect(bitSpectrumComponents(6).map((component) => component.name)).toEqual(["P2/R", "P4/G"]);
+    expect(bitSpectrumComponents(7).map((component) => component.name)).toEqual(["P1/B", "P2/R", "P4/G"]);
   });
 
   it("ZIGZAG_PATH/CHANNELS mirror GRAY_PATH/TOGGLES and toggle exactly one bit per step", () => {

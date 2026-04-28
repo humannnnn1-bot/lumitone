@@ -5,8 +5,7 @@ import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../styles/shared";
 import { useTranslation } from "../i18n";
 import { ACTIVE_LEVELS } from "./LinkedVisualization";
 import { MusicLinkedVisualization } from "./music/MusicLinkedVisualization";
-import { useMusicEngine } from "../hooks/useMusicEngine";
-import type { ScaleMode } from "../data/music-frequency";
+import { useMusicEngine, type ScaleMode, type ToneMode } from "../hooks/useMusicEngine";
 import { Oscilloscope } from "./music/Oscilloscope";
 import { CayleyGrid } from "./music/CayleyGrid";
 import { GrayCube } from "./music/GrayCube";
@@ -147,6 +146,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
   const [muted, setMuted] = useState(false);
   const preMuteVolumeRef = useRef(0.7);
   const [scaleMode, setScaleMode] = useState<ScaleMode>("diatonic7");
+  const [toneMode, setToneMode] = useState<ToneMode>("pitch");
   const [fmEnabled, setFmEnabled] = useState(false);
   const [alphaSpeed, setAlphaSpeed] = useState(36);
   const [phaseSpeed, setPhaseSpeed] = useState(0);
@@ -266,6 +266,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
     alpha7,
     volume: muted ? 0 : volume,
     scaleMode,
+    toneMode,
     fmEnabled,
     panEnabled: true,
     hoveredFanoLine,
@@ -359,6 +360,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setSelectedLevels(new Set());
     setVolume(0.7);
     setScaleMode("diatonic7");
+    setToneMode("pitch");
     setFmEnabled(false);
     setAlphaSpeed(36);
     setPhaseSpeed(0);
@@ -942,8 +944,14 @@ export const MusicPanel = React.memo(function MusicPanel() {
         <div className="panel-sidebar">
           {/* ── Transport + Rotation ── */}
           <div style={{ display: "flex", flexDirection: "column", gap: SP.md, width: "100%" }}>
-            {/* Scale mode */}
+            {/* Tone and scale modes */}
             <div style={{ display: "flex", justifyContent: "center", gap: SP.md, width: "100%" }}>
+              {(["pitch", "bitSpectrum"] as ToneMode[]).map((m) => (
+                <button key={m} type="button" style={toneMode === m ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => setToneMode(m)}>
+                  {t(`music_tone_${m}`)}
+                </button>
+              ))}
+              <span style={{ width: SP.sm }} />
               {(["ji", "diatonic7", "octatonic", "12tet"] as ScaleMode[]).map((m) => (
                 <button key={m} type="button" style={scaleMode === m ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => setScaleMode(m)}>
                   {t(`music_scale_${m}`)}

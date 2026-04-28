@@ -519,6 +519,8 @@ export const en = {
   music_volume: "Volume",
   music_scale_mode: "Scale",
   music_effect_mode: "Effect",
+  music_tone_pitch: "Pitch",
+  music_tone_bitSpectrum: "Bit Spectrum",
   music_scale_12tet: "Equal",
   music_scale_ji: "Just",
   music_scale_octatonic: "Octatonic",

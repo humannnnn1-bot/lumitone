@@ -153,6 +153,26 @@ freq = 220 * 2^((liveAngle mod 360) / 360 * 2)
 
 単音バースト、持続音、音程表示はいずれも `activeAlpha` を含む角度を使う。これにより、alpha 回転後にクリックした単音と、画面上の音程表示・ドローン音高が一致する。
 
+## Algebraic Timbre / Bit Spectrum
+
+Music タブの `Bit Spectrum` モードでは、色相角そのものを音高へ写すのではなく、Theory タブと同じ `GF(2)^3` のビット構造を音色成分へ写す。
+
+レベル `lv` を
+
+```text
+lv = 4G + 2R + B
+```
+
+として読むと、音色は次のようなビット基底の合成として定義する。
+
+```text
+T(lv) = B * tau_B + R * tau_R + G * tau_G
+```
+
+ここで `tau_B`, `tau_R`, `tau_G` は Web Audio 上の倍音成分である。したがって、Black `000` は成分なし、White `111` は全成分、有彩色の Gray cycle は音色成分が 1 つずつ切り替わる巡回として聴こえる。
+
+このモードは、音響ミックスそのものが XOR を実装する、という意味ではない。XOR はコード側で `a xor b` として計算し、その結果のレベルを `Bit Spectrum` として鳴らす。通常の音響加算は GF(2) 加法ではないため、同じ音を 2 回足しても Black には戻らない。
+
 ## Implementation Map
 
 このレイヤーは、離散代数的色彩モデル本体の上に置かれた可視化・音響化レイヤーである。主な実装対応は次の通り。
@@ -160,6 +180,7 @@ freq = 220 * 2^((liveAngle mod 360) / 360 * 2)
 | responsibility | implementation |
 | --- | --- |
 | BT.601 luma, hue candidates, default candidates | `src/color-engine.ts` |
+| bit-spectrum timbre basis and music invariants | `src/data/music-data.ts` |
 | luma radii, alpha rotation, x/y projections, complement curves | `src/components/LinkedVisualization.tsx` |
 | Music-specific wrapper and interval overlay | `src/components/music/MusicLinkedVisualization.tsx`, `src/components/music/IntervalRatios.tsx` |
 | angle-to-frequency mapping | `src/data/music-frequency.ts` |

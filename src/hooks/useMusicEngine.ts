@@ -1,9 +1,18 @@
 import { useRef, useEffect, useCallback, useState } from "react";
 import { COMPLEMENT_EDGES, CUBE_EDGES, FANO_LINES, STELLA_EDGES, TETRA_T0, TETRA_T1 } from "../data/theory-data";
-import { COMPLEMENT_PAIRS, FANO_RHYTHM_PATTERNS, LUMA_VALUES, ZIGZAG_PATH, fanoLinesThrough } from "../data/music-data";
+import {
+  COMPLEMENT_PAIRS,
+  FANO_RHYTHM_PATTERNS,
+  LUMA_VALUES,
+  ZIGZAG_PATH,
+  bitSpectrumComponents,
+  fanoLinesThrough,
+  type ToneMode,
+} from "../data/music-data";
 import { BASE_FREQ, angleToFreq, type ScaleMode } from "../data/music-frequency";
 
 export type { ScaleMode } from "../data/music-frequency";
+export type { ToneMode } from "../data/music-data";
 
 /* ── Types ── */
 interface SonificationLevel {
@@ -20,6 +29,7 @@ interface MusicEngineParams {
   alpha7: number;
   volume: number; // 0-1
   scaleMode: ScaleMode;
+  toneMode: ToneMode;
   fmEnabled: boolean;
   panEnabled: boolean;
   hoveredFanoLine: number | null; // 0-6 or null
@@ -74,6 +84,7 @@ const RAMP_TC = 0.02;
 const DUCK_TC = 0.05;
 const HOVER_BOOST = 1.5;
 const HOVER_DUCK = 0.1;
+const BIT_TIMBRE_GAIN_SCALE = 0.42;
 const C2_PAIRS: [number, number][] = [
   [6, 1],
   [5, 2],
@@ -339,6 +350,44 @@ function triggerLumaBurst(nodes: AudioNodes, gray: number) {
   osc.stop(now + 0.35);
 }
 
+/** Trigger a bit-basis timbre burst: GF(2)^3 bits select spectral basis components. */
+function triggerBitSpectrumBurst(nodes: AudioNodes, lv: number, angle: number, panEnabled: boolean) {
+  const components = bitSpectrumComponents(lv);
+  if (components.length === 0) return;
+
+  const grayNorm = Math.max(0, Math.min(1, (LUMA_VALUES[lv] ?? 0) / 255));
+  if (grayNorm <= 0) return;
+
+  const ctx = nodes.ctx;
+  const now = ctx.currentTime;
+  const group = ctx.createGain();
+  const panner = ctx.createStereoPanner();
+
+  group.gain.setValueAtTime(0, now);
+  group.gain.linearRampToValueAtTime(grayNorm * BIT_TIMBRE_GAIN_SCALE, now + 0.01);
+  group.gain.linearRampToValueAtTime(0, now + 0.31);
+
+  if (panEnabled && angle >= 0) {
+    panner.pan.value = Math.cos((angle * Math.PI) / 180);
+  }
+
+  const componentNorm = 1 / Math.sqrt(components.length);
+  for (const component of components) {
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = BASE_FREQ * component.harmonic;
+
+    const gain = ctx.createGain();
+    gain.gain.value = component.gain * componentNorm;
+
+    osc.connect(gain).connect(group);
+    osc.start(now);
+    osc.stop(now + 0.35);
+  }
+
+  group.connect(panner).connect(nodes.master);
+}
+
 /** Apply current frequency, gain, pan, and FM values to the audio graph */
 function applyParams(
   nodes: AudioNodes,
@@ -466,6 +515,7 @@ export function useMusicEngine({
   alpha7,
   volume,
   scaleMode,
+  toneMode,
   fmEnabled,
   panEnabled,
   hoveredFanoLine,
@@ -492,6 +542,7 @@ export function useMusicEngine({
     alpha7,
     volume,
     scaleMode,
+    toneMode,
     fmEnabled,
     panEnabled,
     hoveredFanoLine,
@@ -505,6 +556,7 @@ export function useMusicEngine({
     alpha7,
     volume,
     scaleMode,
+    toneMode,
     fmEnabled,
     panEnabled,
     hoveredFanoLine,
@@ -619,7 +671,7 @@ export function useMusicEngine({
     }
   }, [enabled, fmEnabled, scaleMode, levels]);
 
-  /* ── Update params when they change ── */
+  /* ── Update drone params when they change ── */
   useEffect(() => {
     if (!enabled || !nodesRef.current) return;
     applyParams(
@@ -651,6 +703,12 @@ export function useMusicEngine({
     const nodes = nodesRef.current;
     if (!nodes) return;
 
+    const p = paramsRef.current;
+    if (p.toneMode === "bitSpectrum") {
+      triggerBitSpectrumBurst(nodes, lv, angle, p.panEnabled);
+      return;
+    }
+
     // Achromatic levels (angle=-1): use luma-based frequency instead of hue-based
     if (angle < 0) {
       triggerLumaBurst(nodes, LUMA_VALUES[lv] ?? 0);
@@ -658,7 +716,7 @@ export function useMusicEngine({
     }
 
     const ctx = nodes.ctx;
-    const mode = paramsRef.current.scaleMode;
+    const mode = p.scaleMode;
 
     const osc = ctx.createOscillator();
     osc.type = "sine";
