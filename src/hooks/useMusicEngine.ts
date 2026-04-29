@@ -7,12 +7,10 @@ import {
   ZIGZAG_PATH,
   bitSpectrumComponents,
   fanoLinesThrough,
-  type ToneMode,
 } from "../data/music-data";
 import { BASE_FREQ, angleToFreq, type ScaleMode } from "../data/music-frequency";
 
 export type { ScaleMode } from "../data/music-frequency";
-export type { ToneMode } from "../data/music-data";
 
 /* ── Types ── */
 interface SonificationLevel {
@@ -29,7 +27,6 @@ interface MusicEngineParams {
   alpha7: number;
   volume: number; // 0-1
   scaleMode: ScaleMode;
-  toneMode: ToneMode;
   fmEnabled: boolean;
   panEnabled: boolean;
   hoveredFanoLine: number | null; // 0-6 or null
@@ -350,6 +347,33 @@ function triggerLumaBurst(nodes: AudioNodes, gray: number) {
   osc.stop(now + 0.35);
 }
 
+/** Trigger a short tone burst at a hue-derived pitch. */
+function triggerPitchBurst(nodes: AudioNodes, angle: number, scaleMode: ScaleMode) {
+  const ctx = nodes.ctx;
+  const osc = ctx.createOscillator();
+  osc.type = "sine";
+  osc.frequency.value = angleToFreq(angle, scaleMode);
+
+  const gain = ctx.createGain();
+  const now = ctx.currentTime;
+  gain.gain.setValueAtTime(0, now);
+  gain.gain.linearRampToValueAtTime(0.3, now + 0.01);
+  gain.gain.linearRampToValueAtTime(0.0, now + 0.31);
+
+  osc.connect(gain).connect(nodes.master);
+  osc.start(now);
+  osc.stop(now + 0.35);
+}
+
+function triggerPitchOrLumaBurst(nodes: AudioNodes, lv: number, angle: number, scaleMode: ScaleMode) {
+  if (angle < 0) {
+    triggerLumaBurst(nodes, LUMA_VALUES[lv] ?? 0);
+    return;
+  }
+
+  triggerPitchBurst(nodes, angle, scaleMode);
+}
+
 /** Trigger a bit-basis timbre burst: GF(2)^3 bits select spectral basis components. */
 function triggerBitSpectrumBurst(nodes: AudioNodes, lv: number, angle: number, panEnabled: boolean) {
   const components = bitSpectrumComponents(lv);
@@ -386,6 +410,31 @@ function triggerBitSpectrumBurst(nodes: AudioNodes, lv: number, angle: number, p
   }
 
   group.connect(panner).connect(nodes.master);
+}
+
+/** Non-pitched transient used only to mark a Hamming error position. */
+function triggerErrorMarker(nodes: AudioNodes) {
+  const ctx = nodes.ctx;
+  const now = ctx.currentTime;
+  const bufLen = Math.floor(ctx.sampleRate * 0.06);
+  const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+  const data = buf.getChannelData(0);
+  for (let i = 0; i < bufLen; i++) data[i] = Math.random() * 2 - 1;
+
+  const source = ctx.createBufferSource();
+  source.buffer = buf;
+
+  const filter = ctx.createBiquadFilter();
+  filter.type = "highpass";
+  filter.frequency.value = 1800;
+
+  const gain = ctx.createGain();
+  gain.gain.setValueAtTime(0.08, now);
+  gain.gain.linearRampToValueAtTime(0, now + 0.06);
+
+  source.connect(filter).connect(gain).connect(nodes.master);
+  source.start(now);
+  source.stop(now + 0.07);
 }
 
 /** Apply current frequency, gain, pan, and FM values to the audio graph */
@@ -515,7 +564,6 @@ export function useMusicEngine({
   alpha7,
   volume,
   scaleMode,
-  toneMode,
   fmEnabled,
   panEnabled,
   hoveredFanoLine,
@@ -542,7 +590,6 @@ export function useMusicEngine({
     alpha7,
     volume,
     scaleMode,
-    toneMode,
     fmEnabled,
     panEnabled,
     hoveredFanoLine,
@@ -556,7 +603,6 @@ export function useMusicEngine({
     alpha7,
     volume,
     scaleMode,
-    toneMode,
     fmEnabled,
     panEnabled,
     hoveredFanoLine,
@@ -703,46 +749,29 @@ export function useMusicEngine({
     const nodes = nodesRef.current;
     if (!nodes) return;
 
-    const p = paramsRef.current;
-    if (p.toneMode === "bitSpectrum") {
-      triggerBitSpectrumBurst(nodes, lv, angle, p.panEnabled);
-      return;
-    }
-
-    // Achromatic levels (angle=-1): use luma-based frequency instead of hue-based
-    if (angle < 0) {
-      triggerLumaBurst(nodes, LUMA_VALUES[lv] ?? 0);
-      return;
-    }
-
-    const ctx = nodes.ctx;
-    const mode = p.scaleMode;
-
-    const osc = ctx.createOscillator();
-    osc.type = "sine";
-    osc.frequency.value = angleToFreq(angle, mode);
-
-    const gain = ctx.createGain();
-    const now = ctx.currentTime;
-    gain.gain.setValueAtTime(0, now);
-    gain.gain.linearRampToValueAtTime(0.3, now + 0.01); // 10ms attack
-    gain.gain.linearRampToValueAtTime(0.0, now + 0.31); // 200ms decay + 100ms release
-
-    osc.connect(gain).connect(nodes.master);
-    osc.start(now);
-    osc.stop(now + 0.35);
+    triggerPitchOrLumaBurst(nodes, lv, angle, paramsRef.current.scaleMode);
   }, []);
 
-  const playDiscreteLevel = useCallback(
+  /** Hue/luma traversal: used when the sequence is meant to be heard as a melody. */
+  const playPitchLevel = useCallback(
     (lv: number) => {
+      const nodes = nodesRef.current;
+      if (!nodes) return;
       if (lv === 0 || lv === 7) {
-        triggerToneBurst(lv, -1);
+        triggerPitchOrLumaBurst(nodes, lv, -1, paramsRef.current.scaleMode);
         return;
       }
-      triggerToneBurst(lv, angleForLv(lv));
+      triggerPitchOrLumaBurst(nodes, lv, angleForLv(lv), paramsRef.current.scaleMode);
     },
-    [triggerToneBurst, angleForLv],
+    [angleForLv],
   );
+
+  /** GF(2)^3 point label: used by algebraic/Fano/Hamming structures. */
+  const playBitVectorLevel = useCallback((lv: number) => {
+    const nodes = nodesRef.current;
+    if (!nodes) return;
+    triggerBitSpectrumBurst(nodes, lv, -1, false);
+  }, []);
 
   /* ── Gray Code Melody ── */
   const playGrayMelody = useCallback(
@@ -757,13 +786,13 @@ export function useMusicEngine({
       let step = 0;
       const id = setInterval(() => {
         const lv = FULL_GRAY_CODE[step % FULL_GRAY_CODE.length];
-        playDiscreteLevel(lv);
+        playPitchLevel(lv);
         onStep(lv);
         step++;
       }, intervalMs);
       grayIntervalRef.current = id;
     },
-    [playDiscreteLevel],
+    [playPitchLevel],
   );
 
   const stopGrayMelody = useCallback(() => {
@@ -880,13 +909,13 @@ export function useMusicEngine({
       for (let i = 0; i < 3; i++) {
         scheduleAlgebra(() => {
           const lv = steps[i];
-          triggerToneBurst(lv, angleForLv(lv));
+          playBitVectorLevel(lv);
           onStep(lv);
         }, i * 300);
       }
       scheduleAlgebra(() => onStep(null), 900);
     },
-    [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
+    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
   );
 
   /* ── 2. playParityChord ── */
@@ -895,10 +924,10 @@ export function useMusicEngine({
       if (!nodesRef.current) return;
       const group = PARITY_GROUPS[parityBit];
       for (const lv of group) {
-        triggerToneBurst(lv, angleForLv(lv));
+        playBitVectorLevel(lv);
       }
     },
-    [triggerToneBurst, angleForLv],
+    [playBitVectorLevel],
   );
 
   /* ── 3. playComplementChord ── */
@@ -909,10 +938,10 @@ export function useMusicEngine({
       const lineSet = new Set(FANO_LINES[lineIndex]);
       const complement = ALL_POINTS.filter((lv) => !lineSet.has(lv));
       for (const lv of complement) {
-        playDiscreteLevel(lv);
+        playBitVectorLevel(lv);
       }
     },
-    [playDiscreteLevel],
+    [playBitVectorLevel],
   );
 
   /* ── 4. playLineAndComplement ── */
@@ -929,20 +958,20 @@ export function useMusicEngine({
       scheduleAlgebra(() => {
         onStep("line");
         for (const lv of line) {
-          playDiscreteLevel(lv);
+          playBitVectorLevel(lv);
         }
       }, 0);
 
       scheduleAlgebra(() => {
         onStep("complement");
         for (const lv of complement) {
-          playDiscreteLevel(lv);
+          playBitVectorLevel(lv);
         }
       }, 500);
 
       scheduleAlgebra(() => onStep(null), 1000);
     },
-    [playDiscreteLevel, clearAlgebraTimers, scheduleAlgebra],
+    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
   );
 
   /* ── 5. playSyndromeDemo ── */
@@ -959,24 +988,22 @@ export function useMusicEngine({
       for (let i = 1; i <= 7; i++) {
         const lv = i;
         scheduleAlgebra(() => {
-          triggerToneBurst(lv, angleForLv(lv));
+          playBitVectorLevel(lv);
         }, t);
         t += 200;
       }
 
       t += 300; // gap
 
-      // Phase "corrupted": same but errorPos has tritone-shifted pitch
+      // Phase "corrupted": the position label stays the same; a transient marks the flipped code bit.
       scheduleAlgebra(() => onPhase("corrupted"), t);
       for (let i = 1; i <= 7; i++) {
         const lv = i;
         scheduleAlgebra(() => {
+          playBitVectorLevel(lv);
           if (lv === errorPos) {
-            // Tritone shift: add 180 degrees to angle (half circle)
-            const shiftedAngle = angleForLv(lv) + 180;
-            triggerToneBurst(lv, shiftedAngle);
-          } else {
-            triggerToneBurst(lv, angleForLv(lv));
+            const nodes = nodesRef.current;
+            if (nodes) triggerErrorMarker(nodes);
           }
         }, t);
         t += 200;
@@ -991,7 +1018,7 @@ export function useMusicEngine({
           if (errorPos & (1 << bit)) {
             // Play the parity group chord for this bit
             const parityLv = 1 << bit; // 1, 2, or 4
-            triggerToneBurst(parityLv, angleForLv(parityLv));
+            playBitVectorLevel(parityLv);
           }
         }
       }, t);
@@ -1003,14 +1030,14 @@ export function useMusicEngine({
       for (let i = 1; i <= 7; i++) {
         const lv = i;
         scheduleAlgebra(() => {
-          triggerToneBurst(lv, angleForLv(lv));
+          playBitVectorLevel(lv);
         }, t);
         t += 200;
       }
 
       scheduleAlgebra(() => onPhase(null), t + 300);
     },
-    [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
+    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
   );
 
   /* ── 6. playGray3Voice (looping) ── */
@@ -1086,7 +1113,7 @@ export function useMusicEngine({
         scheduleAlgebra(() => {
           onStep(cw.positions, cw.weight, idx);
           for (const lv of cw.positions) {
-            triggerToneBurst(lv, angleForLv(lv));
+            playBitVectorLevel(lv);
           }
         }, t);
         t += duration;
@@ -1094,7 +1121,7 @@ export function useMusicEngine({
 
       scheduleAlgebra(() => onStep([], -1, codewords.length), t);
     },
-    [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
+    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
   );
 
   /* ── 8. playCayleyRow (looping) ── */
@@ -1108,38 +1135,16 @@ export function useMusicEngine({
 
       let step = 0;
       const id = setInterval(() => {
-        const nodes = nodesRef.current;
-        if (!nodes) return;
-        const ctx = nodes.ctx;
+        if (!nodesRef.current) return;
         const col = step % 8;
         const value = row ^ col;
         onStep(col, value);
-
-        if (value === 0) {
-          // Level 0 (Black) = silence — do nothing
-        } else if (value === 7) {
-          // Level 7 (White) = noise burst
-          const bufLen = Math.floor(ctx.sampleRate * 0.25);
-          const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
-          const data = buf.getChannelData(0);
-          for (let j = 0; j < bufLen; j++) data[j] = Math.random() * 2 - 1;
-          const source = ctx.createBufferSource();
-          source.buffer = buf;
-          const gain = ctx.createGain();
-          const now = ctx.currentTime;
-          gain.gain.setValueAtTime(0.05, now);
-          gain.gain.linearRampToValueAtTime(0, now + 0.25);
-          source.connect(gain).connect(nodes.master);
-          source.start(now);
-          source.stop(now + 0.28);
-        } else {
-          triggerToneBurst(value, angleForLv(value));
-        }
+        playBitVectorLevel(value);
         step++;
       }, 300);
       cayleyIntervalRef.current = id;
     },
-    [triggerToneBurst, angleForLv],
+    [playBitVectorLevel],
   );
 
   /* ── 9. applyGL32Transform ── */
@@ -1289,13 +1294,13 @@ export function useMusicEngine({
         scheduleAlgebra(() => {
           onStep(lines[i]);
           for (const lv of FANO_LINES[lines[i]]) {
-            triggerToneBurst(lv, angleForLv(lv));
+            playBitVectorLevel(lv);
           }
         }, i * 600);
       }
       scheduleAlgebra(() => onStep(null), lines.length * 600);
     },
-    [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
+    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
   );
 
   /* ── 15. playExtendedHamming ── */
@@ -1313,9 +1318,10 @@ export function useMusicEngine({
           onStep(cw.positions, cw.weight, idx);
           for (const lv of cw.positions) {
             if (lv === 0) {
+              // 0 is the added overall-parity coordinate, not a nonzero Fano point.
               triggerLumaBurst(nodes, 0);
             } else {
-              triggerToneBurst(lv, angleForLv(lv));
+              playBitVectorLevel(lv);
             }
           }
         }, t);
@@ -1323,7 +1329,7 @@ export function useMusicEngine({
       }
       scheduleAlgebra(() => onStep([], -1, codewords.length), t);
     },
-    [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
+    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
   );
 
   /* ── 16. playDistributiveLaw ── */
@@ -1337,10 +1343,7 @@ export function useMusicEngine({
       const ab = a & b;
       const ac = a & c;
       const right = ab ^ ac;
-      const playLv = (lv: number) => {
-        if (lv === 0) triggerLumaBurst(nodes, 0);
-        else triggerToneBurst(lv, angleForLv(lv));
-      };
+      const playLv = (lv: number) => playBitVectorLevel(lv);
       // Left path
       scheduleAlgebra(() => {
         onStep("bxc", bxc);
@@ -1371,7 +1374,7 @@ export function useMusicEngine({
       }, 2400);
       scheduleAlgebra(() => onStep(null, -1), 2900);
     },
-    [triggerToneBurst, clearAlgebraTimers, scheduleAlgebra, angleForLv],
+    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
   );
 
   const playAndTriads = useCallback(
@@ -1382,18 +1385,18 @@ export function useMusicEngine({
       AND_TRIADS.forEach(([a, b, result], pairIndex) => {
         scheduleAlgebra(() => {
           onStep({ pairIndex, phase: "operands" });
-          playDiscreteLevel(a);
-          playDiscreteLevel(b);
+          playBitVectorLevel(a);
+          playBitVectorLevel(b);
         }, t);
         scheduleAlgebra(() => {
           onStep({ pairIndex, phase: "result" });
-          playDiscreteLevel(result);
+          playBitVectorLevel(result);
         }, t + 360);
         t += 860;
       });
       scheduleAlgebra(() => onStep(null), t);
     },
-    [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
+    [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
   );
 
   const playOctahedronMix = useCallback(
@@ -1405,16 +1408,16 @@ export function useMusicEngine({
       clearAlgebraTimers();
       scheduleAlgebra(() => {
         onStep("pair");
-        playDiscreteLevel(lvA);
-        playDiscreteLevel(lvB);
+        playBitVectorLevel(lvA);
+        playBitVectorLevel(lvB);
       }, 0);
       scheduleAlgebra(() => {
         onStep("result");
-        playDiscreteLevel(result);
+        playBitVectorLevel(result);
       }, 480);
       scheduleAlgebra(() => onStep(null), 920);
     },
-    [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
+    [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
   );
 
   const playTetraSplit = useCallback(
@@ -1423,15 +1426,15 @@ export function useMusicEngine({
       clearAlgebraTimers();
       scheduleAlgebra(() => {
         onStep("t0");
-        TETRA_T0.forEach((lv) => playDiscreteLevel(lv));
+        TETRA_T0.forEach((lv) => playBitVectorLevel(lv));
       }, 0);
       scheduleAlgebra(() => {
         onStep("t1");
-        TETRA_T1.forEach((lv) => playDiscreteLevel(lv));
+        TETRA_T1.forEach((lv) => playBitVectorLevel(lv));
       }, 650);
       scheduleAlgebra(() => onStep(null), 1300);
     },
-    [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
+    [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
   );
 
   const playTetraT0 = useCallback(
@@ -1440,11 +1443,11 @@ export function useMusicEngine({
       clearAlgebraTimers();
       scheduleAlgebra(() => {
         onStep("t0");
-        TETRA_T0.forEach((lv) => playDiscreteLevel(lv));
+        TETRA_T0.forEach((lv) => playBitVectorLevel(lv));
       }, 0);
       scheduleAlgebra(() => onStep(null), 650);
     },
-    [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
+    [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
   );
 
   const playTetraT1 = useCallback(
@@ -1453,11 +1456,11 @@ export function useMusicEngine({
       clearAlgebraTimers();
       scheduleAlgebra(() => {
         onStep("t1");
-        TETRA_T1.forEach((lv) => playDiscreteLevel(lv));
+        TETRA_T1.forEach((lv) => playBitVectorLevel(lv));
       }, 0);
       scheduleAlgebra(() => onStep(null), 650);
     },
-    [clearAlgebraTimers, scheduleAlgebra, playDiscreteLevel],
+    [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
   );
 
   const playK8Layer = useCallback(
@@ -1474,13 +1477,13 @@ export function useMusicEngine({
         const ei = step % edges.length;
         const [a, b] = edges[ei];
         onStep(ei, [a, b]);
-        playDiscreteLevel(a);
-        playDiscreteLevel(b);
+        playBitVectorLevel(a);
+        playBitVectorLevel(b);
         step++;
       }, intervalMs);
       k8IntervalRef.current = id;
     },
-    [playDiscreteLevel],
+    [playBitVectorLevel],
   );
 
   return {

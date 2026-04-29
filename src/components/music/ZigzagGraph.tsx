@@ -26,7 +26,7 @@ interface Props {
 
 export const ZigzagGraph = React.memo(function ZigzagGraph({ currentStep }: Props) {
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", aspectRatio: `${W} / ${H}`, display: "block", flex: "0 0 auto" }}>
       <defs>
         <filter id="zg-glow">
           <feGaussianBlur stdDeviation="2" result="blur" />

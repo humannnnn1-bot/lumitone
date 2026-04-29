@@ -520,8 +520,6 @@ export const ja: Record<TranslationKey, string> = {
   music_volume: "音量",
   music_scale_mode: "音律",
   music_effect_mode: "効果",
-  music_tone_pitch: "音高",
-  music_tone_bitSpectrum: "ビット音色",
   music_scale_12tet: "平均律",
   music_scale_ji: "純正律",
   music_scale_octatonic: "減音階",

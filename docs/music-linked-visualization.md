@@ -155,7 +155,7 @@ freq = 220 * 2^((liveAngle mod 360) / 360 * 2)
 
 ## Algebraic Timbre / Bit Spectrum
 
-Music タブの `Bit Spectrum` モードでは、色相角そのものを音高へ写すのではなく、Theory タブと同じ `GF(2)^3` のビット構造を音色成分へ写す。
+代数的デモで使う `Bit Spectrum` では、色相角そのものを音高へ写すのではなく、Theory タブと同じ `GF(2)^3` のビット構造を音色成分へ写す。
 
 レベル `lv` を
 
@@ -172,6 +172,16 @@ T(lv) = B * tau_B + R * tau_R + G * tau_G
 ここで `tau_B`, `tau_R`, `tau_G` は Web Audio 上の倍音成分である。したがって、Black `000` は成分なし、White `111` は全成分、有彩色の Gray cycle は音色成分が 1 つずつ切り替わる巡回として聴こえる。
 
 このモードは、音響ミックスそのものが XOR を実装する、という意味ではない。XOR はコード側で `a xor b` として計算し、その結果のレベルを `Bit Spectrum` として鳴らす。通常の音響加算は GF(2) 加法ではないため、同じ音を 2 回足しても Black には戻らない。
+
+## Routing of Structural Sonifications
+
+Music タブの手動バーストは `Pitch` 固定にする。一方で、Fano Sequences と Structural Sonification の各デモでは、ユーザー選択ではなく、デモの数学的役割に合わせて音響写像を固定する。
+
+- `Bit Spectrum`: XOR, Fano incidence, line/coset, Hamming labels, Boolean operations, Cayley rows, K8/tetra/octahedron など、`GF(2)^3` の点・部分集合・演算を聴かせるデモ。
+- `Pitch`: Gray traversal melody や GL(3,2) のドローン変換など、色相角・回転・既存ドローンの幾何的配置を聴かせるデモ。
+- Dedicated sonification: Fano rhythm, complement/luma canon, luma zigzag, Hamming error marker など、ビット音色でも音高でもなく、その構造固有の時間・輝度・誤りマーカーを聴かせるデモ。
+
+この分離により、代数的構造を説明するデモでは `Pitch` による色相写像を混ぜず、幾何的・輝度的・リズム的なデモでは `Bit Spectrum` を無理に適用しない。
 
 ## Implementation Map
 

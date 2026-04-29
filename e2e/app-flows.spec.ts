@@ -97,6 +97,43 @@ test("regenerates gallery variants from a drawing and opens preview actions", as
   await expect(page.getByRole("button", { name: "Save", exact: true })).toBeVisible();
 });
 
+test("opens music controls without a global tone-mode toggle", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("tab", { name: "Music" }).click();
+
+  await expect(page.getByRole("button", { name: "Pitch" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Bit Spectrum" })).toHaveCount(0);
+  await expect(page.locator('button[aria-pressed="true"]').filter({ hasText: "Diatonic" })).toHaveCount(1);
+});
+
+test("keeps the luma zigzag graph fixed when playback starts", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("tab", { name: "Music" }).click();
+
+  const zigzagButton = page.getByRole("button", { name: "▶ Zigzag" });
+  const zigzagCard = page.getByTestId("luma-zigzag-card");
+  await expect(zigzagCard).toBeVisible();
+  await zigzagCard.scrollIntoViewIfNeeded();
+
+  const graph = zigzagCard.locator("svg");
+  const cardBefore = await zigzagCard.boundingBox();
+  const before = await graph.boundingBox();
+  if (!cardBefore) throw new Error("Zigzag card is not visible");
+  if (!before) throw new Error("Zigzag graph is not visible");
+
+  await zigzagButton.click();
+  await expect(zigzagCard.getByRole("button", { name: "⏹ Zigzag" })).toBeVisible();
+
+  const cardAfter = await zigzagCard.boundingBox();
+  const after = await graph.boundingBox();
+  if (!cardAfter) throw new Error("Zigzag card disappeared");
+  if (!after) throw new Error("Zigzag graph disappeared");
+  expect(Math.abs(after.x - cardAfter.x - (before.x - cardBefore.x))).toBeLessThan(0.5);
+  expect(Math.abs(after.y - cardAfter.y - (before.y - cardBefore.y))).toBeLessThan(0.5);
+  expect(Math.abs(after.width - before.width)).toBeLessThan(0.5);
+  expect(Math.abs(after.height - before.height)).toBeLessThan(0.5);
+});
+
 const pixel5 = devices["Pixel 5"];
 
 test.describe("mobile touch", () => {
