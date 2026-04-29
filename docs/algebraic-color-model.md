@@ -399,15 +399,19 @@ Important invariants currently tested include:
 
 - ITU-R, Recommendation BT.601-7: digital component video and luma construction.
   https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.601-7-201103-I!!PDF-E.pdf
-- W3C, WCAG 2.2 relative luminance definition.
+- W3C, WCAG 2.2 relative luminance definition, used only to distinguish relative luminance from BT.601 luma.
   https://www.w3.org/TR/WCAG22/relative-luminance.html
-- GMT Documentation, Color systems and RGB cube hue path.  
-  https://docs.generic-mapping-tools.org/6.2/cookbook/colorspace.html
-- Wolfram Programming Lab, Color Cube.  
-  https://www.wolfram.com/programming-lab/explorations/color-cube/
+- Alvy Ray Smith, "Color Gamut Transform Pairs", RGB cube / HSV / hue hexagon.
+  https://alvyray.com/Papers/CG/color78.pdf
+- 玉垣庸一・小原康裕・宮崎紀郎「CMYカラーキューブに基づく新たなカラーモデル II」, Boolean lattice / Hasse / RGB-CMY duality.
+  https://www.jstage.jst.go.jp/article/jssd/47/0/47_290/_article/-char/ja/
 - Ron Taylor, "Color Addition Across the Spectrum of Mathematics."  
   https://www.gathering4gardner.org/g4g11gift/Taylor_Ron-Color_Addition.pdf
 - Michel Lavrauw, "Incidence Geometry and Buildings" lecture notes, Fano plane and Hamming code construction.  
   https://osebje.famnit.upr.si/~michel.lavrauw/inc_geom_buildings_notes.pdf
-- Keith Ball, Combinatorics II slides, finite projective plane over Z2.  
-  https://warwick.ac.uk/fac/sci/maths/people/staff/keith_ball/combinatorics_ii_slide_17-18.pdf
+- Error Correction Zoo, "Incidence-matrix projective code", Fano / Hamming correspondence.
+  https://errorcorrectionzoo.org/c/incidence_matrix
+- Wolfram MathWorld, "Cube", including the 11 free cube nets.
+  https://mathworld.wolfram.com/Cube.html
+- Wolfram MathWorld, "Tetrahedron 2-Compound", stella octangula background.
+  https://mathworld.wolfram.com/Tetrahedron2-Compound.html
