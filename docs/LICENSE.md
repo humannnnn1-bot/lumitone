@@ -11,6 +11,15 @@ This CC BY 4.0 content includes:
 - the rendered explanatory diagrams and theory visualizations displayed in
   the Theory tab.
 
+The research-document set currently includes the core corpus and Music
+Appendix listed below:
+
+- `algebraic-color-model.md`
+- `prior-art-algebraic-color-model.md`
+- `theory-tab-prior-art-and-improvements.md`
+- `music-linked-visualization.md`
+- `prior-art-music-linked-visualization.md`
+
 This is separate from the [MIT License](../LICENSE), which covers the
 application source code, tests, build configuration, and non-scholarly app
 assets. The React/TypeScript implementation of the Theory tab (component
@@ -56,12 +65,12 @@ verbatim — it is a mononym (no first/last name split), which has
 implications for BibTeX entries (see the double-brace handling in the
 template below).
 
-## The Corpus: *Tractatus Chromaticus*
+## Core Corpus: _Tractatus Chromaticus_
 
-The three documents in `docs/` are collectively known as the
-*Tractatus Chromaticus* ("Chromatic Treatise"). They are read as
-three parts of a single unified treatise on the discrete algebraic
-color model that underlies the CHROMALUM application:
+The following three documents are collectively known as the _Tractatus
+Chromaticus_ ("Chromatic Treatise"). They are read as three parts of a
+single unified treatise on the discrete algebraic color model that underlies
+the CHROMALUM application:
 
 - **Pars I**: `algebraic-color-model.md`
   English title: Algebraic Color Model
@@ -73,9 +82,25 @@ color model that underlies the CHROMALUM application:
   English title: Theory Tab — Prior Art and Improvement Proposals
   日本語タイトル: Theoryタブ — 先行研究と改善提案
 
-When citing the corpus as a whole, *Tractatus Chromaticus* is the
+When citing the corpus as a whole, _Tractatus Chromaticus_ is the
 collective title. When citing a specific part, use the document title
-above and identify the corpus with *in Tractatus Chromaticus*.
+above and identify the corpus with _in Tractatus Chromaticus_.
+
+## Music Appendix
+
+The following two documents are companion notes to the core corpus. They
+extend the same discrete algebraic color model into LinkedVisualization and
+sonification, but they are not additional parts of _Tractatus Chromaticus_:
+
+- **Appendix A**: `music-linked-visualization.md`
+  English title: Music Linked Visualization
+  日本語タイトル: Music Linked Visualization
+- **Appendix B**: `prior-art-music-linked-visualization.md`
+  English title: Music Linked Visualization — Prior Art and Development Notes
+  日本語タイトル: Music Linked Visualization — 先行研究と開発参考
+
+When citing a Music Appendix note, use the document title above and identify
+it as a CHROMALUM Music Appendix note.
 
 ## Theory Tab Content
 
@@ -93,9 +118,10 @@ title and identify it as part of the CHROMALUM Theory Tab.
 
 Attribution under CC BY 4.0 must include four elements (TASL):
 
-- **T**itle of the work (use the specific document title from the list
-  above; *Tractatus Chromaticus* for the corpus; *CHROMALUM Theory Tab*
-  for the interactive Theory tab)
+- **T**itle of the work (use the specific document title from the lists
+  above; _Tractatus Chromaticus_ for the core corpus; _CHROMALUM Music
+  Appendix_ for the Music companion notes; _CHROMALUM Theory Tab_ for the
+  interactive Theory tab)
 - **A**uthor: Doctor Chromaticus
 - **S**ource URL: <https://github.com/humannnnn1-bot/chromalum>
 - **L**icense: CC BY 4.0,
@@ -133,6 +159,9 @@ the mononym into "first name / last name"):
 ```
 
 In-text citation: `Doctor Chromaticus (2026)`.
+
+For Music Appendix notes, replace `booktitle` / corpus wording with
+`CHROMALUM Music Appendix` and use the specific appendix title.
 
 ### Blog post / web article (after a quoted block)
 

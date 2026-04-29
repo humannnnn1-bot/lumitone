@@ -82,7 +82,7 @@ src/
   data/        Theory, hex, and music data sets
   i18n/        English/Japanese translations
 e2e/           Playwright browser flows
-docs/          Tractatus Chromaticus documentation corpus
+docs/          Research docs, licenses, and screenshots
 ```
 
 ## Development
@@ -146,15 +146,24 @@ npm run format:check
 
 ## Documentation
 
-The three documents in `docs/` form the _Tractatus Chromaticus_
-("Chromatic Treatise"), a unified treatise on the discrete algebraic color
-model that underlies the application:
+See [docs/README.md](./docs/README.md) for the full research-document map and
+recommended reading order.
+
+The core corpus is the three-part _Tractatus Chromaticus_ ("Chromatic
+Treatise"), a unified treatise on the discrete algebraic color model that
+underlies the application:
 
 - Pars I - [離散代数的色彩モデル](./docs/algebraic-color-model.md)
 - Pars II - [離散代数的色彩モデル — 先行研究](./docs/prior-art-algebraic-color-model.md)
 - Pars III - [Theoryタブ — 先行研究と改善提案](./docs/theory-tab-prior-art-and-improvements.md)
 
-The corpus is attributed to the pseudonym **Doctor Chromaticus**.
+Two Music Appendix notes extend the same model into LinkedVisualization and
+sonification:
+
+- Appendix A - [Music Linked Visualization](./docs/music-linked-visualization.md)
+- Appendix B - [Music Linked Visualization — 先行研究と開発参考](./docs/prior-art-music-linked-visualization.md)
+
+The research documents are attributed to the pseudonym **Doctor Chromaticus**.
 
 ## License
 
@@ -163,9 +172,11 @@ The corpus is attributed to the pseudonym **Doctor Chromaticus**.
 - **Scholarly/explanatory content:**
   [Creative Commons Attribution 4.0 International (CC BY 4.0)](./docs/LICENSE.md)
 
-The CC BY 4.0 content includes the _Tractatus Chromaticus_ documents in
-`docs/` and the authored prose, labels, and rendered explanatory diagrams in
-the Theory tab. The code that implements those views remains MIT-licensed.
+The CC BY 4.0 content includes the research and explanatory documents in
+`docs/`, including the _Tractatus Chromaticus_ core corpus and the Music
+Appendix notes, plus the authored prose, labels, and rendered explanatory
+diagrams in the Theory tab. The code that implements those views remains
+MIT-licensed.
 
 When reusing material from the CC BY 4.0 content, see the
 [citation templates](./docs/LICENSE.md#how-to-cite) for academic, blog, book,
