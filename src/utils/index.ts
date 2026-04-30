@@ -11,6 +11,6 @@ export function timestamp(): string {
 }
 
 export function openBlobUrlInNewTab(url: string): void {
-  const opened = window.open(url, "_blank", "noopener,noreferrer");
+  const opened = window.open(url, "_blank", "noopener");
   if (opened) opened.opener = null;
 }
