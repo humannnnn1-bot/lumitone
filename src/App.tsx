@@ -44,7 +44,7 @@ const TAB_KEYS = ["tab_gallery", "tab_hex", "tab_source", "tab_color", "tab_glaz
 const S_ROOT: React.CSSProperties = { minHeight: "100vh", background: C.bgRoot, color: C.textPrimary, fontFamily: FONT.mono };
 const S_HEADER: React.CSSProperties = { textAlign: "center", marginBottom: "var(--sp-header-mb)" };
 const S_TITLE: React.CSSProperties = {
-  fontFamily: "'Inter', system-ui, sans-serif",
+  fontFamily: FONT.sans,
   fontSize: 22,
   fontWeight: FW.normal,
   margin: "2px 0 var(--sp-title-mb)",

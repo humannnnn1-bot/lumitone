@@ -5,7 +5,7 @@ import type { CanvasData } from "../types";
 import type { MapMode } from "../types";
 import type { PixelMaps } from "../hooks/usePixelMaps";
 import { C, SP, FS, R } from "../styles/tokens";
-import { timestamp } from "../utils";
+import { openBlobUrlInNewTab, timestamp } from "../utils";
 import { useTranslation } from "../i18n";
 import { ConfirmModal } from "./ConfirmModal";
 
@@ -367,7 +367,7 @@ export function MapCanvas({
         a.click();
         document.body.removeChild(a);
         if (isIOS) {
-          window.open(url, "_blank");
+          openBlobUrlInNewTab(url);
           showToast?.(t("toast_save_long_press", name), "info");
         } else if (isAndroid) {
           showToast?.(t("toast_saved", name), "success");

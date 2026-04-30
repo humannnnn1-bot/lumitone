@@ -1,5 +1,6 @@
 import { useCallback } from "react";
 import { renderBuf } from "../drawing/render-buf";
+import { openBlobUrlInNewTab } from "../utils";
 import type { CanvasData, ImgCache } from "../types";
 
 interface ExportResult {
@@ -34,7 +35,7 @@ function downloadCanvas(
       document.body.removeChild(a);
       // iOS Safari ignores <a download> — open in new tab as last resort
       if (isIOS) {
-        window.open(url, "_blank");
+        openBlobUrlInNewTab(url);
         showToast(t("toast_save_long_press", name), "info");
       } else if (isAndroid) {
         showToast(t("toast_saved", name), "success");
