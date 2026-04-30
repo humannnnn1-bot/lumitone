@@ -32,6 +32,13 @@ function ST({ title }: { title: string }) {
   );
 }
 
+const S_MAP_MODE_BTN: React.CSSProperties = {
+  padding: `${SP.sm}px ${SP.md}px`,
+  fontSize: FS.md,
+  minHeight: 22,
+  whiteSpace: "nowrap",
+};
+
 /* ── Main AnalyzePanel ── */
 export const AnalyzePanel = React.memo(
   function AnalyzePanel({
@@ -76,9 +83,7 @@ export const AnalyzePanel = React.memo(
                   onClick={() => setMapMode(m)}
                   style={{
                     ...(mapMode === m ? S_BTN_ACTIVE : S_BTN),
-                    padding: `${SP.xs}px ${SP.md}px`,
-                    fontSize: FS.md,
-                    whiteSpace: "nowrap",
+                    ...S_MAP_MODE_BTN,
                   }}
                 >
                   {t("stats_map_" + m)}
@@ -91,9 +96,7 @@ export const AnalyzePanel = React.memo(
                   onClick={() => setMapMode(m)}
                   style={{
                     ...(mapMode === m ? S_BTN_ACTIVE : S_BTN),
-                    padding: `${SP.xs}px ${SP.md}px`,
-                    fontSize: FS.md,
-                    whiteSpace: "nowrap",
+                    ...S_MAP_MODE_BTN,
                   }}
                 >
                   {t("stats_map_" + m)}

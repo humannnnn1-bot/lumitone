@@ -42,6 +42,18 @@ const S_SELECT: React.CSSProperties = {
   border: `1px solid ${C.border}`,
   borderRadius: R.md,
 };
+const S_MUSIC_MODE_BTN: React.CSSProperties = {
+  ...S_BTN_SM,
+  padding: `${SP.sm}px ${SP.md}px`,
+  minHeight: 22,
+  whiteSpace: "nowrap",
+};
+const S_MUSIC_MODE_BTN_ACTIVE: React.CSSProperties = {
+  ...S_BTN_SM_ACTIVE,
+  padding: `${SP.sm}px ${SP.md}px`,
+  minHeight: 22,
+  whiteSpace: "nowrap",
+};
 
 const S_HUE_WRAP: React.CSSProperties = { position: "relative", width: "100%", paddingTop: SP.xl };
 const S_ALPHA_TRACK: React.CSSProperties = {
@@ -948,7 +960,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                   key={m}
                   type="button"
                   aria-pressed={scaleMode === m}
-                  style={scaleMode === m ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                  style={scaleMode === m ? S_MUSIC_MODE_BTN_ACTIVE : S_MUSIC_MODE_BTN}
                   onClick={() => setScaleMode(m)}
                 >
                   {t(`music_scale_${m}`)}
@@ -957,29 +969,29 @@ export const MusicPanel = React.memo(function MusicPanel() {
             </div>
             {/* Control buttons — grouped with spacing */}
             <div style={{ display: "flex", justifyContent: "center", gap: SP.md, width: "100%", flexWrap: "wrap" }}>
-              <button type="button" style={{ ...S_BTN_SM, borderColor: C.error, color: C.error }} onClick={handleStopAll}>
+              <button type="button" style={{ ...S_MUSIC_MODE_BTN, borderColor: C.error, color: C.error }} onClick={handleStopAll}>
                 {t("music_stop_all")}
               </button>
-              <button type="button" style={S_BTN_SM} onClick={handleResetDefaults}>
+              <button type="button" style={S_MUSIC_MODE_BTN} onClick={handleResetDefaults}>
                 {t("music_reset")}
               </button>
               <span style={{ width: SP.sm }} />
               <button
                 type="button"
-                style={luminanceMode === "symmetric" ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                style={luminanceMode === "symmetric" ? S_MUSIC_MODE_BTN_ACTIVE : S_MUSIC_MODE_BTN}
                 onClick={() => setLuminanceMode("symmetric")}
               >
                 {t("music_luminance_sym")}
               </button>
               <button
                 type="button"
-                style={luminanceMode === "luminance" ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                style={luminanceMode === "luminance" ? S_MUSIC_MODE_BTN_ACTIVE : S_MUSIC_MODE_BTN}
                 onClick={() => setLuminanceMode("luminance")}
               >
                 {t("music_luminance_bt601")}
               </button>
               <span style={{ width: SP.sm }} />
-              <button type="button" style={fmEnabled ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => setFmEnabled(!fmEnabled)}>
+              <button type="button" style={fmEnabled ? S_MUSIC_MODE_BTN_ACTIVE : S_MUSIC_MODE_BTN} onClick={() => setFmEnabled(!fmEnabled)}>
                 {t("music_fm_on")}
               </button>
             </div>

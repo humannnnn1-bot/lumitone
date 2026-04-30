@@ -19,6 +19,7 @@ interface MiniFanoChordProps {
 }
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
+const NODE_HIT_R = 14;
 
 function pointColor(lv: number, activeLevels: MiniFanoChordProps["activeLevels"]): string {
   const found = activeLevels.find((l) => l.lv === lv);
@@ -115,6 +116,7 @@ export const MiniFanoChord = React.memo(function MiniFanoChord({
             style={{ cursor: onNodeClick ? "pointer" : undefined }}
             onClick={() => onNodeClick?.(lv)}
           >
+            {onNodeClick && <circle cx={px} cy={py} r={NODE_HIT_R} fill="transparent" pointerEvents="all" />}
             <circle cx={px} cy={py} r={r} fill={col} stroke="#fff" strokeWidth={isPlaying ? 2 : 1} opacity={dimmed ? 0.3 : 1} />
             <text x={px} y={py + 3} fontSize={9} fill={textColor} textAnchor="middle" pointerEvents="none" opacity={dimmed ? 0.3 : 1}>
               {lv}
