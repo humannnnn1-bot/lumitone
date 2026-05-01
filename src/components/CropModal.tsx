@@ -213,7 +213,7 @@ export const CropModal = React.memo(function CropModal({ img, imgW, imgH, onConf
         ref={modalRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Crop image"
+        aria-label={t("crop_image_title")}
         style={{
           background: C.bgModal,
           border: `1px solid ${C.borderHover}`,
@@ -333,7 +333,7 @@ export const CropModal = React.memo(function CropModal({ img, imgW, imgH, onConf
         {/* Buttons */}
         <div style={{ display: "flex", gap: SP.xl }}>
           <button onClick={handleConfirm} style={{ ...S_BTN_ACTIVE, padding: "6px 20px" }}>
-            OK
+            {t("btn_ok")}
           </button>
           <button onClick={onCancel} style={{ ...S_BTN, padding: "6px 20px" }}>
             {t("btn_cancel")}

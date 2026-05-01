@@ -42,4 +42,16 @@ describe("App", () => {
     expect(await screen.findByRole("heading", { name: "Discrete Algebraic Color Theory" })).toBeTruthy();
     expect(screen.getByRole("tab", { name: "Theory" }).getAttribute("aria-selected")).toBe("true");
   });
+
+  it("updates the document title and names tab panels from their tabs", async () => {
+    renderApp();
+
+    expect(await screen.findByRole("tabpanel", { name: "Source" })).toBeTruthy();
+    expect(document.title).toBe("CHROMALUM - Source");
+
+    fireEvent.click(screen.getByRole("tab", { name: "Theory" }));
+
+    expect(await screen.findByRole("tabpanel", { name: "Theory" })).toBeTruthy();
+    expect(document.title).toBe("CHROMALUM - Theory");
+  });
 });

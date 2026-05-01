@@ -212,6 +212,7 @@ const DIAMOND_FRONT = { ...computeDiamondView(OCTA_3D_FRONT, OCTA_POINTS_FRONT),
 function DiamondView({
   view,
   viewId,
+  label,
   mirror,
   hl,
   complementLv,
@@ -227,6 +228,7 @@ function DiamondView({
 }: {
   view: DiamondViewData;
   viewId: string;
+  label: string;
   mirror: boolean;
   hl: number | null;
   complementLv: number | null;
@@ -256,7 +258,7 @@ function DiamondView({
   };
 
   return (
-    <svg viewBox="30 20 240 264" style={{ width: "100%", maxWidth: 220 }} role="img">
+    <svg viewBox="30 20 240 264" style={{ width: "100%", maxWidth: 220 }} role="img" aria-label={label}>
       {/* Gradient defs: 3 per face (one per vertex → opposite edge midpoint) */}
       <defs>
         {/* Edge gradients: vertex-to-vertex color blend */}
@@ -526,7 +528,7 @@ export const Octahedron = React.memo(function Octahedron({ hlLevel, onHover }: P
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg, width: "100%" }}>
       <div style={{ display: "flex", justifyContent: "center" }}>
-        <DiamondView view={DIAMOND_FRONT} viewId="df" mirror={false} {...sharedProps} />
+        <DiamondView view={DIAMOND_FRONT} viewId="df" mirror={false} label={t("theory_octa_title")} {...sharedProps} />
       </div>
 
       {/* Toggle buttons */}

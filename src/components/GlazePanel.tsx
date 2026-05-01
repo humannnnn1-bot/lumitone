@@ -574,6 +574,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
 
               const makeSwatch = (ci: number, size: number, _isCurrent: boolean) => {
                 const cand = cands[ci];
+                const candHex = `#${cand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
                 const isSelected = directCandidates.get(lp.lv) === ci;
                 const isSwatchHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === ci;
                 return (
@@ -581,6 +582,8 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                     key={ci}
                     role="button"
                     tabIndex={0}
+                    aria-label={t("glaze_level_swatch_aria", lp.lv, candHex, `${Math.round(cand.angle)}°`)}
+                    aria-pressed={isSelected}
                     onClick={() => {
                       const deselecting = directCandidates.get(lp.lv) === ci;
                       setDirectCandidates((prev) => {
@@ -616,7 +619,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                     }}
                     onPointerEnter={() => setHoveredCandidate({ lv: lp.lv, ci })}
                     onPointerLeave={() => setHoveredCandidate(null)}
-                    title={`#${cand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")} ${Math.round(cand.angle)}°`}
+                    title={`${candHex} ${Math.round(cand.angle)}°`}
                     style={{
                       width: size,
                       height: size,
@@ -684,12 +687,18 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                   {/* Current / main swatch — click to reset to auto */}
                   {(() => {
                     const mainCi = currentIdx;
+                    const mainCand = cands[mainCi];
+                    const mainHex = mainCand ? `#${mainCand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")}` : "";
                     const isMainHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === mainCi;
                     const isSelected = selectedLevels.has(lp.lv);
                     return (
                       <div
                         role={hasCands ? "button" : undefined}
                         tabIndex={hasCands ? 0 : undefined}
+                        aria-label={
+                          hasCands && mainCand ? t("glaze_level_swatch_aria", lp.lv, mainHex, `${Math.round(mainCand.angle)}°`) : undefined
+                        }
+                        aria-pressed={hasCands ? isSelected : undefined}
                         onClick={
                           hasCands
                             ? () => {
@@ -757,7 +766,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                         }
                         onPointerEnter={() => setHoveredCandidate({ lv: lp.lv, ci: mainCi })}
                         onPointerLeave={() => setHoveredCandidate(null)}
-                        title={isSelected ? t("title_reset_auto") : undefined}
+                        title={isSelected ? t("title_reset_auto") : mainCand ? `${mainHex} ${Math.round(mainCand.angle)}°` : undefined}
                         style={{
                           width: 28,
                           height: 28,

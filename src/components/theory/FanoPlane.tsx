@@ -408,7 +408,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
             className="theory-annotation"
             style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: FS.xs, fontFamily: "monospace", color: item.color }}
           >
-            <svg width={18} height={2}>
+            <svg width={18} height={2} aria-hidden="true" focusable="false">
               <line x1={0} y1={1} x2={18} y2={1} stroke={item.color} strokeWidth={2} strokeDasharray={item.dash} />
             </svg>
             {item.label}

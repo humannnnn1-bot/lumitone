@@ -944,7 +944,7 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg, width: "100%" }}>
       <div style={{ display: "flex", justifyContent: "center" }}>
-        <svg viewBox="40 45 220 180" style={{ width: "100%", maxWidth: VW }} role="img">
+        <svg viewBox="40 45 220 180" style={{ width: "100%", maxWidth: VW }} role="img" aria-label={t("theory_stella_title")}>
           {viewMode === "compound" ? renderCompound(VIEW_FRONT, "f") : renderK8(VIEW_FRONT, "f")}
         </svg>
       </div>

@@ -385,7 +385,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
               key={sz}
               onClick={() => setThumbSize(sz)}
               style={thumbSize === sz ? S_BTN_SM_ACTIVE : S_BTN_SM}
-              aria-label={`Thumbnail size ${sz}`}
+              aria-label={t("aria_gallery_thumb_size", sz)}
             >
               {t(`gallery_thumb_${sz}`)}
             </button>
@@ -670,6 +670,8 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                   lineHeight: 1,
                   color: starred ? C.warning : C.textFaint,
                 }}
+                aria-label={starred ? t("gallery_unbookmark") : t("gallery_bookmark")}
+                aria-pressed={starred}
                 title={starred ? t("gallery_unbookmark") : t("gallery_bookmark")}
               >
                 {starred ? "\u2605" : "\u2606"}

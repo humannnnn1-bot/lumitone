@@ -139,6 +139,10 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     if (activeTab === 5) setHasOpenedStats(true);
   }, [activeTab]);
 
+  useEffect(() => {
+    document.title = `CHROMALUM - ${t(MAIN_TABS[activeTab].key)}`;
+  }, [activeTab, t]);
+
   const prvRef = useRef<HTMLCanvasElement | null>(null);
   const glazePrvRef = useRef<HTMLCanvasElement | null>(null);
   const hexPrvRef = useRef<HTMLCanvasElement | null>(null);
@@ -432,6 +436,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
         {MAIN_TABS.map(({ key }, i) => (
           <button
             key={key}
+            id={`tab-${i}`}
             role="tab"
             aria-selected={activeTab === i}
             aria-controls={`tabpanel-${i}`}
@@ -445,7 +450,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
 
       <div style={S_TAB_CENTER}>
         {activeTab === 2 && (
-          <div id="tabpanel-2" role="tabpanel">
+          <div id="tabpanel-2" role="tabpanel" aria-labelledby="tab-2">
             <SourcePanel
               srcRef={drawing.srcRef}
               curRef={drawing.curRef}
@@ -478,7 +483,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
           </div>
         )}
         {activeTab === 3 && (
-          <div id="tabpanel-3" role="tabpanel">
+          <div id="tabpanel-3" role="tabpanel" aria-labelledby="tab-3">
             <ColorPanel
               prvRef={prvRef}
               prvCurRef={drawing.prvCurRef}
@@ -498,7 +503,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
           </div>
         )}
         {activeTab === 1 && (
-          <div id="tabpanel-1" role="tabpanel">
+          <div id="tabpanel-1" role="tabpanel" aria-labelledby="tab-1">
             <HexPanel
               hexPrvRef={hexPrvRef}
               displayW={displayW}
@@ -522,7 +527,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
           </div>
         )}
         {activeTab === 4 && (
-          <div id="tabpanel-4" role="tabpanel">
+          <div id="tabpanel-4" role="tabpanel" aria-labelledby="tab-4">
             <GlazeContextProvider
               hueAngle={hueAngle}
               setHueAngle={setHueAngle}
@@ -568,7 +573,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
           </div>
         )}
         {(activeTab === 5 || hasOpenedStats) && (
-          <div id="tabpanel-5" role="tabpanel" style={{ display: activeTab === 5 ? undefined : "none" }}>
+          <div id="tabpanel-5" role="tabpanel" aria-labelledby="tab-5" style={{ display: activeTab === 5 ? undefined : "none" }}>
             <AnalyzePanel
               hist={hist}
               total={cvs.w * cvs.h}
@@ -586,7 +591,12 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             />
           </div>
         )}
-        <div id="tabpanel-0" role="tabpanel" style={{ width: "100%", display: activeTab === 0 ? undefined : "none" }}>
+        <div
+          id="tabpanel-0"
+          role="tabpanel"
+          aria-labelledby="tab-0"
+          style={{ width: "100%", display: activeTab === 0 ? undefined : "none" }}
+        >
           <GalleryPanel
             cvs={cvs}
             cc={cc}
@@ -600,11 +610,16 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             onScrollDone={() => setScrollToGallery(false)}
           />
         </div>
-        <div id="tabpanel-6" role="tabpanel" style={{ width: "100%", display: activeTab === 6 ? undefined : "none" }}>
+        <div
+          id="tabpanel-6"
+          role="tabpanel"
+          aria-labelledby="tab-6"
+          style={{ width: "100%", display: activeTab === 6 ? undefined : "none" }}
+        >
           <TheoryPanel />
         </div>
         {activeTab === 7 && (
-          <div id="tabpanel-7" role="tabpanel" style={{ width: "100%" }}>
+          <div id="tabpanel-7" role="tabpanel" aria-labelledby="tab-7" style={{ width: "100%" }}>
             <Suspense fallback={<div style={S_LAZY_PANEL_FALLBACK}>Loading...</div>}>
               <MusicPanel />
             </Suspense>

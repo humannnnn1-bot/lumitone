@@ -422,6 +422,8 @@ export function MapCanvas({
     <div style={{ position: "relative" }}>
       <canvas
         ref={ref}
+        role="img"
+        aria-label={t("stats_title")}
         width={cw || 1}
         height={ch || 1}
         onMouseMove={onMouseMove}

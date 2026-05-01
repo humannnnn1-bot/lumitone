@@ -416,7 +416,7 @@ describe("CropModal interactions", () => {
     fireEvent.pointerDown(nwHandle, { clientX: 0, clientY: 0, pointerId: 1 });
     fireEvent.pointerMove(nwHandle, { clientX: 10, clientY: 12, pointerId: 1 });
     fireEvent.pointerUp(nwHandle, { pointerId: 1 });
-    fireEvent.click(screen.getByRole("button", { name: "OK" }));
+    fireEvent.click(screen.getByRole("button", { name: "btn_ok" }));
 
     expect(onConfirm).toHaveBeenCalledWith(10, 12, 54, 52);
   });

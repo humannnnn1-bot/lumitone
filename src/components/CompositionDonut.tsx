@@ -243,7 +243,14 @@ export const CompositionDonut = React.memo(function CompositionDonut({ cvs, hist
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }} onClick={() => setHover(null)}>
       <div style={{ maxWidth: "min(260px, 90vw)", width: "100%" }}>
-        <svg width="100%" height="auto" viewBox={`0 0 ${size} ${size}`} style={{ display: "block" }}>
+        <svg
+          width="100%"
+          height="auto"
+          viewBox={`0 0 ${size} ${size}`}
+          role="img"
+          aria-label={t("stats_composition")}
+          style={{ display: "block" }}
+        >
           {drawRing(graySlices, cx, cy, grayOuter, grayInner, onSelect)}
           {drawRing(colorSlices, cx, cy, colorOuter, colorInner, onSelect)}
           {hasGlaze && drawRing(glazeSlices, cx, cy, glazeOuter, glazeInner, onSelect)}

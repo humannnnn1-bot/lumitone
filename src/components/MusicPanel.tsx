@@ -44,14 +44,16 @@ const S_SELECT: React.CSSProperties = {
 };
 const S_MUSIC_MODE_BTN: React.CSSProperties = {
   ...S_BTN_SM,
+  boxSizing: "border-box",
+  height: 22,
   padding: `${SP.sm}px ${SP.md}px`,
-  minHeight: 22,
   whiteSpace: "nowrap",
 };
 const S_MUSIC_MODE_BTN_ACTIVE: React.CSSProperties = {
   ...S_BTN_SM_ACTIVE,
+  boxSizing: "border-box",
+  height: 22,
   padding: `${SP.sm}px ${SP.md}px`,
-  minHeight: 22,
   whiteSpace: "nowrap",
 };
 
@@ -721,7 +723,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 step={1}
                 value={Math.round(((alpha0 % 360) + 360) % 360)}
                 onChange={handleAlphaBarChange}
-                aria-label="Alpha angle"
+                aria-label={t("aria_alpha_angle")}
                 style={S_HUE_INPUT}
               />
             </div>
@@ -743,6 +745,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
 
               const makeSwatch = (ci: number, size: number) => {
                 const cand = cands[ci];
+                const candHex = `#${cand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
                 const isSwatchHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === ci;
                 const swatchClick = () => {
                   setDirectCandidates((prev) => {
@@ -763,6 +766,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                     key={ci}
                     role="button"
                     tabIndex={0}
+                    aria-label={t("aria_color_candidate", lp.lv, candHex, `${Math.round(cand.angle)}°`)}
                     onClick={swatchClick}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
@@ -772,7 +776,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                     }}
                     onPointerEnter={isTouchDevice ? undefined : () => setHoveredCandidate({ lv: lp.lv, ci })}
                     onPointerLeave={isTouchDevice ? undefined : () => setHoveredCandidate(null)}
-                    title={`#${cand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")} ${Math.round(cand.angle)}\u00B0`}
+                    title={`${candHex} ${Math.round(cand.angle)}\u00B0`}
                     style={{
                       width: size,
                       height: size,
@@ -843,6 +847,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                   {(() => {
                     const mainCi = currentIdx;
                     const mainCand = cands[mainCi];
+                    const mainHex = mainCand ? `#${mainCand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")}` : "";
                     const isMainHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === mainCi;
                     const isSelected = selectedLevels.has(lp.lv);
                     const isBurst = burstHighlight.has(lp.lv);
@@ -850,6 +855,8 @@ export const MusicPanel = React.memo(function MusicPanel() {
                       <div
                         role="button"
                         tabIndex={0}
+                        aria-label={mainCand ? t("aria_color_candidate", lp.lv, mainHex, `${Math.round(mainCand.angle)}°`) : undefined}
+                        aria-pressed={isSelected}
                         onClick={() => {
                           if (!mainCand) return;
                           setSelectedLevels((prev) => {
@@ -879,11 +886,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                         }
                         onPointerEnter={isTouchDevice ? undefined : () => setHoveredCandidate({ lv: lp.lv, ci: mainCi })}
                         onPointerLeave={isTouchDevice ? undefined : () => setHoveredCandidate(null)}
-                        title={
-                          mainCand
-                            ? `#${mainCand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")} ${Math.round(mainCand.angle)}\u00B0`
-                            : undefined
-                        }
+                        title={mainCand ? `${mainHex} ${Math.round(mainCand.angle)}\u00B0` : undefined}
                         style={{
                           width: 28,
                           height: 28,
@@ -1001,6 +1004,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 type="button"
                 style={{ ...(hueDir === -1 ? S_BTN_SM_ACTIVE : S_BTN_SM), minWidth: 36 }}
                 onClick={handleHueReverse}
+                aria-label={t("linkedviz_hue_reverse")}
                 title={t("linkedviz_hue_reverse")}
               >
                 {"H\u25C0"}
@@ -1009,6 +1013,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 type="button"
                 style={{ ...(hueDir === 1 ? S_BTN_SM_ACTIVE : S_BTN_SM), minWidth: 36 }}
                 onClick={handleHuePlay}
+                aria-label={t("linkedviz_hue_play")}
                 title={t("linkedviz_hue_play")}
               >
                 {"H\u25B6"}
@@ -1019,7 +1024,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 max={120}
                 value={hueSpeed}
                 onChange={(e) => setHueSpeed(Number(e.target.value))}
-                aria-label="Hue speed"
+                aria-label={t("aria_hue_speed")}
                 style={{ flex: 1, minWidth: 60 }}
               />
               <span style={{ fontSize: FS.lg, color: C.textDim, fontVariantNumeric: "tabular-nums", width: 42 }}>{hueSpeed}&deg;/s</span>
@@ -1030,6 +1035,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 type="button"
                 style={{ ...(alphaDir === -1 ? S_BTN_SM_ACTIVE : S_BTN_SM), minWidth: 36 }}
                 onClick={handleAlphaReverse}
+                aria-label={t("linkedviz_alpha_reverse")}
                 title={t("linkedviz_alpha_reverse")}
               >
                 {"\u03b1\u25C0"}
@@ -1038,6 +1044,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 type="button"
                 style={{ ...(alphaDir === 1 ? S_BTN_SM_ACTIVE : S_BTN_SM), minWidth: 36 }}
                 onClick={handleAlphaPlay}
+                aria-label={t("linkedviz_alpha_play")}
                 title={t("linkedviz_alpha_play")}
               >
                 {"\u03b1\u25B6"}
@@ -1048,7 +1055,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 max={120}
                 value={alphaSpeed}
                 onChange={(e) => setAlphaSpeed(Number(e.target.value))}
-                aria-label="Alpha speed"
+                aria-label={t("aria_alpha_speed")}
                 style={{ flex: 1, minWidth: 60 }}
               />
               <span style={{ fontSize: FS.lg, color: C.textDim, fontVariantNumeric: "tabular-nums", width: 42 }}>{alphaSpeed}&deg;/s</span>
@@ -1085,8 +1092,8 @@ export const MusicPanel = React.memo(function MusicPanel() {
                   }
                 }}
                 style={{ ...(muted ? S_BTN_SM_ACTIVE : S_BTN_SM), minWidth: 36 }}
-                aria-label={muted ? "Unmute" : "Mute"}
-                title={muted ? "Unmute" : "Mute"}
+                aria-label={muted ? t("music_unmute") : t("music_mute")}
+                title={muted ? t("music_unmute") : t("music_mute")}
               >
                 {muted ? "\uD83D\uDD07" : "\uD83D\uDD0A"}
               </button>
@@ -1139,7 +1146,12 @@ export const MusicPanel = React.memo(function MusicPanel() {
             }}
           >
             <span style={S_LABEL}>{t("music_xor_title")}</span>
-            <select value={xorA ?? ""} onChange={(e) => setXorA(e.target.value ? Number(e.target.value) : null)} style={S_SELECT}>
+            <select
+              value={xorA ?? ""}
+              onChange={(e) => setXorA(e.target.value ? Number(e.target.value) : null)}
+              aria-label={t("music_xor_left_select")}
+              style={S_SELECT}
+            >
               <option value="">--</option>
               {[1, 2, 3, 4, 5, 6, 7].map((lv) => (
                 <option key={lv} value={lv}>
@@ -1147,7 +1159,12 @@ export const MusicPanel = React.memo(function MusicPanel() {
                 </option>
               ))}
             </select>
-            <select value={xorB ?? ""} onChange={(e) => setXorB(e.target.value ? Number(e.target.value) : null)} style={S_SELECT}>
+            <select
+              value={xorB ?? ""}
+              onChange={(e) => setXorB(e.target.value ? Number(e.target.value) : null)}
+              aria-label={t("music_xor_right_select")}
+              style={S_SELECT}
+            >
               <option value="">--</option>
               {[1, 2, 3, 4, 5, 6, 7].map((lv) => (
                 <option key={lv} value={lv}>
@@ -1178,7 +1195,12 @@ export const MusicPanel = React.memo(function MusicPanel() {
             }}
           >
             <span style={S_LABEL}>{t("music_pointfano_title")}</span>
-            <select value={fanoContextPoint} onChange={(e) => setFanoContextPoint(Number(e.target.value))} style={S_SELECT}>
+            <select
+              value={fanoContextPoint}
+              onChange={(e) => setFanoContextPoint(Number(e.target.value))}
+              aria-label={t("music_fano_point_select")}
+              style={S_SELECT}
+            >
               {[1, 2, 3, 4, 5, 6, 7].map((lv) => (
                 <option key={lv} value={lv}>
                   {lv}
@@ -1202,7 +1224,12 @@ export const MusicPanel = React.memo(function MusicPanel() {
             }}
           >
             <span style={S_LABEL}>{t("music_dual_title")}</span>
-            <select value={selectedFanoLine} onChange={(e) => setHoveredFanoLine(Number(e.target.value))} style={S_SELECT}>
+            <select
+              value={selectedFanoLine}
+              onChange={(e) => setHoveredFanoLine(Number(e.target.value))}
+              aria-label={t("music_fano_line_select")}
+              style={S_SELECT}
+            >
               {FANO_LINES.map((line, i) => (
                 <option key={i} value={i}>
                   {line.join("-")}
@@ -1252,14 +1279,25 @@ export const MusicPanel = React.memo(function MusicPanel() {
         <div style={{ ...S_SECTION, marginTop: SP.sm }} role="heading" aria-level={3}>
           {t("music_section_algebra")}
         </div>
-        <div id="music-algebra-panel" role="region" className="music-algebra-scroll" style={S_CARD_GRID}>
+        <div
+          id="music-algebra-panel"
+          role="region"
+          aria-label={t("music_section_algebra")}
+          className="music-algebra-scroll"
+          style={S_CARD_GRID}
+        >
           {/* ── A: Core Algebra (GF(2)³ operations) ── */}
 
           {/* 2. Cayley Table */}
           <div style={S_CARD_ALGEBRA}>
             <div style={S_ROW}>
               <span style={S_LABEL}>{t("music_cayley_title")}</span>
-              <select value={cayleyRow} onChange={(e) => setCayleyRow(Number(e.target.value))} style={S_SELECT}>
+              <select
+                value={cayleyRow}
+                onChange={(e) => setCayleyRow(Number(e.target.value))}
+                aria-label={t("music_cayley_row_select")}
+                style={S_SELECT}
+              >
                 {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
                   <option key={i} value={i}>
                     {i}
@@ -1289,21 +1327,36 @@ export const MusicPanel = React.memo(function MusicPanel() {
           <div style={S_CARD_ALGEBRA}>
             <div style={S_ROW}>
               <span style={S_LABEL}>{t("music_distrib_title")}</span>
-              <select value={distA} onChange={(e) => setDistA(Number(e.target.value))} style={S_SELECT}>
+              <select
+                value={distA}
+                onChange={(e) => setDistA(Number(e.target.value))}
+                aria-label={t("music_distrib_a_select")}
+                style={S_SELECT}
+              >
                 {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
                   <option key={i} value={i}>
                     {i}
                   </option>
                 ))}
               </select>
-              <select value={distB} onChange={(e) => setDistB(Number(e.target.value))} style={S_SELECT}>
+              <select
+                value={distB}
+                onChange={(e) => setDistB(Number(e.target.value))}
+                aria-label={t("music_distrib_b_select")}
+                style={S_SELECT}
+              >
                 {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
                   <option key={i} value={i}>
                     {i}
                   </option>
                 ))}
               </select>
-              <select value={distC} onChange={(e) => setDistC(Number(e.target.value))} style={S_SELECT}>
+              <select
+                value={distC}
+                onChange={(e) => setDistC(Number(e.target.value))}
+                aria-label={t("music_distrib_c_select")}
+                style={S_SELECT}
+              >
                 {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
                   <option key={i} value={i}>
                     {i}
@@ -1475,14 +1528,24 @@ export const MusicPanel = React.memo(function MusicPanel() {
             <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
               <span style={S_LABEL}>{t("music_octa_title")}</span>
               <div style={{ display: "flex", gap: SP.sm, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
-                <select value={octaA} onChange={(e) => setOctaA(Number(e.target.value))} style={S_SELECT}>
+                <select
+                  value={octaA}
+                  onChange={(e) => setOctaA(Number(e.target.value))}
+                  aria-label={t("music_octa_first_select")}
+                  style={S_SELECT}
+                >
                   {[1, 2, 3, 4, 5, 6].map((lv) => (
                     <option key={lv} value={lv}>
                       {lv}
                     </option>
                   ))}
                 </select>
-                <select value={octaB} onChange={(e) => setOctaB(Number(e.target.value))} style={S_SELECT}>
+                <select
+                  value={octaB}
+                  onChange={(e) => setOctaB(Number(e.target.value))}
+                  aria-label={t("music_octa_second_select")}
+                  style={S_SELECT}
+                >
                   {[1, 2, 3, 4, 5, 6].map((lv) => (
                     <option key={lv} value={lv}>
                       {lv}

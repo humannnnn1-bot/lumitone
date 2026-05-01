@@ -65,7 +65,12 @@ export const ErrorCorrectionCard = React.memo(function ErrorCorrectionCard({
       <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
         <span style={S_LABEL}>{t("music_error_title")}</span>
         <div style={{ display: "flex", gap: SP.sm, alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
-          <select value={errorPos} onChange={(e) => onErrorPosChange(Number(e.target.value))} style={S_SELECT}>
+          <select
+            value={errorPos}
+            onChange={(e) => onErrorPosChange(Number(e.target.value))}
+            aria-label={t("music_error_position_select")}
+            style={S_SELECT}
+          >
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
               <option key={i} value={i}>
                 {i}
