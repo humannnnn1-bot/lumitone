@@ -123,7 +123,7 @@ const ThumbCanvas = React.memo(function ThumbCanvas({ imageData, w, h }: { image
     tmpCtx.putImageData(imageData, 0, 0);
     ctx.drawImage(tmp, 0, 0, bw, bh);
   }, [imageData, w, h]);
-  return <canvas ref={ref} style={{ width: w, height: h, display: "block", borderRadius: R.sm }} />;
+  return <canvas ref={ref} className="gallery-thumb-canvas" style={{ width: w, height: h }} />;
 });
 
 type SortMode = "default" | "hue_asc" | "hue_desc" | "similar";
@@ -579,16 +579,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
       )}
 
       {/* Thumbnail grid */}
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(auto-fill, minmax(${thumbDisplaySize + 14}px, 1fr))`,
-          justifyContent: "center",
-          gap: SP.lg,
-          width: "100%",
-          padding: "2px 0",
-        }}
-      >
+      <div className="gallery-grid" style={{ "--gallery-thumb-track": `${thumbDisplaySize + 14}px` } as React.CSSProperties}>
         {displayItems.map((item, i) => {
           const isCurrent = ccEqual(item.cc, cc);
           const starred = isBookmarked(item.cc);
@@ -596,17 +587,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
             <div
               key={i}
               ref={isCurrent ? currentItemRef : undefined}
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: SP.xs,
-                padding: 3,
-                borderRadius: R.lg,
-                border: isCurrent ? `2px solid ${C.accent}` : `2px solid ${C.bgSurface}`,
-                background: isCurrent ? C.activeGlow : "transparent",
-                cursor: "pointer",
-              }}
+              className={isCurrent ? "gallery-card gallery-card--current" : "gallery-card"}
             >
               <div
                 onClick={() => setExpandedIndex(expandedIndex === i ? null : i)}
@@ -631,29 +612,16 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                 role="button"
                 aria-label={t("gallery_preview") + ` (${i + 1})`}
                 title={t("gallery_preview")}
-                style={{
-                  outline: expandedIndex === i ? `2px solid ${C.accent}` : "none",
-                  borderRadius: R.sm,
-                }}
+                className={expandedIndex === i ? "gallery-preview-button gallery-preview-button--expanded" : "gallery-preview-button"}
               >
                 <ThumbCanvas imageData={item.imageData} w={thumbDisplaySize} h={Math.round((thumbDisplaySize * cvs.h) / cvs.w)} />
               </div>
-              <div style={{ display: "flex", gap: SP.xs }}>
+              <div className="gallery-swatches">
                 {item.cc.map((ci, lv) => {
                   const alts = LEVEL_CANDIDATES[lv];
                   if (hist[lv] === 0) return null; // skip unused levels
                   const rgb = alts[ci % alts.length]?.rgb ?? [128, 128, 128];
-                  return (
-                    <div
-                      key={lv}
-                      style={{
-                        width: 10,
-                        height: 10,
-                        borderRadius: R.sm,
-                        background: rgbStr(rgb),
-                      }}
-                    />
-                  );
+                  return <div key={lv} className="gallery-swatch" style={{ background: rgbStr(rgb) }} />;
                 })}
               </div>
               <button
@@ -661,15 +629,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                   e.stopPropagation();
                   toggleBookmark(item.cc);
                 }}
-                style={{
-                  background: "none",
-                  border: "none",
-                  cursor: "pointer",
-                  fontSize: FS.lg,
-                  padding: `${SP.xs}px ${SP.md}px 0`,
-                  lineHeight: 1,
-                  color: starred ? C.warning : C.textFaint,
-                }}
+                className={starred ? "gallery-bookmark-button gallery-bookmark-button--starred" : "gallery-bookmark-button"}
                 aria-label={starred ? t("gallery_unbookmark") : t("gallery_bookmark")}
                 aria-pressed={starred}
                 title={starred ? t("gallery_unbookmark") : t("gallery_bookmark")}

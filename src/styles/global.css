@@ -13,8 +13,11 @@
   --c-accent-bright: #80a0ff;
   --c-text-primary: #c8c8d8;
   --c-text-secondary: #8a8aaa;
+  --c-text-faint: #8888b8;
   --c-border: #2a2a40;
   --c-border-hover: #3a3a5a;
+  --c-warning: #ffd700;
+  --c-active-glow: rgba(96, 128, 255, 0.06);
 
   /* Responsive header spacing — mobile defaults */
   --sp-root-top: 6px;
@@ -100,6 +103,67 @@ input[type="checkbox"]:focus-visible {
 .map-mode-break {
   flex-basis: 100%;
   height: 0;
+}
+
+/* Gallery thumbnail grid */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--gallery-thumb-track, 194px), 1fr));
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 2px 0;
+}
+.gallery-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 4px;
+  border: 2px solid var(--c-bg-surface, #1a1a30);
+  background: transparent;
+  cursor: pointer;
+}
+.gallery-card--current {
+  border-color: var(--c-accent, #6080ff);
+  background: var(--c-active-glow, rgba(96, 128, 255, 0.06));
+}
+.gallery-preview-button {
+  border-radius: 2px;
+  outline: none;
+}
+.gallery-preview-button--expanded {
+  outline: 2px solid var(--c-accent, #6080ff);
+}
+.gallery-thumb-canvas {
+  display: block;
+  border-radius: 2px;
+}
+.gallery-swatches {
+  display: flex;
+  gap: 2px;
+}
+.gallery-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+.gallery-bookmark-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 11px;
+  padding: 2px 4px 0;
+  line-height: 1;
+  color: var(--c-text-faint, #8888b8);
+}
+.gallery-bookmark-button--starred {
+  color: var(--c-warning, #ffd700);
+}
+.gallery-bookmark-button:hover:not(:disabled) {
+  background: none;
+  border-color: transparent;
 }
 
 /* ── Responsive side-by-side layout for wide screens ── */
