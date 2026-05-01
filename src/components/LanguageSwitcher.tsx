@@ -1,21 +1,24 @@
 import React from "react";
 import { useTranslation } from "../i18n";
-import { C, SP, FS, FW, R } from "../styles/tokens";
+import { C, FS, FW } from "../styles/tokens";
 
 export const LanguageSwitcher = React.memo(function LanguageSwitcher() {
   const { lang, setLang, t } = useTranslation();
   return (
     <button
+      type="button"
       onClick={() => setLang(lang === "ja" ? "en" : "ja")}
+      aria-label={t("lang_switch_label")}
+      title={t("lang_switch_label")}
       style={{
         background: "none",
-        border: `1px solid ${C.borderHover}`,
+        border: "none",
         color: C.textDimmest,
-        borderRadius: R.md,
         cursor: "pointer",
-        padding: `0 ${SP.md}px`,
+        padding: 0,
         fontSize: FS.sm,
         fontWeight: FW.bold,
+        fontFamily: "inherit",
       }}
     >
       {t("lang_switch")}

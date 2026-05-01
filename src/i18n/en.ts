@@ -120,7 +120,7 @@ export const en = {
   help_undo: "Undo",
   help_redo: "Redo",
   help_paste: "Paste image",
-  help_this_help: "This help (also F1)",
+  help_this_help: "Shortcuts panel (also F1)",
   help_close: "Close",
   help_pan_key: "Space+Drag",
   help_zoom_key: "Wheel / +/-",
@@ -177,7 +177,15 @@ export const en = {
   drop_announce: "Drop an image here",
 
   // Header
-  help_link: "Help",
+  help_link: "Shortcuts",
+  header_about: "About",
+  header_shortcuts: "Shortcuts",
+  about_title: "CHROMALUM",
+  about_body_1:
+    "CHROMALUM is an art tool that starts from eight colors: the three primary colors of light, the three primary colors of pigment, plus white and black. It rearranges brightness into relationships of color, supported by an algebraic structure behind the eight-color system.",
+  about_body_2:
+    "Start by drawing in the Source tab or loading an image. In the Hex and Color tabs, assign colors to the eight luminance levels and shape the palette. The Gallery tab lets you browse all resulting pattern combinations. In the Glaze tab, you can overlay alternative candidate colors, while the Map tab analyzes information in the canvas.",
+  about_body_3: "The Theory tab explains the underlying color system, and the Music tab explores the same color structure through sound.",
 
   // Tablist
   tablist_label: "Main navigation",
@@ -628,4 +636,5 @@ export const en = {
 
   // Language switcher
   lang_switch: "JA",
+  lang_switch_label: "Switch language to Japanese",
 } as const satisfies Translations;

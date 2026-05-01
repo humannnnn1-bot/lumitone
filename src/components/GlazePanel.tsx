@@ -438,47 +438,45 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
           </div>
 
           {/* Brush size */}
-          {glazeTool !== "glaze_fill" && (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: SP.lg,
-                fontSize: 11,
-                color: C.textDimmer,
-                width: "100%",
-                marginTop: SP.md,
-                marginBottom: SP.md,
-              }}
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: SP.lg,
+              fontSize: 11,
+              color: C.textDimmer,
+              width: "100%",
+              marginTop: SP.md,
+              marginBottom: SP.md,
+            }}
+          >
+            <span>{t("label_size")}</span>
+            <button
+              style={S_BTN}
+              onClick={() => setBrushSize((s) => Math.max(BRUSH_MIN, s - BRUSH_STEP))}
+              aria-label={t("aria_brush_size_decrease")}
             >
-              <span>{t("label_size")}</span>
-              <button
-                style={S_BTN}
-                onClick={() => setBrushSize((s) => Math.max(BRUSH_MIN, s - BRUSH_STEP))}
-                aria-label={t("aria_brush_size_decrease")}
-              >
-                {"\u2212"}
-              </button>
-              <input
-                type="range"
-                min={BRUSH_MIN}
-                max={BRUSH_MAX}
-                step={BRUSH_STEP}
-                value={brushSize}
-                onChange={(e) => setBrushSize(Number(e.target.value))}
-                aria-label={t("aria_brush_size")}
-                style={{ flex: 1, minWidth: 60 }}
-              />
-              <button
-                style={S_BTN}
-                onClick={() => setBrushSize((s) => Math.min(BRUSH_MAX, s + BRUSH_STEP))}
-                aria-label={t("aria_brush_size_increase")}
-              >
-                +
-              </button>
-              <span style={{ color: C.textSecondary, minWidth: 20 }}>{brushSize}</span>
-            </div>
-          )}
+              {"\u2212"}
+            </button>
+            <input
+              type="range"
+              min={BRUSH_MIN}
+              max={BRUSH_MAX}
+              step={BRUSH_STEP}
+              value={brushSize}
+              onChange={(e) => setBrushSize(Number(e.target.value))}
+              aria-label={t("aria_brush_size")}
+              style={{ flex: 1, minWidth: 60 }}
+            />
+            <button
+              style={S_BTN}
+              onClick={() => setBrushSize((s) => Math.min(BRUSH_MAX, s + BRUSH_STEP))}
+              aria-label={t("aria_brush_size_increase")}
+            >
+              +
+            </button>
+            <span style={{ color: C.textSecondary, minWidth: 20 }}>{brushSize}</span>
+          </div>
 
           {/* Options + Clear */}
           <div style={{ display: "flex", alignItems: "center", gap: SP.lg, flexWrap: "wrap", justifyContent: "center" }}>

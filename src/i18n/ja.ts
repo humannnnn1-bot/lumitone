@@ -120,7 +120,7 @@ export const ja: Record<TranslationKey, string> = {
   help_undo: "元に戻す",
   help_redo: "やり直し",
   help_paste: "画像ペースト",
-  help_this_help: "このヘルプ (F1も可)",
+  help_this_help: "ショートカット (F1も可)",
   help_close: "閉じる",
   help_pan_key: "Space+ドラッグ",
   help_zoom_key: "ホイール / +/-",
@@ -177,7 +177,15 @@ export const ja: Record<TranslationKey, string> = {
   drop_announce: "画像をドロップしてください",
 
   // Header
-  help_link: "ヘルプ",
+  help_link: "Shortcuts",
+  header_about: "About",
+  header_shortcuts: "Shortcuts",
+  about_title: "CHROMALUM",
+  about_body_1:
+    "CHROMALUMは、光の三原色と色の三原色、そして白と黒からなる八色を出発点に、明るさを色の関係へ組み替えていくアートツールです。この色彩表現の奥には、八つの色をめぐる代数的な構造があります。",
+  about_body_2:
+    "まずはSourceタブで絵を描くか、画像を読み込むところから始めます。HexタブやColorタブで八段階の輝度に色を割り当て、配色を決めます。その組み合わせの全パターンはGalleryタブで参照できます。Glazeタブでは別の候補色をオーバーレイすることができます。キャンバスの情報の分析にはMapタブを使います。",
+  about_body_3: "Theoryタブでは色彩体系の理論を読み解き、Musicタブでは同じ色彩構造の音響化を扱います。",
 
   // Tablist
   tablist_label: "メインナビゲーション",
@@ -629,4 +637,5 @@ export const ja: Record<TranslationKey, string> = {
 
   // Language switcher
   lang_switch: "EN",
+  lang_switch_label: "英語に切り替え",
 } as const satisfies Translations;

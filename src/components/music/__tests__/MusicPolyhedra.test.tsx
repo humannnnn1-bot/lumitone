@@ -7,6 +7,7 @@ import { AndTriads } from "../AndTriads";
 import { OctahedronMix } from "../OctahedronMix";
 import { TetraSplitView } from "../TetraSplitView";
 import { K8LayerGraph } from "../K8LayerGraph";
+import { GrayCube } from "../GrayCube";
 function renderWithLanguage(node: ReactNode) {
   localStorage.setItem("chromalum_lang", "en");
   return render(<LanguageProvider>{node}</LanguageProvider>);
@@ -38,5 +39,11 @@ describe("Music polyhedra widgets", () => {
     renderWithLanguage(<K8LayerGraph layer={2} activeEdgeIndex={0} activeLevels={[]} />);
 
     expect(screen.getByText("d=2")).toBeTruthy();
+  });
+
+  it("keeps the active Gray code node modestly sized", () => {
+    const { container } = renderWithLanguage(<GrayCube currentCode={1} activeLevels={[]} />);
+
+    expect(container.querySelector('circle[fill="#0000ff"][r="6.5"]')).toBeTruthy();
   });
 });

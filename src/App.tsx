@@ -22,6 +22,7 @@ import { MAIN_TABS } from "./tabs";
 import { SourcePanel } from "./components/SourcePanel";
 import { ColorPanel } from "./components/ColorPanel";
 import { GlazePanel } from "./components/GlazePanel";
+import { AboutModal } from "./components/AboutModal";
 import { HelpModal } from "./components/HelpModal";
 import { NewCanvasModal } from "./components/NewCanvasModal";
 import { CropModal } from "./components/CropModal";
@@ -50,8 +51,25 @@ const S_TITLE: React.CSSProperties = {
   color: C.textPrimary,
   letterSpacing: 10,
 };
-const S_STATUS: React.CSSProperties = { fontSize: FS.sm, color: C.textFaint, marginTop: 2 };
-const S_HELP_LINK: React.CSSProperties = { cursor: "pointer", color: C.textDimmest, textDecoration: "underline" };
+const S_STATUS: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 6,
+  fontSize: FS.sm,
+  color: C.textFaint,
+  marginTop: 2,
+};
+const S_HEADER_ACTION: React.CSSProperties = {
+  background: "none",
+  border: "none",
+  padding: 0,
+  color: C.textDimmest,
+  cursor: "pointer",
+  font: "inherit",
+};
+const S_HEADER_SEPARATOR: React.CSSProperties = { color: C.textSubtle };
+const S_HEADER_LANGUAGE_SEPARATOR: React.CSSProperties = { color: C.textSubtle, marginLeft: 4, marginRight: 4 };
 const S_TABLIST: React.CSSProperties = {
   display: "flex",
   justifyContent: "center",
@@ -134,6 +152,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   const hist = state.hist;
   const [scrollToGallery, setScrollToGallery] = useState(false);
   const [hasOpenedStats, setHasOpenedStats] = useState(() => activeTab === 5);
+  const [showAbout, setShowAbout] = useState(false);
 
   useEffect(() => {
     if (activeTab === 5) setHasOpenedStats(true);
@@ -418,16 +437,20 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
         </div>
       )}
 
+      <AboutModal open={showAbout} onClose={() => setShowAbout(false)} />
       <HelpModal showHelp={showHelp} setShowHelp={setShowHelp} helpRef={helpRef} />
 
       <div style={S_HEADER}>
         <h1 style={S_TITLE}>CHROMALUM</h1>
         <div style={S_STATUS}>
-          {cvs.w}&times;{cvs.h} |{" "}
-          <span style={S_HELP_LINK} onClick={() => setShowHelp(true)}>
-            {t("help_link")}
-          </span>
-          {" | "}
+          <button type="button" style={S_HEADER_ACTION} onClick={() => setShowAbout(true)}>
+            {t("header_about")}
+          </button>
+          <span style={S_HEADER_SEPARATOR}>·</span>
+          <button type="button" style={S_HEADER_ACTION} onClick={() => setShowHelp(true)}>
+            {t("header_shortcuts")}
+          </button>
+          <span style={S_HEADER_LANGUAGE_SEPARATOR}>|</span>
           <LanguageSwitcher />
         </div>
       </div>

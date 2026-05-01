@@ -49,6 +49,8 @@ function changedBit(a: number, b: number): number {
 
 const BIT_COLORS = ["#0000ff", "#ff0000", "#00ff00"];
 const BIT_LABELS = ["B", "R", "G"];
+const NODE_R = 4;
+const ACTIVE_NODE_R = 6.5;
 
 function toBinary(n: number): string {
   return n.toString(2).padStart(3, "0");
@@ -107,7 +109,7 @@ export const GrayCube = React.memo(function GrayCube({ currentCode, activeLevels
       {[0, 1, 2, 3, 4, 5, 6, 7].map((v) => {
         const [vx, vy] = VERTS[v];
         const isCurrent = currentCode === v;
-        const r = isCurrent ? 8 : 4;
+        const r = isCurrent ? ACTIVE_NODE_R : NODE_R;
         const col = LV_COLORS[v];
 
         return (

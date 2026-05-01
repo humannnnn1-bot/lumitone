@@ -54,4 +54,18 @@ describe("App", () => {
     expect(await screen.findByRole("tabpanel", { name: "Theory" })).toBeTruthy();
     expect(document.title).toBe("CHROMALUM - Theory");
   });
+
+  it("opens About and Shortcuts from the header", async () => {
+    renderApp();
+
+    fireEvent.click(await screen.findByRole("button", { name: "About" }));
+    expect(screen.getByRole("dialog", { name: "CHROMALUM" })).toBeTruthy();
+    expect(screen.getByText(/three primary colors of light/)).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(screen.queryByRole("dialog", { name: "CHROMALUM" })).toBeNull();
+
+    fireEvent.click(screen.getByRole("button", { name: "Shortcuts" }));
+    expect(screen.getByRole("dialog", { name: "Keyboard Shortcuts" })).toBeTruthy();
+  });
 });

@@ -382,6 +382,13 @@ describe("GlazePanel interactions", () => {
     expect((setBrushSize.mock.calls[0][0] as (value: number) => number)(4)).toBe(5);
   });
 
+  it("keeps brush size controls visible for the glaze fill tool", () => {
+    renderGlaze({ context: { glazeTool: "glaze_fill" } });
+
+    expect(screen.getByLabelText("aria_brush_size")).toBeTruthy();
+    expect(screen.getByText("4")).toBeTruthy();
+  });
+
   it("lets direct candidate swatches opt a level into and out of manual selection", () => {
     const { setDirectCandidates } = renderGlaze({ context: { directCandidates: new Map() } });
     const candidateButtons = screen.getAllByRole("button").filter((button) => button.getAttribute("title")?.startsWith("#"));
