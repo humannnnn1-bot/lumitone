@@ -1,0 +1,26 @@
+{
+  "name": "CHROMALUM",
+  "short_name": "CHROMALUM",
+  "description": "CHROMALUM is a browser-based color playground for drawing grayscale pixel art, mapping it to palettes, testing glaze overlays, exploring visual patterns, and experimenting with color-based music.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "theme_color": "#0a0a12",
+  "background_color": "#0a0a12",
+  "lang": "en",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-maskable.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "maskable"
+    }
+  ]
+}
