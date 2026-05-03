@@ -13,9 +13,12 @@
     "test:e2e": "playwright test",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "icons:generate": "node scripts/generate-icons.mjs",
     "lint": "eslint src",
-    "format": "prettier --write src e2e .github README.md SECURITY.md docs/**/*.md index.html public/*.webmanifest .lintstagedrc.json playwright.config.ts vite.config.ts",
-    "format:check": "prettier --check src e2e .github README.md SECURITY.md docs/**/*.md index.html public/*.webmanifest .lintstagedrc.json playwright.config.ts vite.config.ts",
+    "format": "prettier --write src e2e scripts/**/*.mjs .github README.md SECURITY.md docs/**/*.md index.html public/*.webmanifest .lintstagedrc.json playwright.config.ts vite.config.ts",
+    "format:check": "prettier --check src e2e scripts/**/*.mjs .github README.md SECURITY.md docs/**/*.md index.html public/*.webmanifest .lintstagedrc.json playwright.config.ts vite.config.ts",
+    "verify": "npm run format:check && npm run lint && npm run build && npm test",
+    "verify:e2e": "npm run verify && npm run test:e2e",
     "prepare": "husky"
   },
   "volta": {
