@@ -116,7 +116,7 @@ export const HexDiagram = memo(
                     textAnchor="middle"
                     dominantBaseline="central"
                     fontSize={isVertex ? 13 : isNode ? 11 : FS.xs}
-                    fontFamily="monospace"
+                    fontFamily="var(--font-mono)"
                     fill={isVertex ? C.textPrimary : isNode ? C.textMuted : C.textSubtle}
                     fontWeight={isVertex || isNode ? FW.bold : 400}
                   >
@@ -280,7 +280,7 @@ export const HexDiagram = memo(
                         dominantBaseline="central"
                         fontSize={Math.max(FS.sm, r * 0.7)}
                         fontWeight={900}
-                        fontFamily="monospace"
+                        fontFamily="var(--font-mono)"
                         fill={act ? (lv >= 4 ? "#000" : C.textWhite) : color}
                       >
                         {lv}
@@ -292,7 +292,7 @@ export const HexDiagram = memo(
                         dominantBaseline="central"
                         fontSize={14}
                         fontWeight={FW.bold}
-                        fontFamily="monospace"
+                        fontFamily="var(--font-mono)"
                         fill={color}
                         opacity={O.strong}
                       >
@@ -384,7 +384,7 @@ export const HexDiagram = memo(
                       dominantBaseline="central"
                       fontSize={Math.max(FS.xxs, r * 0.9)}
                       fontWeight={FW.bold}
-                      fontFamily="monospace"
+                      fontFamily="var(--font-mono)"
                       fill={act ? (lv >= 4 ? "#000" : C.textWhite) : color}
                     >
                       {lv}

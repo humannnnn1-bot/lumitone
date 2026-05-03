@@ -230,7 +230,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
                   textAnchor="middle"
                   dominantBaseline="central"
                   fontSize={FS.sm}
-                  fontFamily="monospace"
+                  fontFamily="var(--font-mono)"
                   fill={labelColor}
                   fontWeight={FW.bold}
                 >
@@ -242,7 +242,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
                   textAnchor="middle"
                   dominantBaseline="central"
                   fontSize={FS.xs}
-                  fontFamily="monospace"
+                  fontFamily="var(--font-mono)"
                   fill={labelColor}
                   opacity={0.8}
                 >
@@ -255,7 +255,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
         {/* CMY collapse equation label */}
         {isCmyAnimating && animT > 0.6 && (
           <g opacity={Math.min(1, (animT - 0.6) * 3)}>
-            <text x={CX} y={CY - 60} textAnchor="middle" fontSize={FS.md} fontFamily="monospace" fontWeight={FW.bold} fill="#ff6644">
+            <text x={CX} y={CY - 60} textAnchor="middle" fontSize={FS.md} fontFamily="var(--font-mono)" fontWeight={FW.bold} fill="#ff6644">
               {t("theory_fano_cmy_eq")}
             </text>
             {animT > 0.85 && (
@@ -264,7 +264,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
                 y={CY - 46}
                 textAnchor="middle"
                 fontSize={FS.xs}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={C.textDimmer}
                 opacity={Math.min(1, (animT - 0.85) * 6)}
               >
@@ -326,7 +326,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
                 dominantBaseline="central"
                 fontSize={FS.lg}
                 fontWeight={900}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={lv >= 4 ? "#000" : "#fff"}
                 opacity={dim ? 0.3 : 1}
               >
@@ -349,7 +349,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
                 y={Math.min(p.y + DOT_R + 14, 244)}
                 textAnchor="middle"
                 fontSize={FS.xs}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={info.color}
                 opacity={Math.min(1, (animT - 0.3) * 3)}
               >
@@ -377,7 +377,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
                 y={p.y - DOT_R - 6}
                 textAnchor="middle"
                 fontSize={FS.xs}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={info.color}
                 opacity={Math.min(1, (animT - 0.65) * 3) * 0.85}
               >

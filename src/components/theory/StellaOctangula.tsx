@@ -609,7 +609,7 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
             textAnchor="middle"
             dominantBaseline="central"
             fontSize={FS.xs}
-            fontFamily="monospace"
+            fontFamily="var(--font-mono)"
             fontWeight={FW.bold}
             fill={lv === 6 || lv === 7 ? "#000" : "#fff"}
             opacity={dim ? 0.2 : 0.4 + vDepth * 0.5}
@@ -695,7 +695,7 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={FS.xxs}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fontWeight={FW.bold}
                 fill={sf.color === 0 || sf.color === 1 ? "#fff" : info.color}
                 opacity={0.9}
@@ -810,7 +810,7 @@ export const StellaOctangula = React.memo(function StellaOctangula({ hlLevel, on
                     textAnchor="middle"
                     dominantBaseline="central"
                     fontSize={FS.xxs}
-                    fontFamily="monospace"
+                    fontFamily="var(--font-mono)"
                     fontWeight={FW.bold}
                     opacity={0.85}
                   >

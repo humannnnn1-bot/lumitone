@@ -137,14 +137,7 @@ export function IntervalRatios({
 
   return (
     <g>
-      <text
-        x={x}
-        y={y}
-        fontSize={TITLE_FONT_SIZE}
-        fill={C.accent}
-        fontWeight="bold"
-        fontFamily="'SF Mono','Cascadia Mono',Consolas,Menlo,monospace"
-      >
+      <text x={x} y={y} fontSize={TITLE_FONT_SIZE} fill={C.accent} fontWeight="bold" fontFamily="var(--font-mono)">
         {title}
       </text>
       {rows.map((r, i) => {
@@ -169,7 +162,7 @@ export function IntervalRatios({
               fontSize={ROW_FONT_SIZE}
               fill={textFill}
               fontWeight={r.dim ? "normal" : "bold"}
-              fontFamily="system-ui, sans-serif"
+              fontFamily="var(--font-sans)"
             >
               {r.label}
             </text>
@@ -178,7 +171,7 @@ export function IntervalRatios({
               y={rowY}
               fontSize={ROW_FONT_SIZE}
               fill={textFill}
-              fontFamily="'SF Mono','Cascadia Mono',Consolas,Menlo,monospace"
+              fontFamily="var(--font-mono)"
               style={{ fontVariantNumeric: "tabular-nums" }}
             >
               {r.value}
@@ -204,14 +197,7 @@ export function IntervalRatios({
                     stroke={isMHovered ? "#fff" : C.border}
                     strokeWidth={isMHovered ? 1.5 : 0.5}
                   />
-                  <text
-                    x={mx + memberSq / 2}
-                    y={my - 1}
-                    fontSize={8}
-                    fill={C.textDim}
-                    textAnchor="middle"
-                    fontFamily="system-ui, sans-serif"
-                  >
+                  <text x={mx + memberSq / 2} y={my - 1} fontSize={8} fill={C.textDim} textAnchor="middle" fontFamily="var(--font-sans)">
                     {m.lv}
                   </text>
                 </g>

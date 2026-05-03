@@ -99,7 +99,7 @@ export const AndTriads = React.memo(function AndTriads({ activeStep, activeLevel
         );
       })}
 
-      <text x={71} y={130} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={71} y={130} textAnchor="middle" fontSize={8} fontFamily="var(--font-mono)" fill={C.textDimmer}>
         a∨b=7 ⇒ a+b−7 = a∧b
       </text>
     </svg>

@@ -40,7 +40,7 @@ export const ComplementPairs = React.memo(function ComplementPairs({ activePair 
         strokeDasharray="3,2"
         opacity={0.6}
       />
-      <text x={CX} y={TOP - 6} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.accent} opacity={0.8}>
+      <text x={CX} y={TOP - 6} textAnchor="middle" fontSize={8} fontFamily="var(--font-mono)" fill={C.accent} opacity={0.8}>
         550Hz
       </text>
       {COMPLEMENT_PAIRS.map(([a, b], i) => {
@@ -61,7 +61,7 @@ export const ComplementPairs = React.memo(function ComplementPairs({ activePair 
               textAnchor="end"
               dominantBaseline="central"
               fontSize={FS.xxs}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fill={LV_COLORS[a]}
             >
               {a}
@@ -72,7 +72,7 @@ export const ComplementPairs = React.memo(function ComplementPairs({ activePair 
               textAnchor="start"
               dominantBaseline="central"
               fontSize={FS.xxs}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fill={LV_COLORS[b]}
             >
               {b}
@@ -85,7 +85,7 @@ export const ComplementPairs = React.memo(function ComplementPairs({ activePair 
                 textAnchor="start"
                 dominantBaseline="central"
                 fontSize={7}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={C.textMuted}
               >
                 {LUMA_VALUES[a]}+{LUMA_VALUES[b]}=255
@@ -95,7 +95,7 @@ export const ComplementPairs = React.memo(function ComplementPairs({ activePair 
         );
       })}
       {/* Theorem label */}
-      <text x={CX} y={H - 4} textAnchor="middle" fontSize={8} fontFamily="monospace" fill={C.textDimmer}>
+      <text x={CX} y={H - 4} textAnchor="middle" fontSize={8} fontFamily="var(--font-mono)" fill={C.textDimmer}>
         Y&#x2096; + Y&#x2087;&#x208b;&#x2096; = 255
       </text>
     </svg>

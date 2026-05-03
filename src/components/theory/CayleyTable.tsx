@@ -54,7 +54,7 @@ export const CayleyTable = React.memo(function CayleyTable({ hlLevel, onHover }:
           textAnchor="middle"
           dominantBaseline="central"
           fontSize={FS.lg}
-          fontFamily="monospace"
+          fontFamily="var(--font-mono)"
           fontWeight={FW.bold}
           fill={C.textMuted}
         >
@@ -83,7 +83,7 @@ export const CayleyTable = React.memo(function CayleyTable({ hlLevel, onHover }:
                 dominantBaseline="central"
                 fontSize={FS.sm}
                 fontWeight={FW.bold}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={lv.lv >= 4 ? "#000" : "#fff"}
               >
                 {lv.lv}
@@ -114,7 +114,7 @@ export const CayleyTable = React.memo(function CayleyTable({ hlLevel, onHover }:
                 dominantBaseline="central"
                 fontSize={FS.sm}
                 fontWeight={FW.bold}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={lv.lv >= 4 ? "#000" : "#fff"}
               >
                 {lv.lv}
@@ -181,7 +181,7 @@ export const CayleyTable = React.memo(function CayleyTable({ hlLevel, onHover }:
                   dominantBaseline="central"
                   fontSize={isHoverCell ? FS.md : FS.xs}
                   fontWeight={FW.bold}
-                  fontFamily="monospace"
+                  fontFamily="var(--font-mono)"
                   fill={result === 0 ? C.textDimmer : result >= 4 ? "#000" : "#fff"}
                   opacity={dotOpacity}
                 >

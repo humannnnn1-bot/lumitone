@@ -184,7 +184,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
               textAnchor="middle"
               dominantBaseline="central"
               fontSize={FS.sm}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fontWeight={FW.bold}
               fill={chColor}
               opacity={0.5 * (1 - animT)}
@@ -294,7 +294,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                   y={(p0.y + p1.y) / 2 - 8}
                   textAnchor="middle"
                   fontSize={FS.xs}
-                  fontFamily="monospace"
+                  fontFamily="var(--font-mono)"
                   fontWeight={FW.bold}
                   fill={chColor}
                 >
@@ -315,7 +315,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
               textAnchor="middle"
               dominantBaseline="central"
               fontSize={FS.xxs}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fill={C.textPrimary}
             >
               rank
@@ -326,7 +326,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
               textAnchor="middle"
               dominantBaseline="central"
               fontSize={FS.xxs}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fill={C.textPrimary}
             >
               Pascal
@@ -345,7 +345,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                   textAnchor="middle"
                   dominantBaseline="central"
                   fontSize={FS.xxs}
-                  fontFamily="monospace"
+                  fontFamily="var(--font-mono)"
                   fill={C.textPrimary}
                 >
                   {rank}
@@ -356,7 +356,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                   textAnchor="middle"
                   dominantBaseline="central"
                   fontSize={FS.xxs}
-                  fontFamily="monospace"
+                  fontFamily="var(--font-mono)"
                   fill={C.textPrimary}
                 >
                   {count}
@@ -381,7 +381,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                 textAnchor={anchor}
                 dominantBaseline="central"
                 fontSize={FS.xxs}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={C.textMuted}
                 opacity={animT * (dim ? 0.3 : active ? 1 : 0.85)}
                 pointerEvents="none"
@@ -418,7 +418,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                 dominantBaseline="central"
                 fontSize={FS.md}
                 fontWeight={900}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={lv >= 4 ? "#000" : "#fff"}
                 opacity={(dim ? 0.3 : 1) * (1 - animT)}
               >
@@ -432,7 +432,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
                   dominantBaseline="central"
                   fontSize={FS.sm}
                   fontWeight={900}
-                  fontFamily="monospace"
+                  fontFamily="var(--font-mono)"
                   fill={lv >= 4 ? "#000" : "#fff"}
                   opacity={(dim ? 0.3 : 1) * animT}
                 >

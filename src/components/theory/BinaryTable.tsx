@@ -36,13 +36,37 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 6, width: "100%" }}>
       <svg viewBox={`0 0 ${SVG_W} ${H}`} className="theory-binary-svg" role="img" aria-label={t("theory_binary_title")}>
         {/* Header */}
-        <text x={COL.lv} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+        <text
+          x={COL.lv}
+          y={HEADER_Y}
+          textAnchor="middle"
+          fontSize={FS.sm}
+          fill={C.textMuted}
+          fontFamily="var(--font-mono)"
+          fontWeight={FW.bold}
+        >
           Lv
         </text>
-        <text x={COL.bin} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+        <text
+          x={COL.bin}
+          y={HEADER_Y}
+          textAnchor="middle"
+          fontSize={FS.sm}
+          fill={C.textMuted}
+          fontFamily="var(--font-mono)"
+          fontWeight={FW.bold}
+        >
           GRB
         </text>
-        <text x={COL.dot} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+        <text
+          x={COL.dot}
+          y={HEADER_Y}
+          textAnchor="middle"
+          fontSize={FS.sm}
+          fill={C.textMuted}
+          fontFamily="var(--font-mono)"
+          fontWeight={FW.bold}
+        >
           {t("theory_binary_color")}
         </text>
         {["G", "R", "B"].map((ch, i) => (
@@ -53,16 +77,32 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
             textAnchor="middle"
             fontSize={FS.lg}
             fill={CHANNEL_COLORS[i]}
-            fontFamily="monospace"
+            fontFamily="var(--font-mono)"
             fontWeight={FW.bold}
           >
             {ch}
           </text>
         ))}
-        <text x={COL.set} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+        <text
+          x={COL.set}
+          y={HEADER_Y}
+          textAnchor="middle"
+          fontSize={FS.sm}
+          fill={C.textMuted}
+          fontFamily="var(--font-mono)"
+          fontWeight={FW.bold}
+        >
           A
         </text>
-        <text x={COL.wt} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+        <text
+          x={COL.wt}
+          y={HEADER_Y}
+          textAnchor="middle"
+          fontSize={FS.sm}
+          fill={C.textMuted}
+          fontFamily="var(--font-mono)"
+          fontWeight={FW.bold}
+        >
           Wt
         </text>
         <text
@@ -71,12 +111,20 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
           textAnchor="middle"
           fontSize={FS.sm}
           fill={C.textMuted}
-          fontFamily="monospace"
+          fontFamily="var(--font-mono)"
           fontWeight={FW.bold}
         >
           Hamming
         </text>
-        <text x={COL.luma} y={HEADER_Y} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+        <text
+          x={COL.luma}
+          y={HEADER_Y}
+          textAnchor="middle"
+          fontSize={FS.sm}
+          fill={C.textMuted}
+          fontFamily="var(--font-mono)"
+          fontWeight={FW.bold}
+        >
           Luma
         </text>
 
@@ -107,7 +155,7 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                 dominantBaseline="central"
                 fontSize={FS.md}
                 fill={C.textMuted}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fontWeight={FW.bold}
               >
                 {lv.lv}
@@ -119,7 +167,7 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                 dominantBaseline="central"
                 fontSize={FS.sm}
                 fill={C.textDimmer}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
               >
                 {binStr}
               </text>
@@ -152,7 +200,7 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                 dominantBaseline="central"
                 fontSize={FS.sm}
                 fill={C.textDimmer}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
               >
                 {setNotation(lv.bits)}
               </text>
@@ -163,7 +211,7 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                 dominantBaseline="central"
                 fontSize={FS.sm}
                 fill={C.textDimmer}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
               >
                 {weight}
               </text>
@@ -174,7 +222,7 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                 dominantBaseline="central"
                 fontSize={FS.sm}
                 fill={lv.hamming.startsWith("P") ? C.accentBright : lv.hamming.startsWith("D") ? C.textMuted : C.textDimmer}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
               >
                 {lv.hamming}
               </text>
@@ -195,7 +243,7 @@ export const BinaryTable = React.memo(function BinaryTable({ hlLevel, onHover }:
                 dominantBaseline="central"
                 fontSize={FS.xs}
                 fill={C.textDimmer}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
               >
                 {LUMA_VALUES[i]}
               </text>

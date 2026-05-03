@@ -91,7 +91,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                 dominantBaseline="central"
                 fontSize={FS.xs}
                 fontWeight={FW.bold}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={lv.lv >= 4 ? "#000" : "#fff"}
               >
                 {lv.lv}
@@ -101,7 +101,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                 y={28}
                 textAnchor="middle"
                 fontSize={FS.xxs}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={isParity ? C.accentBright : C.textDimmer}
               >
                 {lv.hamming}
@@ -113,10 +113,10 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
 
       <svg viewBox={`0 0 ${W} ${H}`} style={{ width: "100%", maxWidth: W }} role="img" aria-label={t("theory_hamming_title")}>
         {/* Header */}
-        <text x={30} y={22} textAnchor="middle" fontSize={FS.sm} fill={C.accentBright} fontFamily="monospace" fontWeight={FW.bold}>
+        <text x={30} y={22} textAnchor="middle" fontSize={FS.sm} fill={C.accentBright} fontFamily="var(--font-mono)" fontWeight={FW.bold}>
           {t("theory_hamming_parity")}
         </text>
-        <text x={170} y={22} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="monospace" fontWeight={FW.bold}>
+        <text x={170} y={22} textAnchor="middle" fontSize={FS.sm} fill={C.textMuted} fontFamily="var(--font-mono)" fontWeight={FW.bold}>
           {t("theory_hamming_checks")}
         </text>
 
@@ -165,7 +165,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                   dominantBaseline="central"
                   fontSize={FS.md}
                   fontWeight={900}
-                  fontFamily="monospace"
+                  fontFamily="var(--font-mono)"
                   fill="#fff"
                 >
                   {pg.parity}
@@ -175,7 +175,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                   y={y + DOT_R + 10}
                   textAnchor="middle"
                   fontSize={FS.xs}
-                  fontFamily="monospace"
+                  fontFamily="var(--font-mono)"
                   fill={pg.failed ? C.error : parityInfo.color}
                   opacity={0.7}
                 >
@@ -191,7 +191,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                       textAnchor="middle"
                       dominantBaseline="central"
                       fontSize={FS.sm}
-                      fontFamily="monospace"
+                      fontFamily="var(--font-mono)"
                       fontWeight={FW.bold}
                       fill="#fff"
                     >
@@ -235,7 +235,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
                       dominantBaseline="central"
                       fontSize={isParity ? FS.md : FS.sm}
                       fontWeight={FW.bold}
-                      fontFamily="monospace"
+                      fontFamily="var(--font-mono)"
                       fill={lv >= 4 ? "#000" : "#fff"}
                       opacity={dim ? 0.3 : 1}
                     >
@@ -256,7 +256,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
               y={188}
               textAnchor="middle"
               fontSize={FS.md}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fontWeight={FW.bold}
               fill={corrected ? C.success : C.error}
             >
@@ -270,7 +270,7 @@ export const HammingDiagram = React.memo(function HammingDiagram({ hlLevel, onHo
               y={204}
               textAnchor="middle"
               fontSize={FS.xs}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fill={C.textDimmer}
             >
               {"syndrome = "}

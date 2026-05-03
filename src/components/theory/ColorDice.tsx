@@ -160,7 +160,7 @@ function MiniCube({
               dominantBaseline="central"
               fontSize={9}
               fontWeight={900}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fill={isDim ? C.textDimmer : lv >= 4 ? "#000" : "#fff"}
               opacity={isDim ? 0.3 : 0.9}
               pointerEvents="none"
@@ -298,7 +298,7 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
                 dominantBaseline="central"
                 fontSize={FS.xl}
                 fontWeight={900}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={lv >= 4 ? "#000" : "#fff"}
                 opacity={isDim ? 0.3 : 1}
               >

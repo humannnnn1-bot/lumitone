@@ -104,7 +104,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
           dominantBaseline="central"
           fontSize={FS.xxs}
           fill={C.textDimmer}
-          fontFamily="monospace"
+          fontFamily="var(--font-mono)"
         >
           127.5
         </text>
@@ -119,7 +119,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
           dominantBaseline="central"
           fontSize={FS.xxs}
           fill={C.textDimmer}
-          fontFamily="monospace"
+          fontFamily="var(--font-mono)"
         >
           N=4
         </text>
@@ -129,7 +129,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
           dominantBaseline="central"
           fontSize={FS.xxs}
           fill={C.textDimmer}
-          fontFamily="monospace"
+          fontFamily="var(--font-mono)"
         >
           N=4
         </text>
@@ -160,7 +160,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
                 dominantBaseline="central"
                 fontSize={FS.xxs}
                 fill={isHl ? info.color : C.textDimmer}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 opacity={isHl ? 1 : 0.6}
               >
                 {Math.round(y)}
@@ -191,7 +191,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
               dominantBaseline="central"
               fontSize={FS.xxs}
               fill={C.textMuted}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
             >
               =255
             </text>
@@ -228,7 +228,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
               y={my + (rising ? -6 : 8)}
               textAnchor="middle"
               fontSize={FS.xxs}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fontWeight={FW.bold}
               fill={SEG_COLORS[i]}
               opacity={0.6}
@@ -254,7 +254,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
         {hits.map((hit, i) => (
           <g key={`hit${i}`}>
             <circle cx={xH(hit.h)} cy={yL(hlY!)} r={4} fill={hit.color} stroke="#fff" strokeWidth={1.5} />
-            <text x={xH(hit.h)} y={yL(hlY!) + 12} textAnchor="middle" fontSize={FS.xxs} fill={C.textMuted} fontFamily="monospace">
+            <text x={xH(hit.h)} y={yL(hlY!) + 12} textAnchor="middle" fontSize={FS.xxs} fill={C.textMuted} fontFamily="var(--font-mono)">
               {Math.round(hit.h)}°
             </text>
           </g>
@@ -270,7 +270,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
               y={MT + PH + 12}
               textAnchor="middle"
               fontSize={FS.xs}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fontWeight={FW.bold}
               fill={info.color}
               opacity={0.8}
@@ -295,7 +295,7 @@ export const LuminanceZigzag = React.memo(function LuminanceZigzag({ hlLevel, on
 
         {/* N count on hover */}
         {hlLevel !== null && hits.length > 0 && (
-          <text x={ML + PW / 2} y={MT + PH + MB - 4} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textMuted}>
+          <text x={ML + PW / 2} y={MT + PH + MB - 4} textAnchor="middle" fontSize={FS.xs} fontFamily="var(--font-mono)" fill={C.textMuted}>
             N = {hits.length} candidate{hits.length > 1 ? "s" : ""}
           </text>
         )}

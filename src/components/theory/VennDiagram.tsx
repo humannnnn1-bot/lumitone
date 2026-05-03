@@ -141,7 +141,7 @@ export const VennDiagram = React.memo(function VennDiagram({ hlLevel, onHover }:
                 dominantBaseline="central"
                 fontSize={FS.sm}
                 fontWeight={FW.bold}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={textColor}
               >
                 {setLabel}

@@ -1276,7 +1276,7 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
   return (
     <div className="linked-viz-root" style={{ marginTop: SP.xl, textAlign: "center" }}>
       {/* L0/L7 Toggle + Δα controls */}
-      <div style={{ marginBottom: SP.md, display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center" }}>
+      <div style={{ marginBottom: SP.md, display: "flex", flexWrap: "wrap", gap: SP.sm, justifyContent: "center", alignItems: "center" }}>
         <button type="button" style={mode === 0 ? S_TOGGLE_ACTIVE : S_TOGGLE} onClick={() => setMode(0)}>
           {t("linkedviz_mode_l0")}
         </button>

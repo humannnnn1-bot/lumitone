@@ -89,7 +89,7 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={FS.md}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fontWeight={FW.bold}
                 fill={tgColor}
                 opacity={isCurrentEdge ? 1 : 0.5}
@@ -162,7 +162,7 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
                 dominantBaseline="central"
                 fontSize={FS.xl}
                 fontWeight={900}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={lv >= 4 ? "#000" : "#fff"}
               >
                 {lv}
@@ -176,7 +176,7 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
                     textAnchor="middle"
                     dominantBaseline="central"
                     fontSize={FS.sm}
-                    fontFamily="monospace"
+                    fontFamily="var(--font-mono)"
                     fontWeight={FW.bold}
                     fill={info.color}
                     opacity={0.8}
@@ -221,7 +221,15 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
                   </g>
                 );
               })}
-              <text x={cx} y={cy + 4} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={toggleColor} fontWeight={FW.bold}>
+              <text
+                x={cx}
+                y={cy + 4}
+                textAnchor="middle"
+                fontSize={FS.xs}
+                fontFamily="var(--font-mono)"
+                fill={toggleColor}
+                fontWeight={FW.bold}
+              >
                 {t("theory_gray_toggle", toggle)}
               </text>
             </g>
@@ -229,7 +237,7 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
         })()}
 
         {/* Transition info at bottom */}
-        <text x={150} y={H - 22} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textDimmer}>
+        <text x={150} y={H - 22} textAnchor="middle" fontSize={FS.xs} fontFamily="var(--font-mono)" fill={C.textDimmer}>
           {currentBits.join("")} ({THEORY_LEVELS[currentLv].name}) → {nextBits.join("")} ({THEORY_LEVELS[nextLv].name})
         </text>
       </svg>

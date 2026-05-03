@@ -251,7 +251,7 @@ function MiniTetra({
                 dominantBaseline="central"
                 fontSize={FS.xs}
                 fontWeight={900}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill={lv >= 4 ? "#000" : "#fff"}
                 opacity={0.95}
               >
@@ -291,7 +291,7 @@ export const TetraDecomposition = React.memo(function TetraDecomposition({ hlLev
         {t("theory_dice_tetra")}
       </p>
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
-        <div style={{ display: "flex", gap: SP.xl, justifyContent: "center" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: SP.xl, justifyContent: "center", maxWidth: "100%" }}>
           <MiniTetra
             idPrefix="t0"
             verts={TETRA_T0}

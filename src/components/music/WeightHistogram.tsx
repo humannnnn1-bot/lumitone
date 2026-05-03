@@ -45,7 +45,7 @@ export const WeightHistogram = React.memo(function WeightHistogram({ mode, curre
       </defs>
 
       {/* Mode title */}
-      <text x={W / 2} y={12} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fontWeight={FW.bold} fill={C.textMuted}>
+      <text x={W / 2} y={12} textAnchor="middle" fontSize={FS.xs} fontFamily="var(--font-mono)" fontWeight={FW.bold} fill={C.textMuted}>
         [{mode === "743" ? "7,4,3" : "8,4,4"}]
       </text>
 
@@ -99,12 +99,12 @@ export const WeightHistogram = React.memo(function WeightHistogram({ mode, curre
               fontSize={7}
               fill={C.textDimmer}
               textAnchor="middle"
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
             >
               {count}
             </text>
             {/* Weight below */}
-            <text x={x + BAR_W / 2} y={BOTTOM + 10} fontSize={7} fill={C.textDimmer} textAnchor="middle" fontFamily="monospace">
+            <text x={x + BAR_W / 2} y={BOTTOM + 10} fontSize={7} fill={C.textDimmer} textAnchor="middle" fontFamily="var(--font-mono)">
               w={w}
             </text>
           </g>

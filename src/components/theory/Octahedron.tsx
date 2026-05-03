@@ -341,7 +341,7 @@ function DiamondView({
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={FS.xs}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fontWeight={FW.bold}
                 fill={sf.color === 0 || sf.color === 1 ? "#fff" : info.color}
                 opacity={0.9}
@@ -394,7 +394,7 @@ function DiamondView({
                 textAnchor="middle"
                 dominantBaseline="central"
                 fontSize={FS.xxs}
-                fontFamily="monospace"
+                fontFamily="var(--font-mono)"
                 fill="rgba(255,255,255,0.4)"
               >
                 {THEORY_LEVELS[a].lv}
@@ -433,7 +433,7 @@ function DiamondView({
               textAnchor="middle"
               dominantBaseline="central"
               fontSize={FS.md}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fontWeight={FW.bold}
               fill={lv === 6 ? "#000" : "#fff"}
               opacity={dim ? 0.2 : 0.9}
@@ -446,7 +446,7 @@ function DiamondView({
               textAnchor="middle"
               dominantBaseline={p.y < CY ? "auto" : "hanging"}
               fontSize={FS.xxs}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fill={info.color}
               opacity={dim ? 0.15 : 0.7}
             >

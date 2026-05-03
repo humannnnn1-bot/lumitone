@@ -73,7 +73,7 @@ export const ZigzagGraph = React.memo(function ZigzagGraph({ currentStep }: Prop
               y={(y0 + y1) / 2 + (delta > 0 ? -5 : 8)}
               textAnchor="middle"
               fontSize={7}
-              fontFamily="monospace"
+              fontFamily="var(--font-mono)"
               fontWeight={FW.bold}
               fill={CH_COLORS[ch]}
               opacity={isActive ? 1 : 0.5}
@@ -100,17 +100,33 @@ export const ZigzagGraph = React.memo(function ZigzagGraph({ currentStep }: Prop
               stroke="#fff"
               strokeWidth={isActive ? 2 : 1}
             />
-            <text x={x} y={y - 8} textAnchor="middle" fontSize={FS.xxs} fontFamily="monospace" fill={LV_COLORS[lv]} opacity={0.8}>
+            <text x={x} y={y - 8} textAnchor="middle" fontSize={FS.xxs} fontFamily="var(--font-mono)" fill={LV_COLORS[lv]} opacity={0.8}>
               {NAMES[lv]}
             </text>
           </g>
         );
       })}
       {/* Y-axis luma labels */}
-      <text x={ML - 3} y={yPos(0)} textAnchor="end" dominantBaseline="central" fontSize={6} fontFamily="monospace" fill={C.textDimmer}>
+      <text
+        x={ML - 3}
+        y={yPos(0)}
+        textAnchor="end"
+        dominantBaseline="central"
+        fontSize={6}
+        fontFamily="var(--font-mono)"
+        fill={C.textDimmer}
+      >
         0
       </text>
-      <text x={ML - 3} y={yPos(255)} textAnchor="end" dominantBaseline="central" fontSize={6} fontFamily="monospace" fill={C.textDimmer}>
+      <text
+        x={ML - 3}
+        y={yPos(255)}
+        textAnchor="end"
+        dominantBaseline="central"
+        fontSize={6}
+        fontFamily="var(--font-mono)"
+        fill={C.textDimmer}
+      >
         255
       </text>
     </svg>

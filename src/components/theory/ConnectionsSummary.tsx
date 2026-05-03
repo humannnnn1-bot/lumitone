@@ -115,7 +115,7 @@ export const PolyhedraNetwork = React.memo(function PolyhedraNetwork() {
                         textAnchor="middle"
                         dominantBaseline="central"
                         fontSize={FS.xs}
-                        fontFamily="monospace"
+                        fontFamily="var(--font-mono)"
                         fill="rgba(255,255,255,0.5)"
                       >
                         ↔
@@ -127,7 +127,7 @@ export const PolyhedraNetwork = React.memo(function PolyhedraNetwork() {
                       textAnchor="middle"
                       dominantBaseline="central"
                       fontSize={10}
-                      fontFamily="monospace"
+                      fontFamily="var(--font-mono)"
                       fill="rgba(255,255,255,0.45)"
                     >
                       {e.label}
@@ -164,7 +164,7 @@ export const PolyhedraNetwork = React.memo(function PolyhedraNetwork() {
                     textAnchor="middle"
                     dominantBaseline="central"
                     fontSize={12}
-                    fontFamily="monospace"
+                    fontFamily="var(--font-mono)"
                     fill={n.color}
                     fontWeight={700}
                   >

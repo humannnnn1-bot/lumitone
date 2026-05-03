@@ -40,22 +40,30 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
   return (
     <div ref={containerRef} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xl, width: "100%" }}>
       {/* Selectors */}
-      <div style={{ display: "flex", gap: compact ? SP.sm : SP["3xl"], alignItems: "center" }}>
-        <LevelSelector value={a} onChange={setA} label="A" onHover={onHover} compact={compact} />
+      <div
+        style={{
+          display: "flex",
+          flexDirection: compact ? "column" : "row",
+          gap: compact ? SP.sm : SP["3xl"],
+          alignItems: "center",
+          maxWidth: "100%",
+        }}
+      >
+        <LevelSelector value={a} onChange={setA} onHover={onHover} compact={compact} />
         <span
           style={{
             fontSize: compact ? FS.xl : FS["2xl"],
             fontFamily: FONT.mono,
             color: C.textMuted,
-            alignSelf: "flex-end",
-            height: compact ? 20 : 32,
+            alignSelf: compact ? "center" : "flex-end",
+            height: compact ? 14 : 32,
             display: "inline-flex",
             alignItems: "center",
           }}
         >
           {"\u2295"}
         </span>
-        <LevelSelector value={b} onChange={setB} label="B" onHover={onHover} compact={compact} />
+        <LevelSelector value={b} onChange={setB} onHover={onHover} compact={compact} />
       </div>
 
       {/* Result visualization */}
@@ -69,18 +77,26 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
             dominantBaseline="central"
             fontSize={FS.xl}
             fontWeight={900}
-            fontFamily="monospace"
+            fontFamily="var(--font-mono)"
             fill={a >= 4 ? "#000" : "#fff"}
           >
             {a}
           </text>
-          <text y={DOT_R + 12} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textDimmer}>
+          <text y={DOT_R + 12} textAnchor="middle" fontSize={FS.xs} fontFamily="var(--font-mono)" fill={C.textDimmer}>
             {infoA.bits.join("")}
           </text>
         </g>
 
         {/* XOR symbol */}
-        <text x={110} y={40} textAnchor="middle" dominantBaseline="central" fontSize={FS["2xl"]} fontFamily="monospace" fill={C.textMuted}>
+        <text
+          x={110}
+          y={40}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={FS["2xl"]}
+          fontFamily="var(--font-mono)"
+          fill={C.textMuted}
+        >
           {"\u2295"}
         </text>
 
@@ -93,18 +109,26 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
             dominantBaseline="central"
             fontSize={FS.xl}
             fontWeight={900}
-            fontFamily="monospace"
+            fontFamily="var(--font-mono)"
             fill={b >= 4 ? "#000" : "#fff"}
           >
             {b}
           </text>
-          <text y={DOT_R + 12} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textDimmer}>
+          <text y={DOT_R + 12} textAnchor="middle" fontSize={FS.xs} fontFamily="var(--font-mono)" fill={C.textDimmer}>
             {infoB.bits.join("")}
           </text>
         </g>
 
         {/* Equals */}
-        <text x={230} y={40} textAnchor="middle" dominantBaseline="central" fontSize={FS["2xl"]} fontFamily="monospace" fill={C.textMuted}>
+        <text
+          x={230}
+          y={40}
+          textAnchor="middle"
+          dominantBaseline="central"
+          fontSize={FS["2xl"]}
+          fontFamily="var(--font-mono)"
+          fill={C.textMuted}
+        >
           =
         </text>
 
@@ -117,12 +141,12 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
             dominantBaseline="central"
             fontSize={FS.xl}
             fontWeight={900}
-            fontFamily="monospace"
+            fontFamily="var(--font-mono)"
             fill={result >= 4 ? "#000" : "#fff"}
           >
             {result}
           </text>
-          <text y={DOT_R + 12} textAnchor="middle" fontSize={FS.xs} fontFamily="monospace" fill={C.textDimmer}>
+          <text y={DOT_R + 12} textAnchor="middle" fontSize={FS.xs} fontFamily="var(--font-mono)" fill={C.textDimmer}>
             {infoR.bits.join("")}
           </text>
         </g>
@@ -195,21 +219,18 @@ export const XorDemo = React.memo(function XorDemo({ hlLevel, onHover }: Props) 
 function LevelSelector({
   value,
   onChange,
-  label,
   onHover,
   compact,
 }: {
   value: number;
   onChange: (v: number) => void;
-  label: string;
   onHover?: (lv: number | null) => void;
   compact?: boolean;
 }) {
-  const sz = compact ? 20 : 32;
+  const sz = compact ? 24 : 32;
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.xs }}>
-      <span style={{ fontSize: FS.xs, fontFamily: FONT.mono, color: C.textDimmer }}>{label}</span>
-      <div style={{ display: "flex", gap: compact ? 2 : 3, justifyContent: "center" }}>
+      <div style={{ display: "flex", gap: 3, justifyContent: "center" }}>
         {THEORY_LEVELS.map((lv) => {
           const active = lv.lv === value;
           return (
@@ -228,7 +249,7 @@ function LevelSelector({
                 background: lv.lv === 0 ? C.bgRoot : lv.color,
                 cursor: "pointer",
                 padding: 0,
-                fontSize: compact ? FS.xxs : FS.xs,
+                fontSize: FS.xs,
                 fontWeight: FW.bold,
                 fontFamily: FONT.mono,
                 color: lv.lv >= 4 ? "#000" : "#fff",
