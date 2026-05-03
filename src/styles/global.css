@@ -23,7 +23,8 @@
   --c-active-glow: rgba(96, 128, 255, 0.06);
   --font-mono: "SF Mono", "Cascadia Mono", Consolas, Menlo, monospace;
   --font-sans:
-    "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Yu Gothic UI", "Meiryo", "Noto Sans CJK JP", system-ui, sans-serif;
+    "Segoe UI", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", "Meiryo",
+    "Noto Sans CJK JP", system-ui, sans-serif;
 
   /* Responsive header spacing — mobile defaults */
   --sp-root-top: 6px;
@@ -44,7 +45,15 @@ body {
   background: var(--c-bg-root, #0a0a12);
 }
 body {
+  font-family: var(--font-sans);
   overflow-x: hidden;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 /* Header action links (About / Shortcuts / language switcher) */

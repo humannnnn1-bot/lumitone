@@ -112,7 +112,7 @@ export const FW = {
 
 export const FONT = {
   mono: '"SF Mono", "Cascadia Mono", Consolas, Menlo, monospace',
-  sans: '"Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Yu Gothic UI", Meiryo, "Noto Sans CJK JP", system-ui, sans-serif',
+  sans: '"Segoe UI", -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Yu Gothic", Meiryo, "Noto Sans CJK JP", system-ui, sans-serif',
 } as const;
 
 /* ── Border Radius ── */
