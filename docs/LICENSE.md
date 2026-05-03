@@ -5,8 +5,7 @@ The scholarly and explanatory content of this repository is licensed under the
 
 This CC BY 4.0 content includes:
 
-- the documents in this `docs/` directory (excluding this `LICENSE.md`
-  itself, which is a license notice rather than scholarly content);
+- the research and explanatory documents listed below;
 - the authored prose, labels, and section text displayed in the Theory tab;
 - the rendered explanatory diagrams and theory visualizations displayed in
   the Theory tab.
@@ -27,6 +26,10 @@ logic, hooks, styles, and rendering algorithms) remains MIT-licensed. The
 CC BY 4.0 license covers the expressive content surfaced by that
 implementation: authored prose, section labels, and the rendered diagrams
 when reused as visual artifacts (e.g., screenshots, embedded images).
+
+Technical project documentation in this directory, such as
+`architecture.md`, follows the repository's MIT-licensed project documentation
+unless a document states otherwise.
 
 ## Summary (human-readable)
 

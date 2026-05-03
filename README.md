@@ -1,7 +1,7 @@
 # CHROMALUM
 
 [![Deploy to GitHub Pages](https://github.com/humannnnn1-bot/chromalum/actions/workflows/deploy.yml/badge.svg)](https://github.com/humannnnn1-bot/chromalum/actions/workflows/deploy.yml)
-[![PR Validation](https://github.com/humannnnn1-bot/chromalum/actions/workflows/pr-check.yml/badge.svg)](https://github.com/humannnnn1-bot/chromalum/actions/workflows/pr-check.yml)
+[![CI](https://github.com/humannnnn1-bot/chromalum/actions/workflows/ci.yml/badge.svg)](https://github.com/humannnnn1-bot/chromalum/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/humannnnn1-bot/chromalum/actions/workflows/codeql.yml/badge.svg)](https://github.com/humannnnn1-bot/chromalum/actions/workflows/codeql.yml)
 [![License: MIT](https://img.shields.io/badge/source-MIT-blue.svg)](./LICENSE)
 [![Docs: CC BY 4.0](https://img.shields.io/badge/docs-CC%20BY%204.0-green.svg)](./docs/LICENSE.md)
@@ -70,6 +70,9 @@ and autosave uses IndexedDB.
   deployment.
 
 ## Architecture
+
+For the detailed technical architecture, see
+[docs/architecture.md](./docs/architecture.md).
 
 ```text
 src/
@@ -144,10 +147,14 @@ npm run lint
 npm run format:check
 ```
 
+`format:check` covers source, tests, GitHub configuration, root Markdown, and
+technical Markdown in `docs/`. Long-form research notes keep their editorial
+line wrapping and are excluded in `.prettierignore`.
+
 ## Documentation
 
-See [docs/README.md](./docs/README.md) for the full research-document map and
-recommended reading order.
+See [docs/README.md](./docs/README.md) for the documentation map and the
+recommended reading order for research notes.
 
 The core corpus is the three-part _Tractatus Chromaticus_ ("Chromatic
 Treatise"), a unified treatise on the discrete algebraic color model that
@@ -165,6 +172,12 @@ sonification:
 
 The research documents are attributed to the pseudonym **Doctor Chromaticus**.
 
+## Security
+
+Please report security issues privately. See
+[SECURITY.md](./SECURITY.md) for supported versions, report scope, and the
+vulnerability reporting process.
+
 ## License
 
 - **Application source code, tests, build config, and non-scholarly app assets:**
@@ -177,6 +190,10 @@ The CC BY 4.0 content includes the research and explanatory documents in
 Appendix notes, plus the authored prose, labels, and rendered explanatory
 diagrams in the Theory tab. The code that implements those views remains
 MIT-licensed.
+
+Technical project documentation, including
+[docs/architecture.md](./docs/architecture.md), follows the MIT-licensed
+project documentation unless a document says otherwise.
 
 When reusing material from the CC BY 4.0 content, see the
 [citation templates](./docs/LICENSE.md#how-to-cite) for academic, blog, book,

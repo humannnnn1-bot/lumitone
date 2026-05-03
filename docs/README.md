@@ -1,9 +1,17 @@
-# Research Documentation
+# Documentation
 
-This directory contains the research and explanatory documentation for
-CHROMALUM. The application source code is licensed under MIT; the scholarly
-and explanatory documents listed here are covered by the CC BY 4.0 notice in
-[LICENSE.md](./LICENSE.md).
+This directory contains technical project documentation and the research
+documentation for CHROMALUM.
+
+Technical project documentation follows the repository's MIT license unless a
+document says otherwise. The scholarly and explanatory research documents listed
+below are covered by the CC BY 4.0 notice in [LICENSE.md](./LICENSE.md).
+
+## Technical Documentation
+
+1. [Architecture](./architecture.md)
+   Describes the browser-only React/Vite runtime, state model, drawing
+   pipeline, workers, persistence, and quality gates.
 
 ## Core Corpus: Tractatus Chromaticus
 
@@ -19,7 +27,8 @@ it against prior art, and explain how it is presented in the Theory tab.
    CHROMALUM-specific synthesis.
 3. [Pars III - Theory Tab - Prior Art and Improvement Proposals](./theory-tab-prior-art-and-improvements.md)  
    Tracks how the theoretical model is presented in the interactive Theory
-   tab, including claim boundaries and UI/content improvements.
+   tab, including claim boundaries, UI/content improvements, and implementation
+   status. This is a living research/development note.
 
 ## Music Appendix
 
@@ -45,4 +54,4 @@ Appendix B.
 See [LICENSE.md](./LICENSE.md) for the CC BY 4.0 license notice, attribution
 requirements, and citation templates. The root [../LICENSE](../LICENSE)
 continues to apply to source code, tests, build configuration, and
-non-scholarly application assets.
+non-scholarly application assets, including technical project documentation.

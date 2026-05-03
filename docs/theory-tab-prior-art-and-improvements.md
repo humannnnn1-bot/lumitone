@@ -2,6 +2,8 @@
 
 調査日：2026-04-19
 整理方針：2026-04-29
+文書種別：living research/development note。先行研究整理と、Theory タブ
+実装に関するステータス確認を同じ文脈で扱う。
 
 ## Related Notes
 
