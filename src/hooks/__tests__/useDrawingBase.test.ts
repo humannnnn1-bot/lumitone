@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { canvasPos, trySetPointerCapture, tryStartPan, cPosFromRefs } from "../useDrawingBase";
+import { canvasPos, canvasPosUnclamped, isCanvasPointInBounds, trySetPointerCapture, tryStartPan, cPosFromRefs } from "../useDrawingBase";
 import type { CanvasData } from "../../types";
 
 /* ── Helpers ────────────────────────────────────────────────── */
@@ -67,6 +67,15 @@ describe("canvasPos", () => {
     const pos = canvasPos({ clientX: 0, clientY: 0 }, el, 1, { x: 0, y: 0 }, cvs);
     expect(pos.x).toBe(0);
     expect(pos.y).toBe(0);
+  });
+
+  it("can return unclamped coordinates outside the canvas", () => {
+    const cvs = makeCvs(10, 10);
+    const el = makeFakeCanvas(makeRect(0, 0, 100, 100));
+    const pos = canvasPosUnclamped({ clientX: 200, clientY: -20 }, el, 1, { x: 0, y: 0 }, cvs);
+    expect(pos.x).toBe(20);
+    expect(pos.y).toBe(-2);
+    expect(isCanvasPointInBounds(pos, cvs)).toBe(false);
   });
 
   it("accounts for pan offset", () => {

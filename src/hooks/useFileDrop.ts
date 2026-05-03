@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MAX_IMAGE_SIZE, MAX_FILE_BYTES, MAX_IMAGE_PIXELS } from "../constants";
+import { MAX_IMAGE_SIZE, MAX_FILE_BYTES, MAX_IMAGE_PIXELS, isAllowedCanvasSize } from "../constants";
 import { LUMA_R, LUMA_G, LUMA_B, GRAY_LUT } from "../color-engine";
 import { useSyncRef } from "./useSyncRef";
 
@@ -106,9 +106,10 @@ export function useFileDrop(
               finish();
               return;
             }
-            const scale = Math.min(1, MAX_IMAGE_SIZE / iw, MAX_IMAGE_SIZE / ih);
-            const w = Math.min(MAX_IMAGE_SIZE, Math.max(1, Math.round(iw * scale)));
-            const h = Math.min(MAX_IMAGE_SIZE, Math.max(1, Math.round(ih * scale)));
+            const keepOriginalSize = isAllowedCanvasSize(iw, ih);
+            const scale = keepOriginalSize ? 1 : Math.min(1, MAX_IMAGE_SIZE / iw, MAX_IMAGE_SIZE / ih);
+            const w = keepOriginalSize ? iw : Math.min(MAX_IMAGE_SIZE, Math.max(1, Math.round(iw * scale)));
+            const h = keepOriginalSize ? ih : Math.min(MAX_IMAGE_SIZE, Math.max(1, Math.round(ih * scale)));
             const tc = document.createElement("canvas");
             tc.width = w;
             tc.height = h;
@@ -119,7 +120,7 @@ export function useFileDrop(
               finish();
               return;
             }
-            if (img.width > MAX_IMAGE_SIZE || img.height > MAX_IMAGE_SIZE) {
+            if (w !== iw || h !== ih) {
               showToast(t("toast_image_resized", img.width, img.height, w, h), "info");
             }
             ctx.fillStyle = "#fff";

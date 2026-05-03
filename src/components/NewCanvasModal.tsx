@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { S_BTN, S_BTN_ACTIVE } from "../styles/shared";
-import { MAX_IMAGE_SIZE } from "../constants";
+import { MAX_IMAGE_SIZE, isAllowedCanvasSize } from "../constants";
 import { useTranslation } from "../i18n";
 import { useFocusTrap } from "../hooks/useFocusTrap";
 import { C, Z, SP, FS, R } from "../styles/tokens";
@@ -11,18 +11,35 @@ interface NewCanvasModalProps {
   onCancel: () => void;
 }
 
+const DEFAULT_CANVAS_SIZE = 320;
+
+function parseCanvasSizeInput(value: string): number {
+  const trimmed = value.trim();
+  if (trimmed === "") return DEFAULT_CANVAS_SIZE;
+  const n = Number(trimmed);
+  if (!Number.isFinite(n)) return DEFAULT_CANVAS_SIZE;
+  return Math.max(1, Math.min(MAX_IMAGE_SIZE, Math.round(n)));
+}
+
+function parseCanvasSizeInputs(wValue: string, hValue: string): { w: number; h: number } {
+  const rawW = Math.round(Number(wValue.trim()));
+  const rawH = Math.round(Number(hValue.trim()));
+  if (isAllowedCanvasSize(rawW, rawH)) return { w: rawW, h: rawH };
+  return { w: parseCanvasSizeInput(wValue), h: parseCanvasSizeInput(hValue) };
+}
+
 export const NewCanvasModal = React.memo(function NewCanvasModal({ open, onConfirm, onCancel }: NewCanvasModalProps) {
   const { t } = useTranslation();
-  const [w, setW] = useState(320);
-  const [h, setH] = useState(320);
+  const [w, setW] = useState(String(DEFAULT_CANVAS_SIZE));
+  const [h, setH] = useState(String(DEFAULT_CANVAS_SIZE));
 
   const widthRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (open) {
-      setW(320);
-      setH(320);
+      setW(String(DEFAULT_CANVAS_SIZE));
+      setH(String(DEFAULT_CANVAS_SIZE));
       // Focus width input on desktop only; skip on touch to avoid popping up the
       // virtual keyboard before the user asks for it.
       const isTouch = navigator.maxTouchPoints > 0 || "ontouchstart" in window || !window.matchMedia("(pointer: fine)").matches;
@@ -35,9 +52,8 @@ export const NewCanvasModal = React.memo(function NewCanvasModal({ open, onConfi
   useFocusTrap(modalRef, open, onCancel);
 
   const handleConfirm = useCallback(() => {
-    const cw = Number.isFinite(w) ? Math.max(1, Math.min(MAX_IMAGE_SIZE, Math.round(w))) : 320;
-    const ch = Number.isFinite(h) ? Math.max(1, Math.min(MAX_IMAGE_SIZE, Math.round(h))) : 320;
-    onConfirm(cw, ch);
+    const size = parseCanvasSizeInputs(w, h);
+    onConfirm(size.w, size.h);
   }, [w, h, onConfirm]);
 
   if (!open) return null;
@@ -94,7 +110,7 @@ export const NewCanvasModal = React.memo(function NewCanvasModal({ open, onConfi
               min={1}
               max={MAX_IMAGE_SIZE}
               value={w}
-              onChange={(e) => setW(+e.target.value)}
+              onChange={(e) => setW(e.target.value)}
               aria-label={t("aria_canvas_width")}
               style={{
                 width: 60,
@@ -115,7 +131,7 @@ export const NewCanvasModal = React.memo(function NewCanvasModal({ open, onConfi
               min={1}
               max={MAX_IMAGE_SIZE}
               value={h}
-              onChange={(e) => setH(+e.target.value)}
+              onChange={(e) => setH(e.target.value)}
               aria-label={t("aria_canvas_height")}
               style={{
                 width: 60,
@@ -141,14 +157,14 @@ export const NewCanvasModal = React.memo(function NewCanvasModal({ open, onConfi
                 <button
                   key={p.label}
                   onClick={() => {
-                    setW(p.w);
-                    setH(p.h);
+                    setW(String(p.w));
+                    setH(String(p.h));
                   }}
                   style={{
                     ...S_BTN,
                     padding: "2px 8px",
                     fontSize: FS.sm,
-                    ...(w === p.w && h === p.h ? { border: `1px solid ${C.accent}`, color: C.accentBright } : {}),
+                    ...(w === String(p.w) && h === String(p.h) ? { border: `1px solid ${C.accent}`, color: C.accentBright } : {}),
                   }}
                 >
                   {p.label}

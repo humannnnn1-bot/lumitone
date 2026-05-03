@@ -238,7 +238,7 @@ function buildAudioGraph(ctx: AudioContext): AudioNodes {
 
   // White noise for L7
   const noiseGain = ctx.createGain();
-  noiseGain.gain.value = NOISE_GAIN;
+  noiseGain.gain.value = 0;
   const noiseSource = ctx.createBufferSource();
   noiseSource.buffer = createNoiseBuffer(ctx);
   noiseSource.loop = true;

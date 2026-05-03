@@ -2,7 +2,9 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useGlazeDrawing } from "../useGlazeDrawing";
+import { renderBuf } from "../../drawing/render-buf";
 import type { CanvasData } from "../../types";
+import type { GlazeToolId } from "../../constants";
 
 /* ── Mocks ──────────────────────────────────── */
 
@@ -43,6 +45,10 @@ vi.mock("../useCursorOverlay", () => ({
     trackCursor: vi.fn(),
     clearCursor: vi.fn(),
   }),
+}));
+
+vi.mock("../../drawing/render-buf", () => ({
+  renderBuf: vi.fn(),
 }));
 
 function makeCvs(w = 10, h = 10): CanvasData {
@@ -149,6 +155,78 @@ describe("useGlazeDrawing", () => {
     const action = dispatch.mock.calls[0][0];
     expect(action.finalColorMap[centerIndex]).toBeGreaterThan(0);
     expect(Array.from(action.diff.idx)).toContain(centerIndex);
+  });
+
+  it.each([
+    { glazeTool: "glaze_brush" as GlazeToolId, initialColorMap: 0, expectCenterChanged: true, expectedEdge: 0 },
+    { glazeTool: "glaze_eraser" as GlazeToolId, initialColorMap: 2, expectCenterChanged: false, expectedEdge: 2 },
+  ])(
+    "does not paint an edge trail when $glazeTool moves outside the canvas",
+    ({ glazeTool, initialColorMap, expectCenterChanged, expectedEdge }) => {
+      const cvs = makeCvs(10, 10);
+      cvs.data.fill(2);
+      cvs.colorMap.fill(initialColorMap);
+      const dispatch = vi.fn();
+      const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, dispatch, glazeTool, brushSize: 1 })));
+      const canvas = result.current.curRef.current!;
+      mockCanvasRect(canvas);
+
+      act(() => {
+        result.current.onDown(pointerEvent({ target: canvas }));
+      });
+      act(() => {
+        result.current.onMove(pointerEvent({ clientX: 400, clientY: 160, target: canvas }));
+      });
+      act(() => {
+        result.current.onUp();
+      });
+
+      const cmBuf = dispatch.mock.calls[0][0].finalColorMap as Uint8Array;
+      expect(cmBuf?.[5 * 10 + 5] > 0).toBe(expectCenterChanged);
+      expect(cmBuf?.[5 * 10 + 9]).toBe(expectedEdge);
+    },
+  );
+
+  it("accumulates dirty rects while a glaze brush render frame is pending", () => {
+    const rafCallbacks: FrameRequestCallback[] = [];
+    const rafSpy = vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation((cb) => {
+      rafCallbacks.push(cb);
+      return rafCallbacks.length;
+    });
+    const cancelSpy = vi.spyOn(globalThis, "cancelAnimationFrame").mockImplementation(() => {});
+
+    try {
+      const cvs = makeCvs(10, 10);
+      cvs.data.fill(2);
+      const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, brushSize: 1 })));
+      const canvas = result.current.curRef.current!;
+      mockCanvasRect(canvas);
+
+      act(() => {
+        result.current.onDown(pointerEvent({ target: canvas }));
+      });
+      vi.mocked(renderBuf).mockClear();
+
+      act(() => {
+        result.current.onMove(pointerEvent({ clientX: 192, clientY: 160, target: canvas }));
+      });
+      act(() => {
+        result.current.onMove(pointerEvent({ clientX: 224, clientY: 160, target: canvas }));
+      });
+
+      expect(rafCallbacks).toHaveLength(1);
+      expect(cancelSpy).not.toHaveBeenCalled();
+
+      act(() => {
+        rafCallbacks[0](0);
+      });
+
+      expect(renderBuf).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(renderBuf).mock.calls[0][7]).toEqual({ x: 5, y: 5, w: 3, h: 1 });
+    } finally {
+      rafSpy.mockRestore();
+      cancelSpy.mockRestore();
+    }
   });
 
   it.each([0, 7])("pickHue on achromatic level L%s announces an error", (level) => {

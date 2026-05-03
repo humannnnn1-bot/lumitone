@@ -113,10 +113,22 @@ describe("canvasReducer", () => {
       expect(next.hist[0]).toBe(64 * 48);
     });
 
+    it.each([
+      [1200, 630],
+      [630, 1200],
+    ])("allows hidden OGP canvas size %sx%s", (w, h) => {
+      const next = canvasReducer(initialState, { type: "new_canvas", w, h });
+      expect(next.cvs.w).toBe(w);
+      expect(next.cvs.h).toBe(h);
+      expect(next.cvs.data.length).toBe(w * h);
+      expect(next.hist[0]).toBe(w * h);
+    });
+
     it("rejects invalid dimensions", () => {
       expect(canvasReducer(initialState, { type: "new_canvas", w: 0, h: 100 })).toBe(initialState);
       expect(canvasReducer(initialState, { type: "new_canvas", w: 100, h: -1 })).toBe(initialState);
       expect(canvasReducer(initialState, { type: "new_canvas", w: 2000, h: 100 })).toBe(initialState);
+      expect(canvasReducer(initialState, { type: "new_canvas", w: 1200, h: 1200 })).toBe(initialState);
     });
   });
 
@@ -132,6 +144,14 @@ describe("canvasReducer", () => {
       expect(next.undoStack.length).toBe(0);
       expect(next.hist[2]).toBe(1);
       expect(next.hist[5]).toBe(1);
+    });
+
+    it("loads hidden OGP-sized image data", () => {
+      const data = new Uint8Array(1200 * 630);
+      const next = canvasReducer(initialState, { type: "load_image", w: 1200, h: 630, data });
+      expect(next.cvs.w).toBe(1200);
+      expect(next.cvs.h).toBe(630);
+      expect(next.cvs.data.length).toBe(1200 * 630);
     });
 
     it("rejects mismatched data length", () => {

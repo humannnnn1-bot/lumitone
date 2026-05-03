@@ -48,4 +48,57 @@ describe("NewCanvasModal", () => {
     fireEvent.click(cancelBtn);
     expect(onCancel).toHaveBeenCalled();
   });
+
+  it("allows size fields to be temporarily empty while editing", () => {
+    render(<NewCanvasModal open={true} onConfirm={() => {}} onCancel={() => {}} />);
+
+    const width = screen.getByLabelText("aria_canvas_width") as HTMLInputElement;
+    const height = screen.getByLabelText("aria_canvas_height") as HTMLInputElement;
+
+    fireEvent.change(width, { target: { value: "" } });
+    fireEvent.change(height, { target: { value: "" } });
+
+    expect(width.value).toBe("");
+    expect(height.value).toBe("");
+  });
+
+  it("uses retyped size values when creating after clearing inputs", () => {
+    const onConfirm = vi.fn();
+    render(<NewCanvasModal open={true} onConfirm={onConfirm} onCancel={() => {}} />);
+
+    const width = screen.getByLabelText("aria_canvas_width");
+    const height = screen.getByLabelText("aria_canvas_height");
+    fireEvent.change(width, { target: { value: "" } });
+    fireEvent.change(width, { target: { value: "48" } });
+    fireEvent.change(height, { target: { value: "" } });
+    fireEvent.change(height, { target: { value: "24" } });
+    fireEvent.click(screen.getByText("Create"));
+
+    expect(onConfirm).toHaveBeenCalledWith(48, 24);
+  });
+
+  it.each([
+    ["1200", "630", 1200, 630],
+    ["630", "1200", 630, 1200],
+  ])("allows hidden OGP canvas size %sx%s by manual input", (inputW, inputH, expectedW, expectedH) => {
+    const onConfirm = vi.fn();
+    render(<NewCanvasModal open={true} onConfirm={onConfirm} onCancel={() => {}} />);
+
+    fireEvent.change(screen.getByLabelText("aria_canvas_width"), { target: { value: inputW } });
+    fireEvent.change(screen.getByLabelText("aria_canvas_height"), { target: { value: inputH } });
+    fireEvent.click(screen.getByText("Create"));
+
+    expect(onConfirm).toHaveBeenCalledWith(expectedW, expectedH);
+  });
+
+  it("still clamps non-allowed oversize canvas dimensions", () => {
+    const onConfirm = vi.fn();
+    render(<NewCanvasModal open={true} onConfirm={onConfirm} onCancel={() => {}} />);
+
+    fireEvent.change(screen.getByLabelText("aria_canvas_width"), { target: { value: "1200" } });
+    fireEvent.change(screen.getByLabelText("aria_canvas_height"), { target: { value: "1200" } });
+    fireEvent.click(screen.getByText("Create"));
+
+    expect(onConfirm).toHaveBeenCalledWith(1024, 1024);
+  });
 });

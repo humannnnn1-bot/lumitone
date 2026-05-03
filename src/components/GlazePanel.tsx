@@ -437,6 +437,18 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
             </button>
           </div>
 
+          {/* Options + Clear */}
+          <div style={{ display: "flex", alignItems: "center", gap: SP.lg, flexWrap: "wrap", justifyContent: "center" }}>
+            <label style={{ fontSize: FS.sm, color: C.textDim, cursor: "pointer", display: "flex", alignItems: "center", gap: SP.sm }}>
+              <input type="checkbox" checked={showHighlight} onChange={(e) => setShowHighlight(e.target.checked)} />
+              {t("glaze_show_highlight")}
+            </label>
+            <button style={S_BTN} onClick={handleGlazeClear} title={t("title_glaze_clear")}>
+              {t("btn_glaze_clear")}
+            </button>
+            {glazeCount > 0 && <span style={{ fontSize: FS.xs, color: C.textDimmer }}>{glazeCount.toLocaleString()}px</span>}
+          </div>
+
           {/* Brush size */}
           <div
             style={{
@@ -476,18 +488,6 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
               +
             </button>
             <span style={{ color: C.textSecondary, minWidth: 20 }}>{brushSize}</span>
-          </div>
-
-          {/* Options + Clear */}
-          <div style={{ display: "flex", alignItems: "center", gap: SP.lg, flexWrap: "wrap", justifyContent: "center" }}>
-            <label style={{ fontSize: FS.sm, color: C.textDim, cursor: "pointer", display: "flex", alignItems: "center", gap: SP.sm }}>
-              <input type="checkbox" checked={showHighlight} onChange={(e) => setShowHighlight(e.target.checked)} />
-              {t("glaze_show_highlight")}
-            </label>
-            <button style={S_BTN} onClick={handleGlazeClear} title={t("title_glaze_clear")}>
-              {t("btn_glaze_clear")}
-            </button>
-            {glazeCount > 0 && <span style={{ fontSize: FS.xs, color: C.textDimmer }}>{glazeCount.toLocaleString()}px</span>}
           </div>
 
           {/* Hue angle slider with marker */}

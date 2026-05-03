@@ -2,6 +2,7 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useCanvasDrawing } from "../useCanvasDrawing";
+import { renderBuf } from "../../drawing/render-buf";
 import type { CanvasData } from "../../types";
 import type { ToolId } from "../../constants";
 
@@ -48,6 +49,10 @@ vi.mock("../useCursorOverlay", () => ({
     trackCursorPrv: vi.fn(),
     clearCursorPrv: vi.fn(),
   }),
+}));
+
+vi.mock("../../drawing/render-buf", () => ({
+  renderBuf: vi.fn(),
 }));
 
 function makeCvs(w = 10, h = 10): CanvasData {
@@ -158,6 +163,68 @@ describe("useCanvasDrawing", () => {
     const action = dispatch.mock.calls[0][0];
     expect(action.finalData[centerIndex]).toBe(3);
     expect(Array.from(action.diff.idx)).toContain(centerIndex);
+  });
+
+  it.each([
+    { tool: "brush" as ToolId, initialLevel: 0, expectedCenter: 3, expectedEdge: 0 },
+    { tool: "eraser" as ToolId, initialLevel: 7, expectedCenter: 0, expectedEdge: 7 },
+  ])("does not paint an edge trail when $tool moves outside the canvas", ({ tool, initialLevel, expectedCenter, expectedEdge }) => {
+    const cvs = makeCvs(10, 10);
+    cvs.data.fill(initialLevel);
+    const { result } = renderHook(() => useCanvasDrawing(makeOpts({ cvs, tool, brushLevel: 3, brushSize: 1 })));
+    const canvas = result.current.curRef.current!;
+    mockCanvasRect(canvas);
+
+    act(() => {
+      result.current.onDown(pointerEvent({ target: canvas }));
+    });
+    act(() => {
+      result.current.onMove(pointerEvent({ clientX: 400, clientY: 160, target: canvas }));
+    });
+
+    const buf = result.current.strokeRef.current?.buf;
+    expect(buf?.[5 * 10 + 5]).toBe(expectedCenter);
+    expect(buf?.[5 * 10 + 9]).toBe(expectedEdge);
+  });
+
+  it("accumulates dirty rects while a brush render frame is pending", () => {
+    const rafCallbacks: FrameRequestCallback[] = [];
+    const rafSpy = vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation((cb) => {
+      rafCallbacks.push(cb);
+      return rafCallbacks.length;
+    });
+    const cancelSpy = vi.spyOn(globalThis, "cancelAnimationFrame").mockImplementation(() => {});
+
+    try {
+      const { result } = renderHook(() => useCanvasDrawing(makeOpts({ brushLevel: 3, brushSize: 1 })));
+      const canvas = result.current.curRef.current!;
+      mockCanvasRect(canvas);
+
+      act(() => {
+        result.current.onDown(pointerEvent({ target: canvas }));
+      });
+      vi.mocked(renderBuf).mockClear();
+
+      act(() => {
+        result.current.onMove(pointerEvent({ clientX: 192, clientY: 160, target: canvas }));
+      });
+      act(() => {
+        result.current.onMove(pointerEvent({ clientX: 224, clientY: 160, target: canvas }));
+      });
+
+      expect(rafCallbacks).toHaveLength(1);
+      expect(cancelSpy).not.toHaveBeenCalled();
+
+      act(() => {
+        rafCallbacks[0](0);
+      });
+
+      expect(renderBuf).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(renderBuf).mock.calls[0][7]).toEqual({ x: 5, y: 5, w: 3, h: 1 });
+    } finally {
+      rafSpy.mockRestore();
+      cancelSpy.mockRestore();
+    }
   });
 
   it("right-click samples the source level instead of drawing", () => {

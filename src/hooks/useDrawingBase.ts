@@ -8,6 +8,25 @@ import { LEVEL_MASK } from "../constants";
 import { LEVEL_INFO } from "../color-engine";
 import type { CanvasData, Point } from "../types";
 
+type CanvasRect = { left: number; top: number; width: number; height: number };
+
+function canvasPosFromRect(
+  e: { clientX: number; clientY: number },
+  r: CanvasRect,
+  zoom: number,
+  pan: { x: number; y: number },
+  cvs: CanvasData,
+): Point {
+  const rx = (e.clientX - r.left) / r.width,
+    ry = (e.clientY - r.top) / r.height;
+  const vx = (rx - 0.5) / zoom + 0.5 - pan.x / cvs.w;
+  const vy = (ry - 0.5) / zoom + 0.5 - pan.y / cvs.h;
+  return {
+    x: Math.floor(vx * cvs.w),
+    y: Math.floor(vy * cvs.h),
+  };
+}
+
 /**
  * Convert a pointer event's client coordinates to canvas pixel coordinates,
  * accounting for zoom, pan, and canvas dimensions.
@@ -22,14 +41,33 @@ export function canvasPos(
   if (!refEl) return { x: 0, y: 0 };
   const r = refEl.getBoundingClientRect();
   if (r.width === 0 || r.height === 0) return { x: -1, y: -1 };
-  const rx = (e.clientX - r.left) / r.width,
-    ry = (e.clientY - r.top) / r.height;
-  const vx = (rx - 0.5) / zoom + 0.5 - pan.x / cvs.w;
-  const vy = (ry - 0.5) / zoom + 0.5 - pan.y / cvs.h;
+  const pos = canvasPosFromRect(e, r, zoom, pan, cvs);
   return {
-    x: Math.max(0, Math.min(cvs.w - 1, Math.floor(vx * cvs.w))),
-    y: Math.max(0, Math.min(cvs.h - 1, Math.floor(vy * cvs.h))),
+    x: Math.max(0, Math.min(cvs.w - 1, pos.x)),
+    y: Math.max(0, Math.min(cvs.h - 1, pos.y)),
   };
+}
+
+/**
+ * Convert pointer coordinates to canvas pixel coordinates without clamping.
+ * Use this for pointer-stream drawing so samples outside the canvas can be
+ * skipped instead of being smeared onto the nearest edge.
+ */
+export function canvasPosUnclamped(
+  e: { clientX: number; clientY: number },
+  refEl: HTMLCanvasElement | null,
+  zoom: number,
+  pan: { x: number; y: number },
+  cvs: CanvasData,
+): Point {
+  if (!refEl) return { x: 0, y: 0 };
+  const r = refEl.getBoundingClientRect();
+  if (r.width === 0 || r.height === 0) return { x: -1, y: -1 };
+  return canvasPosFromRect(e, r, zoom, pan, cvs);
+}
+
+export function isCanvasPointInBounds(pos: Point, cvs: CanvasData): boolean {
+  return pos.x >= 0 && pos.x < cvs.w && pos.y >= 0 && pos.y < cvs.h;
 }
 
 /**

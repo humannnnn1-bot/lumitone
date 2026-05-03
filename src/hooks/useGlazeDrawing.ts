@@ -17,7 +17,7 @@ import { renderBuf } from "../drawing/render-buf";
 import { hexStr } from "../utils";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
-import { trySetPointerCapture, cPosFromRefs, canvasPos, updateStatusBase } from "./useDrawingBase";
+import { trySetPointerCapture, cPosFromRefs, canvasPosUnclamped, isCanvasPointInBounds, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
 import type { CanvasData, ImgCache, CanvasAction, DirtyRect } from "../types";
 import { useDrawingContext } from "../state/DrawingContext";
@@ -74,6 +74,17 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   // Buffer pool: reuse cmPre/cmBuf allocations across strokes
   const cmPoolRef = useRef<{ cmPre: Uint8Array | null; cmBuf: Uint8Array | null; size: number }>({ cmPre: null, cmBuf: null, size: 0 });
   const paintRafRef = useRef<number | null>(null);
+  const pendingPaintDirtyRef = useRef<DirtyRect | null>(null);
+  const paintFrameRef = useRef<{
+    data: Uint8Array;
+    colorMap: Uint8Array;
+    w: number;
+    h: number;
+    lut: [number, number, number][];
+    srcCanvas: HTMLCanvasElement | null;
+    prvCanvas: HTMLCanvasElement | null;
+    imgCache: ImgCache;
+  } | null>(null);
   const fillPendingRef = useRef(false);
   const pendingUpRef = useRef(false);
   const floodFillWorker = useFloodFillWorker();
@@ -106,6 +117,33 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
       const ci = cm > 0 ? (cm - 1) % alts.length : -1;
       const colorHex = ci >= 0 ? hexStr(alts[ci].rgb) : "";
       return `(${pos.x}, ${pos.y})  L${lv} ${info.name}  ${cmLabel} ${colorHex}`;
+    });
+  }
+
+  function queueGlazeRender(data: Uint8Array, colorMap: Uint8Array, W: number, H: number, dirtyBB: DirtyRect) {
+    pendingPaintDirtyRef.current = unionBBox(pendingPaintDirtyRef.current, dirtyBB);
+    paintFrameRef.current = {
+      data,
+      colorMap,
+      w: W,
+      h: H,
+      lut: s.current.colorLUT,
+      srcCanvas: srcRef.current,
+      prvCanvas: prvRef.current,
+      imgCache: imgCacheRef.current,
+    };
+
+    if (paintRafRef.current !== null) return;
+
+    paintRafRef.current = requestAnimationFrame(() => {
+      paintRafRef.current = null;
+      const dirtySnap = pendingPaintDirtyRef.current;
+      const frame = paintFrameRef.current;
+      pendingPaintDirtyRef.current = null;
+      paintFrameRef.current = null;
+      if (dirtySnap && frame) {
+        renderBuf(frame.data, frame.w, frame.h, frame.lut, frame.srcCanvas, frame.prvCanvas, frame.imgCache, dirtySnap, frame.colorMap);
+      }
     });
   }
 
@@ -245,38 +283,37 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     let last = lastRef.current;
     let dirtyBB: DirtyRect | null = null;
     for (const ev of events) {
-      const p = canvasPos(ev, canvasEl, zoom, pan, cv);
-      if (!last) last = p;
-      if (curTool === "glaze_eraser") {
-        eraseGlazeLine(cmBuf, last.x, last.y, p.x, p.y, r, W, H);
-      } else {
-        paintGlazeLine(cmBuf, cv.data, last.x, last.y, p.x, p.y, r, W, H, st.glazeLUT);
+      const p = canvasPosUnclamped(ev, canvasEl, zoom, pan, cv);
+      if (!isCanvasPointInBounds(p, cv)) {
+        last = null;
+        continue;
       }
-      const bb = brushBBox(
-        [
-          [last.x, last.y],
-          [p.x, p.y],
-        ],
-        r,
-        W,
-        H,
-      );
+      if (curTool === "glaze_eraser") {
+        if (last) eraseGlazeLine(cmBuf, last.x, last.y, p.x, p.y, r, W, H);
+        else eraseGlazeCircle(cmBuf, p.x, p.y, r, W, H);
+      } else {
+        if (last) paintGlazeLine(cmBuf, cv.data, last.x, last.y, p.x, p.y, r, W, H, st.glazeLUT);
+        else paintGlazeCircle(cmBuf, cv.data, p.x, p.y, r, W, H, st.glazeLUT);
+      }
+      const bb = last
+        ? brushBBox(
+            [
+              [last.x, last.y],
+              [p.x, p.y],
+            ],
+            r,
+            W,
+            H,
+          )
+        : brushBBox([[p.x, p.y]], r, W, H);
       dirtyBB = unionBBox(dirtyBB, bb);
       last = p;
     }
     lastRef.current = last;
 
-    if (paintRafRef.current !== null) cancelAnimationFrame(paintRafRef.current);
-    const lutSnap = s.current.colorLUT,
-      srcSnap = srcRef.current,
-      prvSnap = prvRef.current,
-      cacheSnap = imgCacheRef.current;
-    const dataSnap = cv.data;
-    const dirtySnap = dirtyBB;
-    paintRafRef.current = requestAnimationFrame(() => {
-      paintRafRef.current = null;
-      renderBuf(dataSnap, W, H, lutSnap, srcSnap, prvSnap, cacheSnap, dirtySnap, cmBuf);
-    });
+    if (!dirtyBB) return;
+
+    queueGlazeRender(cv.data, cmBuf, W, H, dirtyBB);
   }
 
   const onDown = useCallback((e: React.PointerEvent) => {
@@ -297,6 +334,8 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     if (paintRafRef.current !== null) {
       cancelAnimationFrame(paintRafRef.current);
       paintRafRef.current = null;
+      pendingPaintDirtyRef.current = null;
+      paintFrameRef.current = null;
       const cv = cvsRef.current;
       const st2 = strokeRef.current;
       if (st2)

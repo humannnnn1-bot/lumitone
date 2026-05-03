@@ -4,7 +4,7 @@
  * operations are atomic: a single undo step can revert both the pixel
  * level change and any associated colorMap change together.
  */
-import { MAX_UNDO, LEVEL_MASK, MAX_IMAGE_SIZE } from "../constants";
+import { MAX_UNDO, LEVEL_MASK, isAllowedCanvasSize } from "../constants";
 import { computeDiff, applyDiff, applyDiffToColorMap, compressDiff, decompressDiff } from "./undo-diff";
 import { RingBuffer } from "../utils/ring-buffer";
 import type { AppState, CanvasAction, CompressedDiff } from "../types";
@@ -120,7 +120,7 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
     }
     case "load_image": {
       const { w, h, data } = action;
-      if (w <= 0 || h <= 0 || w > MAX_IMAGE_SIZE || h > MAX_IMAGE_SIZE) return state;
+      if (!isAllowedCanvasSize(w, h)) return state;
       if (data.length !== w * h) return state;
       const colorMap = action.colorMap && action.colorMap.length === w * h ? action.colorMap : new Uint8Array(w * h);
       return {
@@ -152,7 +152,7 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
     }
     case "new_canvas": {
       const { w, h } = action;
-      if (w <= 0 || h <= 0 || w > MAX_IMAGE_SIZE || h > MAX_IMAGE_SIZE) return state;
+      if (!isAllowedCanvasSize(w, h)) return state;
       const data = new Uint8Array(w * h);
       const hist = new Array(8).fill(0);
       hist[0] = w * h;

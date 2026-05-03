@@ -19,7 +19,7 @@ import { hexStr } from "../utils";
 import type { BufferPool } from "./useStrokeManager";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
-import { trySetPointerCapture, cPosFromRefs, canvasPos, updateStatusBase } from "./useDrawingBase";
+import { trySetPointerCapture, cPosFromRefs, canvasPosUnclamped, isCanvasPointInBounds, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
 import { unionBBox } from "../drawing/dirty-rect";
 import type { CanvasData, StrokeState, ImgCache, CanvasAction, DirtyRect } from "../types";
@@ -74,6 +74,16 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
   const lastRef = useRef<{ x: number; y: number } | null>(null);
   const activeCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const paintRafRef = useRef<number | null>(null);
+  const pendingPaintDirtyRef = useRef<DirtyRect | null>(null);
+  const paintFrameRef = useRef<{
+    buf: Uint8Array;
+    w: number;
+    h: number;
+    lut: [number, number, number][];
+    srcCanvas: HTMLCanvasElement | null;
+    prvCanvas: HTMLCanvasElement | null;
+    imgCache: ImgCache;
+  } | null>(null);
   const fillPendingRef = useRef(false);
   const pendingUpRef = useRef(false);
   const floodFillWorker = useFloodFillWorker();
@@ -105,6 +115,32 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
         ci = s.current.cc[lv] % a.length,
         cur = a[ci];
       return `(${pos.x}, ${pos.y})  L${lv} ${info.name}  ${hexStr(cur.rgb)}`;
+    });
+  }
+
+  function queueBrushRender(buf: Uint8Array, W: number, H: number, dirtyBB: DirtyRect) {
+    pendingPaintDirtyRef.current = unionBBox(pendingPaintDirtyRef.current, dirtyBB);
+    paintFrameRef.current = {
+      buf,
+      w: W,
+      h: H,
+      lut: s.current.colorLUT,
+      srcCanvas: srcRef.current,
+      prvCanvas: prvRef.current,
+      imgCache: imgCacheRef.current,
+    };
+
+    if (paintRafRef.current !== null) return;
+
+    paintRafRef.current = requestAnimationFrame(() => {
+      paintRafRef.current = null;
+      const dirtySnap = pendingPaintDirtyRef.current;
+      const frame = paintFrameRef.current;
+      pendingPaintDirtyRef.current = null;
+      paintFrameRef.current = null;
+      if (dirtySnap && frame) {
+        renderBuf(frame.buf, frame.w, frame.h, frame.lut, frame.srcCanvas, frame.prvCanvas, frame.imgCache, dirtySnap);
+      }
     });
   }
 
@@ -234,24 +270,20 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     let last = lastRef.current;
     let dirtyBB: DirtyRect | null = null;
     for (const ev of events) {
-      const p = canvasPos(ev, canvasEl, zoom, pan, cv);
-      if (!last) last = p;
-      const bb = applyBrushStroke(buf, last, p, sp.brushSize, lv, W, H);
+      const p = canvasPosUnclamped(ev, canvasEl, zoom, pan, cv);
+      if (!isCanvasPointInBounds(p, cv)) {
+        last = null;
+        continue;
+      }
+      const bb = last ? applyBrushStroke(buf, last, p, sp.brushSize, lv, W, H) : applyBrushDot(buf, p, sp.brushSize, lv, W, H);
       dirtyBB = unionBBox(dirtyBB, bb);
       last = p;
     }
     lastRef.current = last;
 
-    if (paintRafRef.current !== null) cancelAnimationFrame(paintRafRef.current);
-    const lutSnap = s.current.colorLUT,
-      srcSnap = srcRef.current,
-      prvSnap = prvRef.current,
-      cacheSnap = imgCacheRef.current;
-    const dirtySnap = dirtyBB;
-    paintRafRef.current = requestAnimationFrame(() => {
-      paintRafRef.current = null;
-      renderBuf(buf, W, H, lutSnap, srcSnap, prvSnap, cacheSnap, dirtySnap);
-    });
+    if (!dirtyBB) return;
+
+    queueBrushRender(buf, W, H, dirtyBB);
   }
 
   const onDown = useCallback((e: React.PointerEvent) => {
@@ -285,6 +317,8 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     if (paintRafRef.current !== null) {
       cancelAnimationFrame(paintRafRef.current);
       paintRafRef.current = null;
+      pendingPaintDirtyRef.current = null;
+      paintFrameRef.current = null;
       const st2 = strokeRef.current;
       if (st2)
         renderBuf(st2.buf, cvsRef.current.w, cvsRef.current.h, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current);
