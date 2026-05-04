@@ -4,6 +4,7 @@ import "./styles/global.css";
 import App from "./App";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { LanguageProvider } from "./i18n";
+import { registerServiceWorker } from "./pwa";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
@@ -14,3 +15,5 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </ErrorBoundary>
   </React.StrictMode>,
 );
+
+registerServiceWorker();

@@ -166,6 +166,10 @@ export const ja: Record<TranslationKey, string> = {
   toast_cleared: "クリアしました (Ctrl+Zで元に戻せます)",
   toast_new_canvas_created: "{0}×{1} の新規キャンバスを作成しました",
   toast_undo_history_cleared: "元に戻す履歴がクリアされました",
+  pwa_update_available: "新しいバージョンがあります",
+  pwa_update_reload: "再読み込み",
+  pwa_update_reloading: "再読み込み中...",
+  pwa_update_dismiss: "更新通知を閉じる",
 
   // FileDrop
   toast_image_load_failed: "画像の読み込みに失敗しました",

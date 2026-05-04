@@ -62,12 +62,25 @@ and autosave uses IndexedDB.
   worker-backed pixel analysis.
 - **Undo/redo:** compressed diffs with optional color-map deltas.
 - **Persistence:** debounced IndexedDB autosave with pagehide/visibility flush.
+- **Offline support:** production builds include a service worker that
+  pre-caches the app shell, icons, workers, and lazy-loaded Music tab chunk for
+  offline reopening.
 - **Testing:** Vitest unit tests plus Playwright end-to-end checks that verify
   canvas pixels, save flows, gallery previews, glaze clearing, Theory rendering,
-  and mobile touch input.
+  PWA offline behavior, and mobile touch input.
 - **Quality gates:** TypeScript strict mode, ESLint, Prettier, coverage
   thresholds, CodeQL, Dependabot, pinned GitHub Actions, and GitHub Pages
   deployment.
+
+## Offline and Local Data
+
+CHROMALUM can be reopened offline after the production app has loaded once.
+Canvas state is autosaved in this browser on this device using IndexedDB, with a
+best-effort request for persistent browser storage after user work is saved.
+
+Browser storage is not a backup: clearing site data, using private browsing, or
+switching devices can remove local work. Save PNG exports for work you need to
+keep outside the browser.
 
 ## Architecture
 

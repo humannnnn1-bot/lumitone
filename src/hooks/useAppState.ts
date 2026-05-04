@@ -1,11 +1,27 @@
 import { useState, useRef, useEffect, useReducer, useMemo } from "react";
 import { DISPLAY_MIN, DISPLAY_MAX_LIMIT } from "../constants";
 import { canvasReducer, initialState } from "../state/canvas-reducer";
-import { saveState, loadState } from "../utils/idb-persistence";
+import { saveState, loadState, requestPersistentStorage } from "../utils/idb-persistence";
 import { createErrorHandler } from "../utils/error-handler";
 import { useToolState } from "./useToolState";
 import { useUIState } from "./useUIState";
 import { useColorState } from "./useColorState";
+
+const STORAGE_PERSIST_REQUEST_KEY = "chromalum-storage-persist-requested-v1";
+
+function hasRequestedPersistentStorage(): boolean {
+  try {
+    return localStorage.getItem(STORAGE_PERSIST_REQUEST_KEY) === "1";
+  } catch {
+    return false;
+  }
+}
+
+function markPersistentStorageRequested(): void {
+  try {
+    localStorage.setItem(STORAGE_PERSIST_REQUEST_KEY, "1");
+  } catch {}
+}
 
 export function useAppState(t: import("../i18n").TranslationFn) {
   const [state, dispatch] = useReducer(canvasReducer, initialState);
@@ -23,6 +39,8 @@ export function useAppState(t: import("../i18n").TranslationFn) {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const flushSaveRef = useRef<(() => void) | null>(null);
   const saveRequestIdRef = useRef(0);
+  const baselineSaveCompleteRef = useRef(false);
+  const persistentStorageRequestInFlightRef = useRef(false);
   const lastSavedRef = useRef<{ data: Uint8Array | null; colorMap: Uint8Array | null; cc: number[] | null; locked: boolean[] | null }>({
     data: null,
     colorMap: null,
@@ -76,6 +94,21 @@ export function useAppState(t: import("../i18n").TranslationFn) {
         .then(() => {
           if (requestId === saveRequestIdRef.current) {
             lastSavedRef.current = { data: _cvs.data, colorMap: _cvs.colorMap, cc: _cc, locked: _locked };
+            if (!baselineSaveCompleteRef.current) {
+              baselineSaveCompleteRef.current = true;
+              return;
+            }
+            if (!persistentStorageRequestInFlightRef.current && !hasRequestedPersistentStorage()) {
+              persistentStorageRequestInFlightRef.current = true;
+              markPersistentStorageRequested();
+              requestPersistentStorage()
+                .catch((err: unknown) => {
+                  console.warn("CHROMALUM: persistent storage request failed", err);
+                })
+                .finally(() => {
+                  persistentStorageRequestInFlightRef.current = false;
+                });
+            }
           }
         })
         .catch(createErrorHandler("AutoSave", () => showToast(t("toast_autosave_failed"), "error")));

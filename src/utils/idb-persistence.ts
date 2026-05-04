@@ -16,6 +16,12 @@ export interface SavedState {
   locked?: boolean[];
 }
 
+export interface PersistentStorageResult {
+  supported: boolean;
+  persisted: boolean;
+  requested: boolean;
+}
+
 const _db = { conn: null as IDBDatabase | null };
 
 /** Detect quota-exceeded errors across browsers (Chrome/Safari name + Firefox name + legacy code). */
@@ -89,6 +95,20 @@ export async function checkStorageQuota(): Promise<{ used: number; quota: number
     return { used: est.usage ?? 0, quota: est.quota ?? 0 };
   }
   return null;
+}
+
+export async function requestPersistentStorage(): Promise<PersistentStorageResult> {
+  const storage = typeof navigator !== "undefined" ? navigator.storage : undefined;
+  if (!storage?.persist) {
+    return { supported: false, persisted: false, requested: false };
+  }
+
+  if (storage.persisted && (await storage.persisted())) {
+    return { supported: true, persisted: true, requested: false };
+  }
+
+  const persisted = await storage.persist();
+  return { supported: true, persisted, requested: true };
 }
 
 export async function loadState(): Promise<SavedState | null> {

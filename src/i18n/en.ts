@@ -166,6 +166,10 @@ export const en = {
   toast_cleared: "Cleared (Ctrl+Z to undo)",
   toast_new_canvas_created: "Created new {0}×{1} canvas",
   toast_undo_history_cleared: "Undo history cleared",
+  pwa_update_available: "A new version is available",
+  pwa_update_reload: "Reload",
+  pwa_update_reloading: "Reloading...",
+  pwa_update_dismiss: "Dismiss update notice",
 
   // FileDrop
   toast_image_load_failed: "Failed to load image",

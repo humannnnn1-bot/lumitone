@@ -6,10 +6,11 @@ import { renderHook, act } from "@testing-library/react";
 vi.mock("../../utils/idb-persistence", () => ({
   loadState: vi.fn(() => Promise.resolve(null)),
   saveState: vi.fn(() => Promise.resolve()),
+  requestPersistentStorage: vi.fn(() => Promise.resolve({ supported: true, persisted: true, requested: true })),
 }));
 
 import { useAppState } from "../useAppState";
-import { saveState } from "../../utils/idb-persistence";
+import { requestPersistentStorage, saveState } from "../../utils/idb-persistence";
 import { W0, H0 } from "../../constants";
 
 // Minimal translation stub
@@ -98,6 +99,53 @@ describe("useAppState", () => {
 
     expect(saveStateMock).toHaveBeenCalledTimes(2);
     errorSpy.mockRestore();
+    unmount();
+  });
+
+  it("requests persistent storage once after the baseline autosave", async () => {
+    vi.useFakeTimers();
+    const saveStateMock = vi.mocked(saveState);
+    const requestPersistentStorageMock = vi.mocked(requestPersistentStorage);
+
+    const { result, unmount } = renderHook(() => useAppState(t));
+
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(result.current.loaded).toBe(true);
+
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+      await Promise.resolve();
+    });
+    expect(saveStateMock).toHaveBeenCalledTimes(1);
+    expect(requestPersistentStorageMock).not.toHaveBeenCalled();
+
+    act(() => {
+      result.current.dispatch({ type: "new_canvas", w: 16, h: 16 });
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(saveStateMock).toHaveBeenCalledTimes(2);
+    expect(requestPersistentStorageMock).toHaveBeenCalledTimes(1);
+    expect(localStorage.getItem("chromalum-storage-persist-requested-v1")).toBe("1");
+
+    act(() => {
+      result.current.dispatch({ type: "new_canvas", w: 32, h: 32 });
+    });
+    await act(async () => {
+      vi.advanceTimersByTime(1000);
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(saveStateMock).toHaveBeenCalledTimes(3);
+    expect(requestPersistentStorageMock).toHaveBeenCalledTimes(1);
     unmount();
   });
 });

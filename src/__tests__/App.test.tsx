@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import App from "../App";
 import { LanguageProvider } from "../i18n";
+import { PWA_UPDATE_READY_EVENT } from "../pwa";
 
 vi.mock("../utils/idb-persistence", () => ({
   loadState: vi.fn(() => Promise.resolve(null)),
@@ -67,5 +68,24 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Shortcuts" }));
     expect(screen.getByRole("dialog", { name: "Keyboard Shortcuts" })).toBeTruthy();
+  });
+
+  it("shows and dismisses the service worker update prompt", async () => {
+    renderApp();
+
+    expect(await screen.findByRole("tab", { name: "Source" })).toBeTruthy();
+
+    fireEvent(
+      window,
+      new CustomEvent(PWA_UPDATE_READY_EVENT, {
+        detail: { registration: { waiting: null } as unknown as ServiceWorkerRegistration },
+      }),
+    );
+
+    expect(await screen.findByText("A new version is available")).toBeTruthy();
+    expect(screen.getByRole("button", { name: "Reload" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Dismiss update notice" }));
+    expect(screen.queryByText("A new version is available")).toBeNull();
   });
 });

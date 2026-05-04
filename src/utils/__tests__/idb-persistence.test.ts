@@ -1,6 +1,6 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import "fake-indexeddb/auto";
-import { saveState, loadState, checkStorageQuota } from "../idb-persistence";
+import { saveState, loadState, checkStorageQuota, requestPersistentStorage } from "../idb-persistence";
 import type { SavedState } from "../idb-persistence";
 
 /**
@@ -20,9 +20,15 @@ function makeState(overrides?: Partial<SavedState>): SavedState {
 }
 
 // Reset the IDB between tests by clearing the cached connection
+const originalStorage = navigator.storage;
+
 beforeEach(() => {
   // Force fresh DB connection by clearing the module-level cache
   // fake-indexeddb resets automatically between test files
+});
+
+afterEach(() => {
+  Object.defineProperty(navigator, "storage", { configurable: true, value: originalStorage });
 });
 
 describe("idb-persistence error handling", () => {
@@ -152,5 +158,39 @@ describe("checkStorageQuota", () => {
       // API not available in this environment — that's OK
       expect(result).toBeNull();
     }
+  });
+});
+
+describe("requestPersistentStorage", () => {
+  it("returns unsupported when the StorageManager persist API is unavailable", async () => {
+    Object.defineProperty(navigator, "storage", { configurable: true, value: undefined });
+
+    await expect(requestPersistentStorage()).resolves.toEqual({ supported: false, persisted: false, requested: false });
+  });
+
+  it("does not request when storage is already persistent", async () => {
+    const persisted = vi.fn(() => Promise.resolve(true));
+    const persist = vi.fn(() => Promise.resolve(true));
+    Object.defineProperty(navigator, "storage", {
+      configurable: true,
+      value: { persisted, persist },
+    });
+
+    await expect(requestPersistentStorage()).resolves.toEqual({ supported: true, persisted: true, requested: false });
+    expect(persisted).toHaveBeenCalledTimes(1);
+    expect(persist).not.toHaveBeenCalled();
+  });
+
+  it("requests persistent storage when it is not already enabled", async () => {
+    const persisted = vi.fn(() => Promise.resolve(false));
+    const persist = vi.fn(() => Promise.resolve(true));
+    Object.defineProperty(navigator, "storage", {
+      configurable: true,
+      value: { persisted, persist },
+    });
+
+    await expect(requestPersistentStorage()).resolves.toEqual({ supported: true, persisted: true, requested: true });
+    expect(persisted).toHaveBeenCalledTimes(1);
+    expect(persist).toHaveBeenCalledTimes(1);
   });
 });
