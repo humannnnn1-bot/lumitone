@@ -1,5 +1,4 @@
-import { useRef, useEffect, useCallback, useState } from "react";
-import { FANO_LINES } from "../data/theory-data";
+import { useRef, useEffect, useCallback, useMemo, useState } from "react";
 import { FANO_RHYTHM_PATTERNS, LUMA_VALUES } from "../data/music-data";
 import { angleToFreq, type ScaleMode } from "../data/music-frequency";
 import {
@@ -17,23 +16,23 @@ import {
   type SonificationLevel,
 } from "../music/music-audio-graph";
 import { FULL_GRAY_CODE, GRAY_VOICE_FREQS, PARITY_GROUPS, gl32GenA, gl32GenB, gl32GenC, lumaToFreq } from "../music/music-engine-core";
+import { complementOfLine, k8LayerStep, zigzagStep } from "../music/music-playback-sequences";
 import {
-  andTriadEvents,
-  complementCanonPairs,
-  complementOfLine,
-  distributiveEvents,
-  extendedHammingTimeline,
-  k8LayerStep,
-  lineAndComplement,
-  octahedronMixSequence,
-  pointFanoContextLines,
-  syndromeDemoEvents,
-  tetraSingleEvents,
-  tetraSplitEvents,
-  timedCodewordEnd,
-  weightSpectrumTimeline,
-  zigzagStep,
-} from "../music/music-playback-sequences";
+  scheduleAndTriads,
+  scheduleComplementCanon,
+  scheduleDistributiveLaw,
+  scheduleExtendedHamming,
+  scheduleLineAndComplement,
+  scheduleOctahedronMix,
+  schedulePointFanoContext,
+  scheduleSyndromeDemo,
+  scheduleTetraSplit,
+  scheduleTetraT0,
+  scheduleTetraT1,
+  scheduleWeightSpectrum,
+  scheduleXorTriple,
+  type MusicPlaybackRuntime,
+} from "../music/music-playback-runner";
 import {
   clearIntervalSlot,
   clearIntervalSlots,
@@ -373,6 +372,27 @@ export function useMusicEngine({
     return scheduleTimeout(algebraTimersRef, fn, ms);
   }, []);
 
+  const oneShotPlayback = useMemo<MusicPlaybackRuntime>(
+    () => ({
+      clear: clearAlgebraTimers,
+      schedule: scheduleAlgebra,
+      playBitVectorLevel,
+      triggerLumaBurst: (gray: number) => {
+        const nodes = nodesRef.current;
+        if (nodes) {
+          triggerLumaBurst(nodes, gray);
+        }
+      },
+      triggerErrorMarker: () => {
+        const nodes = nodesRef.current;
+        if (nodes) {
+          triggerErrorMarker(nodes);
+        }
+      },
+    }),
+    [clearAlgebraTimers, playBitVectorLevel, scheduleAlgebra],
+  );
+
   /* ── stopAlgebra ── */
   const stopAlgebra = useCallback(() => {
     clearAlgebraTimers();
@@ -383,19 +403,9 @@ export function useMusicEngine({
   const playXorTriple = useCallback(
     (lvA: number, lvB: number, onStep: (lv: number | null) => void) => {
       if (!nodesRef.current) return;
-      clearAlgebraTimers();
-      const lvC = lvA ^ lvB;
-      const steps = [lvA, lvB, lvC];
-      for (let i = 0; i < 3; i++) {
-        scheduleAlgebra(() => {
-          const lv = steps[i];
-          playBitVectorLevel(lv);
-          onStep(lv);
-        }, i * 300);
-      }
-      scheduleAlgebra(() => onStep(null), 900);
+      scheduleXorTriple(lvA, lvB, onStep, oneShotPlayback);
     },
-    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
+    [oneShotPlayback],
   );
 
   /* ── 2. playParityChord ── */
@@ -427,57 +437,18 @@ export function useMusicEngine({
   const playLineAndComplement = useCallback(
     (lineIndex: number, onStep: (phase: "line" | "complement" | null) => void) => {
       if (!nodesRef.current) return;
-      const sequence = lineAndComplement(lineIndex);
-      if (!sequence) return;
-      clearAlgebraTimers();
-
-      scheduleAlgebra(() => {
-        onStep("line");
-        for (const lv of sequence.line) {
-          playBitVectorLevel(lv);
-        }
-      }, 0);
-
-      scheduleAlgebra(() => {
-        onStep("complement");
-        for (const lv of sequence.complement) {
-          playBitVectorLevel(lv);
-        }
-      }, 500);
-
-      scheduleAlgebra(() => onStep(null), 1000);
+      scheduleLineAndComplement(lineIndex, onStep, oneShotPlayback);
     },
-    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
+    [oneShotPlayback],
   );
 
   /* ── 5. playSyndromeDemo ── */
   const playSyndromeDemo = useCallback(
     (errorPos: number, onPhase: (phase: "original" | "corrupted" | "syndrome" | "corrected" | null) => void) => {
       if (!nodesRef.current) return;
-      const events = syndromeDemoEvents(errorPos);
-      if (events.length === 0) return;
-      clearAlgebraTimers();
-
-      for (const event of events) {
-        scheduleAlgebra(() => {
-          if (event.type === "phase") {
-            onPhase(event.phase);
-          } else if (event.type === "tone") {
-            playBitVectorLevel(event.lv);
-            if (event.errorMarker) {
-              const nodes = nodesRef.current;
-              if (nodes) triggerErrorMarker(nodes);
-            }
-          } else {
-            onPhase("syndrome");
-            for (const lv of event.levels) {
-              playBitVectorLevel(lv);
-            }
-          }
-        }, event.at);
-      }
+      scheduleSyndromeDemo(errorPos, onPhase, oneShotPlayback);
     },
-    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
+    [oneShotPlayback],
   );
 
   /* ── 6. playGray3Voice (looping) ── */
@@ -522,21 +493,9 @@ export function useMusicEngine({
   const playWeightSpectrum = useCallback(
     (onStep: (positions: number[], weight: number, index: number) => void) => {
       if (!nodesRef.current) return;
-      clearAlgebraTimers();
-
-      const events = weightSpectrumTimeline();
-      for (const event of events) {
-        scheduleAlgebra(() => {
-          onStep(event.positions, event.weight, event.index);
-          for (const lv of event.positions) {
-            playBitVectorLevel(lv);
-          }
-        }, event.at);
-      }
-
-      scheduleAlgebra(() => onStep([], -1, events.length), timedCodewordEnd(events, 7));
+      scheduleWeightSpectrum(onStep, oneShotPlayback);
     },
-    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
+    [oneShotPlayback],
   );
 
   /* ── 8. playCayleyRow (looping) ── */
@@ -652,20 +611,10 @@ export function useMusicEngine({
   /* ── 12. playComplementCanon ── */
   const playComplementCanon = useCallback(
     (onStep: (pairIndex: number, phase: "playing" | null) => void, reverse = false) => {
-      const nodes = nodesRef.current;
-      if (!nodes) return;
-      clearAlgebraTimers();
-      for (const event of complementCanonPairs(reverse)) {
-        scheduleAlgebra(() => {
-          const [a, b] = event.pair;
-          triggerLumaBurst(nodes, LUMA_VALUES[a]);
-          triggerLumaBurst(nodes, LUMA_VALUES[b]);
-          onStep(event.pairIndex, "playing");
-        }, event.at);
-      }
-      scheduleAlgebra(() => onStep(-1, null), 1800);
+      if (!nodesRef.current) return;
+      scheduleComplementCanon(onStep, reverse, oneShotPlayback);
     },
-    [clearAlgebraTimers, scheduleAlgebra],
+    [oneShotPlayback],
   );
 
   /* ── 13. playZigzagMelody (looping) ── */
@@ -695,133 +644,67 @@ export function useMusicEngine({
   const playPointFanoContext = useCallback(
     (point: number, onStep: (lineIdx: number | null) => void) => {
       if (!nodesRef.current) return;
-      const lines = pointFanoContextLines(point);
-      if (lines.length === 0) return;
-      clearAlgebraTimers();
-      for (let i = 0; i < lines.length; i++) {
-        scheduleAlgebra(() => {
-          onStep(lines[i]);
-          for (const lv of FANO_LINES[lines[i]]) {
-            playBitVectorLevel(lv);
-          }
-        }, i * 600);
-      }
-      scheduleAlgebra(() => onStep(null), lines.length * 600);
+      schedulePointFanoContext(point, onStep, oneShotPlayback);
     },
-    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
+    [oneShotPlayback],
   );
 
   /* ── 15. playExtendedHamming ── */
   const playExtendedHamming = useCallback(
     (onStep: (positions: number[], weight: number, index: number) => void) => {
-      const nodes = nodesRef.current;
-      if (!nodes) return;
-      clearAlgebraTimers();
-      const events = extendedHammingTimeline();
-      for (const event of events) {
-        scheduleAlgebra(() => {
-          onStep(event.positions, event.weight, event.index);
-          for (const lv of event.positions) {
-            if (lv === 0) {
-              // 0 is the added overall-parity coordinate, not a nonzero Fano point.
-              triggerLumaBurst(nodes, 0);
-            } else {
-              playBitVectorLevel(lv);
-            }
-          }
-        }, event.at);
-      }
-      scheduleAlgebra(() => onStep([], -1, events.length), timedCodewordEnd(events, 8));
+      if (!nodesRef.current) return;
+      scheduleExtendedHamming(onStep, oneShotPlayback);
     },
-    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
+    [oneShotPlayback],
   );
 
   /* ── 16. playDistributiveLaw ── */
   const playDistributiveLaw = useCallback(
     (a: number, b: number, c: number, onStep: (phase: "bxc" | "left" | "ab" | "ac" | "right" | "equal" | null, value: number) => void) => {
-      const nodes = nodesRef.current;
-      if (!nodes) return;
-      clearAlgebraTimers();
-      for (const event of distributiveEvents(a, b, c)) {
-        scheduleAlgebra(() => {
-          onStep(event.phase, event.value);
-          event.play.forEach((lv) => playBitVectorLevel(lv));
-        }, event.at);
-      }
+      if (!nodesRef.current) return;
+      scheduleDistributiveLaw(a, b, c, onStep, oneShotPlayback);
     },
-    [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
+    [oneShotPlayback],
   );
 
   const playAndTriads = useCallback(
     (onStep: (step: { pairIndex: number; phase: "operands" | "result" } | null) => void) => {
       if (!nodesRef.current) return;
-      clearAlgebraTimers();
-      for (const event of andTriadEvents()) {
-        scheduleAlgebra(() => {
-          onStep(event.step);
-          event.play.forEach((lv) => playBitVectorLevel(lv));
-        }, event.at);
-      }
+      scheduleAndTriads(onStep, oneShotPlayback);
     },
-    [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
+    [oneShotPlayback],
   );
 
   const playOctahedronMix = useCallback(
     (lvA: number, lvB: number, onStep: (phase: "pair" | "result" | null) => void) => {
       if (!nodesRef.current) return;
-      const sequence = octahedronMixSequence(lvA, lvB);
-      if (!sequence) return;
-      clearAlgebraTimers();
-      for (const event of sequence.events) {
-        scheduleAlgebra(() => {
-          onStep(event.phase);
-          event.play.forEach((lv) => playBitVectorLevel(lv));
-        }, event.at);
-      }
+      scheduleOctahedronMix(lvA, lvB, onStep, oneShotPlayback);
     },
-    [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
+    [oneShotPlayback],
   );
 
   const playTetraSplit = useCallback(
     (onStep: (phase: "t0" | "t1" | null) => void) => {
       if (!nodesRef.current) return;
-      clearAlgebraTimers();
-      for (const event of tetraSplitEvents()) {
-        scheduleAlgebra(() => {
-          onStep(event.phase);
-          event.play.forEach((lv) => playBitVectorLevel(lv));
-        }, event.at);
-      }
+      scheduleTetraSplit(onStep, oneShotPlayback);
     },
-    [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
+    [oneShotPlayback],
   );
 
   const playTetraT0 = useCallback(
     (onStep: (phase: "t0" | null) => void) => {
       if (!nodesRef.current) return;
-      clearAlgebraTimers();
-      for (const event of tetraSingleEvents("t0")) {
-        scheduleAlgebra(() => {
-          onStep(event.phase === "t1" ? null : event.phase);
-          event.play.forEach((lv) => playBitVectorLevel(lv));
-        }, event.at);
-      }
+      scheduleTetraT0(onStep, oneShotPlayback);
     },
-    [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
+    [oneShotPlayback],
   );
 
   const playTetraT1 = useCallback(
     (onStep: (phase: "t1" | null) => void) => {
       if (!nodesRef.current) return;
-      clearAlgebraTimers();
-      for (const event of tetraSingleEvents("t1")) {
-        scheduleAlgebra(() => {
-          onStep(event.phase === "t0" ? null : event.phase);
-          event.play.forEach((lv) => playBitVectorLevel(lv));
-        }, event.at);
-      }
+      scheduleTetraT1(onStep, oneShotPlayback);
     },
-    [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
+    [oneShotPlayback],
   );
 
   const playK8Layer = useCallback(
