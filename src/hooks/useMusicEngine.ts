@@ -1,6 +1,6 @@
 import { useRef, useEffect, useCallback, useState } from "react";
-import { FANO_LINES, TETRA_T0, TETRA_T1 } from "../data/theory-data";
-import { COMPLEMENT_PAIRS, FANO_RHYTHM_PATTERNS, LUMA_VALUES, ZIGZAG_PATH } from "../data/music-data";
+import { FANO_LINES } from "../data/theory-data";
+import { FANO_RHYTHM_PATTERNS, LUMA_VALUES } from "../data/music-data";
 import { angleToFreq, type ScaleMode } from "../data/music-frequency";
 import {
   applyParams,
@@ -16,20 +16,24 @@ import {
   type AudioNodes,
   type SonificationLevel,
 } from "../music/music-audio-graph";
+import { FULL_GRAY_CODE, GRAY_VOICE_FREQS, PARITY_GROUPS, gl32GenA, gl32GenB, gl32GenC, lumaToFreq } from "../music/music-engine-core";
 import {
-  ALL_POINTS,
-  AND_TRIADS,
-  FULL_GRAY_CODE,
-  GRAY_VOICE_FREQS,
-  K8_LAYER_EDGES,
-  PARITY_GROUPS,
-  extendedHammingCodewords,
-  gl32GenA,
-  gl32GenB,
-  gl32GenC,
-  linesThrough,
-  lumaToFreq,
-} from "../music/music-engine-core";
+  andTriadEvents,
+  complementCanonPairs,
+  complementOfLine,
+  distributiveEvents,
+  extendedHammingTimeline,
+  k8LayerStep,
+  lineAndComplement,
+  octahedronMixSequence,
+  pointFanoContextLines,
+  syndromeDemoEvents,
+  tetraSingleEvents,
+  tetraSplitEvents,
+  timedCodewordEnd,
+  weightSpectrumTimeline,
+  zigzagStep,
+} from "../music/music-playback-sequences";
 
 export type { ScaleMode } from "../data/music-frequency";
 
@@ -454,9 +458,8 @@ export function useMusicEngine({
   const playComplementChord = useCallback(
     (lineIndex: number) => {
       if (!nodesRef.current) return;
-      if (lineIndex < 0 || lineIndex >= FANO_LINES.length) return;
-      const lineSet = new Set(FANO_LINES[lineIndex]);
-      const complement = ALL_POINTS.filter((lv) => !lineSet.has(lv));
+      const complement = complementOfLine(lineIndex);
+      if (!complement) return;
       for (const lv of complement) {
         playBitVectorLevel(lv);
       }
@@ -468,23 +471,20 @@ export function useMusicEngine({
   const playLineAndComplement = useCallback(
     (lineIndex: number, onStep: (phase: "line" | "complement" | null) => void) => {
       if (!nodesRef.current) return;
-      if (lineIndex < 0 || lineIndex >= FANO_LINES.length) return;
+      const sequence = lineAndComplement(lineIndex);
+      if (!sequence) return;
       clearAlgebraTimers();
-
-      const line = FANO_LINES[lineIndex];
-      const lineSet = new Set(line);
-      const complement = ALL_POINTS.filter((lv) => !lineSet.has(lv));
 
       scheduleAlgebra(() => {
         onStep("line");
-        for (const lv of line) {
+        for (const lv of sequence.line) {
           playBitVectorLevel(lv);
         }
       }, 0);
 
       scheduleAlgebra(() => {
         onStep("complement");
-        for (const lv of complement) {
+        for (const lv of sequence.complement) {
           playBitVectorLevel(lv);
         }
       }, 500);
@@ -498,64 +498,28 @@ export function useMusicEngine({
   const playSyndromeDemo = useCallback(
     (errorPos: number, onPhase: (phase: "original" | "corrupted" | "syndrome" | "corrected" | null) => void) => {
       if (!nodesRef.current) return;
-      if (errorPos < 1 || errorPos > 7) return;
+      const events = syndromeDemoEvents(errorPos);
+      if (events.length === 0) return;
       clearAlgebraTimers();
 
-      let t = 0;
-
-      // Phase "original": 7 tones, 200ms each
-      scheduleAlgebra(() => onPhase("original"), t);
-      for (let i = 1; i <= 7; i++) {
-        const lv = i;
+      for (const event of events) {
         scheduleAlgebra(() => {
-          playBitVectorLevel(lv);
-        }, t);
-        t += 200;
-      }
-
-      t += 300; // gap
-
-      // Phase "corrupted": the position label stays the same; a transient marks the flipped code bit.
-      scheduleAlgebra(() => onPhase("corrupted"), t);
-      for (let i = 1; i <= 7; i++) {
-        const lv = i;
-        scheduleAlgebra(() => {
-          playBitVectorLevel(lv);
-          if (lv === errorPos) {
-            const nodes = nodesRef.current;
-            if (nodes) triggerErrorMarker(nodes);
+          if (event.type === "phase") {
+            onPhase(event.phase);
+          } else if (event.type === "tone") {
+            playBitVectorLevel(event.lv);
+            if (event.errorMarker) {
+              const nodes = nodesRef.current;
+              if (nodes) triggerErrorMarker(nodes);
+            }
+          } else {
+            onPhase("syndrome");
+            for (const lv of event.levels) {
+              playBitVectorLevel(lv);
+            }
           }
-        }, t);
-        t += 200;
+        }, event.at);
       }
-
-      t += 300; // gap
-
-      // Phase "syndrome": syndrome = errorPos in binary, play parity bits that fail
-      scheduleAlgebra(() => {
-        onPhase("syndrome");
-        for (let bit = 0; bit < 3; bit++) {
-          if (errorPos & (1 << bit)) {
-            // Play the parity group chord for this bit
-            const parityLv = 1 << bit; // 1, 2, or 4
-            playBitVectorLevel(parityLv);
-          }
-        }
-      }, t);
-
-      t += 500; // gap
-
-      // Phase "corrected": play original 7 tones again
-      scheduleAlgebra(() => onPhase("corrected"), t);
-      for (let i = 1; i <= 7; i++) {
-        const lv = i;
-        scheduleAlgebra(() => {
-          playBitVectorLevel(lv);
-        }, t);
-        t += 200;
-      }
-
-      scheduleAlgebra(() => onPhase(null), t + 300);
     },
     [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
   );
@@ -605,41 +569,17 @@ export function useMusicEngine({
       if (!nodesRef.current) return;
       clearAlgebraTimers();
 
-      // Build all 16 codewords sorted by weight
-      const codewords: { positions: number[]; weight: number }[] = [];
-
-      // Weight 0: empty (silence)
-      codewords.push({ positions: [], weight: 0 });
-
-      // Weight 3: Fano lines
-      for (const line of FANO_LINES) {
-        codewords.push({ positions: [...line], weight: 3 });
-      }
-
-      // Weight 4: complements of Fano lines
-      for (const line of FANO_LINES) {
-        const lineSet = new Set(line);
-        const dual = ALL_POINTS.filter((lv) => !lineSet.has(lv));
-        codewords.push({ positions: dual, weight: 4 });
-      }
-
-      // Weight 7: all points
-      codewords.push({ positions: [...ALL_POINTS], weight: 7 });
-
-      let t = 0;
-      for (let idx = 0; idx < codewords.length; idx++) {
-        const cw = codewords[idx];
-        const duration = cw.weight === 0 || cw.weight === 7 ? 500 : 400;
+      const events = weightSpectrumTimeline();
+      for (const event of events) {
         scheduleAlgebra(() => {
-          onStep(cw.positions, cw.weight, idx);
-          for (const lv of cw.positions) {
+          onStep(event.positions, event.weight, event.index);
+          for (const lv of event.positions) {
             playBitVectorLevel(lv);
           }
-        }, t);
-        t += duration;
+        }, event.at);
       }
 
-      scheduleAlgebra(() => onStep([], -1, codewords.length), t);
+      scheduleAlgebra(() => onStep([], -1, events.length), timedCodewordEnd(events, 7));
     },
     [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
   );
@@ -762,14 +702,13 @@ export function useMusicEngine({
       const nodes = nodesRef.current;
       if (!nodes) return;
       clearAlgebraTimers();
-      for (let step = 0; step < 3; step++) {
-        const i = reverse ? 2 - step : step;
+      for (const event of complementCanonPairs(reverse)) {
         scheduleAlgebra(() => {
-          const [a, b] = COMPLEMENT_PAIRS[i];
+          const [a, b] = event.pair;
           triggerLumaBurst(nodes, LUMA_VALUES[a]);
           triggerLumaBurst(nodes, LUMA_VALUES[b]);
-          onStep(i, "playing");
-        }, step * 600);
+          onStep(event.pairIndex, "playing");
+        }, event.at);
       }
       scheduleAlgebra(() => onStep(-1, null), 1800);
     },
@@ -787,10 +726,9 @@ export function useMusicEngine({
     const id = setInterval(() => {
       const currentNodes = nodesRef.current;
       if (!currentNodes) return;
-      const i = step % ZIGZAG_PATH.length;
-      const lv = ZIGZAG_PATH[i];
+      const { index, lv } = zigzagStep(step);
       triggerLumaBurst(currentNodes, LUMA_VALUES[lv]);
-      onStep(i);
+      onStep(index);
       step++;
     }, 400);
     zigzagIntervalRef.current = id;
@@ -807,9 +745,9 @@ export function useMusicEngine({
   const playPointFanoContext = useCallback(
     (point: number, onStep: (lineIdx: number | null) => void) => {
       if (!nodesRef.current) return;
-      if (point < 1 || point > 7) return;
+      const lines = pointFanoContextLines(point);
+      if (lines.length === 0) return;
       clearAlgebraTimers();
-      const lines = linesThrough(point);
       for (let i = 0; i < lines.length; i++) {
         scheduleAlgebra(() => {
           onStep(lines[i]);
@@ -829,14 +767,11 @@ export function useMusicEngine({
       const nodes = nodesRef.current;
       if (!nodes) return;
       clearAlgebraTimers();
-      const codewords = extendedHammingCodewords();
-      let t = 0;
-      for (let idx = 0; idx < codewords.length; idx++) {
-        const cw = codewords[idx];
-        const duration = cw.weight === 0 || cw.weight === 8 ? 500 : 350;
+      const events = extendedHammingTimeline();
+      for (const event of events) {
         scheduleAlgebra(() => {
-          onStep(cw.positions, cw.weight, idx);
-          for (const lv of cw.positions) {
+          onStep(event.positions, event.weight, event.index);
+          for (const lv of event.positions) {
             if (lv === 0) {
               // 0 is the added overall-parity coordinate, not a nonzero Fano point.
               triggerLumaBurst(nodes, 0);
@@ -844,10 +779,9 @@ export function useMusicEngine({
               playBitVectorLevel(lv);
             }
           }
-        }, t);
-        t += duration;
+        }, event.at);
       }
-      scheduleAlgebra(() => onStep([], -1, codewords.length), t);
+      scheduleAlgebra(() => onStep([], -1, events.length), timedCodewordEnd(events, 8));
     },
     [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
   );
@@ -858,41 +792,12 @@ export function useMusicEngine({
       const nodes = nodesRef.current;
       if (!nodes) return;
       clearAlgebraTimers();
-      const bxc = b ^ c;
-      const left = a & bxc;
-      const ab = a & b;
-      const ac = a & c;
-      const right = ab ^ ac;
-      const playLv = (lv: number) => playBitVectorLevel(lv);
-      // Left path
-      scheduleAlgebra(() => {
-        onStep("bxc", bxc);
-        playLv(bxc);
-      }, 0);
-      scheduleAlgebra(() => {
-        onStep("left", left);
-        playLv(left);
-      }, 400);
-      // Right path
-      scheduleAlgebra(() => {
-        onStep("ab", ab);
-        playLv(ab);
-      }, 1000);
-      scheduleAlgebra(() => {
-        onStep("ac", ac);
-        playLv(ac);
-      }, 1400);
-      scheduleAlgebra(() => {
-        onStep("right", right);
-        playLv(right);
-      }, 1800);
-      // Convergence
-      scheduleAlgebra(() => {
-        onStep("equal", left);
-        playLv(left);
-        playLv(right);
-      }, 2400);
-      scheduleAlgebra(() => onStep(null, -1), 2900);
+      for (const event of distributiveEvents(a, b, c)) {
+        scheduleAlgebra(() => {
+          onStep(event.phase, event.value);
+          event.play.forEach((lv) => playBitVectorLevel(lv));
+        }, event.at);
+      }
     },
     [playBitVectorLevel, clearAlgebraTimers, scheduleAlgebra],
   );
@@ -901,20 +806,12 @@ export function useMusicEngine({
     (onStep: (step: { pairIndex: number; phase: "operands" | "result" } | null) => void) => {
       if (!nodesRef.current) return;
       clearAlgebraTimers();
-      let t = 0;
-      AND_TRIADS.forEach(([a, b, result], pairIndex) => {
+      for (const event of andTriadEvents()) {
         scheduleAlgebra(() => {
-          onStep({ pairIndex, phase: "operands" });
-          playBitVectorLevel(a);
-          playBitVectorLevel(b);
-        }, t);
-        scheduleAlgebra(() => {
-          onStep({ pairIndex, phase: "result" });
-          playBitVectorLevel(result);
-        }, t + 360);
-        t += 860;
-      });
-      scheduleAlgebra(() => onStep(null), t);
+          onStep(event.step);
+          event.play.forEach((lv) => playBitVectorLevel(lv));
+        }, event.at);
+      }
     },
     [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
   );
@@ -922,20 +819,15 @@ export function useMusicEngine({
   const playOctahedronMix = useCallback(
     (lvA: number, lvB: number, onStep: (phase: "pair" | "result" | null) => void) => {
       if (!nodesRef.current) return;
-      if (lvA < 1 || lvA > 6 || lvB < 1 || lvB > 6 || lvA === lvB) return;
-      const result = lvA ^ lvB;
-      if (result < 1 || result > 6) return;
+      const sequence = octahedronMixSequence(lvA, lvB);
+      if (!sequence) return;
       clearAlgebraTimers();
-      scheduleAlgebra(() => {
-        onStep("pair");
-        playBitVectorLevel(lvA);
-        playBitVectorLevel(lvB);
-      }, 0);
-      scheduleAlgebra(() => {
-        onStep("result");
-        playBitVectorLevel(result);
-      }, 480);
-      scheduleAlgebra(() => onStep(null), 920);
+      for (const event of sequence.events) {
+        scheduleAlgebra(() => {
+          onStep(event.phase);
+          event.play.forEach((lv) => playBitVectorLevel(lv));
+        }, event.at);
+      }
     },
     [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
   );
@@ -944,15 +836,12 @@ export function useMusicEngine({
     (onStep: (phase: "t0" | "t1" | null) => void) => {
       if (!nodesRef.current) return;
       clearAlgebraTimers();
-      scheduleAlgebra(() => {
-        onStep("t0");
-        TETRA_T0.forEach((lv) => playBitVectorLevel(lv));
-      }, 0);
-      scheduleAlgebra(() => {
-        onStep("t1");
-        TETRA_T1.forEach((lv) => playBitVectorLevel(lv));
-      }, 650);
-      scheduleAlgebra(() => onStep(null), 1300);
+      for (const event of tetraSplitEvents()) {
+        scheduleAlgebra(() => {
+          onStep(event.phase);
+          event.play.forEach((lv) => playBitVectorLevel(lv));
+        }, event.at);
+      }
     },
     [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
   );
@@ -961,11 +850,12 @@ export function useMusicEngine({
     (onStep: (phase: "t0" | null) => void) => {
       if (!nodesRef.current) return;
       clearAlgebraTimers();
-      scheduleAlgebra(() => {
-        onStep("t0");
-        TETRA_T0.forEach((lv) => playBitVectorLevel(lv));
-      }, 0);
-      scheduleAlgebra(() => onStep(null), 650);
+      for (const event of tetraSingleEvents("t0")) {
+        scheduleAlgebra(() => {
+          onStep(event.phase === "t1" ? null : event.phase);
+          event.play.forEach((lv) => playBitVectorLevel(lv));
+        }, event.at);
+      }
     },
     [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
   );
@@ -974,11 +864,12 @@ export function useMusicEngine({
     (onStep: (phase: "t1" | null) => void) => {
       if (!nodesRef.current) return;
       clearAlgebraTimers();
-      scheduleAlgebra(() => {
-        onStep("t1");
-        TETRA_T1.forEach((lv) => playBitVectorLevel(lv));
-      }, 0);
-      scheduleAlgebra(() => onStep(null), 650);
+      for (const event of tetraSingleEvents("t1")) {
+        scheduleAlgebra(() => {
+          onStep(event.phase === "t0" ? null : event.phase);
+          event.play.forEach((lv) => playBitVectorLevel(lv));
+        }, event.at);
+      }
     },
     [clearAlgebraTimers, scheduleAlgebra, playBitVectorLevel],
   );
@@ -989,14 +880,13 @@ export function useMusicEngine({
       if (k8IntervalRef.current !== null) {
         clearInterval(k8IntervalRef.current);
       }
-      const edges = K8_LAYER_EDGES[layer];
-      const intervalMs = layer === 3 ? 520 : 280;
       let step = 0;
+      const { intervalMs } = k8LayerStep(layer, step);
       const id = setInterval(() => {
         if (!nodesRef.current) return;
-        const ei = step % edges.length;
-        const [a, b] = edges[ei];
-        onStep(ei, [a, b]);
+        const { edgeIndex, pair } = k8LayerStep(layer, step);
+        const [a, b] = pair;
+        onStep(edgeIndex, pair);
         playBitVectorLevel(a);
         playBitVectorLevel(b);
         step++;
