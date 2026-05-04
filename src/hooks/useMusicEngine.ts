@@ -34,6 +34,15 @@ import {
   weightSpectrumTimeline,
   zigzagStep,
 } from "../music/music-playback-sequences";
+import {
+  clearIntervalSlot,
+  clearIntervalSlots,
+  clearTimeoutList,
+  replaceInterval,
+  scheduleTimeout,
+  type IntervalHandle,
+  type TimeoutHandle,
+} from "../music/music-scheduler";
 
 export type { ScaleMode } from "../data/music-frequency";
 
@@ -109,13 +118,13 @@ export function useMusicEngine({
   originMode,
 }: MusicEngineParams): MusicEngineReturn {
   const nodesRef = useRef<AudioNodes | null>(null);
-  const grayIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const fanoIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const algebraTimersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
-  const gray3IntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const zigzagIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const cayleyIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const k8IntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const grayIntervalRef = useRef<IntervalHandle | null>(null);
+  const fanoIntervalRef = useRef<IntervalHandle | null>(null);
+  const algebraTimersRef = useRef<TimeoutHandle[]>([]);
+  const gray3IntervalRef = useRef<IntervalHandle | null>(null);
+  const zigzagIntervalRef = useRef<IntervalHandle | null>(null);
+  const cayleyIntervalRef = useRef<IntervalHandle | null>(null);
+  const k8IntervalRef = useRef<IntervalHandle | null>(null);
   const gl32PermRef = useRef<number[]>([1, 2, 3, 4, 5, 6, 7]); // identity permutation
   const droneMutedRef = useRef(true);
   const [analyserNode, setAnalyserNode] = useState<AnalyserNode | null>(null);
@@ -186,32 +195,8 @@ export function useMusicEngine({
   }, []);
 
   const stopAudio = useCallback(() => {
-    if (grayIntervalRef.current !== null) {
-      clearInterval(grayIntervalRef.current);
-      grayIntervalRef.current = null;
-    }
-    if (fanoIntervalRef.current !== null) {
-      clearInterval(fanoIntervalRef.current);
-      fanoIntervalRef.current = null;
-    }
-    if (zigzagIntervalRef.current !== null) {
-      clearInterval(zigzagIntervalRef.current);
-      zigzagIntervalRef.current = null;
-    }
-    if (gray3IntervalRef.current !== null) {
-      clearInterval(gray3IntervalRef.current);
-      gray3IntervalRef.current = null;
-    }
-    if (cayleyIntervalRef.current !== null) {
-      clearInterval(cayleyIntervalRef.current);
-      cayleyIntervalRef.current = null;
-    }
-    if (k8IntervalRef.current !== null) {
-      clearInterval(k8IntervalRef.current);
-      k8IntervalRef.current = null;
-    }
-    for (const t of algebraTimersRef.current) clearTimeout(t);
-    algebraTimersRef.current = [];
+    clearIntervalSlots(grayIntervalRef, fanoIntervalRef, zigzagIntervalRef, gray3IntervalRef, cayleyIntervalRef, k8IntervalRef);
+    clearTimeoutList(algebraTimersRef);
     if (nodesRef.current) {
       teardown(nodesRef.current);
       nodesRef.current = null;
@@ -301,29 +286,24 @@ export function useMusicEngine({
   const playGrayMelody = useCallback(
     (tempo: number, onStep: (lv: number | null) => void) => {
       if (!nodesRef.current) return;
-      // Stop any existing melody
-      if (grayIntervalRef.current !== null) {
-        clearInterval(grayIntervalRef.current);
-      }
-
       const intervalMs = 60000 / tempo;
       let step = 0;
-      const id = setInterval(() => {
-        const lv = FULL_GRAY_CODE[step % FULL_GRAY_CODE.length];
-        playPitchLevel(lv);
-        onStep(lv);
-        step++;
-      }, intervalMs);
-      grayIntervalRef.current = id;
+      replaceInterval(
+        grayIntervalRef,
+        () => {
+          const lv = FULL_GRAY_CODE[step % FULL_GRAY_CODE.length];
+          playPitchLevel(lv);
+          onStep(lv);
+          step++;
+        },
+        intervalMs,
+      );
     },
     [playPitchLevel],
   );
 
   const stopGrayMelody = useCallback(() => {
-    if (grayIntervalRef.current !== null) {
-      clearInterval(grayIntervalRef.current);
-      grayIntervalRef.current = null;
-    }
+    clearIntervalSlot(grayIntervalRef);
   }, []);
 
   /* ── Fano Rhythm Canon ── */
@@ -331,96 +311,72 @@ export function useMusicEngine({
     const nodes = nodesRef.current;
     if (!nodes) return;
 
-    // Stop any existing rhythm
-    if (fanoIntervalRef.current !== null) {
-      clearInterval(fanoIntervalRef.current);
-    }
-
     const subdivisionMs = 60000 / (tempo * 7);
     let pos = 0;
 
-    const id = setInterval(() => {
-      const currentNodes = nodesRef.current;
-      if (!currentNodes) return;
-      const ctx = currentNodes.ctx;
-      const now = ctx.currentTime;
+    replaceInterval(
+      fanoIntervalRef,
+      () => {
+        const currentNodes = nodesRef.current;
+        if (!currentNodes) return;
+        const ctx = currentNodes.ctx;
+        const now = ctx.currentTime;
 
-      // Each beat may trigger up to 3 Fano lines simultaneously (difference set {0,1,3}
-      // guarantees exactly 3 firings per beat). Collect them all so the UI can highlight
-      // the full set of audible lines in sync with the noise bursts.
-      const firingLines: number[] = [];
-      for (let line = 0; line < 7; line++) {
-        if (FANO_RHYTHM_PATTERNS[line].includes(pos % 7)) {
-          firingLines.push(line);
-          // Short noise burst filtered at different frequency per line
-          const bufLen = Math.floor(ctx.sampleRate * 0.05); // 50ms
-          const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
-          const data = buf.getChannelData(0);
-          for (let j = 0; j < bufLen; j++) data[j] = Math.random() * 2 - 1;
+        // Each beat may trigger up to 3 Fano lines simultaneously (difference set {0,1,3}
+        // guarantees exactly 3 firings per beat). Collect them all so the UI can highlight
+        // the full set of audible lines in sync with the noise bursts.
+        const firingLines: number[] = [];
+        for (let line = 0; line < 7; line++) {
+          if (FANO_RHYTHM_PATTERNS[line].includes(pos % 7)) {
+            firingLines.push(line);
+            // Short noise burst filtered at different frequency per line
+            const bufLen = Math.floor(ctx.sampleRate * 0.05); // 50ms
+            const buf = ctx.createBuffer(1, bufLen, ctx.sampleRate);
+            const data = buf.getChannelData(0);
+            for (let j = 0; j < bufLen; j++) data[j] = Math.random() * 2 - 1;
 
-          const source = ctx.createBufferSource();
-          source.buffer = buf;
+            const source = ctx.createBufferSource();
+            source.buffer = buf;
 
-          const filter = ctx.createBiquadFilter();
-          filter.type = "bandpass";
-          filter.frequency.value = 300 + line * 200; // 300-1700 Hz per line
-          filter.Q.value = 5;
+            const filter = ctx.createBiquadFilter();
+            filter.type = "bandpass";
+            filter.frequency.value = 300 + line * 200; // 300-1700 Hz per line
+            filter.Q.value = 5;
 
-          const gain = ctx.createGain();
-          gain.gain.setValueAtTime(0.15, now);
-          gain.gain.linearRampToValueAtTime(0, now + 0.05);
+            const gain = ctx.createGain();
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.linearRampToValueAtTime(0, now + 0.05);
 
-          source.connect(filter).connect(gain).connect(currentNodes.master);
-          source.start(now);
-          source.stop(now + 0.06);
+            source.connect(filter).connect(gain).connect(currentNodes.master);
+            source.start(now);
+            source.stop(now + 0.06);
+          }
         }
-      }
-      onBeat(firingLines, pos % 7);
-      pos++;
-    }, subdivisionMs);
-
-    fanoIntervalRef.current = id;
+        onBeat(firingLines, pos % 7);
+        pos++;
+      },
+      subdivisionMs,
+    );
   }, []);
 
   const stopFanoRhythm = useCallback(() => {
-    if (fanoIntervalRef.current !== null) {
-      clearInterval(fanoIntervalRef.current);
-      fanoIntervalRef.current = null;
-    }
+    clearIntervalSlot(fanoIntervalRef);
   }, []);
 
   /* ── Helper: clear all algebra timers ── */
   const clearAlgebraTimers = useCallback(() => {
-    for (const t of algebraTimersRef.current) clearTimeout(t);
-    algebraTimersRef.current = [];
+    clearTimeoutList(algebraTimersRef);
   }, []);
 
   /* ── Helper: schedule a timeout and track it ── */
   const scheduleAlgebra = useCallback((fn: () => void, ms: number) => {
-    const id = setTimeout(fn, ms);
-    algebraTimersRef.current.push(id);
-    return id;
+    return scheduleTimeout(algebraTimersRef, fn, ms);
   }, []);
 
   /* ── stopAlgebra ── */
   const stopAlgebra = useCallback(() => {
     clearAlgebraTimers();
-    if (gray3IntervalRef.current !== null) {
-      clearInterval(gray3IntervalRef.current);
-      gray3IntervalRef.current = null;
-    }
-    if (cayleyIntervalRef.current !== null) {
-      clearInterval(cayleyIntervalRef.current);
-      cayleyIntervalRef.current = null;
-    }
-    if (zigzagIntervalRef.current !== null) {
-      clearInterval(zigzagIntervalRef.current);
-      zigzagIntervalRef.current = null;
-    }
-    if (k8IntervalRef.current !== null) {
-      clearInterval(k8IntervalRef.current);
-      k8IntervalRef.current = null;
-    }
+    clearIntervalSlots(gray3IntervalRef, cayleyIntervalRef, zigzagIntervalRef, k8IntervalRef);
   }, [clearAlgebraTimers]);
 
   /* ── 1. playXorTriple ── */
@@ -527,40 +483,39 @@ export function useMusicEngine({
   /* ── 6. playGray3Voice (looping) ── */
   const playGray3Voice = useCallback((onStep: (lv: number | null) => void) => {
     if (!nodesRef.current) return;
-    // Stop any existing
-    if (gray3IntervalRef.current !== null) {
-      clearInterval(gray3IntervalRef.current);
-    }
 
     let step = 0;
-    const id = setInterval(() => {
-      const nodes = nodesRef.current;
-      if (!nodes) return;
-      const ctx = nodes.ctx;
-      const lv = FULL_GRAY_CODE[step % FULL_GRAY_CODE.length];
-      onStep(lv);
+    replaceInterval(
+      gray3IntervalRef,
+      () => {
+        const nodes = nodesRef.current;
+        if (!nodes) return;
+        const ctx = nodes.ctx;
+        const lv = FULL_GRAY_CODE[step % FULL_GRAY_CODE.length];
+        onStep(lv);
 
-      // Create oscillators for each bit that is 1
-      for (let bit = 0; bit < 3; bit++) {
-        if (lv & (1 << bit)) {
-          const osc = ctx.createOscillator();
-          osc.type = "sine";
-          osc.frequency.value = GRAY_VOICE_FREQS[bit];
+        // Create oscillators for each bit that is 1
+        for (let bit = 0; bit < 3; bit++) {
+          if (lv & (1 << bit)) {
+            const osc = ctx.createOscillator();
+            osc.type = "sine";
+            osc.frequency.value = GRAY_VOICE_FREQS[bit];
 
-          const gain = ctx.createGain();
-          const now = ctx.currentTime;
-          gain.gain.setValueAtTime(0, now);
-          gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
-          gain.gain.linearRampToValueAtTime(0.0, now + 0.35);
+            const gain = ctx.createGain();
+            const now = ctx.currentTime;
+            gain.gain.setValueAtTime(0, now);
+            gain.gain.linearRampToValueAtTime(0.2, now + 0.01);
+            gain.gain.linearRampToValueAtTime(0.0, now + 0.35);
 
-          osc.connect(gain).connect(nodes.master);
-          osc.start(now);
-          osc.stop(now + 0.38);
+            osc.connect(gain).connect(nodes.master);
+            osc.start(now);
+            osc.stop(now + 0.38);
+          }
         }
-      }
-      step++;
-    }, 400);
-    gray3IntervalRef.current = id;
+        step++;
+      },
+      400,
+    );
   }, []);
 
   /* ── 7. playWeightSpectrum ── */
@@ -588,21 +543,19 @@ export function useMusicEngine({
   const playCayleyRow = useCallback(
     (row: number, onStep: (col: number, value: number) => void) => {
       if (!nodesRef.current) return;
-      // Stop any existing
-      if (cayleyIntervalRef.current !== null) {
-        clearInterval(cayleyIntervalRef.current);
-      }
-
       let step = 0;
-      const id = setInterval(() => {
-        if (!nodesRef.current) return;
-        const col = step % 8;
-        const value = row ^ col;
-        onStep(col, value);
-        playBitVectorLevel(value);
-        step++;
-      }, 300);
-      cayleyIntervalRef.current = id;
+      replaceInterval(
+        cayleyIntervalRef,
+        () => {
+          if (!nodesRef.current) return;
+          const col = step % 8;
+          const value = row ^ col;
+          onStep(col, value);
+          playBitVectorLevel(value);
+          step++;
+        },
+        300,
+      );
     },
     [playBitVectorLevel],
   );
@@ -719,26 +672,23 @@ export function useMusicEngine({
   const playZigzagMelody = useCallback((onStep: (stepIndex: number | null) => void) => {
     const nodes = nodesRef.current;
     if (!nodes) return;
-    if (zigzagIntervalRef.current !== null) {
-      clearInterval(zigzagIntervalRef.current);
-    }
     let step = 0;
-    const id = setInterval(() => {
-      const currentNodes = nodesRef.current;
-      if (!currentNodes) return;
-      const { index, lv } = zigzagStep(step);
-      triggerLumaBurst(currentNodes, LUMA_VALUES[lv]);
-      onStep(index);
-      step++;
-    }, 400);
-    zigzagIntervalRef.current = id;
+    replaceInterval(
+      zigzagIntervalRef,
+      () => {
+        const currentNodes = nodesRef.current;
+        if (!currentNodes) return;
+        const { index, lv } = zigzagStep(step);
+        triggerLumaBurst(currentNodes, LUMA_VALUES[lv]);
+        onStep(index);
+        step++;
+      },
+      400,
+    );
   }, []);
 
   const stopZigzagMelody = useCallback(() => {
-    if (zigzagIntervalRef.current !== null) {
-      clearInterval(zigzagIntervalRef.current);
-      zigzagIntervalRef.current = null;
-    }
+    clearIntervalSlot(zigzagIntervalRef);
   }, []);
 
   /* ── 14. playPointFanoContext ── */
@@ -877,21 +827,21 @@ export function useMusicEngine({
   const playK8Layer = useCallback(
     (layer: 1 | 2 | 3, onStep: (edgeIndex: number, pair: [number, number] | null) => void) => {
       if (!nodesRef.current) return;
-      if (k8IntervalRef.current !== null) {
-        clearInterval(k8IntervalRef.current);
-      }
       let step = 0;
       const { intervalMs } = k8LayerStep(layer, step);
-      const id = setInterval(() => {
-        if (!nodesRef.current) return;
-        const { edgeIndex, pair } = k8LayerStep(layer, step);
-        const [a, b] = pair;
-        onStep(edgeIndex, pair);
-        playBitVectorLevel(a);
-        playBitVectorLevel(b);
-        step++;
-      }, intervalMs);
-      k8IntervalRef.current = id;
+      replaceInterval(
+        k8IntervalRef,
+        () => {
+          if (!nodesRef.current) return;
+          const { edgeIndex, pair } = k8LayerStep(layer, step);
+          const [a, b] = pair;
+          onStep(edgeIndex, pair);
+          playBitVectorLevel(a);
+          playBitVectorLevel(b);
+          step++;
+        },
+        intervalMs,
+      );
     },
     [playBitVectorLevel],
   );
