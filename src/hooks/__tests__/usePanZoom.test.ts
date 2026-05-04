@@ -3,6 +3,7 @@ import { describe, it, expect, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { usePanZoom } from "../usePanZoom";
 import type { CanvasData } from "../../types";
+import { ZOOM_MAX, ZOOM_MIN } from "../../constants";
 
 function makeMocks() {
   const cvs: CanvasData = {
@@ -17,6 +18,41 @@ function makeMocks() {
 }
 
 describe("usePanZoom", () => {
+  function makeFakePointerEvent(overrides?: Partial<React.PointerEvent>): React.PointerEvent {
+    return {
+      button: 0,
+      clientX: 100,
+      clientY: 100,
+      pointerId: 1,
+      preventDefault: vi.fn(),
+      target: { setPointerCapture: vi.fn() },
+      ...overrides,
+    } as unknown as React.PointerEvent;
+  }
+
+  function makeWheelEvent(overrides?: Partial<WheelEvent> & { rect?: Partial<DOMRect> }): WheelEvent {
+    const rect = {
+      left: 0,
+      top: 0,
+      width: 320,
+      height: 320,
+      right: 320,
+      bottom: 320,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+      ...overrides?.rect,
+    } as DOMRect;
+    return {
+      deltaY: -100,
+      clientX: 160,
+      clientY: 160,
+      preventDefault: vi.fn(),
+      currentTarget: { getBoundingClientRect: () => rect },
+      ...overrides,
+    } as unknown as WheelEvent;
+  }
+
   it("initial zoom is 1", () => {
     const { cvs, displayW, schedCursorRef } = makeMocks();
     const { result } = renderHook(() => usePanZoom(cvs, displayW, schedCursorRef));
@@ -94,27 +130,133 @@ describe("usePanZoom", () => {
     expect(result.current.panOriginRef.current).toEqual({ x: 0, y: 0 });
   });
 
+  it("movePan clamps pan to canvas bounds and schedules cursor redraw", () => {
+    const { cvs, displayW, schedCursorRef } = makeMocks();
+    const schedCursor = vi.fn();
+    schedCursorRef.current = schedCursor;
+    const { result } = renderHook(() => usePanZoom(cvs, displayW, schedCursorRef));
+
+    act(() => {
+      result.current.startPan(makeFakePointerEvent({ clientX: 0, clientY: 0 }));
+    });
+    act(() => {
+      result.current.movePan(makeFakePointerEvent({ clientX: 10_000, clientY: -10_000 }));
+    });
+
+    expect(result.current.pan).toEqual({ x: cvs.w, y: -cvs.h });
+    expect(schedCursor).toHaveBeenCalled();
+  });
+
+  describe("onWheel", () => {
+    it("zooms in and out around the pointer", () => {
+      const { cvs, displayW, schedCursorRef } = makeMocks();
+      const schedCursor = vi.fn();
+      schedCursorRef.current = schedCursor;
+      const { result } = renderHook(() => usePanZoom(cvs, displayW, schedCursorRef));
+
+      act(() => {
+        result.current.onWheel(makeWheelEvent({ deltaY: -100 }));
+      });
+      expect(result.current.zoom).toBeGreaterThan(1);
+
+      act(() => {
+        result.current.onWheel(makeWheelEvent({ deltaY: 100 }));
+      });
+      expect(result.current.zoom).toBeCloseTo(1);
+      expect(schedCursor).toHaveBeenCalled();
+    });
+
+    it("clamps wheel zoom to configured min and max", () => {
+      const { cvs, displayW, schedCursorRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(cvs, displayW, schedCursorRef));
+
+      act(() => {
+        result.current.setZoom(ZOOM_MAX / 1.01);
+      });
+      act(() => {
+        result.current.onWheel(makeWheelEvent({ deltaY: -100 }));
+      });
+      expect(result.current.zoom).toBe(ZOOM_MAX);
+
+      act(() => {
+        result.current.setZoom(ZOOM_MIN * 1.01);
+      });
+      act(() => {
+        result.current.onWheel(makeWheelEvent({ deltaY: 100 }));
+      });
+      expect(result.current.zoom).toBe(ZOOM_MIN);
+    });
+
+    it("clamps wheel-generated pan to canvas bounds", () => {
+      const { cvs, displayW, schedCursorRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(cvs, displayW, schedCursorRef));
+
+      act(() => {
+        result.current.setPan({ x: 10_000, y: -10_000 });
+      });
+      act(() => {
+        result.current.onWheel(makeWheelEvent({ deltaY: -100, clientX: 0, clientY: 320 }));
+      });
+
+      expect(result.current.pan.x).toBeGreaterThanOrEqual(-cvs.w);
+      expect(result.current.pan.x).toBeLessThanOrEqual(cvs.w);
+      expect(result.current.pan.y).toBeGreaterThanOrEqual(-cvs.h);
+      expect(result.current.pan.y).toBeLessThanOrEqual(cvs.h);
+    });
+  });
+
+  describe("pinch handlers", () => {
+    it("uses one pointer as pan input and clamps the result", () => {
+      const { cvs, displayW, schedCursorRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(cvs, displayW, schedCursorRef));
+
+      act(() => {
+        result.current.onPinchDown(makeFakePointerEvent({ pointerId: 1, clientX: 0, clientY: 0 }));
+      });
+      expect(result.current.panningRef.current).toBe(true);
+
+      act(() => {
+        result.current.onPinchMove(makeFakePointerEvent({ pointerId: 1, clientX: 10_000, clientY: 10_000 }));
+      });
+      expect(result.current.pan).toEqual({ x: cvs.w, y: cvs.h });
+
+      act(() => {
+        result.current.onPinchUp(makeFakePointerEvent({ pointerId: 1 }));
+      });
+      expect(result.current.panningRef.current).toBe(false);
+    });
+
+    it("pinch-zooms with two pointers and resumes pan when one remains", () => {
+      const { cvs, displayW, schedCursorRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(cvs, displayW, schedCursorRef));
+
+      act(() => {
+        result.current.onPinchDown(makeFakePointerEvent({ pointerId: 1, clientX: 0, clientY: 0 }));
+        result.current.onPinchDown(makeFakePointerEvent({ pointerId: 2, clientX: 0, clientY: 100 }));
+      });
+      expect(result.current.panningRef.current).toBe(false);
+
+      act(() => {
+        result.current.onPinchMove(makeFakePointerEvent({ pointerId: 2, clientX: 0, clientY: 200 }));
+      });
+      expect(result.current.zoom).toBe(2);
+
+      act(() => {
+        result.current.onPinchUp(makeFakePointerEvent({ pointerId: 2 }));
+      });
+      expect(result.current.panningRef.current).toBe(true);
+    });
+  });
+
   /* ---------- handleMiddleDown ---------- */
 
   describe("handleMiddleDown", () => {
-    function makeFakePointerEvent(overrides?: Partial<React.PointerEvent>): React.PointerEvent {
-      return {
-        button: 1,
-        clientX: 100,
-        clientY: 100,
-        pointerId: 1,
-        preventDefault: vi.fn(),
-        target: { setPointerCapture: vi.fn() },
-        ...overrides,
-      } as unknown as React.PointerEvent;
-    }
-
     it("first middle-click starts pan (delegates to startPan)", () => {
       const { cvs, displayW, schedCursorRef } = makeMocks();
       const { result } = renderHook(() => usePanZoom(cvs, displayW, schedCursorRef));
 
       act(() => {
-        result.current.handleMiddleDown(makeFakePointerEvent());
+        result.current.handleMiddleDown(makeFakePointerEvent({ button: 1 }));
       });
 
       expect(result.current.panningRef.current).toBe(true);
@@ -133,7 +275,7 @@ describe("usePanZoom", () => {
 
       // First middle-click
       act(() => {
-        result.current.handleMiddleDown(makeFakePointerEvent());
+        result.current.handleMiddleDown(makeFakePointerEvent({ button: 1 }));
       });
       // End pan (simulate pointer up)
       act(() => {
@@ -142,7 +284,7 @@ describe("usePanZoom", () => {
 
       // Second middle-click quickly
       act(() => {
-        result.current.handleMiddleDown(makeFakePointerEvent());
+        result.current.handleMiddleDown(makeFakePointerEvent({ button: 1 }));
       });
 
       expect(result.current.zoom).toBe(1);
@@ -162,7 +304,7 @@ describe("usePanZoom", () => {
 
       // First click
       act(() => {
-        result.current.handleMiddleDown(makeFakePointerEvent());
+        result.current.handleMiddleDown(makeFakePointerEvent({ button: 1 }));
       });
       act(() => {
         result.current.endPan();
@@ -176,7 +318,7 @@ describe("usePanZoom", () => {
 
       // Second click after delay — should NOT reset
       act(() => {
-        result.current.handleMiddleDown(makeFakePointerEvent());
+        result.current.handleMiddleDown(makeFakePointerEvent({ button: 1 }));
       });
 
       expect(result.current.zoom).toBe(2);
