@@ -3,39 +3,28 @@ import { LEVEL_INFO, LEVEL_CANDIDATES, hue2rgb } from "../color-engine";
 import { SP, C, R } from "../styles/tokens";
 import { S_CURSOR_POINTER } from "../styles/shared";
 import { useTranslation } from "../i18n";
+import { BottomProjectionGraph, RightProjectionGraph } from "./LinkedVisualizationProjectionGraphs";
 import {
-  ACTIVE_LEVELS,
-  BH,
   bottomProjectionY,
   buildLinkedVisualizationDots,
-  BXleft,
   BXright,
-  BW,
   BY,
   C2_PAIR,
   clampHueFromBottomGraphY,
   clampHueFromRightGraphX,
-  compositeCosinePath,
-  compositeSinePath,
   cosinePath,
   CX,
   CY,
-  HUE_LABELS,
   lumR0,
   lumR7,
   LV_COLORS,
-  RH,
   rightProjectionX,
-  RX,
-  RYbot,
-  RYtop,
   sinePath,
   TH,
   TW,
   wheelPoint,
   WO,
   WR,
-  RW,
   type LinkedVisualizationDot,
 } from "./linked-visualization-geometry";
 
@@ -533,463 +522,43 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
             return <circle cx={gx} cy={gy} r={4} fill="none" stroke={col} strokeWidth={1.2} opacity={0.5} strokeDasharray="2,2" />;
           })()}
 
-        {/* ═══ RIGHT GRAPH: Screen Y projection (-cos) ═══ */}
-        <g>
-          <rect
-            x={RX}
-            y={RYtop}
-            width={RW}
-            height={RH}
-            fill="rgba(255,255,255,0.035)"
-            stroke="rgba(255,255,255,0.06)"
-            strokeWidth={0.5}
-            rx={4}
-          />
-          {/* Grid lines */}
-          {HUE_LABELS.map((a) => (
-            <line key={`rg${a}`} x1={rPx(a)} y1={RYtop} x2={rPx(a)} y2={RYbot} stroke="rgba(255,255,255,0.07)" strokeWidth={0.4} />
-          ))}
-          <line x1={RX} y1={CY} x2={RX + RW} y2={CY} stroke="rgba(255,255,255,0.10)" strokeWidth={0.5} />
-          {/* L0 center line: r=0 in L0-system → always at CY */}
-          <line
-            x1={RX}
-            y1={CY}
-            x2={RX + RW}
-            y2={CY}
-            stroke="rgba(255,255,255,0.6)"
-            strokeWidth={hoveredDot?.lv === 0 && mode === 0 ? 1.4 : mode === 0 && !hoveredDot ? 1.4 : 0.6}
-            opacity={hoveredDot?.lv === 0 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.4 : 0.12}
-          />
-          {/* L7 center line: r=0 in L7-system → always at CY */}
-          <line
-            x1={RX}
-            y1={CY}
-            x2={RX + RW}
-            y2={CY}
-            stroke="#fff"
-            strokeWidth={hoveredDot?.lv === 7 && mode === 7 ? 1.4 : mode === 7 && !hoveredDot ? 1.4 : 0.6}
-            opacity={hoveredDot?.lv === 7 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.4 : 0.12}
-          />
-          {/* L7(white) boundary curve in L0 system — full amplitude WR */}
-          <path
-            d={sinePaths.r0[7]}
-            fill="none"
-            stroke="#fff"
-            strokeWidth={mode === 0 ? 1.4 : 0.6}
-            opacity={hoveredDot?.lv === 7 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.5 : 0.12}
-          />
-          {/* L0(black) boundary curve in L7 system — full amplitude WR */}
-          <path
-            d={sinePaths.r7[0]}
-            fill="none"
-            stroke="rgba(255,255,255,0.6)"
-            strokeWidth={mode === 7 ? 1.4 : 0.6}
-            opacity={hoveredDot?.lv === 0 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.5 : 0.12}
-          />
-          {/* Boundary dots — outer (oscillating) and center (fixed) */}
-          {(() => {
-            const yellowDot = activeDots.find((d) => d.lv === 6);
-            const blueDot = activeDots.find((d) => d.lv === 1);
-            return (
-              <>
-                {/* L0=origin: White oscillates near Yellow (outer), Black fixed near Blue (center) */}
-                {yellowDot &&
-                  (() => {
-                    const hovL7m0 = hoveredDot?.lv === 7 && mode === 0;
-                    const rad = ((yellowDot.a - alpha0 - 90) * Math.PI) / 180;
-                    return (
-                      <circle
-                        cx={rPx(yellowDot.a)}
-                        cy={CY + WR * Math.sin(rad)}
-                        r={hovL7m0 ? 5.5 : 4}
-                        fill="#fff"
-                        stroke={hovL7m0 ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.5)"}
-                        strokeWidth={hovL7m0 ? 1.2 : 0.8}
-                        opacity={hovL7m0 ? 1 : hoveredDot ? 0.15 : mode === 0 ? 0.8 : 0.15}
-                        style={{ transition: DOT_TRANSITION }}
-                      />
-                    );
-                  })()}
-                {blueDot &&
-                  (() => {
-                    const hovL0m0 = hoveredDot?.lv === 0 && mode === 0;
-                    return (
-                      <circle
-                        cx={rPx(blueDot.a)}
-                        cy={CY}
-                        r={hovL0m0 ? 5.5 : 4}
-                        fill="#222"
-                        stroke={hovL0m0 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)"}
-                        strokeWidth={hovL0m0 ? 1.2 : 0.8}
-                        opacity={hovL0m0 ? 1 : hoveredDot ? 0.15 : mode === 0 ? 0.8 : 0.15}
-                        style={{ transition: DOT_TRANSITION }}
-                      />
-                    );
-                  })()}
-                {/* L7=origin: Black oscillates near Blue (outer), White fixed near Yellow (center) */}
-                {blueDot &&
-                  (() => {
-                    const hovL0m7 = hoveredDot?.lv === 0 && mode === 7;
-                    const rad = ((blueDot.a - alpha7 - 90) * Math.PI) / 180;
-                    return (
-                      <circle
-                        cx={rPx(blueDot.a)}
-                        cy={CY + WR * Math.sin(rad)}
-                        r={hovL0m7 ? 5.5 : 4}
-                        fill="#222"
-                        stroke={hovL0m7 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)"}
-                        strokeWidth={hovL0m7 ? 1.2 : 0.8}
-                        opacity={hovL0m7 ? 1 : hoveredDot ? 0.15 : mode === 7 ? 0.8 : 0.15}
-                        style={{ transition: DOT_TRANSITION }}
-                      />
-                    );
-                  })()}
-                {yellowDot &&
-                  (() => {
-                    const hovL7m7 = hoveredDot?.lv === 7 && mode === 7;
-                    return (
-                      <circle
-                        cx={rPx(yellowDot.a)}
-                        cy={CY}
-                        r={hovL7m7 ? 5.5 : 4}
-                        fill="#fff"
-                        stroke={hovL7m7 ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.5)"}
-                        strokeWidth={hovL7m7 ? 1.2 : 0.8}
-                        opacity={hovL7m7 ? 1 : hoveredDot ? 0.15 : mode === 7 ? 0.8 : 0.15}
-                        style={{ transition: DOT_TRANSITION }}
-                      />
-                    );
-                  })()}
-              </>
-            );
-          })()}
-          {/* Axis label */}
-          <text x={RX + RW / 2} y={RYtop - 4} fontSize={9} fill={C.textMuted} textAnchor="middle" fontStyle="italic">
-            {t("linkedviz_axis_sin")}
-          </text>
-          {HUE_LABELS.map((a) => (
-            <text key={`ra${a}`} x={rPx(a)} y={RYbot + 12} fontSize={8} fill={C.textMuted} textAnchor="middle">
-              {a}°
-            </text>
-          ))}
+        <RightProjectionGraph
+          mode={mode}
+          hueAngle={hueAngle}
+          alpha0={alpha0}
+          alpha7={alpha7}
+          activeAlpha={activeAlpha}
+          activeRadiusFn={activeRadiusFn}
+          activeDots={activeDots}
+          projectionDots={projectionDots}
+          hoveredDot={hoveredDot}
+          dotHandlers={dotHandlers}
+          lvColor={lvColor}
+          paths={sinePaths}
+          dotHitR={DOT_HIT_R}
+          dotTransition={DOT_TRANSITION}
+          axisLabel={t("linkedviz_axis_sin")}
+          onHuePointerDown={onHuePointerDown}
+        />
 
-          {/* L0 continuous sine curves */}
-          {ACTIVE_LEVELS.map((lv) => (
-            <path
-              key={`rs0-${lv}`}
-              d={sinePaths.r0[lv]}
-              fill="none"
-              stroke={lvColor(lv)}
-              strokeWidth={mode === 0 ? 1.8 : 0.8}
-              opacity={hoveredDot && mode === 0 ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
-            />
-          ))}
-          {/* L7 continuous sine curves */}
-          {ACTIVE_LEVELS.map((lv) => (
-            <path
-              key={`rs7-${lv}`}
-              d={sinePaths.r7[lv]}
-              fill="none"
-              stroke={lvColor(lv)}
-              strokeWidth={mode === 7 ? 1.8 : 0.8}
-              opacity={hoveredDot && mode === 7 ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
-            />
-          ))}
-
-          {/* C2 pair composite sine curves — shows cancellation/reinforcement */}
-          {(
-            [
-              [1, 6],
-              [2, 5],
-              [3, 4],
-            ] as const
-          ).map(([a, b]) => {
-            const rA = lumR0(a);
-            if (rA < 1) return null;
-            const colA = activeDots.find((d) => d.lv === a);
-            const colB = activeDots.find((d) => d.lv === b);
-            const col =
-              colA && colB
-                ? `rgb(${Math.round((colA.rgb[0] + colB.rgb[0]) / 2)},${Math.round((colA.rgb[1] + colB.rgb[1]) / 2)},${Math.round((colA.rgb[2] + colB.rgb[2]) / 2)})`
-                : "rgba(255,255,255,0.5)";
-            return (
-              <path
-                key={`comp-s-${a}-${b}`}
-                d={compositeSinePath(rA, alpha0, alpha7)}
-                fill="none"
-                stroke={col}
-                strokeWidth={1.2}
-                opacity={0.5}
-                strokeDasharray="4,3"
-              />
-            );
-          })}
-
-          {/* Hue angle line (draggable) */}
-          <line x1={rPx(hueAngle)} y1={RYtop} x2={rPx(hueAngle)} y2={RYbot} stroke={C.accent} strokeWidth={1} opacity={0.5} />
-          {/* Narrow drag handle strip (12px wide) centered on hue line */}
-          <rect
-            x={rPx(hueAngle) - 6}
-            y={RYtop - 5}
-            width={12}
-            height={RH + 10}
-            fill="transparent"
-            style={{ cursor: "ew-resize" }}
-            onPointerDown={onHuePointerDown}
-          />
-
-          {/* Dots on current mode's curves */}
-          {projectionDots.map((d) => {
-            const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
-            const y = CY + activeRadiusFn(d.lv) * Math.sin(rad);
-            const hov = hoveredDot !== null && hoveredDot.lv === d.lv && hoveredDot.ci === d.ci;
-            const dimmed = d.act && hoveredDot !== null && !hov;
-            return (
-              <g key={`rproj-${d.lv}-${d.ci}`} {...(d.act ? dotHandlers(d) : {})}>
-                {d.act && <circle cx={rPx(d.a)} cy={y} r={DOT_HIT_R} fill="transparent" pointerEvents="all" />}
-                <circle
-                  cx={rPx(d.a)}
-                  cy={y}
-                  r={d.act ? (hov ? 5.5 : 4) : hov ? 4 : 1.8}
-                  fill={`rgb(${d.rgb.join(",")})`}
-                  stroke={d.act ? "#fff" : hov ? "#fff" : "rgba(255,255,255,0.15)"}
-                  strokeWidth={d.act ? (hov ? 1.4 : 1.0) : hov ? 1.0 : 0.5}
-                  opacity={d.act ? (dimmed ? 0.25 : 1) : hov ? 0.9 : 0.3}
-                  filter={hov ? "url(#dot-glow)" : undefined}
-                  style={{ transition: DOT_TRANSITION }}
-                />
-              </g>
-            );
-          })}
-        </g>
-
-        {/* ═══ BOTTOM GRAPH: Screen X projection (sin) ═══ */}
-        <g>
-          <rect
-            x={BXleft}
-            y={BY}
-            width={BW}
-            height={BH}
-            fill="rgba(255,255,255,0.035)"
-            stroke="rgba(255,255,255,0.06)"
-            strokeWidth={0.5}
-            rx={4}
-          />
-          {/* Grid lines */}
-          {HUE_LABELS.map((a) => (
-            <line key={`bg${a}`} x1={BXleft} y1={bPy(a)} x2={BXright} y2={bPy(a)} stroke="rgba(255,255,255,0.07)" strokeWidth={0.4} />
-          ))}
-          <line x1={CX} y1={BY} x2={CX} y2={BY + BH} stroke="rgba(255,255,255,0.10)" strokeWidth={0.5} />
-          {/* L0 center line: r=0 in L0-system → always at CX */}
-          <line
-            x1={CX}
-            y1={BY}
-            x2={CX}
-            y2={BY + BH}
-            stroke="rgba(255,255,255,0.6)"
-            strokeWidth={hoveredDot?.lv === 0 && mode === 0 ? 1.4 : mode === 0 && !hoveredDot ? 1.4 : 0.6}
-            opacity={hoveredDot?.lv === 0 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.4 : 0.12}
-          />
-          {/* L7 center line: r=0 in L7-system → always at CX */}
-          <line
-            x1={CX}
-            y1={BY}
-            x2={CX}
-            y2={BY + BH}
-            stroke="#fff"
-            strokeWidth={hoveredDot?.lv === 7 && mode === 7 ? 1.4 : mode === 7 && !hoveredDot ? 1.4 : 0.6}
-            opacity={hoveredDot?.lv === 7 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.4 : 0.12}
-          />
-          {/* L7(white) boundary curve in L0 system — full amplitude WR */}
-          <path
-            d={cosinePaths.r0[7]}
-            fill="none"
-            stroke="#fff"
-            strokeWidth={mode === 0 ? 1.4 : 0.6}
-            opacity={hoveredDot?.lv === 7 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.5 : 0.12}
-          />
-          {/* L0(black) boundary curve in L7 system — full amplitude WR */}
-          <path
-            d={cosinePaths.r7[0]}
-            fill="none"
-            stroke="rgba(255,255,255,0.6)"
-            strokeWidth={mode === 7 ? 1.4 : 0.6}
-            opacity={hoveredDot?.lv === 0 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.5 : 0.12}
-          />
-          {/* Boundary dots — outer (oscillating) and center (fixed) */}
-          {(() => {
-            const yellowDot = activeDots.find((d) => d.lv === 6);
-            const blueDot = activeDots.find((d) => d.lv === 1);
-            return (
-              <>
-                {/* L0=origin: White oscillates near Yellow, Black fixed near Blue */}
-                {yellowDot &&
-                  (() => {
-                    const hovL7m0 = hoveredDot?.lv === 7 && mode === 0;
-                    const rad = ((yellowDot.a - alpha0 - 90) * Math.PI) / 180;
-                    return (
-                      <circle
-                        cx={CX + WR * Math.cos(rad)}
-                        cy={bPy(yellowDot.a)}
-                        r={hovL7m0 ? 5.5 : 4}
-                        fill="#fff"
-                        stroke={hovL7m0 ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.5)"}
-                        strokeWidth={hovL7m0 ? 1.2 : 0.8}
-                        opacity={hovL7m0 ? 1 : hoveredDot ? 0.15 : mode === 0 ? 0.8 : 0.15}
-                        style={{ transition: DOT_TRANSITION }}
-                      />
-                    );
-                  })()}
-                {blueDot &&
-                  (() => {
-                    const hovL0m0 = hoveredDot?.lv === 0 && mode === 0;
-                    return (
-                      <circle
-                        cx={CX}
-                        cy={bPy(blueDot.a)}
-                        r={hovL0m0 ? 5.5 : 4}
-                        fill="#222"
-                        stroke={hovL0m0 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)"}
-                        strokeWidth={hovL0m0 ? 1.2 : 0.8}
-                        opacity={hovL0m0 ? 1 : hoveredDot ? 0.15 : mode === 0 ? 0.8 : 0.15}
-                        style={{ transition: DOT_TRANSITION }}
-                      />
-                    );
-                  })()}
-                {/* L7=origin: Black oscillates near Blue, White fixed near Yellow */}
-                {blueDot &&
-                  (() => {
-                    const hovL0m7 = hoveredDot?.lv === 0 && mode === 7;
-                    const rad = ((blueDot.a - alpha7 - 90) * Math.PI) / 180;
-                    return (
-                      <circle
-                        cx={CX + WR * Math.cos(rad)}
-                        cy={bPy(blueDot.a)}
-                        r={hovL0m7 ? 5.5 : 4}
-                        fill="#222"
-                        stroke={hovL0m7 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)"}
-                        strokeWidth={hovL0m7 ? 1.2 : 0.8}
-                        opacity={hovL0m7 ? 1 : hoveredDot ? 0.15 : mode === 7 ? 0.8 : 0.15}
-                        style={{ transition: DOT_TRANSITION }}
-                      />
-                    );
-                  })()}
-                {yellowDot &&
-                  (() => {
-                    const hovL7m7 = hoveredDot?.lv === 7 && mode === 7;
-                    return (
-                      <circle
-                        cx={CX}
-                        cy={bPy(yellowDot.a)}
-                        r={hovL7m7 ? 5.5 : 4}
-                        fill="#fff"
-                        stroke={hovL7m7 ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.5)"}
-                        strokeWidth={hovL7m7 ? 1.2 : 0.8}
-                        opacity={hovL7m7 ? 1 : hoveredDot ? 0.15 : mode === 7 ? 0.8 : 0.15}
-                        style={{ transition: DOT_TRANSITION }}
-                      />
-                    );
-                  })()}
-              </>
-            );
-          })()}
-          {/* Axis label */}
-          <text x={CX} y={BY + BH + 12} fontSize={9} fill={C.textMuted} textAnchor="middle" fontStyle="italic">
-            {t("linkedviz_axis_cos")}
-          </text>
-          {HUE_LABELS.map((a) => (
-            <text key={`ba${a}`} x={BXleft - 4} y={bPy(a)} fontSize={8} fill={C.textMuted} textAnchor="end" dominantBaseline="middle">
-              {a}°
-            </text>
-          ))}
-          <line x1={BXleft} y1={bPy(hueAngle)} x2={BXright} y2={bPy(hueAngle)} stroke={C.accent} strokeWidth={1} opacity={0.5} />
-          {/* Narrow drag handle strip (12px tall) centered on hue line */}
-          <rect
-            x={BXleft - 5}
-            y={bPy(hueAngle) - 6}
-            width={BW + 10}
-            height={12}
-            fill="transparent"
-            style={{ cursor: "ns-resize" }}
-            onPointerDown={onHueBottomPointerDown}
-          />
-
-          {/* L0 continuous cosine curves */}
-          {ACTIVE_LEVELS.map((lv) => (
-            <path
-              key={`bc0-${lv}`}
-              d={cosinePaths.r0[lv]}
-              fill="none"
-              stroke={lvColor(lv)}
-              strokeWidth={mode === 0 ? 1.8 : 0.8}
-              opacity={hoveredDot && mode === 0 ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
-            />
-          ))}
-          {/* L7 continuous cosine curves (dashed) */}
-          {ACTIVE_LEVELS.map((lv) => (
-            <path
-              key={`bc7-${lv}`}
-              d={cosinePaths.r7[lv]}
-              fill="none"
-              stroke={lvColor(lv)}
-              strokeWidth={mode === 7 ? 1.8 : 0.8}
-              opacity={hoveredDot && mode === 7 ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
-            />
-          ))}
-
-          {/* C2 pair composite cosine curves */}
-          {(
-            [
-              [1, 6],
-              [2, 5],
-              [3, 4],
-            ] as const
-          ).map(([a, b]) => {
-            const rA = lumR0(a);
-            if (rA < 1) return null;
-            const colA = activeDots.find((d) => d.lv === a);
-            const colB = activeDots.find((d) => d.lv === b);
-            const col =
-              colA && colB
-                ? `rgb(${Math.round((colA.rgb[0] + colB.rgb[0]) / 2)},${Math.round((colA.rgb[1] + colB.rgb[1]) / 2)},${Math.round((colA.rgb[2] + colB.rgb[2]) / 2)})`
-                : "rgba(255,255,255,0.5)";
-            return (
-              <path
-                key={`comp-c-${a}-${b}`}
-                d={compositeCosinePath(rA, alpha0, alpha7)}
-                fill="none"
-                stroke={col}
-                strokeWidth={1.2}
-                opacity={0.5}
-                strokeDasharray="4,3"
-              />
-            );
-          })}
-
-          {/* Dots on current mode's curves */}
-          {projectionDots.map((d) => {
-            const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
-            const x = CX + activeRadiusFn(d.lv) * Math.cos(rad);
-            const hov = hoveredDot !== null && hoveredDot.lv === d.lv && hoveredDot.ci === d.ci;
-            const dimmed = d.act && hoveredDot !== null && !hov;
-            return (
-              <g key={`bproj-${d.lv}-${d.ci}`} {...(d.act ? dotHandlers(d) : {})}>
-                {d.act && <circle cx={x} cy={bPy(d.a)} r={DOT_HIT_R} fill="transparent" pointerEvents="all" />}
-                <circle
-                  cx={x}
-                  cy={bPy(d.a)}
-                  r={d.act ? (hov ? 5.5 : 4) : hov ? 4 : 1.8}
-                  fill={`rgb(${d.rgb.join(",")})`}
-                  stroke={d.act ? "#fff" : hov ? "#fff" : "rgba(255,255,255,0.15)"}
-                  strokeWidth={d.act ? (hov ? 1.4 : 1.0) : hov ? 1.0 : 0.5}
-                  opacity={d.act ? (dimmed ? 0.25 : 1) : hov ? 0.9 : 0.3}
-                  filter={hov ? "url(#dot-glow)" : undefined}
-                  style={{ transition: DOT_TRANSITION }}
-                />
-              </g>
-            );
-          })}
-        </g>
+        <BottomProjectionGraph
+          mode={mode}
+          hueAngle={hueAngle}
+          alpha0={alpha0}
+          alpha7={alpha7}
+          activeAlpha={activeAlpha}
+          activeRadiusFn={activeRadiusFn}
+          activeDots={activeDots}
+          projectionDots={projectionDots}
+          hoveredDot={hoveredDot}
+          dotHandlers={dotHandlers}
+          lvColor={lvColor}
+          paths={cosinePaths}
+          dotHitR={DOT_HIT_R}
+          dotTransition={DOT_TRANSITION}
+          axisLabel={t("linkedviz_axis_cos")}
+          onHuePointerDown={onHueBottomPointerDown}
+        />
 
         {/* ═══ BOTTOM-RIGHT: Legend + Active color info ═══ */}
         {showLegend && (
