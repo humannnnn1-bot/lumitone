@@ -132,6 +132,38 @@ test("opens music controls without a global tone-mode toggle", async ({ page }) 
   await expect(page.locator('button[aria-pressed="true"]').filter({ hasText: "Diatonic" })).toHaveCount(1);
 });
 
+test("caps Structural Sonification cards at four columns on wide desktop", async ({ page }) => {
+  await page.setViewportSize({ width: 1600, height: 1000 });
+  await page.goto("/");
+  await page.getByRole("tab", { name: "Music" }).click();
+
+  const grid = page.locator("#music-algebra-panel");
+  await expect(grid).toBeVisible();
+
+  const columnCount = await grid.evaluate((node) => {
+    const columns = window.getComputedStyle(node).gridTemplateColumns;
+    return columns.split(" ").filter(Boolean).length;
+  });
+
+  expect(columnCount).toBe(4);
+});
+
+test("does not exceed four Structural Sonification columns on wide portrait", async ({ page }) => {
+  await page.setViewportSize({ width: 1200, height: 1600 });
+  await page.goto("/");
+  await page.getByRole("tab", { name: "Music" }).click();
+
+  const grid = page.locator("#music-algebra-panel");
+  await expect(grid).toBeVisible();
+
+  const columnCount = await grid.evaluate((node) => {
+    const columns = window.getComputedStyle(node).gridTemplateColumns;
+    return columns.split(" ").filter(Boolean).length;
+  });
+
+  expect(columnCount).toBeLessThanOrEqual(4);
+});
+
 test("keeps the luma zigzag graph fixed when playback starts", async ({ page }) => {
   await page.goto("/");
   await page.getByRole("tab", { name: "Music" }).click();
