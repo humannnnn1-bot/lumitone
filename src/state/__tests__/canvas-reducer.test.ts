@@ -116,7 +116,8 @@ describe("canvasReducer", () => {
     it.each([
       [1200, 630],
       [630, 1200],
-    ])("allows hidden OGP canvas size %sx%s", (w, h) => {
+      [2048, 2048],
+    ])("allows canvas size %sx%s within the maximum", (w, h) => {
       const next = canvasReducer(initialState, { type: "new_canvas", w, h });
       expect(next.cvs.w).toBe(w);
       expect(next.cvs.h).toBe(h);
@@ -127,8 +128,8 @@ describe("canvasReducer", () => {
     it("rejects invalid dimensions", () => {
       expect(canvasReducer(initialState, { type: "new_canvas", w: 0, h: 100 })).toBe(initialState);
       expect(canvasReducer(initialState, { type: "new_canvas", w: 100, h: -1 })).toBe(initialState);
-      expect(canvasReducer(initialState, { type: "new_canvas", w: 2000, h: 100 })).toBe(initialState);
-      expect(canvasReducer(initialState, { type: "new_canvas", w: 1200, h: 1200 })).toBe(initialState);
+      expect(canvasReducer(initialState, { type: "new_canvas", w: 2049, h: 100 })).toBe(initialState);
+      expect(canvasReducer(initialState, { type: "new_canvas", w: 1200, h: 2049 })).toBe(initialState);
     });
   });
 
@@ -146,7 +147,7 @@ describe("canvasReducer", () => {
       expect(next.hist[5]).toBe(1);
     });
 
-    it("loads hidden OGP-sized image data", () => {
+    it("loads non-square image data within the maximum", () => {
       const data = new Uint8Array(1200 * 630);
       const next = canvasReducer(initialState, { type: "load_image", w: 1200, h: 630, data });
       expect(next.cvs.w).toBe(1200);

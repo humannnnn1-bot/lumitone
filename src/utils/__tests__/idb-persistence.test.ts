@@ -123,6 +123,22 @@ describe("loadState validation", () => {
     expect(loaded).not.toBeNull();
     expect(loaded!.colorMap).toBeUndefined();
   });
+
+  it("accepts persisted canvas dimensions up to 2048 per side", async () => {
+    const state = makeState({ w: 2048, h: 1, data: new Uint8Array(2048) });
+    await saveState(state);
+    const loaded = await loadState();
+    expect(loaded).not.toBeNull();
+    expect(loaded!.w).toBe(2048);
+    expect(loaded!.h).toBe(1);
+  });
+
+  it("rejects persisted canvas dimensions above 2048 per side", async () => {
+    const state = makeState({ w: 2049, h: 1, data: new Uint8Array(2049) });
+    await saveState(state);
+    const loaded = await loadState();
+    expect(loaded).toBeNull();
+  });
 });
 
 describe("checkStorageQuota", () => {

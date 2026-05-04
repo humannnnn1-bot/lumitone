@@ -65,9 +65,9 @@ export const NewCanvasModal = React.memo(function NewCanvasModal({ open, onConfi
     { label: "64\u00D764", w: 64, h: 64 },
     { label: "128\u00D7128", w: 128, h: 128 },
     { label: "256\u00D7256", w: 256, h: 256 },
-    { label: "320\u00D7320", w: 320, h: 320 },
     { label: "512\u00D7512", w: 512, h: 512 },
     { label: "1024\u00D71024", w: 1024, h: 1024 },
+    { label: "2048\u00D72048", w: 2048, h: 2048 },
   ];
 
   return (

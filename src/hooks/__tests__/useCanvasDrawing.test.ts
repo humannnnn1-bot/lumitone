@@ -166,26 +166,29 @@ describe("useCanvasDrawing", () => {
   });
 
   it.each([
-    { tool: "brush" as ToolId, initialLevel: 0, expectedCenter: 3, expectedEdge: 0 },
-    { tool: "eraser" as ToolId, initialLevel: 7, expectedCenter: 0, expectedEdge: 7 },
-  ])("does not paint an edge trail when $tool moves outside the canvas", ({ tool, initialLevel, expectedCenter, expectedEdge }) => {
-    const cvs = makeCvs(10, 10);
-    cvs.data.fill(initialLevel);
-    const { result } = renderHook(() => useCanvasDrawing(makeOpts({ cvs, tool, brushLevel: 3, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
-    mockCanvasRect(canvas);
+    { tool: "brush" as ToolId, initialLevel: 0, expectedCenter: 3, expectedEdge: 3 },
+    { tool: "eraser" as ToolId, initialLevel: 7, expectedCenter: 0, expectedEdge: 0 },
+  ])(
+    "continues the $tool stroke to the canvas edge when the pointer moves outside",
+    ({ tool, initialLevel, expectedCenter, expectedEdge }) => {
+      const cvs = makeCvs(10, 10);
+      cvs.data.fill(initialLevel);
+      const { result } = renderHook(() => useCanvasDrawing(makeOpts({ cvs, tool, brushLevel: 3, brushSize: 1 })));
+      const canvas = result.current.curRef.current!;
+      mockCanvasRect(canvas);
 
-    act(() => {
-      result.current.onDown(pointerEvent({ target: canvas }));
-    });
-    act(() => {
-      result.current.onMove(pointerEvent({ clientX: 400, clientY: 160, target: canvas }));
-    });
+      act(() => {
+        result.current.onDown(pointerEvent({ target: canvas }));
+      });
+      act(() => {
+        result.current.onMove(pointerEvent({ clientX: 400, clientY: 160, target: canvas }));
+      });
 
-    const buf = result.current.strokeRef.current?.buf;
-    expect(buf?.[5 * 10 + 5]).toBe(expectedCenter);
-    expect(buf?.[5 * 10 + 9]).toBe(expectedEdge);
-  });
+      const buf = result.current.strokeRef.current?.buf;
+      expect(buf?.[5 * 10 + 5]).toBe(expectedCenter);
+      expect(buf?.[5 * 10 + 9]).toBe(expectedEdge);
+    },
+  );
 
   it("accumulates dirty rects while a brush render frame is pending", () => {
     const rafCallbacks: FrameRequestCallback[] = [];

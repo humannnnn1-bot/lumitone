@@ -1,3 +1,5 @@
+import { MAX_IMAGE_SIZE } from "../constants";
+
 const DB_NAME = "chromalum";
 const STORE_NAME = "state";
 const KEY = "current";
@@ -107,8 +109,8 @@ export async function loadState(): Promise<SavedState | null> {
         val.data.length !== val.w * val.h ||
         val.w <= 0 ||
         val.h <= 0 ||
-        val.w > 1024 ||
-        val.h > 1024
+        val.w > MAX_IMAGE_SIZE ||
+        val.h > MAX_IMAGE_SIZE
       ) {
         resolve(null);
         return;

@@ -19,7 +19,7 @@ import { hexStr } from "../utils";
 import type { BufferPool } from "./useStrokeManager";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
-import { trySetPointerCapture, cPosFromRefs, canvasPosUnclamped, isCanvasPointInBounds, updateStatusBase } from "./useDrawingBase";
+import { trySetPointerCapture, cPosFromRefs, canvasPos, isCanvasPointInBounds, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
 import { unionBBox } from "../drawing/dirty-rect";
 import type { CanvasData, StrokeState, ImgCache, CanvasAction, DirtyRect } from "../types";
@@ -270,7 +270,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     let last = lastRef.current;
     let dirtyBB: DirtyRect | null = null;
     for (const ev of events) {
-      const p = canvasPosUnclamped(ev, canvasEl, zoom, pan, cv);
+      const p = canvasPos(ev, canvasEl, zoom, pan, cv);
       if (!isCanvasPointInBounds(p, cv)) {
         last = null;
         continue;

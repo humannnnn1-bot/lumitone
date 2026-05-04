@@ -41,6 +41,22 @@ describe("NewCanvasModal", () => {
     expect(screen.getByText("Cancel")).toBeTruthy();
   });
 
+  it("does not include 320x320 in the preset buttons", () => {
+    render(<NewCanvasModal open={true} onConfirm={() => {}} onCancel={() => {}} />);
+
+    expect(screen.queryByText("320\u00D7320")).toBeNull();
+    expect(screen.getByText("256\u00D7256")).toBeTruthy();
+    expect(screen.getByText("512\u00D7512")).toBeTruthy();
+  });
+
+  it("includes 2048x2048 as the largest preset", () => {
+    render(<NewCanvasModal open={true} onConfirm={() => {}} onCancel={() => {}} />);
+
+    expect(screen.getByText("2048\u00D72048")).toBeTruthy();
+    expect((screen.getByLabelText("aria_canvas_width") as HTMLInputElement).max).toBe("2048");
+    expect((screen.getByLabelText("aria_canvas_height") as HTMLInputElement).max).toBe("2048");
+  });
+
   it("cancel button calls onCancel", () => {
     const onCancel = vi.fn();
     render(<NewCanvasModal open={true} onConfirm={() => {}} onCancel={onCancel} />);
@@ -80,7 +96,7 @@ describe("NewCanvasModal", () => {
   it.each([
     ["1200", "630", 1200, 630],
     ["630", "1200", 630, 1200],
-  ])("allows hidden OGP canvas size %sx%s by manual input", (inputW, inputH, expectedW, expectedH) => {
+  ])("allows non-square canvas size %sx%s by manual input", (inputW, inputH, expectedW, expectedH) => {
     const onConfirm = vi.fn();
     render(<NewCanvasModal open={true} onConfirm={onConfirm} onCancel={() => {}} />);
 
@@ -91,14 +107,14 @@ describe("NewCanvasModal", () => {
     expect(onConfirm).toHaveBeenCalledWith(expectedW, expectedH);
   });
 
-  it("still clamps non-allowed oversize canvas dimensions", () => {
+  it("clamps dimensions above the maximum canvas size", () => {
     const onConfirm = vi.fn();
     render(<NewCanvasModal open={true} onConfirm={onConfirm} onCancel={() => {}} />);
 
-    fireEvent.change(screen.getByLabelText("aria_canvas_width"), { target: { value: "1200" } });
-    fireEvent.change(screen.getByLabelText("aria_canvas_height"), { target: { value: "1200" } });
+    fireEvent.change(screen.getByLabelText("aria_canvas_width"), { target: { value: "4096" } });
+    fireEvent.change(screen.getByLabelText("aria_canvas_height"), { target: { value: "4096" } });
     fireEvent.click(screen.getByText("Create"));
 
-    expect(onConfirm).toHaveBeenCalledWith(1024, 1024);
+    expect(onConfirm).toHaveBeenCalledWith(2048, 2048);
   });
 });

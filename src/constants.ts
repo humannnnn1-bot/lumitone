@@ -12,11 +12,7 @@ export const ZOOM_MIN = 0.25,
 export const BRUSH_MIN = 1,
   BRUSH_MAX = 100,
   BRUSH_STEP = 1;
-export const MAX_IMAGE_SIZE = 1024;
-const ALLOWED_OVERSIZE_CANVAS_SIZES = [
-  [1200, 630],
-  [630, 1200],
-] as const;
+export const MAX_IMAGE_SIZE = 2048;
 export const MAX_FILE_BYTES = 20 * 1024 * 1024;
 export const MAX_IMAGE_PIXELS = 50_000_000;
 export const GRID_ZOOM_THRESHOLD = 4;
@@ -57,6 +53,5 @@ export type GlazeToolId = "glaze_brush" | "glaze_eraser" | "glaze_fill";
 
 export function isAllowedCanvasSize(w: number, h: number): boolean {
   if (!Number.isInteger(w) || !Number.isInteger(h) || w <= 0 || h <= 0) return false;
-  if (w <= MAX_IMAGE_SIZE && h <= MAX_IMAGE_SIZE) return true;
-  return ALLOWED_OVERSIZE_CANVAS_SIZES.some(([allowedW, allowedH]) => w === allowedW && h === allowedH);
+  return w <= MAX_IMAGE_SIZE && h <= MAX_IMAGE_SIZE;
 }

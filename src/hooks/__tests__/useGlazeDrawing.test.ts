@@ -158,11 +158,11 @@ describe("useGlazeDrawing", () => {
   });
 
   it.each([
-    { glazeTool: "glaze_brush" as GlazeToolId, initialColorMap: 0, expectCenterChanged: true, expectedEdge: 0 },
-    { glazeTool: "glaze_eraser" as GlazeToolId, initialColorMap: 2, expectCenterChanged: false, expectedEdge: 2 },
+    { glazeTool: "glaze_brush" as GlazeToolId, initialColorMap: 0, expectCenterChanged: true, expectEdgeChanged: true },
+    { glazeTool: "glaze_eraser" as GlazeToolId, initialColorMap: 2, expectCenterChanged: false, expectEdgeChanged: false },
   ])(
-    "does not paint an edge trail when $glazeTool moves outside the canvas",
-    ({ glazeTool, initialColorMap, expectCenterChanged, expectedEdge }) => {
+    "continues the $glazeTool stroke to the canvas edge when the pointer moves outside",
+    ({ glazeTool, initialColorMap, expectCenterChanged, expectEdgeChanged }) => {
       const cvs = makeCvs(10, 10);
       cvs.data.fill(2);
       cvs.colorMap.fill(initialColorMap);
@@ -183,7 +183,7 @@ describe("useGlazeDrawing", () => {
 
       const cmBuf = dispatch.mock.calls[0][0].finalColorMap as Uint8Array;
       expect(cmBuf?.[5 * 10 + 5] > 0).toBe(expectCenterChanged);
-      expect(cmBuf?.[5 * 10 + 9]).toBe(expectedEdge);
+      expect(cmBuf?.[5 * 10 + 9] > 0).toBe(expectEdgeChanged);
     },
   );
 
