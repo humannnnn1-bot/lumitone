@@ -36,54 +36,90 @@ type AndStep = { pairIndex: number; phase: "operands" | "result" } | null;
 type DistPhase = "bxc" | "left" | "ab" | "ac" | "right" | "equal" | null;
 type OctaPhase = "pair" | "result" | null;
 
-interface MusicAlgebraPanelProps {
-  engine: MusicEngineReturn;
-  activeLevels: ActiveMusicLevel[];
-  stopSignal: number;
-  resetSignal: number;
-  cayleyRow: number;
-  onCayleyRowChange: StateSetter<number>;
-  cayleyCol: number;
-  onCayleyColChange: StateSetter<number>;
-  distA: number;
-  onDistAChange: StateSetter<number>;
-  distB: number;
-  onDistBChange: StateSetter<number>;
-  distC: number;
-  onDistCChange: StateSetter<number>;
-  distPhase: DistPhase;
-  onDistPhaseChange: StateSetter<DistPhase>;
-  andStep: AndStep;
-  onAndStepChange: StateSetter<AndStep>;
-  errorPos: number;
-  errorPhase: DecoderPhase;
-  onErrorPosChange: StateSetter<number>;
-  onErrorPhaseChange: StateSetter<DecoderPhase>;
-  hammingMode: "743" | "844";
-  onHammingModeChange: StateSetter<"743" | "844">;
+interface MusicCayleyAlgebraState {
+  row: number;
+  onRowChange: StateSetter<number>;
+  col: number;
+  onColChange: StateSetter<number>;
+}
+
+interface MusicDistributiveAlgebraState {
+  a: number;
+  onAChange: StateSetter<number>;
+  b: number;
+  onBChange: StateSetter<number>;
+  c: number;
+  onCChange: StateSetter<number>;
+  phase: DistPhase;
+  onPhaseChange: StateSetter<DistPhase>;
+}
+
+interface MusicAndTriadsAlgebraState {
+  step: AndStep;
+  onStepChange: StateSetter<AndStep>;
+}
+
+interface MusicErrorCorrectionAlgebraState {
+  pos: number;
+  phase: DecoderPhase;
+  onPosChange: StateSetter<number>;
+  onPhaseChange: StateSetter<DecoderPhase>;
+}
+
+interface MusicHammingAlgebraState {
+  mode: "743" | "844";
+  onModeChange: StateSetter<"743" | "844">;
   weightPlaying: boolean;
   onWeightPlayingChange: StateSetter<boolean>;
   weightStep: WeightStep;
   onWeightStepChange: StateSetter<WeightStep>;
   onHoveredFanoLineChange: StateSetter<number | null>;
-  octaA: number;
-  onOctaAChange: StateSetter<number>;
-  octaB: number;
-  onOctaBChange: StateSetter<number>;
-  octaPhase: OctaPhase;
-  onOctaPhaseChange: StateSetter<OctaPhase>;
-  gray3Playing: boolean;
-  onGray3PlayingChange: StateSetter<boolean>;
-  gray3Code: number | null;
-  onGray3CodeChange: StateSetter<number | null>;
+}
+
+interface MusicOctahedronAlgebraState {
+  a: number;
+  onAChange: StateSetter<number>;
+  b: number;
+  onBChange: StateSetter<number>;
+  phase: OctaPhase;
+  onPhaseChange: StateSetter<OctaPhase>;
+}
+
+interface MusicGray3AlgebraState {
+  playing: boolean;
+  onPlayingChange: StateSetter<boolean>;
+  code: number | null;
+  onCodeChange: StateSetter<number | null>;
+}
+
+interface MusicPolyhedraAlgebraState {
   k8Layer: 1 | 2 | 3 | null;
   onK8LayerChange: StateSetter<1 | 2 | 3 | null>;
   tetraPhase: "t0" | "t1" | null;
   onTetraPhaseChange: StateSetter<"t0" | "t1" | null>;
-  gl32Perm: number[];
-  onGl32PermChange: StateSetter<number[]>;
-  gl32Flash: boolean;
-  onGl32FlashChange: StateSetter<boolean>;
+}
+
+interface MusicGl32AlgebraState {
+  perm: number[];
+  onPermChange: StateSetter<number[]>;
+  flash: boolean;
+  onFlashChange: StateSetter<boolean>;
+}
+
+interface MusicAlgebraPanelProps {
+  engine: MusicEngineReturn;
+  activeLevels: ActiveMusicLevel[];
+  stopSignal: number;
+  resetSignal: number;
+  cayley: MusicCayleyAlgebraState;
+  distributive: MusicDistributiveAlgebraState;
+  andTriads: MusicAndTriadsAlgebraState;
+  errorCorrection: MusicErrorCorrectionAlgebraState;
+  hamming: MusicHammingAlgebraState;
+  octahedron: MusicOctahedronAlgebraState;
+  gray3: MusicGray3AlgebraState;
+  polyhedra: MusicPolyhedraAlgebraState;
+  gl32: MusicGl32AlgebraState;
 }
 
 const GF8_LEVELS = [0, 1, 2, 3, 4, 5, 6, 7];
@@ -94,51 +130,50 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
   activeLevels,
   stopSignal,
   resetSignal,
-  cayleyRow,
-  onCayleyRowChange,
-  cayleyCol,
-  onCayleyColChange,
-  distA,
-  onDistAChange,
-  distB,
-  onDistBChange,
-  distC,
-  onDistCChange,
-  distPhase,
-  onDistPhaseChange,
-  andStep,
-  onAndStepChange,
-  errorPos,
-  errorPhase,
-  onErrorPosChange,
-  onErrorPhaseChange,
-  hammingMode,
-  onHammingModeChange,
-  weightPlaying,
-  onWeightPlayingChange,
-  weightStep,
-  onWeightStepChange,
-  onHoveredFanoLineChange,
-  octaA,
-  onOctaAChange,
-  octaB,
-  onOctaBChange,
-  octaPhase,
-  onOctaPhaseChange,
-  gray3Playing,
-  onGray3PlayingChange,
-  gray3Code,
-  onGray3CodeChange,
-  k8Layer,
-  onK8LayerChange,
-  tetraPhase,
-  onTetraPhaseChange,
-  gl32Perm,
-  onGl32PermChange,
-  gl32Flash,
-  onGl32FlashChange,
+  cayley,
+  distributive,
+  andTriads,
+  errorCorrection,
+  hamming,
+  octahedron,
+  gray3,
+  polyhedra,
+  gl32,
 }: MusicAlgebraPanelProps) {
   const { t } = useTranslation();
+  const { row: cayleyRow, onRowChange: onCayleyRowChange, col: cayleyCol, onColChange: onCayleyColChange } = cayley;
+  const {
+    a: distA,
+    onAChange: onDistAChange,
+    b: distB,
+    onBChange: onDistBChange,
+    c: distC,
+    onCChange: onDistCChange,
+    phase: distPhase,
+    onPhaseChange: onDistPhaseChange,
+  } = distributive;
+  const { step: andStep, onStepChange: onAndStepChange } = andTriads;
+  const { pos: errorPos, phase: errorPhase, onPosChange: onErrorPosChange, onPhaseChange: onErrorPhaseChange } = errorCorrection;
+  const {
+    mode: hammingMode,
+    onModeChange: onHammingModeChange,
+    weightPlaying,
+    onWeightPlayingChange,
+    weightStep,
+    onWeightStepChange,
+    onHoveredFanoLineChange,
+  } = hamming;
+  const {
+    a: octaA,
+    onAChange: onOctaAChange,
+    b: octaB,
+    onBChange: onOctaBChange,
+    phase: octaPhase,
+    onPhaseChange: onOctaPhaseChange,
+  } = octahedron;
+  const { playing: gray3Playing, onPlayingChange: onGray3PlayingChange, code: gray3Code, onCodeChange: onGray3CodeChange } = gray3;
+  const { k8Layer, onK8LayerChange, tetraPhase, onTetraPhaseChange } = polyhedra;
+  const { perm: gl32Perm, onPermChange: onGl32PermChange, flash: gl32Flash, onFlashChange: onGl32FlashChange } = gl32;
   const octaResult = octaA ^ octaB;
   const octaPlayable = octaA !== octaB && octaResult >= 1 && octaResult <= 6;
 

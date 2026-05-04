@@ -1,6 +1,7 @@
 import React, { useState, useRef, useCallback, useMemo, useEffect } from "react";
 import { LEVEL_INFO, LEVEL_CANDIDATES, findClosestCandidate } from "../color-engine";
 import { LinkedVisualization } from "./LinkedVisualization";
+import { GlazeCandidateGrid, type GlazeLevelPreview } from "./GlazeCandidateGrid";
 import { BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from "../constants";
 import { buildGlazeHighlightPixels } from "../drawing/glaze-highlight";
 import type { GlazeToolId } from "../constants";
@@ -9,7 +10,7 @@ import type { PanZoomHandlers, CanvasAction, CanvasData } from "../types";
 import type { GlazeDrawingResult } from "../hooks/useGlazeDrawing";
 import { useTranslation } from "../i18n";
 import { useGlazeContext } from "../state/GlazeContext";
-import { C, Z, SP, FS, R, SHADOW, HUE_GRADIENT, FONT } from "../styles/tokens";
+import { C, Z, SP, FS, R, HUE_GRADIENT, FONT } from "../styles/tokens";
 
 interface GlazePanelProps {
   prvRef: React.RefObject<HTMLCanvasElement | null>;
@@ -250,7 +251,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
   }, [panZoom]);
 
   // Preview: for selected hue angle, show what color each level maps to
-  const levelPreview = useMemo(() => {
+  const levelPreview = useMemo<GlazeLevelPreview[]>(() => {
     return LEVEL_INFO.map((info, lv) => {
       const candidates = LEVEL_CANDIDATES[lv];
       const ci = findClosestCandidate(lv, hueAngle);
@@ -258,6 +259,23 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
       return { lv, name: info.name, rgb, hex: `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` };
     });
   }, [hueAngle]);
+
+  const hueTicks = useMemo(() => {
+    const ticks: { deg: number; color: string }[] = [];
+    for (let lv = 2; lv <= 5; lv++) {
+      const cands = LEVEL_CANDIDATES[lv];
+      if (cands.length <= 1 || cands[0].angle < 0) continue;
+      const angles = cands.map((c) => c.angle).sort((a, b) => a - b);
+      for (let i = 0; i < angles.length; i++) {
+        const a1 = angles[i];
+        const a2 = angles[(i + 1) % angles.length];
+        const diff = (a2 - a1 + 360) % 360;
+        const mid = (a1 + diff / 2) % 360;
+        ticks.push({ deg: mid, color: `rgb(${cands[0].rgb.join(",")})` });
+      }
+    }
+    return ticks;
+  }, []);
 
   // Count glazed pixels
   const glazeCount = useMemo(() => {
@@ -484,22 +502,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                 }}
               />
               {/* Candidate switch-point tick marks (above the bar) */}
-              {useMemo(() => {
-                const ticks: { deg: number; color: string }[] = [];
-                for (let lv = 2; lv <= 5; lv++) {
-                  const cands = LEVEL_CANDIDATES[lv];
-                  if (cands.length <= 1 || cands[0].angle < 0) continue;
-                  const angles = cands.map((c) => c.angle).sort((a, b) => a - b);
-                  for (let i = 0; i < angles.length; i++) {
-                    const a1 = angles[i];
-                    const a2 = angles[(i + 1) % angles.length];
-                    const diff = (a2 - a1 + 360) % 360;
-                    const mid = (a1 + diff / 2) % 360;
-                    ticks.push({ deg: mid, color: `rgb(${cands[0].rgb.join(",")})` });
-                  }
-                }
-                return ticks;
-              }, []).map((tick, i) => (
+              {hueTicks.map((tick, i) => (
                 <div
                   key={i}
                   style={{
@@ -527,235 +530,16 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
             </div>
           </div>
 
-          {/* Level preview — 2D candidate grid */}
-          <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center" }}>
-            {levelPreview.map((lp) => {
-              const cands = LEVEL_CANDIDATES[lp.lv];
-              const hasCands = cands.length > 1;
-              const isDirect = directCandidates.has(lp.lv);
-              const directIdx = directCandidates.get(lp.lv);
-              const autoIdx = hasCands ? findClosestCandidate(lp.lv, hueAngle) : 0;
-              // Current selected candidate index
-              const currentIdx = isDirect ? directIdx! : autoIdx;
-              // For 3 candidates: show prev above, current center, next below
-              const prevIdx = hasCands ? (currentIdx - 1 + cands.length) % cands.length : -1;
-              const nextIdx = hasCands ? (currentIdx + 1) % cands.length : -1;
-
-              const makeSwatch = (ci: number, size: number, _isCurrent: boolean) => {
-                const cand = cands[ci];
-                const candHex = `#${cand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")}`;
-                const isSelected = directCandidates.get(lp.lv) === ci;
-                const isSwatchHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === ci;
-                return (
-                  <div
-                    key={ci}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={t("glaze_level_swatch_aria", lp.lv, candHex, `${Math.round(cand.angle)}°`)}
-                    aria-pressed={isSelected}
-                    onClick={() => {
-                      const deselecting = directCandidates.get(lp.lv) === ci;
-                      setDirectCandidates((prev) => {
-                        const next = new Map(prev);
-                        if (deselecting) next.delete(lp.lv);
-                        else next.set(lp.lv, ci);
-                        return next;
-                      });
-                      setSelectedLevels((prev) => {
-                        const next = new Set(prev);
-                        next.delete(lp.lv);
-                        return next;
-                      });
-                      setHoveredCandidate(null);
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        const deselecting = directCandidates.get(lp.lv) === ci;
-                        setDirectCandidates((prev) => {
-                          const next = new Map(prev);
-                          if (deselecting) next.delete(lp.lv);
-                          else next.set(lp.lv, ci);
-                          return next;
-                        });
-                        setSelectedLevels((prev) => {
-                          const next = new Set(prev);
-                          next.delete(lp.lv);
-                          return next;
-                        });
-                        setHoveredCandidate(null);
-                      }
-                    }}
-                    onPointerEnter={() => setHoveredCandidate({ lv: lp.lv, ci })}
-                    onPointerLeave={() => setHoveredCandidate(null)}
-                    title={`${candHex} ${Math.round(cand.angle)}°`}
-                    style={{
-                      width: size,
-                      height: size,
-                      borderRadius: R.md,
-                      cursor: "pointer",
-                      background: `rgb(${cand.rgb.join(",")})`,
-                      border: `2px solid ${isSwatchHovered || isSelected ? C.accent : C.border}`,
-                      boxSizing: "border-box" as const,
-                      boxShadow: isSwatchHovered || isSelected ? SHADOW.glow(C.accent) : "none",
-                      transition: "box-shadow 0.15s, border-color 0.15s",
-                    }}
-                  />
-                );
-              };
-
-              const cycleCand = (dir: number) => {
-                const cur = directCandidates.has(lp.lv) ? directCandidates.get(lp.lv)! : autoIdx;
-                const newIdx = (((cur + dir) % cands.length) + cands.length) % cands.length;
-                setDirectCandidates((prev) => {
-                  const next = new Map(prev);
-                  next.set(lp.lv, newIdx);
-                  return next;
-                });
-                setHoveredCandidate({ lv: lp.lv, ci: newIdx });
-              };
-
-              const handleWheel = hasCands
-                ? (e: React.WheelEvent) => {
-                    e.preventDefault();
-                    cycleCand(e.deltaY > 0 ? 1 : -1);
-                  }
-                : undefined;
-
-              // Touch swipe support for cycling candidates
-              const swipeStartRef = { current: 0 };
-              const handleTouchStart = hasCands
-                ? (e: React.TouchEvent) => {
-                    swipeStartRef.current = e.touches[0].clientY;
-                  }
-                : undefined;
-              const handleTouchEnd = hasCands
-                ? (e: React.TouchEvent) => {
-                    const dy = e.changedTouches[0].clientY - swipeStartRef.current;
-                    if (Math.abs(dy) > 20) cycleCand(dy > 0 ? 1 : -1);
-                  }
-                : undefined;
-
-              return (
-                <div
-                  key={lp.lv}
-                  onWheel={handleWheel}
-                  onTouchStart={handleTouchStart}
-                  onTouchEnd={handleTouchEnd}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 2,
-                    cursor: hasCands ? "pointer" : "default",
-                    touchAction: hasCands ? "none" : "auto",
-                  }}
-                >
-                  {/* Upper candidate */}
-                  {hasCands ? makeSwatch(prevIdx, 20, false) : <div style={{ height: 20 }} />}
-                  {/* Current / main swatch — click to reset to auto */}
-                  {(() => {
-                    const mainCi = currentIdx;
-                    const mainCand = cands[mainCi];
-                    const mainHex = mainCand ? `#${mainCand.rgb.map((c) => c.toString(16).padStart(2, "0")).join("")}` : "";
-                    const isMainHovered = hoveredCandidate !== null && hoveredCandidate.lv === lp.lv && hoveredCandidate.ci === mainCi;
-                    const isSelected = selectedLevels.has(lp.lv);
-                    return (
-                      <div
-                        role={hasCands ? "button" : undefined}
-                        tabIndex={hasCands ? 0 : undefined}
-                        aria-label={
-                          hasCands && mainCand ? t("glaze_level_swatch_aria", lp.lv, mainHex, `${Math.round(mainCand.angle)}°`) : undefined
-                        }
-                        aria-pressed={hasCands ? isSelected : undefined}
-                        onClick={
-                          hasCands
-                            ? () => {
-                                if (isSelected) {
-                                  setSelectedLevels((prev) => {
-                                    const next = new Set(prev);
-                                    next.delete(lp.lv);
-                                    return next;
-                                  });
-                                  setDirectCandidates((prev) => {
-                                    const next = new Map(prev);
-                                    next.delete(lp.lv);
-                                    return next;
-                                  });
-                                } else {
-                                  setSelectedLevels((prev) => {
-                                    const next = new Set(prev);
-                                    next.add(lp.lv);
-                                    return next;
-                                  });
-                                  if (!isDirect) {
-                                    setDirectCandidates((prev) => {
-                                      const next = new Map(prev);
-                                      next.set(lp.lv, autoIdx);
-                                      return next;
-                                    });
-                                  }
-                                }
-                              }
-                            : undefined
-                        }
-                        onKeyDown={
-                          hasCands
-                            ? (e) => {
-                                if (e.key === "Enter" || e.key === " ") {
-                                  e.preventDefault();
-                                  if (isSelected) {
-                                    setSelectedLevels((prev) => {
-                                      const next = new Set(prev);
-                                      next.delete(lp.lv);
-                                      return next;
-                                    });
-                                    setDirectCandidates((prev) => {
-                                      const next = new Map(prev);
-                                      next.delete(lp.lv);
-                                      return next;
-                                    });
-                                  } else {
-                                    setSelectedLevels((prev) => {
-                                      const next = new Set(prev);
-                                      next.add(lp.lv);
-                                      return next;
-                                    });
-                                    if (!isDirect) {
-                                      setDirectCandidates((prev) => {
-                                        const next = new Map(prev);
-                                        next.set(lp.lv, autoIdx);
-                                        return next;
-                                      });
-                                    }
-                                  }
-                                }
-                              }
-                            : undefined
-                        }
-                        onPointerEnter={() => setHoveredCandidate({ lv: lp.lv, ci: mainCi })}
-                        onPointerLeave={() => setHoveredCandidate(null)}
-                        title={isSelected ? t("title_reset_auto") : mainCand ? `${mainHex} ${Math.round(mainCand.angle)}°` : undefined}
-                        style={{
-                          width: 28,
-                          height: 28,
-                          borderRadius: R.md,
-                          background: isDirect ? `rgb(${cands[directIdx!]?.rgb.join(",")})` : lp.hex,
-                          border: `2px solid ${isMainHovered || isSelected ? C.accent : C.border}`,
-                          boxSizing: "border-box" as const,
-                          cursor: hasCands ? "pointer" : "default",
-                          boxShadow: isMainHovered ? SHADOW.glow(C.accent) : "none",
-                          transition: "box-shadow 0.15s, border-color 0.15s",
-                        }}
-                      />
-                    );
-                  })()}
-                  {/* Lower candidate */}
-                  {hasCands ? makeSwatch(nextIdx, 20, false) : <div style={{ height: 20 }} />}
-                </div>
-              );
-            })}
-          </div>
+          <GlazeCandidateGrid
+            levelPreview={levelPreview}
+            hueAngle={hueAngle}
+            directCandidates={directCandidates}
+            selectedLevels={selectedLevels}
+            hoveredCandidate={hoveredCandidate}
+            onDirectCandidatesChange={setDirectCandidates}
+            onSelectedLevelsChange={setSelectedLevels}
+            onHoveredCandidateChange={setHoveredCandidate}
+          />
 
           {/* ── Linked 4-View Visualization ── */}
           <LinkedVisualization

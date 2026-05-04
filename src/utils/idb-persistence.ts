@@ -16,7 +16,7 @@ export interface SavedState {
   locked?: boolean[];
 }
 
-export interface PersistentStorageResult {
+interface PersistentStorageResult {
   supported: boolean;
   persisted: boolean;
   requested: boolean;

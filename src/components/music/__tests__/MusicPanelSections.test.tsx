@@ -128,56 +128,102 @@ function makeFanoProps(overrides: Partial<FanoProps> = {}): FanoProps {
   };
 }
 
-function makeAlgebraProps(overrides: Partial<AlgebraProps> = {}): AlgebraProps {
-  return {
+type AlgebraPropsOverrides = Omit<
+  Partial<AlgebraProps>,
+  "cayley" | "distributive" | "andTriads" | "errorCorrection" | "hamming" | "octahedron" | "gray3" | "polyhedra" | "gl32"
+> & {
+  cayley?: Partial<AlgebraProps["cayley"]>;
+  distributive?: Partial<AlgebraProps["distributive"]>;
+  andTriads?: Partial<AlgebraProps["andTriads"]>;
+  errorCorrection?: Partial<AlgebraProps["errorCorrection"]>;
+  hamming?: Partial<AlgebraProps["hamming"]>;
+  octahedron?: Partial<AlgebraProps["octahedron"]>;
+  gray3?: Partial<AlgebraProps["gray3"]>;
+  polyhedra?: Partial<AlgebraProps["polyhedra"]>;
+  gl32?: Partial<AlgebraProps["gl32"]>;
+};
+
+function makeAlgebraProps(overrides: AlgebraPropsOverrides = {}): AlgebraProps {
+  const props: AlgebraProps = {
     engine: makeMusicEngine(),
     activeLevels: [],
     stopSignal: 0,
     resetSignal: 0,
-    cayleyRow: 1,
-    onCayleyRowChange: mockFn<AlgebraProps["onCayleyRowChange"]>(),
-    cayleyCol: -1,
-    onCayleyColChange: mockFn<AlgebraProps["onCayleyColChange"]>(),
-    distA: 5,
-    onDistAChange: mockFn<AlgebraProps["onDistAChange"]>(),
-    distB: 3,
-    onDistBChange: mockFn<AlgebraProps["onDistBChange"]>(),
-    distC: 6,
-    onDistCChange: mockFn<AlgebraProps["onDistCChange"]>(),
-    distPhase: null,
-    onDistPhaseChange: mockFn<AlgebraProps["onDistPhaseChange"]>(),
-    andStep: null,
-    onAndStepChange: mockFn<AlgebraProps["onAndStepChange"]>(),
-    errorPos: 1,
-    errorPhase: null,
-    onErrorPosChange: mockFn<AlgebraProps["onErrorPosChange"]>(),
-    onErrorPhaseChange: mockFn<AlgebraProps["onErrorPhaseChange"]>(),
-    hammingMode: "743",
-    onHammingModeChange: mockFn<AlgebraProps["onHammingModeChange"]>(),
-    weightPlaying: false,
-    onWeightPlayingChange: mockFn<AlgebraProps["onWeightPlayingChange"]>(),
-    weightStep: null,
-    onWeightStepChange: mockFn<AlgebraProps["onWeightStepChange"]>(),
-    onHoveredFanoLineChange: mockFn<AlgebraProps["onHoveredFanoLineChange"]>(),
-    octaA: 1,
-    onOctaAChange: mockFn<AlgebraProps["onOctaAChange"]>(),
-    octaB: 2,
-    onOctaBChange: mockFn<AlgebraProps["onOctaBChange"]>(),
-    octaPhase: null,
-    onOctaPhaseChange: mockFn<AlgebraProps["onOctaPhaseChange"]>(),
-    gray3Playing: false,
-    onGray3PlayingChange: mockFn<AlgebraProps["onGray3PlayingChange"]>(),
-    gray3Code: null,
-    onGray3CodeChange: mockFn<AlgebraProps["onGray3CodeChange"]>(),
-    k8Layer: null,
-    onK8LayerChange: mockFn<AlgebraProps["onK8LayerChange"]>(),
-    tetraPhase: null,
-    onTetraPhaseChange: mockFn<AlgebraProps["onTetraPhaseChange"]>(),
-    gl32Perm: [0, 1, 2, 3, 4, 5, 6, 7],
-    onGl32PermChange: mockFn<AlgebraProps["onGl32PermChange"]>(),
-    gl32Flash: false,
-    onGl32FlashChange: mockFn<AlgebraProps["onGl32FlashChange"]>(),
+    cayley: {
+      row: 1,
+      onRowChange: mockFn<AlgebraProps["cayley"]["onRowChange"]>(),
+      col: -1,
+      onColChange: mockFn<AlgebraProps["cayley"]["onColChange"]>(),
+    },
+    distributive: {
+      a: 5,
+      onAChange: mockFn<AlgebraProps["distributive"]["onAChange"]>(),
+      b: 3,
+      onBChange: mockFn<AlgebraProps["distributive"]["onBChange"]>(),
+      c: 6,
+      onCChange: mockFn<AlgebraProps["distributive"]["onCChange"]>(),
+      phase: null,
+      onPhaseChange: mockFn<AlgebraProps["distributive"]["onPhaseChange"]>(),
+    },
+    andTriads: {
+      step: null,
+      onStepChange: mockFn<AlgebraProps["andTriads"]["onStepChange"]>(),
+    },
+    errorCorrection: {
+      pos: 1,
+      phase: null,
+      onPosChange: mockFn<AlgebraProps["errorCorrection"]["onPosChange"]>(),
+      onPhaseChange: mockFn<AlgebraProps["errorCorrection"]["onPhaseChange"]>(),
+    },
+    hamming: {
+      mode: "743",
+      onModeChange: mockFn<AlgebraProps["hamming"]["onModeChange"]>(),
+      weightPlaying: false,
+      onWeightPlayingChange: mockFn<AlgebraProps["hamming"]["onWeightPlayingChange"]>(),
+      weightStep: null,
+      onWeightStepChange: mockFn<AlgebraProps["hamming"]["onWeightStepChange"]>(),
+      onHoveredFanoLineChange: mockFn<AlgebraProps["hamming"]["onHoveredFanoLineChange"]>(),
+    },
+    octahedron: {
+      a: 1,
+      onAChange: mockFn<AlgebraProps["octahedron"]["onAChange"]>(),
+      b: 2,
+      onBChange: mockFn<AlgebraProps["octahedron"]["onBChange"]>(),
+      phase: null,
+      onPhaseChange: mockFn<AlgebraProps["octahedron"]["onPhaseChange"]>(),
+    },
+    gray3: {
+      playing: false,
+      onPlayingChange: mockFn<AlgebraProps["gray3"]["onPlayingChange"]>(),
+      code: null,
+      onCodeChange: mockFn<AlgebraProps["gray3"]["onCodeChange"]>(),
+    },
+    polyhedra: {
+      k8Layer: null,
+      onK8LayerChange: mockFn<AlgebraProps["polyhedra"]["onK8LayerChange"]>(),
+      tetraPhase: null,
+      onTetraPhaseChange: mockFn<AlgebraProps["polyhedra"]["onTetraPhaseChange"]>(),
+    },
+    gl32: {
+      perm: [0, 1, 2, 3, 4, 5, 6, 7],
+      onPermChange: mockFn<AlgebraProps["gl32"]["onPermChange"]>(),
+      flash: false,
+      onFlashChange: mockFn<AlgebraProps["gl32"]["onFlashChange"]>(),
+    },
+  };
+
+  return {
+    ...props,
     ...overrides,
+    cayley: { ...props.cayley, ...overrides.cayley },
+    distributive: { ...props.distributive, ...overrides.distributive },
+    andTriads: { ...props.andTriads, ...overrides.andTriads },
+    errorCorrection: { ...props.errorCorrection, ...overrides.errorCorrection },
+    hamming: { ...props.hamming, ...overrides.hamming },
+    octahedron: { ...props.octahedron, ...overrides.octahedron },
+    gray3: { ...props.gray3, ...overrides.gray3 },
+    polyhedra: { ...props.polyhedra, ...overrides.polyhedra },
+    gl32: { ...props.gl32, ...overrides.gl32 },
   };
 }
 
@@ -343,12 +389,12 @@ describe("MusicPanel section components", () => {
     renderWithLanguage(<MusicAlgebraPanel {...props} />);
 
     fireEvent.change(screen.getByRole("combobox", { name: "Cayley row" }), { target: { value: "4" } });
-    expect(props.onCayleyRowChange).toHaveBeenCalledWith(4);
+    expect(props.cayley.onRowChange).toHaveBeenCalledWith(4);
 
     fireEvent.click(screen.getByRole("button", { name: "\u25b6 Row" }));
     expect(engine.initAudio).toHaveBeenCalled();
     expect(engine.playCayleyRow).toHaveBeenCalledWith(1, expect.any(Function));
-    expect(props.onCayleyColChange).toHaveBeenCalledWith(3);
+    expect(props.cayley.onColChange).toHaveBeenCalledWith(3);
   });
 
   it("routes algebra stop, octahedron, and GL(3,2) callbacks", () => {
@@ -357,20 +403,23 @@ describe("MusicPanel section components", () => {
     });
     const props = makeAlgebraProps({
       engine,
-      cayleyCol: 2,
-      octaA: 1,
-      octaB: 1,
+      cayley: { col: 2 },
+      octahedron: { a: 1, b: 1 },
     });
     const view = renderWithLanguage(<MusicAlgebraPanel {...props} />);
 
     fireEvent.click(screen.getByRole("button", { name: "\u23f9 Row" }));
     expect(engine.stopAlgebra).toHaveBeenCalled();
-    expect(props.onCayleyColChange).toHaveBeenCalledWith(-1);
+    expect(props.cayley.onColChange).toHaveBeenCalledWith(-1);
 
     const invalidOcta = screen.getByRole("button", { name: "\u25b6 Octa" }) as HTMLButtonElement;
     expect(invalidOcta.disabled).toBe(true);
 
-    const validProps = { ...props, octaA: 1, octaB: 2, cayleyCol: -1 };
+    const validProps = {
+      ...props,
+      cayley: { ...props.cayley, col: -1 },
+      octahedron: { ...props.octahedron, a: 1, b: 2 },
+    };
     view.rerender(
       <LanguageProvider>
         <MusicAlgebraPanel {...validProps} />
@@ -384,7 +433,7 @@ describe("MusicPanel section components", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Gen B" }));
     expect(engine.applyGL32Transform).toHaveBeenCalledWith("B", expect.any(Function));
-    expect(props.onGl32PermChange).toHaveBeenCalledWith([7, 6, 5, 4, 3, 2, 1, 0]);
-    expect(props.onGl32FlashChange).toHaveBeenCalledWith(true);
+    expect(props.gl32.onPermChange).toHaveBeenCalledWith([7, 6, 5, 4, 3, 2, 1, 0]);
+    expect(props.gl32.onFlashChange).toHaveBeenCalledWith(true);
   });
 });

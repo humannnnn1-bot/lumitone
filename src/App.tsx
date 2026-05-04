@@ -12,12 +12,14 @@ import { useFileDrop } from "./hooks/useFileDrop";
 import { useKeyboardShortcuts } from "./hooks/useKeyboardShortcuts";
 import { useExport } from "./hooks/useExport";
 import { useAppState } from "./hooks/useAppState";
+import { usePwaUpdate } from "./hooks/usePwaUpdate";
 import { DrawingContextProvider } from "./state/DrawingContext";
 import { GlazeContextProvider } from "./state/GlazeContext";
 import { timestamp } from "./utils";
 import { S_TAB_ACTIVE, S_TAB_INACTIVE } from "./styles/shared";
 import { C, Z, FS, FW, FONT } from "./styles/tokens";
 import { Toast } from "./components/Toast";
+import { PwaUpdateToast } from "./components/PwaUpdateToast";
 import { MAIN_TABS } from "./tabs";
 import { SourcePanel } from "./components/SourcePanel";
 import { ColorPanel } from "./components/ColorPanel";
@@ -32,7 +34,6 @@ import { GalleryPanel } from "./components/GalleryPanel";
 import { HexPanel } from "./components/HexPanel";
 import { TheoryPanel } from "./components/TheoryPanel";
 import { useTranslation } from "./i18n";
-import { PWA_UPDATE_READY_EVENT, type PwaUpdateReadyDetail } from "./pwa";
 
 const MusicPanel = lazy(async () => {
   const mod = await import("./components/MusicPanel");
@@ -105,45 +106,6 @@ const S_LAZY_PANEL_FALLBACK: React.CSSProperties = {
   color: C.textMuted,
   fontSize: FS.lg,
 };
-const S_UPDATE_TOAST: React.CSSProperties = {
-  position: "fixed",
-  bottom: 24,
-  left: "50%",
-  transform: "translateX(-50%)",
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-  maxWidth: "calc(100vw - 24px)",
-  padding: "10px 14px",
-  borderRadius: 10,
-  background: C.accent,
-  color: C.textWhite,
-  fontSize: FS.md,
-  fontFamily: FONT.mono,
-  fontWeight: FW.bold,
-  zIndex: Z.toast,
-  boxShadow: "0 10px 30px rgba(0,0,0,0.35)",
-  animation: "toast-in 0.2s ease-out",
-};
-const S_UPDATE_ACTION: React.CSSProperties = {
-  border: `1px solid rgba(255,255,255,0.65)`,
-  borderRadius: 6,
-  background: "rgba(255,255,255,0.14)",
-  color: C.textWhite,
-  cursor: "pointer",
-  padding: "4px 8px",
-  whiteSpace: "nowrap",
-};
-const S_UPDATE_DISMISS: React.CSSProperties = {
-  border: 0,
-  background: "transparent",
-  color: C.textWhite,
-  cursor: "pointer",
-  fontSize: 18,
-  lineHeight: 1,
-  padding: "2px 4px",
-};
-
 interface AppContentProps {
   app: ReturnType<typeof useAppState>;
   panZoom: ReturnType<typeof usePanZoom>;
@@ -196,44 +158,11 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   const hist = state.hist;
   const [scrollToGallery, setScrollToGallery] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
-  const [pwaUpdateRegistration, setPwaUpdateRegistration] = useState<ServiceWorkerRegistration | null>(null);
-  const [pwaUpdateReloading, setPwaUpdateReloading] = useState(false);
+  const pwaUpdate = usePwaUpdate();
 
   useEffect(() => {
     document.title = `CHROMALUM - ${t(MAIN_TABS[activeTab].key)}`;
   }, [activeTab, t]);
-
-  useEffect(() => {
-    const onUpdateReady = (event: Event) => {
-      const detail = (event as CustomEvent<PwaUpdateReadyDetail>).detail;
-      if (!detail?.registration) return;
-      setPwaUpdateRegistration(detail.registration);
-      setPwaUpdateReloading(false);
-    };
-
-    window.addEventListener(PWA_UPDATE_READY_EVENT, onUpdateReady);
-    return () => window.removeEventListener(PWA_UPDATE_READY_EVENT, onUpdateReady);
-  }, []);
-
-  const handlePwaUpdateReload = useCallback(() => {
-    const waitingWorker = pwaUpdateRegistration?.waiting;
-    if (!waitingWorker || !("serviceWorker" in navigator)) {
-      window.location.reload();
-      return;
-    }
-
-    setPwaUpdateReloading(true);
-    let reloaded = false;
-    const reload = () => {
-      if (reloaded) return;
-      reloaded = true;
-      window.location.reload();
-    };
-
-    navigator.serviceWorker.addEventListener("controllerchange", reload, { once: true });
-    waitingWorker.postMessage({ type: "SKIP_WAITING" });
-    window.setTimeout(reload, 4000);
-  }, [pwaUpdateRegistration]);
 
   const prvRef = useRef<HTMLCanvasElement | null>(null);
   const glazePrvRef = useRef<HTMLCanvasElement | null>(null);
@@ -499,21 +428,8 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
       <div ref={ariaLiveRef} role="status" aria-live="polite" aria-atomic="true" style={S_SR_ONLY} />
 
       {toast && <Toast message={toast.message} type={toast.type} />}
-      {pwaUpdateRegistration && (
-        <div role="status" aria-live="polite" style={S_UPDATE_TOAST}>
-          <span style={{ minWidth: 0 }}>{t("pwa_update_available")}</span>
-          <button type="button" onClick={handlePwaUpdateReload} disabled={pwaUpdateReloading} style={S_UPDATE_ACTION}>
-            {pwaUpdateReloading ? t("pwa_update_reloading") : t("pwa_update_reload")}
-          </button>
-          <button
-            type="button"
-            onClick={() => setPwaUpdateRegistration(null)}
-            aria-label={t("pwa_update_dismiss")}
-            style={S_UPDATE_DISMISS}
-          >
-            ×
-          </button>
-        </div>
+      {pwaUpdate.hasUpdate && (
+        <PwaUpdateToast reloading={pwaUpdate.reloading} onReload={pwaUpdate.reload} onDismiss={pwaUpdate.dismiss} t={t} />
       )}
 
       <NewCanvasModal open={showNewCanvas} onConfirm={handleNewCanvasConfirm} onCancel={handleNewCanvasCancel} />

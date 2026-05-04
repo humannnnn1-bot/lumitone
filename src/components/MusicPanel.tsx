@@ -1,18 +1,27 @@
-import React, { useState, useMemo, useCallback, useRef, useEffect } from "react";
-import { LEVEL_INFO, LEVEL_CANDIDATES, DEFAULT_CC, findClosestCandidate } from "../color-engine";
+import React, { useMemo, useCallback, useRef, useEffect } from "react";
+import { LEVEL_INFO, LEVEL_CANDIDATES, findClosestCandidate } from "../color-engine";
 import { SP, C, FS } from "../styles/tokens";
 import { useTranslation } from "../i18n";
 import { ACTIVE_LEVELS } from "./LinkedVisualization";
 import { MusicLinkedVisualization } from "./music/MusicLinkedVisualization";
-import { useMusicEngine, type ScaleMode } from "../hooks/useMusicEngine";
+import { useMusicEngine } from "../hooks/useMusicEngine";
 import { Oscilloscope } from "./music/Oscilloscope";
-import type { DecoderPhase, MusicCandidateHover, MusicHueTick, MusicLevelPreview } from "./music/types";
+import type { MusicHueTick, MusicLevelPreview } from "./music/types";
 import { MusicAlgebraPanel } from "./music/MusicAlgebraPanel";
 import { MusicFanoControls } from "./music/MusicFanoControls";
 import { MusicHueAlphaControls } from "./music/MusicHueAlphaControls";
 import { MusicLevelCandidateGrid } from "./music/MusicLevelCandidateGrid";
 import { MusicTransportControls } from "./music/MusicTransportControls";
 import { FANO_LINES } from "../data/theory-data";
+import {
+  createDefaultMusicDirectCandidates,
+  useMusicAlgebraState,
+  useMusicBurstHighlightState,
+  useMusicFanoState,
+  useMusicPaletteState,
+  useMusicSignalsState,
+  useMusicTransportState,
+} from "../hooks/useMusicPanelState";
 
 /** Find Fano line index for a triple {a, b, a XOR b}, or -1 if not a Fano line */
 function findFanoLine(a: number, b: number): number {
@@ -27,18 +36,17 @@ function findFanoLine(a: number, b: number): number {
 export const MusicPanel = React.memo(function MusicPanel() {
   const { t } = useTranslation();
 
-  // Shared state (replaces GlazeContext for this tab)
-  const [hueAngle, setHueAngle] = useState(0);
-  const [directCandidates, setDirectCandidates] = useState<Map<number, number>>(() => {
-    const m = new Map<number, number>();
-    for (let lv = 1; lv <= 6; lv++) m.set(lv, DEFAULT_CC[lv]);
-    return m;
-  });
-  const [hoveredCandidate, setHoveredCandidate] = useState<MusicCandidateHover>(null);
-  const [selectedLevels, setSelectedLevels] = useState<Set<number>>(new Set());
-
-  // Track candidate indices for hue-drag tone burst
-  const prevCandidatesRef = useRef<Map<number, number>>(new Map());
+  const {
+    hueAngle,
+    setHueAngle,
+    directCandidates,
+    setDirectCandidates,
+    hoveredCandidate,
+    setHoveredCandidate,
+    selectedLevels,
+    setSelectedLevels,
+    prevCandidatesRef,
+  } = useMusicPaletteState();
 
   // Audio state — always enabled, initAudio called on first interaction
   const audioInitedRef = useRef(false);
@@ -47,32 +55,47 @@ export const MusicPanel = React.memo(function MusicPanel() {
       audioInitedRef.current = true;
     }
   }, []);
-  const [volume, setVolume] = useState(0.7);
-  const [muted, setMuted] = useState(false);
-  const preMuteVolumeRef = useRef(0.7);
-  const [scaleMode, setScaleMode] = useState<ScaleMode>("diatonic7");
-  const [fmEnabled, setFmEnabled] = useState(false);
-  const [alphaSpeed, setAlphaSpeed] = useState(36);
-  const [phaseSpeed, setPhaseSpeed] = useState(0);
-  const [hueSpeed, setHueSpeed] = useState(36);
-  const [hoveredFanoLine, setHoveredFanoLine] = useState<number | null>(null);
 
-  // LinkedVisualization alpha state (lifted here for audio engine access)
-  const [alpha0, setAlpha0] = useState(0);
-  const [alpha7, setAlpha7] = useState(0);
-  const [originMode, setOriginMode] = useState<0 | 7>(0);
-  const [droneMuted, setDroneMuted] = useState(true);
-
-  // Auto-rotation state
-  const [alphaDir, setAlphaDir] = useState<1 | -1 | 0>(0);
-  const [hueDir, setHueDir] = useState<1 | -1 | 0>(0);
-  const prevTimeRef = useRef<number>(0);
-  const hueRef = useRef(hueAngle);
-  const lastHueRoundedRef = useRef(Math.round(hueAngle));
+  const {
+    volume,
+    setVolume,
+    muted,
+    setMuted,
+    preMuteVolumeRef,
+    scaleMode,
+    setScaleMode,
+    fmEnabled,
+    setFmEnabled,
+    alphaSpeed,
+    setAlphaSpeed,
+    phaseSpeed,
+    setPhaseSpeed,
+    hueSpeed,
+    setHueSpeed,
+    hoveredFanoLine,
+    setHoveredFanoLine,
+    luminanceMode,
+    setLuminanceMode,
+    alpha0,
+    setAlpha0,
+    alpha7,
+    setAlpha7,
+    originMode,
+    setOriginMode,
+    droneMuted,
+    setDroneMuted,
+    alphaDir,
+    setAlphaDir,
+    hueDir,
+    setHueDir,
+    prevTimeRef,
+    hueRef,
+    lastHueRoundedRef,
+  } = useMusicTransportState(hueAngle);
   useEffect(() => {
     hueRef.current = hueAngle;
     lastHueRoundedRef.current = Math.round(hueAngle);
-  }, [hueAngle]);
+  }, [hueAngle, hueRef, lastHueRoundedRef]);
 
   useEffect(() => {
     if (alphaDir === 0 && hueDir === 0 && phaseSpeed === 0) return;
@@ -104,54 +127,93 @@ export const MusicPanel = React.memo(function MusicPanel() {
     prevTimeRef.current = 0;
     rafId = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(rafId);
-  }, [alphaDir, hueDir, alphaSpeed, phaseSpeed, hueSpeed, originMode]);
+  }, [
+    alphaDir,
+    hueDir,
+    alphaSpeed,
+    phaseSpeed,
+    hueSpeed,
+    originMode,
+    hueRef,
+    lastHueRoundedRef,
+    prevTimeRef,
+    setAlpha0,
+    setAlpha7,
+    setHueAngle,
+  ]);
 
-  // Algebra state (non-explorer cards)
-  const [gray3Playing, setGray3Playing] = useState(false);
-  const [weightPlaying, setWeightPlaying] = useState(false);
-  const [weightStep, setWeightStep] = useState<{ positions: number[]; weight: number; index: number } | null>(null);
-  const [hammingMode, setHammingMode] = useState<"743" | "844">("743");
-  const [cayleyRow, setCayleyRow] = useState(1);
-  const [luminanceMode, setLuminanceMode] = useState<"symmetric" | "luminance">("symmetric");
-  const [andStep, setAndStep] = useState<{ pairIndex: number; phase: "operands" | "result" } | null>(null);
-  const [gray3Code, setGray3Code] = useState<number | null>(null);
-  const [cayleyCol, setCayleyCol] = useState(-1);
-  const [gl32Perm, setGl32Perm] = useState([0, 1, 2, 3, 4, 5, 6, 7]);
-  const [gl32Flash, setGl32Flash] = useState(false);
-  const [distA, setDistA] = useState(5);
-  const [distB, setDistB] = useState(3);
-  const [distC, setDistC] = useState(6);
-  const [distPhase, setDistPhase] = useState<"bxc" | "left" | "ab" | "ac" | "right" | "equal" | null>(null);
-  const [octaA, setOctaA] = useState(1);
-  const [octaB, setOctaB] = useState(2);
-  const [octaPhase, setOctaPhase] = useState<"pair" | "result" | null>(null);
+  const {
+    gray3Playing,
+    setGray3Playing,
+    weightPlaying,
+    setWeightPlaying,
+    weightStep,
+    setWeightStep,
+    hammingMode,
+    setHammingMode,
+    cayleyRow,
+    setCayleyRow,
+    andStep,
+    setAndStep,
+    gray3Code,
+    setGray3Code,
+    cayleyCol,
+    setCayleyCol,
+    gl32Perm,
+    setGl32Perm,
+    gl32Flash,
+    setGl32Flash,
+    distA,
+    setDistA,
+    distB,
+    setDistB,
+    distC,
+    setDistC,
+    distPhase,
+    setDistPhase,
+    octaA,
+    setOctaA,
+    octaB,
+    setOctaB,
+    octaPhase,
+    setOctaPhase,
+    k8Layer,
+    setK8Layer,
+    tetraPhase,
+    setTetraPhase,
+    errorPos,
+    setErrorPos,
+    errorPhase,
+    setErrorPhase,
+  } = useMusicAlgebraState();
 
-  // Fano plane sidebar state
-  const [grayStep, setGrayStep] = useState<number | null>(null);
-  const [rhythmPlaying, setRhythmPlaying] = useState(false);
-  // Multi-line state: each beat can trigger up to 3 Fano lines simultaneously.
-  const [rhythmFiringLines, setRhythmFiringLines] = useState<number[]>([]);
-  const [rhythmTempo, setRhythmTempo] = useState(120);
-  const [xorA, setXorA] = useState<number | null>(null);
-  const [xorB, setXorB] = useState<number | null>(null);
-  const [xorStep, setXorStep] = useState<number | null>(null);
-  const [fanoContextPoint, setFanoContextPoint] = useState(1);
-  const [fanoContextLine, setFanoContextLine] = useState(-1);
-  const [partitionPhase, setPartitionPhase] = useState<"line" | "complement" | null>(null);
-  const [partitionLineIndex, setPartitionLineIndex] = useState(0);
+  const {
+    grayStep,
+    setGrayStep,
+    rhythmPlaying,
+    setRhythmPlaying,
+    rhythmFiringLines,
+    setRhythmFiringLines,
+    rhythmTempo,
+    setRhythmTempo,
+    xorA,
+    setXorA,
+    xorB,
+    setXorB,
+    xorStep,
+    setXorStep,
+    fanoContextPoint,
+    setFanoContextPoint,
+    fanoContextLine,
+    setFanoContextLine,
+    partitionPhase,
+    setPartitionPhase,
+    partitionLineIndex,
+    setPartitionLineIndex,
+  } = useMusicFanoState();
 
-  // Signals for explorer components to stop/reset
-  const [stopSignal, setStopSignal] = useState(0);
-  const [resetSignal, setResetSignal] = useState(0);
-  const backgroundStoppedRef = useRef(false);
-
-  // Cross-card state: K8 layer ↔ TetraSplit phase
-  const [k8Layer, setK8Layer] = useState<1 | 2 | 3 | null>(null);
-  const [tetraPhase, setTetraPhase] = useState<"t0" | "t1" | null>(null);
-
-  // Cross-card state: Parity ↔ Error Correction
-  const [errorPos, setErrorPos] = useState(1);
-  const [errorPhase, setErrorPhase] = useState<DecoderPhase>(null);
+  const { stopSignal, setStopSignal, resetSignal, setResetSignal, backgroundStoppedRef } = useMusicSignalsState();
+  const { burstHighlight, setBurstHighlight, burstTimersRef } = useMusicBurstHighlightState();
 
   // Compute sonification levels
   const sonificationLevels = useMemo(() => {
@@ -197,28 +259,28 @@ export const MusicPanel = React.memo(function MusicPanel() {
       engine.setDroneMuted(false);
       setDroneMuted(false);
     }
-  }, [droneMuted, engine]);
+  }, [droneMuted, engine, setDroneMuted]);
 
   const handleAlphaPlay = useCallback(() => {
     engine.initAudio();
     resumeDrone();
     setAlphaDir((d) => (d === 1 ? 0 : 1));
-  }, [engine, resumeDrone]);
+  }, [engine, resumeDrone, setAlphaDir]);
   const handleAlphaReverse = useCallback(() => {
     engine.initAudio();
     resumeDrone();
     setAlphaDir((d) => (d === -1 ? 0 : -1));
-  }, [engine, resumeDrone]);
+  }, [engine, resumeDrone, setAlphaDir]);
   const handleHuePlay = useCallback(() => {
     engine.initAudio();
     resumeDrone();
     setHueDir((d) => (d === 1 ? 0 : 1));
-  }, [engine, resumeDrone]);
+  }, [engine, resumeDrone, setHueDir]);
   const handleHueReverse = useCallback(() => {
     engine.initAudio();
     resumeDrone();
     setHueDir((d) => (d === -1 ? 0 : -1));
-  }, [engine, resumeDrone]);
+  }, [engine, resumeDrone, setHueDir]);
 
   // Stop All handler
   const handleStopAll = useCallback(() => {
@@ -252,14 +314,38 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setStopSignal((s) => s + 1);
     engine.setDroneMuted(true);
     setDroneMuted(true);
-  }, [engine]);
+  }, [
+    engine,
+    setAlphaDir,
+    setAndStep,
+    setCayleyCol,
+    setDistPhase,
+    setDroneMuted,
+    setErrorPhase,
+    setFanoContextLine,
+    setGl32Flash,
+    setGray3Code,
+    setGray3Playing,
+    setGrayStep,
+    setHueDir,
+    setK8Layer,
+    setOctaPhase,
+    setPartitionPhase,
+    setRhythmFiringLines,
+    setRhythmPlaying,
+    setStopSignal,
+    setTetraPhase,
+    setWeightPlaying,
+    setWeightStep,
+    setXorStep,
+  ]);
 
   const handleBackgroundStop = useCallback(() => {
     if (backgroundStoppedRef.current) return;
     backgroundStoppedRef.current = true;
     handleStopAll();
     engine.stopAudio();
-  }, [engine, handleStopAll]);
+  }, [backgroundStoppedRef, engine, handleStopAll]);
 
   useEffect(() => {
     const onVisibilityChange = () => {
@@ -281,7 +367,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
       window.removeEventListener("pagehide", onPageHide);
       window.removeEventListener("pageshow", onPageShow);
     };
-  }, [handleBackgroundStop]);
+  }, [backgroundStoppedRef, handleBackgroundStop]);
 
   // Reset Defaults handler
   const handleResetDefaults = useCallback(() => {
@@ -291,9 +377,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setHueAngle(0);
     // Force the canonical 6-color palette (RGB light primaries + CMY pigment primaries):
     // L1=Blue, L2=Red, L3=Magenta, L4=Green, L5=Cyan, L6=Yellow.
-    const canonical = new Map<number, number>();
-    for (let lv = 1; lv <= 6; lv++) canonical.set(lv, DEFAULT_CC[lv]);
-    setDirectCandidates(canonical);
+    setDirectCandidates(createDefaultMusicDirectCandidates());
     setSelectedLevels(new Set());
     setVolume(0.7);
     setScaleMode("diatonic7");
@@ -317,7 +401,34 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setOctaB(2);
     // Signal explorer components to reset defaults
     setResetSignal((s) => s + 1);
-  }, [handleStopAll, engine]);
+  }, [
+    handleStopAll,
+    engine,
+    setAlpha0,
+    setAlpha7,
+    setAlphaSpeed,
+    setDirectCandidates,
+    setDistA,
+    setDistB,
+    setDistC,
+    setDroneMuted,
+    setFanoContextPoint,
+    setFmEnabled,
+    setGl32Perm,
+    setHoveredFanoLine,
+    setHueAngle,
+    setHueSpeed,
+    setLuminanceMode,
+    setOctaA,
+    setOctaB,
+    setPartitionLineIndex,
+    setPhaseSpeed,
+    setResetSignal,
+    setRhythmTempo,
+    setScaleMode,
+    setSelectedLevels,
+    setVolume,
+  ]);
 
   // Handlers
   const handleHueChange = useCallback(
@@ -328,7 +439,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
       setDirectCandidates(new Map());
       setSelectedLevels(new Set());
     },
-    [engine, resumeDrone],
+    [engine, resumeDrone, setDirectCandidates, setHueAngle, setSelectedLevels],
   );
 
   const handleAlphaBarChange = useCallback(
@@ -339,12 +450,8 @@ export const MusicPanel = React.memo(function MusicPanel() {
       setAlpha0(v);
       setAlpha7(v);
     },
-    [engine, resumeDrone],
+    [engine, resumeDrone, setAlpha0, setAlpha7],
   );
-
-  // Tone burst highlight: flash white then fade out over 500ms (supports multiple simultaneous)
-  const [burstHighlight, setBurstHighlight] = useState<Set<number>>(() => new Set());
-  const burstTimersRef = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   const handleBlockClick = useCallback(
     (lv: number, angle: number) => {
@@ -375,7 +482,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
         );
       });
     },
-    [engine, ensureAudio, triggerToneBurstAtActiveAlpha],
+    [burstTimersRef, engine, ensureAudio, setBurstHighlight, triggerToneBurstAtActiveAlpha],
   );
 
   // Keyboard 1-6: trigger tone burst for corresponding level
@@ -409,7 +516,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
     }
     engine.initAudio();
     engine.playGrayMelody(rhythmTempo, grayStepCbRef.current);
-  }, [engine, grayStep, rhythmTempo]);
+  }, [engine, grayStep, rhythmTempo, setGrayStep]);
 
   const handleFanoRhythm = useCallback(() => {
     if (rhythmPlaying) {
@@ -420,7 +527,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
     engine.initAudio();
     engine.startFanoRhythm(rhythmTempo, fanoBeatCbRef.current);
     setRhythmPlaying(true);
-  }, [engine, rhythmPlaying, rhythmTempo]);
+  }, [engine, rhythmPlaying, rhythmTempo, setRhythmPlaying]);
 
   // Restart playback when BPM changes while playing
   const tempoMountedRef = useRef(false);
@@ -450,7 +557,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
         if (lv === null && fanoIdx >= 0) setHoveredFanoLine(null);
       });
     }
-  }, [engine, xorA, xorB]);
+  }, [engine, setHoveredFanoLine, setXorStep, xorA, xorB]);
 
   // Point context handler
   const handlePlayPointContext = useCallback(() => {
@@ -459,7 +566,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
       setFanoContextLine(idx ?? -1);
       setHoveredFanoLine(idx ?? null);
     });
-  }, [engine, fanoContextPoint]);
+  }, [engine, fanoContextPoint, setFanoContextLine, setHoveredFanoLine]);
 
   // Line + Complement handler
   const selectedFanoLine = hoveredFanoLine ?? 0;
@@ -473,7 +580,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
       setPartitionPhase(null);
       engine.playLineAndComplement?.(selectedFanoLine, (phase) => setPartitionPhase(phase));
     }
-  }, [engine, partitionPhase, selectedFanoLine]);
+  }, [engine, partitionPhase, selectedFanoLine, setPartitionLineIndex, setPartitionPhase]);
 
   // Fano node click → XOR selection
   const handleFanoNodeClick = useCallback(
@@ -487,13 +594,16 @@ export const MusicPanel = React.memo(function MusicPanel() {
         setXorB(null);
       }
     },
-    [xorA, xorB],
+    [setXorA, setXorB, xorA, xorB],
   );
 
   // Fano line click → Line+Complement selection
-  const handleFanoLineClick = useCallback((lineIndex: number) => {
-    setHoveredFanoLine(lineIndex);
-  }, []);
+  const handleFanoLineClick = useCallback(
+    (lineIndex: number) => {
+      setHoveredFanoLine(lineIndex);
+    },
+    [setHoveredFanoLine],
+  );
 
   // Level preview (same as GlazePanel)
   const levelPreview = useMemo<MusicLevelPreview[]>(() => {
@@ -531,13 +641,16 @@ export const MusicPanel = React.memo(function MusicPanel() {
   // Disabled style for play buttons when audio is off
   // All buttons auto-init audio on click; no disabled state needed
 
-  const handleBgTap = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    // Reset hover state when tapping non-interactive background areas
-    const el = e.target as HTMLElement;
-    if (el.closest("button, [role='button'], input, select, a, canvas, svg")) return;
-    setHoveredCandidate(null);
-    setHoveredFanoLine(null);
-  }, []);
+  const handleBgTap = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      // Reset hover state when tapping non-interactive background areas
+      const el = e.target as HTMLElement;
+      if (el.closest("button, [role='button'], input, select, a, canvas, svg")) return;
+      setHoveredCandidate(null);
+      setHoveredFanoLine(null);
+    },
+    [setHoveredCandidate, setHoveredFanoLine],
+  );
 
   return (
     <div onClick={handleBgTap} style={{ display: "flex", flexDirection: "column", gap: SP.md, padding: `0 ${SP.md}px ${SP.md}px` }}>
@@ -699,49 +812,67 @@ export const MusicPanel = React.memo(function MusicPanel() {
         activeLevels={activeLevels}
         stopSignal={stopSignal}
         resetSignal={resetSignal}
-        cayleyRow={cayleyRow}
-        onCayleyRowChange={setCayleyRow}
-        cayleyCol={cayleyCol}
-        onCayleyColChange={setCayleyCol}
-        distA={distA}
-        onDistAChange={setDistA}
-        distB={distB}
-        onDistBChange={setDistB}
-        distC={distC}
-        onDistCChange={setDistC}
-        distPhase={distPhase}
-        onDistPhaseChange={setDistPhase}
-        andStep={andStep}
-        onAndStepChange={setAndStep}
-        errorPos={errorPos}
-        errorPhase={errorPhase}
-        onErrorPosChange={setErrorPos}
-        onErrorPhaseChange={setErrorPhase}
-        hammingMode={hammingMode}
-        onHammingModeChange={setHammingMode}
-        weightPlaying={weightPlaying}
-        onWeightPlayingChange={setWeightPlaying}
-        weightStep={weightStep}
-        onWeightStepChange={setWeightStep}
-        onHoveredFanoLineChange={setHoveredFanoLine}
-        octaA={octaA}
-        onOctaAChange={setOctaA}
-        octaB={octaB}
-        onOctaBChange={setOctaB}
-        octaPhase={octaPhase}
-        onOctaPhaseChange={setOctaPhase}
-        gray3Playing={gray3Playing}
-        onGray3PlayingChange={setGray3Playing}
-        gray3Code={gray3Code}
-        onGray3CodeChange={setGray3Code}
-        k8Layer={k8Layer}
-        onK8LayerChange={setK8Layer}
-        tetraPhase={tetraPhase}
-        onTetraPhaseChange={setTetraPhase}
-        gl32Perm={gl32Perm}
-        onGl32PermChange={setGl32Perm}
-        gl32Flash={gl32Flash}
-        onGl32FlashChange={setGl32Flash}
+        cayley={{
+          row: cayleyRow,
+          onRowChange: setCayleyRow,
+          col: cayleyCol,
+          onColChange: setCayleyCol,
+        }}
+        distributive={{
+          a: distA,
+          onAChange: setDistA,
+          b: distB,
+          onBChange: setDistB,
+          c: distC,
+          onCChange: setDistC,
+          phase: distPhase,
+          onPhaseChange: setDistPhase,
+        }}
+        andTriads={{
+          step: andStep,
+          onStepChange: setAndStep,
+        }}
+        errorCorrection={{
+          pos: errorPos,
+          phase: errorPhase,
+          onPosChange: setErrorPos,
+          onPhaseChange: setErrorPhase,
+        }}
+        hamming={{
+          mode: hammingMode,
+          onModeChange: setHammingMode,
+          weightPlaying,
+          onWeightPlayingChange: setWeightPlaying,
+          weightStep,
+          onWeightStepChange: setWeightStep,
+          onHoveredFanoLineChange: setHoveredFanoLine,
+        }}
+        octahedron={{
+          a: octaA,
+          onAChange: setOctaA,
+          b: octaB,
+          onBChange: setOctaB,
+          phase: octaPhase,
+          onPhaseChange: setOctaPhase,
+        }}
+        gray3={{
+          playing: gray3Playing,
+          onPlayingChange: setGray3Playing,
+          code: gray3Code,
+          onCodeChange: setGray3Code,
+        }}
+        polyhedra={{
+          k8Layer,
+          onK8LayerChange: setK8Layer,
+          tetraPhase,
+          onTetraPhaseChange: setTetraPhase,
+        }}
+        gl32={{
+          perm: gl32Perm,
+          onPermChange: setGl32Perm,
+          flash: gl32Flash,
+          onFlashChange: setGl32Flash,
+        }}
       />
     </div>
   );
