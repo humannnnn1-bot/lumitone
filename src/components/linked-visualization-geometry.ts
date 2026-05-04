@@ -13,12 +13,12 @@ export interface LinkedVisualizationHover {
   ci: number;
 }
 
-export interface LinkedVisualizationPoint {
+interface LinkedVisualizationPoint {
   x: number;
   y: number;
 }
 
-export const LINKED_VIZ_LAYOUT = {
+const LINKED_VIZ_LAYOUT = {
   WR: 58,
   WO: 18,
   WCX: 68,

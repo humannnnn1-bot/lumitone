@@ -1,11 +1,11 @@
 export type IntervalHandle = ReturnType<typeof setInterval>;
 export type TimeoutHandle = ReturnType<typeof setTimeout>;
 
-export interface TimerSlot<T> {
+interface TimerSlot<T> {
   current: T | null;
 }
 
-export interface TimerList<T> {
+interface TimerList<T> {
   current: T[];
 }
 

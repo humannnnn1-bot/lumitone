@@ -25,13 +25,13 @@ export interface MusicPlaybackRuntime {
   triggerErrorMarker: () => void;
 }
 
-export type LineComplementPhase = "line" | "complement" | null;
-export type SpectrumStepHandler = (positions: number[], weight: number, index: number) => void;
-export type ComplementCanonStepHandler = (pairIndex: number, phase: "playing" | null) => void;
-export type DistributiveStepHandler = (phase: DistributivePhase | null, value: number) => void;
-export type AndTriadStep = { pairIndex: number; phase: "operands" | "result" } | null;
-export type OctahedronMixPhase = "pair" | "result" | null;
-export type TetraSplitPhase = "t0" | "t1" | null;
+type LineComplementPhase = "line" | "complement" | null;
+type SpectrumStepHandler = (positions: number[], weight: number, index: number) => void;
+type ComplementCanonStepHandler = (pairIndex: number, phase: "playing" | null) => void;
+type DistributiveStepHandler = (phase: DistributivePhase | null, value: number) => void;
+type AndTriadStep = { pairIndex: number; phase: "operands" | "result" } | null;
+type OctahedronMixPhase = "pair" | "result" | null;
+type TetraSplitPhase = "t0" | "t1" | null;
 
 export function scheduleXorTriple(lvA: number, lvB: number, onStep: (lv: number | null) => void, runtime: MusicPlaybackRuntime) {
   runtime.clear();

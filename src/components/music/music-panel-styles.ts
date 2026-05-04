@@ -2,12 +2,12 @@ import type { CSSProperties } from "react";
 import { C, FS, R, SP, HUE_GRADIENT, FONT } from "../../styles/tokens";
 import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
 
-export const MUSIC_CARD_LABEL_FONT_SIZE = `var(--music-card-label-fs, ${FS.lg}px)`;
-export const MUSIC_CARD_SELECT_FONT_SIZE = `var(--music-card-select-fs, ${FS.lg}px)`;
-export const MUSIC_CARD_SELECT_PADDING = "var(--music-card-select-padding, 2px 4px)";
-export const MUSIC_CARD_PADDING = "var(--music-card-padding, 6px)";
-export const MUSIC_CARD_GAP = "var(--music-card-gap, 4px)";
-export const MUSIC_CARD_CONTROL_GAP = `var(--music-card-control-gap, ${SP.sm}px)`;
+const MUSIC_CARD_LABEL_FONT_SIZE = `var(--music-card-label-fs, ${FS.lg}px)`;
+const MUSIC_CARD_SELECT_FONT_SIZE = `var(--music-card-select-fs, ${FS.lg}px)`;
+const MUSIC_CARD_SELECT_PADDING = "var(--music-card-select-padding, 2px 4px)";
+const MUSIC_CARD_PADDING = "var(--music-card-padding, 6px)";
+const MUSIC_CARD_GAP = "var(--music-card-gap, 4px)";
+const MUSIC_CARD_CONTROL_GAP = `var(--music-card-control-gap, ${SP.sm}px)`;
 
 export const S_ROW: CSSProperties = {
   display: "flex",
@@ -95,7 +95,7 @@ export const S_SECTION: CSSProperties = {
   boxSizing: "border-box",
 };
 
-export const S_CARD: CSSProperties = {
+const S_CARD: CSSProperties = {
   display: "flex",
   flexDirection: "column",
   alignItems: "center",

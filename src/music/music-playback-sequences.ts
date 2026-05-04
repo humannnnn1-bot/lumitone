@@ -2,12 +2,12 @@ import { FANO_LINES, TETRA_T0, TETRA_T1 } from "../data/theory-data";
 import { COMPLEMENT_PAIRS, ZIGZAG_PATH } from "../data/music-data";
 import { ALL_POINTS, AND_TRIADS, K8_LAYER_EDGES, extendedHammingCodewords, linesThrough } from "./music-engine-core";
 
-export interface Codeword {
+interface Codeword {
   positions: number[];
   weight: number;
 }
 
-export interface TimedCodeword {
+interface TimedCodeword {
   at: number;
   positions: number[];
   weight: number;
@@ -15,12 +15,12 @@ export interface TimedCodeword {
 }
 
 export type SyndromePhase = "original" | "corrupted" | "syndrome" | "corrected";
-export type SyndromeEvent =
+type SyndromeEvent =
   | { at: number; type: "phase"; phase: SyndromePhase | null }
   | { at: number; type: "tone"; lv: number; errorMarker?: boolean }
   | { at: number; type: "parity"; levels: number[] };
 
-export interface DistributiveValues {
+interface DistributiveValues {
   bxc: number;
   left: number;
   ab: number;
@@ -29,7 +29,7 @@ export interface DistributiveValues {
 }
 
 export type DistributivePhase = "bxc" | "left" | "ab" | "ac" | "right" | "equal";
-export interface DistributiveEvent {
+interface DistributiveEvent {
   at: number;
   phase: DistributivePhase | null;
   value: number;
@@ -89,7 +89,7 @@ export function syndromeDemoEvents(errorPos: number): SyndromeEvent[] {
   return events;
 }
 
-export function weightSpectrumCodewords(): Codeword[] {
+function weightSpectrumCodewords(): Codeword[] {
   const codewords: Codeword[] = [];
   codewords.push({ positions: [], weight: 0 });
   for (const line of FANO_LINES) {
@@ -103,7 +103,7 @@ export function weightSpectrumCodewords(): Codeword[] {
   return codewords;
 }
 
-export function timedCodewords(codewords: Codeword[], terminalWeight: number): TimedCodeword[] {
+function timedCodewords(codewords: Codeword[], terminalWeight: number): TimedCodeword[] {
   let at = 0;
   return codewords.map((cw, index) => {
     const event = { at, positions: cw.positions, weight: cw.weight, index };
@@ -142,7 +142,7 @@ export function pointFanoContextLines(point: number): number[] {
   return point >= 1 && point <= 7 ? linesThrough(point) : [];
 }
 
-export function distributiveValues(a: number, b: number, c: number): DistributiveValues {
+function distributiveValues(a: number, b: number, c: number): DistributiveValues {
   const bxc = b ^ c;
   const left = a & bxc;
   const ab = a & b;
