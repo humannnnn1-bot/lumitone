@@ -136,6 +136,8 @@ describe("SourcePanel interactions", () => {
     const setZoom = vi.fn();
     const saveColor = vi.fn();
     const saveGlaze = vi.fn();
+    const shareColor = vi.fn();
+    const shareGlaze = vi.fn();
     const props: React.ComponentProps<typeof SourcePanel> = {
       srcRef,
       curRef: React.createRef<HTMLCanvasElement>(),
@@ -162,8 +164,8 @@ describe("SourcePanel interactions", () => {
         saveColor,
         saveColorWithLUT: vi.fn(),
         saveGlaze,
-        shareColor: vi.fn(),
-        shareGlaze: vi.fn(),
+        shareColor,
+        shareGlaze,
       },
       colorLUT,
       state: makeState(true),
@@ -188,7 +190,7 @@ describe("SourcePanel interactions", () => {
       ...overrides,
     };
     const view = render(<SourcePanel {...props} />);
-    return { ...view, props, setBrushSize, setPan, setZoom, saveColor, saveGlaze, srcRef, prvRef };
+    return { ...view, props, setBrushSize, setPan, setZoom, saveColor, saveGlaze, shareColor, shareGlaze, srcRef, prvRef };
   }
 
   it("routes tool, brush-size, zoom, pan, and mobile save-confirm controls", () => {
@@ -228,7 +230,7 @@ describe("SourcePanel interactions", () => {
 
   it("uses immediate save/share actions on pointer-fine devices", () => {
     mockPointerFine(true);
-    const { saveColor, saveGlaze } = renderSource();
+    const { saveColor, saveGlaze, shareColor, shareGlaze } = renderSource();
 
     fireEvent.click(screen.getByRole("button", { name: "btn_save_color" }));
     expect(saveColor).toHaveBeenCalledWith(
@@ -238,6 +240,71 @@ describe("SourcePanel interactions", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "btn_save_glaze" }));
     expect(saveGlaze).toHaveBeenCalledWith(expect.stringMatching(/^chromalum_glaze_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png$/));
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "btn_save_gray" }));
+    expect(shareColor).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.stringMatching(/^chromalum_gray_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png$/),
+    );
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "btn_save_color" }));
+    expect(shareColor).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.stringMatching(/^chromalum_color_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png$/),
+    );
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "btn_save_glaze" }));
+    expect(shareGlaze).toHaveBeenCalledWith(expect.stringMatching(/^chromalum_glaze_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png$/));
+  });
+
+  it("routes pixel-perfect zoom, brush range, level double-click, and pan-mode pointer controls", () => {
+    const setTool = vi.fn();
+    const setBrushLevel = vi.fn();
+    const setBrushSize = vi.fn();
+    const setPan = vi.fn();
+    const setZoom = vi.fn();
+    const state = { ...makeState(true), cvs: makeCanvasData(128, 64) };
+    const { props } = renderSource({
+      state,
+      toolState: {
+        tool: "brush",
+        setTool,
+        brushLevel: 2,
+        setBrushLevel,
+        brushSize: 4,
+        setBrushSize,
+      },
+      viewState: {
+        zoom: 1,
+        setZoom,
+        setPan,
+        displayW: 64,
+        displayH: 32,
+        canvasTransform: {},
+        canvasCursor: "crosshair",
+      },
+      panZoomMode: true,
+    });
+
+    fireEvent.contextMenu(screen.getByRole("button", { name: "aria_zoom_reset(100)" }));
+    expect(setZoom).toHaveBeenCalledWith(2);
+    expect(setPan).toHaveBeenCalledWith({ x: 0, y: 0 });
+
+    fireEvent.change(screen.getByLabelText("aria_brush_size"), { target: { value: "12" } });
+    expect(setBrushSize).toHaveBeenCalledWith(12);
+
+    fireEvent.doubleClick(screen.getByLabelText("announce_level(0,Black)"));
+    expect(setBrushLevel).toHaveBeenCalledWith(0);
+    expect(setTool).toHaveBeenCalledWith("eraser");
+
+    const canvas = screen.getByRole("application", { name: "aria_drawing_canvas" });
+    fireEvent.pointerDown(canvas, { button: 0 });
+    fireEvent.pointerMove(canvas);
+    fireEvent.pointerUp(canvas);
+    fireEvent.pointerLeave(canvas);
+    expect(props.onPinchDown).toHaveBeenCalled();
+    expect(props.onPinchMove).toHaveBeenCalled();
+    expect(props.onPinchUp).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -398,6 +465,39 @@ describe("GlazePanel interactions", () => {
     expect(setDirectCandidates).toHaveBeenCalledWith(expect.any(Function));
     const updated = (setDirectCandidates.mock.calls[0][0] as (value: Map<number, number>) => Map<number, number>)(new Map());
     expect(updated.size).toBe(1);
+  });
+
+  it("routes keyboard tool switching, zoom reset, and pan-mode pointer controls", () => {
+    const setZoom = vi.fn();
+    const setPan = vi.fn();
+    const schedCursor = vi.fn();
+    const { props, panZoom, setGlazeTool } = renderGlaze({
+      props: {
+        panZoomMode: true,
+        panZoom: makePanZoom({ setZoom, setPan, schedCursorRef: { current: schedCursor } }),
+      },
+    });
+
+    const canvas = screen.getByRole("img", { name: "label_glaze" });
+    const wrap = canvas.parentElement!;
+
+    fireEvent.keyDown(wrap, { key: "e" });
+    expect(setGlazeTool).toHaveBeenCalledWith("glaze_eraser");
+    expect(props.announce).toHaveBeenCalledWith("announce_glaze_eraser");
+
+    fireEvent.keyDown(wrap, { key: "0" });
+    expect(setZoom).toHaveBeenCalledWith(1);
+    expect(setPan).toHaveBeenCalledWith({ x: 0, y: 0 });
+    expect(schedCursor).toHaveBeenCalled();
+
+    fireEvent.pointerDown(canvas, { button: 0 });
+    fireEvent.pointerMove(canvas);
+    fireEvent.pointerUp(canvas);
+    fireEvent.pointerLeave(canvas);
+    expect(props.onPinchDown).toHaveBeenCalled();
+    expect(props.onPinchMove).toHaveBeenCalled();
+    expect(props.onPinchUp).toHaveBeenCalledTimes(2);
+    expect(panZoom.startPan).not.toHaveBeenCalled();
   });
 });
 
