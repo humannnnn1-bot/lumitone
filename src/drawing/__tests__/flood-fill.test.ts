@@ -93,6 +93,37 @@ describe("floodFill", () => {
     expect(result!.changed.length).toBe(1); // only (0,0)
     expect(buf[1 * 3 + 1]).toBe(0); // diagonal not filled
   });
+
+  it("does not fill a shifted run on an adjacent row", () => {
+    const buf = new Uint8Array([
+      0,
+      0,
+      0,
+      0, //
+      0,
+      0,
+      0,
+      0, //
+      0,
+      0,
+      0,
+      0, //
+      0,
+      0,
+      0,
+      2, //
+      0,
+      0,
+      2,
+      0,
+    ]);
+    const result = floodFill(buf, 2, 4, 7, 4, 5);
+
+    expect(result).not.toBeNull();
+    expect(Array.from(result!.changed)).toEqual([18]);
+    expect(buf[18]).toBe(7);
+    expect(buf[15]).toBe(2);
+  });
 });
 
 describe("edge cases", () => {

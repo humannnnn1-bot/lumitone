@@ -54,6 +54,7 @@ function scanlineFill(
   };
 
   const push = (y: number, xl: number, xr: number, dy: number) => {
+    if (y < 0 || y >= h) return;
     if (sp + 4 > stack.length) {
       const newLen = Math.min(stack.length * 2, maxPixels * 4);
       if (newLen <= stack.length) {
@@ -79,6 +80,7 @@ function scanlineFill(
       xl = stack[--sp],
       y = stack[--sp];
     if (y < 0 || y >= h) continue;
+    if (xl < 0 || xl >= w || !match(y * w + xl)) continue;
     let x = xl;
     while (x >= 0 && match(y * w + x)) {
       const idx = y * w + x;
