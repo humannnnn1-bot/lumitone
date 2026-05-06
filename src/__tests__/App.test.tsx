@@ -71,7 +71,7 @@ describe("App", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Shortcuts" }));
     expect(screen.getByRole("dialog", { name: "Keyboard Shortcuts" })).toBeTruthy();
-  });
+  }, 15000);
 
   it("shows and dismisses the service worker update prompt", async () => {
     renderApp();

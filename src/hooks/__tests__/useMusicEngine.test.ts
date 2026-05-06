@@ -233,6 +233,51 @@ describe("useMusicEngine", () => {
     unmount();
   });
 
+  it("tears down audio and active playback when disabled", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("AudioContext", FakeAudioContext);
+
+    const { result, rerender, unmount } = renderHook(
+      ({ enabled }) =>
+        useMusicEngine({
+          enabled,
+          levels: DEFAULT_LEVELS,
+          hoveredLv: null,
+          alpha0: 0,
+          alpha7: 0,
+          volume: 0.7,
+          scaleMode: "diatonic7",
+          fmEnabled: false,
+          panEnabled: true,
+          hoveredFanoLine: null,
+          luminanceMode: "symmetric",
+          originMode: 0,
+        }),
+      { initialProps: { enabled: true } },
+    );
+
+    act(() => {
+      result.current.initAudio();
+    });
+    const ctx = FakeAudioContext.instances[0];
+
+    const onStep = vi.fn();
+    act(() => {
+      result.current.playGrayMelody(60, onStep);
+    });
+    act(() => {
+      rerender({ enabled: false });
+    });
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(ctx.state).toBe("closed");
+    expect(onStep).not.toHaveBeenCalled();
+
+    unmount();
+  });
+
   it("starts, restarts, and stops the Gray melody interval", () => {
     vi.useFakeTimers();
     vi.stubGlobal("AudioContext", FakeAudioContext);
