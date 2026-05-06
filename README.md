@@ -147,6 +147,12 @@ Run coverage:
 npm run test:coverage
 ```
 
+Run local performance benchmarks:
+
+```bash
+npm run benchmark
+```
+
 Run end-to-end tests:
 
 ```bash
