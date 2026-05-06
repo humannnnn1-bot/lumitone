@@ -4,6 +4,7 @@ import { LEVEL_MASK } from "../constants";
 import type { CanvasData, MapMode } from "../types";
 import { computeNoiseLevelNorm, computeDiversity, computeEdgeDepth, computeGradient, computeRegion } from "../utils/pixel-analysis";
 import type { WorkerRequest, WorkerResponse } from "../workers/pixel-analysis.worker";
+import { recordDebugPerf, startDebugPerf } from "../utils/perf-debug";
 
 // Lazy worker constructor — Vite ?worker import
 import PixelAnalysisWorker from "../workers/pixel-analysis.worker?worker";
@@ -138,9 +139,11 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): P
     }
 
     if (!WORKER_MODES.has(mode)) {
+      const perfStart = startDebugPerf();
       const nextMaps = computePixelMapsSync(cvs, mode);
       cache.byMode[mode] = nextMaps;
       setMaps(nextMaps);
+      recordDebugPerf(`pixel-analysis:${mode}:sync`, perfStart, { w: cvs.w, h: cvs.h, pixels: cvs.w * cvs.h });
       return;
     }
 
@@ -155,13 +158,16 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): P
     }
 
     if (!worker) {
+      const perfStart = startDebugPerf();
       const nextMaps = computePixelMapsSync(cvs, mode);
       cache.byMode[mode] = nextMaps;
       setMaps(nextMaps);
+      recordDebugPerf(`pixel-analysis:${mode}:sync-fallback`, perfStart, { w: cvs.w, h: cvs.h, pixels: cvs.w * cvs.h });
       return;
     }
 
     const id = ++requestIdRef.current;
+    const perfStart = startDebugPerf();
     const dataCopy = new Uint8Array(cvs.data);
     const colorMapCopy = new Uint8Array(cvs.colorMap);
     const req: WorkerRequest = { id, mode, data: dataCopy, colorMap: colorMapCopy, w: cvs.w, h: cvs.h };
@@ -185,6 +191,12 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): P
       const nextMaps = computePixelMapsSync(cvs, mode);
       cache.byMode[mode] = nextMaps;
       setMaps(nextMaps);
+      recordDebugPerf(`pixel-analysis:${mode}:sync-fallback`, perfStart, {
+        status: "worker-error",
+        w: cvs.w,
+        h: cvs.h,
+        pixels: cvs.w * cvs.h,
+      });
     };
 
     const handleMessage = (e: MessageEvent<WorkerResponse>) => {
@@ -194,6 +206,7 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): P
       const nextMaps = toPixelMaps(e.data);
       cache.byMode[mode] = nextMaps;
       setMaps(nextMaps);
+      recordDebugPerf(`pixel-analysis:${mode}:worker`, perfStart, { w: cvs.w, h: cvs.h, pixels: cvs.w * cvs.h });
     };
 
     const handleError = () => {
@@ -239,6 +252,7 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): P
     let disposed = false;
     let pendingId = 0;
     let pendingMode: MapMode | null = null;
+    let pendingPerfStart: number | null = null;
 
     const resetWorker = () => {
       if (preloadWorkerRef.current === worker) {
@@ -266,6 +280,7 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): P
 
       pendingMode = nextMode;
       pendingId = ++preloadRequestIdRef.current;
+      pendingPerfStart = startDebugPerf();
       const dataCopy = new Uint8Array(cvs.data);
       const colorMapCopy = new Uint8Array(cvs.colorMap);
       const req: WorkerRequest = { id: pendingId, mode: nextMode, data: dataCopy, colorMap: colorMapCopy, w: cvs.w, h: cvs.h };
@@ -283,11 +298,25 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): P
         return;
       }
       cache.byMode[pendingMode] = toPixelMaps(e.data);
+      recordDebugPerf(`pixel-analysis:${pendingMode}:preload-worker`, pendingPerfStart, {
+        w: cvs.w,
+        h: cvs.h,
+        pixels: cvs.w * cvs.h,
+      });
       pendingMode = null;
+      pendingPerfStart = null;
       runNext();
     };
 
     const handleError = () => {
+      if (pendingMode) {
+        recordDebugPerf(`pixel-analysis:${pendingMode}:preload-worker`, pendingPerfStart, {
+          status: "error",
+          w: cvs.w,
+          h: cvs.h,
+          pixels: cvs.w * cvs.h,
+        });
+      }
       cleanup();
       resetWorker();
     };

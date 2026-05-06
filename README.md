@@ -160,6 +160,11 @@ npm run lint
 npm run format:check
 ```
 
+To inspect canvas performance locally, open the app with `?debugPerf` appended
+to the URL. The console reports rolling `avgMs`, `p95Ms`, and `maxMs` for
+`renderBuf`, analysis map rendering, flood fill requests, and pixel-analysis
+requests.
+
 `format:check` covers source, tests, GitHub configuration, root Markdown, and
 technical Markdown in `docs/`. Long-form research notes keep their editorial
 line wrapping and are excluded in `.prettierignore`.

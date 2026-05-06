@@ -6,6 +6,7 @@ import type { MapMode } from "../types";
 import type { PixelMaps } from "../hooks/usePixelMaps";
 import { C, SP, FS, R, FONT } from "../styles/tokens";
 import { openBlobUrlInNewTab, timestamp } from "../utils";
+import { recordDebugPerf, startDebugPerf } from "../utils/perf-debug";
 import { useTranslation } from "../i18n";
 import { ConfirmModal } from "./ConfirmModal";
 
@@ -145,6 +146,7 @@ export function MapCanvas({
   useEffect(() => {
     const c = ref.current;
     if (!c || cw === 0 || ch === 0) return;
+    const perfStart = startDebugPerf();
     if (c.width !== cw || c.height !== ch) {
       c.width = cw;
       c.height = ch;
@@ -158,6 +160,12 @@ export function MapCanvas({
     // Skip rendering if pixelMaps dimensions don't match canvas (stale worker response)
     if (pixelMaps.w !== cw || pixelMaps.h !== ch) {
       ctx.putImageData(img, 0, 0);
+      recordDebugPerf(`MapCanvas:${mode}`, perfStart, {
+        status: "stale",
+        w: cw,
+        h: ch,
+        pixels: n,
+      });
       return;
     }
 
@@ -286,6 +294,12 @@ export function MapCanvas({
       }
     }
     ctx.putImageData(img, 0, 0);
+    recordDebugPerf(`MapCanvas:${mode}`, perfStart, {
+      status: "rendered",
+      w: cw,
+      h: ch,
+      pixels: n,
+    });
   }, [mode, pixelMaps, colorLUT, cvs, cw, ch]);
 
   // Hover info
