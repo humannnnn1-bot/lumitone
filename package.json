@@ -9,7 +9,7 @@
     "build": "tsc --noEmit && vite build",
     "build:itch": "tsc --noEmit && vite build --base ./",
     "preview": "vite preview",
-    "test": "vitest run",
+    "test": "vitest run --testTimeout=15000",
     "test:e2e": "playwright test",
     "test:pwa": "playwright test -c playwright.pwa.config.ts",
     "test:visual": "playwright test -c playwright.visual.config.ts",

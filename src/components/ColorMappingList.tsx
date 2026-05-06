@@ -120,7 +120,10 @@ export const ColorMappingList = memo(
                   const outputColor = rgbStr(cur.rgb);
                   return (
                     <span style={{ fontSize: FS.md, fontFamily: FONT.mono, whiteSpace: "nowrap" }}>
-                      <span style={{ ...ibs, color: canonicalColor, width: 36 }}>
+                      <span
+                        data-a11y-color-contrast-exception="intentional-color-sample"
+                        style={{ ...ibs, color: canonicalColor, width: 36 }}
+                      >
                         {"\u2B21"}
                         {canon}°
                       </span>
@@ -130,7 +133,9 @@ export const ColorMappingList = memo(
                         {Math.abs(d)}°
                       </span>
                       <span style={{ ...ibc, color: C.textDim }}>=</span>
-                      <span style={{ ...ibs, color: outputColor, width: 32 }}>{hexAngle}°</span>
+                      <span data-a11y-color-contrast-exception="intentional-color-sample" style={{ ...ibs, color: outputColor, width: 32 }}>
+                        {hexAngle}°
+                      </span>
                     </span>
                   );
                 })()}

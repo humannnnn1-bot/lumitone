@@ -428,7 +428,7 @@ export const FanoPlane = React.memo(function FanoPlane({ hlLevel, onHover }: Pro
           className="theory-annotation theory-diagram-button"
           style={{
             ...S_BTN,
-            opacity: cmyMode ? 1 : 0.5,
+            background: cmyMode ? S_BTN.background : "rgba(15,15,26,0.5)",
             borderColor: cmyMode ? "rgba(255,100,100,0.6)" : C.border,
             color: cmyMode ? "#ff6644" : C.textMuted,
             marginLeft: SP.xl,

@@ -6,10 +6,13 @@ interface AxeViolationSummary {
   impact: string | null;
   help: string;
   nodes: {
+    html?: string | null;
     target: string[];
     failureSummary?: string | null;
   }[];
 }
+
+const INTENTIONAL_COLOR_SAMPLE_ATTR = 'data-a11y-color-contrast-exception="intentional-color-sample"';
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -32,9 +35,20 @@ function formatViolations(violations: AxeViolationSummary[]): string {
     .join("\n\n");
 }
 
+function filterIntentionalColorSampleContrast(violations: AxeViolationSummary[]): AxeViolationSummary[] {
+  return violations
+    .map((violation) => {
+      if (violation.id !== "color-contrast") return violation;
+      const nodes = violation.nodes.filter((node) => !node.html?.includes(INTENTIONAL_COLOR_SAMPLE_ATTR));
+      return { ...violation, nodes };
+    })
+    .filter((violation) => violation.nodes.length > 0);
+}
+
 async function expectNoA11yViolations(page: Page, label: string) {
   const results = await new AxeBuilder({ page }).analyze();
-  expect(results.violations, `${label} accessibility violations:\n${formatViolations(results.violations)}`).toEqual([]);
+  const violations = filterIntentionalColorSampleContrast(results.violations);
+  expect(violations, `${label} accessibility violations:\n${formatViolations(violations)}`).toEqual([]);
 }
 
 async function gotoSource(page: Page) {
