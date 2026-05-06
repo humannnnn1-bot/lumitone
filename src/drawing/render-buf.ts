@@ -8,6 +8,7 @@
 import { LEVEL_INFO, LEVEL_CANDIDATES } from "../color-engine";
 import { LEVEL_MASK } from "../constants";
 import type { DirtyRect, ImgCache } from "../types";
+import { recordDebugPerf, startDebugPerf } from "../utils/perf-debug";
 
 /* ═══════════════════════════════════════════
    renderBuf — module-level function
@@ -53,6 +54,7 @@ export function renderBuf(
   colorMap?: Uint8Array | null,
 ): void {
   if (!srcCanvas && !prvCanvas) return;
+  const perfStart = startDebugPerf();
   const sc = srcCanvas?.getContext("2d") ?? null;
   const pc = prvCanvas?.getContext("2d") ?? null;
   if (!sc && !pc) return;
@@ -67,6 +69,7 @@ export function renderBuf(
   const s32 = imgCache.s32!,
     p32 = imgCache.p32!;
   const hasColorMap = colorMap != null && colorMap.length > 0;
+  const targets = (sc ? 1 : 0) + (pc ? 1 : 0);
   // Rebuild _lutPacked only when lut reference changes
   if (lut !== _cachedLutRef) {
     _cachedLutRef = lut;
@@ -99,6 +102,14 @@ export function renderBuf(
     if (dw > 0 && dh > 0) {
       if (sc) sc.putImageData(si, 0, 0, x0, y0, dw, dh);
       if (pc) pc.putImageData(pi, 0, 0, x0, y0, dw, dh);
+      recordDebugPerf("renderBuf", perfStart, {
+        mode: "dirty",
+        w,
+        h,
+        pixels: dw * dh,
+        targets,
+        colorMap: hasColorMap,
+      });
     }
   } else {
     const n = Math.min(w * h, data.length);
@@ -123,5 +134,13 @@ export function renderBuf(
     }
     if (sc) sc.putImageData(si, 0, 0);
     if (pc) pc.putImageData(pi, 0, 0);
+    recordDebugPerf("renderBuf", perfStart, {
+      mode: "full",
+      w,
+      h,
+      pixels: n,
+      targets,
+      colorMap: hasColorMap,
+    });
   }
 }

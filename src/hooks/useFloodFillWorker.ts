@@ -6,6 +6,7 @@
 import { useRef, useEffect, useCallback } from "react";
 import { floodFill, glazeFloodFill } from "../drawing/flood-fill";
 import type { FloodFillWorkerRequest, FloodFillWorkerResponse } from "../workers/flood-fill.worker";
+import { recordDebugPerf, startDebugPerf } from "../utils/perf-debug";
 
 // Lazy worker constructor — Vite ?worker import
 import FloodFillWorker from "../workers/flood-fill.worker?worker";
@@ -75,14 +76,19 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
 
   const requestCanvasFill = useCallback(
     (buf: Uint8Array, sx: number, sy: number, newVal: number, w: number, h: number): Promise<CanvasFillResult> => {
+      const perfStart = startDebugPerf();
+      const pixels = w * h;
       // Use sync fallback for small canvases or when Worker unavailable
-      const worker = w * h < SYNC_THRESHOLD ? null : getWorker();
+      const worker = pixels < SYNC_THRESHOLD ? null : getWorker();
       if (!worker) {
         const result = floodFill(buf, sx, sy, newVal, w, h);
+        const changed = result ? result.changed : new Uint32Array(0);
+        const truncated = result ? result.truncated : false;
+        recordDebugPerf("flood-fill:canvas:sync", perfStart, { w, h, pixels, changed: changed.length, truncated });
         return Promise.resolve({
           data: buf,
-          changed: result ? result.changed : new Uint32Array(0),
-          truncated: result ? result.truncated : false,
+          changed,
+          truncated,
         });
       }
 
@@ -100,18 +106,28 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
         const timeout = setTimeout(() => {
           cleanup();
           resetWorker(worker);
+          recordDebugPerf("flood-fill:canvas:worker", perfStart, { status: "timeout", w, h, pixels });
           reject(new Error("Flood fill timed out"));
         }, FILL_TIMEOUT_MS);
 
         const errHandler = (ev: ErrorEvent) => {
           cleanup();
           resetWorker(worker);
+          recordDebugPerf("flood-fill:canvas:worker", perfStart, { status: "error", w, h, pixels });
           reject(new Error(ev.message || "Worker error"));
         };
 
         const handler = (e: MessageEvent<FloodFillWorkerResponse>) => {
           if (e.data.id !== id) return;
           cleanup();
+          recordDebugPerf("flood-fill:canvas:worker", perfStart, {
+            status: "ok",
+            w,
+            h,
+            pixels,
+            changed: e.data.changed.length,
+            truncated: e.data.truncated,
+          });
           resolve({
             data: e.data.data,
             changed: e.data.changed,
@@ -129,14 +145,19 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
 
   const requestGlazeFill = useCallback(
     (data: Uint8Array, colorMap: Uint8Array, sx: number, sy: number, newCmVal: number, w: number, h: number): Promise<GlazeFillResult> => {
+      const perfStart = startDebugPerf();
+      const pixels = w * h;
       // Use sync fallback for small canvases or when Worker unavailable
-      const worker = w * h < SYNC_THRESHOLD ? null : getWorker();
+      const worker = pixels < SYNC_THRESHOLD ? null : getWorker();
       if (!worker) {
         const result = glazeFloodFill(data, colorMap, sx, sy, newCmVal, w, h);
+        const changed = result ? result.changed : new Uint32Array(0);
+        const truncated = result ? result.truncated : false;
+        recordDebugPerf("flood-fill:glaze:sync", perfStart, { w, h, pixels, changed: changed.length, truncated });
         return Promise.resolve({
           colorMap,
-          changed: result ? result.changed : new Uint32Array(0),
-          truncated: result ? result.truncated : false,
+          changed,
+          truncated,
         });
       }
 
@@ -166,18 +187,28 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
         const timeout = setTimeout(() => {
           cleanup();
           resetWorker(worker);
+          recordDebugPerf("flood-fill:glaze:worker", perfStart, { status: "timeout", w, h, pixels });
           reject(new Error("Glaze fill timed out"));
         }, FILL_TIMEOUT_MS);
 
         const errHandler = (ev: ErrorEvent) => {
           cleanup();
           resetWorker(worker);
+          recordDebugPerf("flood-fill:glaze:worker", perfStart, { status: "error", w, h, pixels });
           reject(new Error(ev.message || "Worker error"));
         };
 
         const handler = (e: MessageEvent<FloodFillWorkerResponse>) => {
           if (e.data.id !== id) return;
           cleanup();
+          recordDebugPerf("flood-fill:glaze:worker", perfStart, {
+            status: "ok",
+            w,
+            h,
+            pixels,
+            changed: e.data.changed.length,
+            truncated: e.data.truncated,
+          });
           resolve({
             colorMap: e.data.colorMap!,
             changed: e.data.changed,
