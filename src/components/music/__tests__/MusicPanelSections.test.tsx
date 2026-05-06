@@ -342,6 +342,19 @@ describe("MusicPanel section components", () => {
     expect(props.onVolumeChange).toHaveBeenCalledWith(0.25);
   });
 
+  it("uses fixed-height buttons for rotation and volume controls", () => {
+    const props = makeTransportProps();
+    renderWithLanguage(<MusicTransportControls {...props} />);
+
+    for (const name of ["Auto-rotate hue backward", "Auto-rotate hue forward", "Auto-rotate α backward", "Auto-rotate α forward", "Mute"]) {
+      const button = screen.getByRole("button", { name });
+      expect(button.style.height).toBe("22px");
+      expect(button.style.fontSize).toBe("11px");
+      expect(button.style.lineHeight).toBe("1");
+      expect(button.style.minWidth).toBe("36px");
+    }
+  });
+
   it("routes Fano selectors and keeps XOR play disabled until both operands are selected", () => {
     const props = makeFanoProps();
     renderWithLanguage(<MusicFanoControls {...props} />);
