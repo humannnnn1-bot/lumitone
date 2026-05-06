@@ -65,9 +65,10 @@ and autosave uses IndexedDB.
 - **Offline support:** production builds include a service worker that
   pre-caches the app shell, icons, workers, and lazy-loaded Music tab chunk for
   offline reopening.
-- **Testing:** Vitest unit tests plus Playwright end-to-end checks that verify
-  canvas pixels, save flows, gallery previews, glaze clearing, Theory rendering,
-  PWA offline behavior, and mobile touch input.
+- **Testing:** Vitest unit tests plus Playwright end-to-end, accessibility, and
+  manual visual-regression checks that verify canvas pixels, save flows, gallery
+  previews, glaze clearing, Theory rendering, PWA offline behavior, and mobile
+  touch input.
 - **Quality gates:** TypeScript strict mode, ESLint, Prettier, coverage
   thresholds, CodeQL, Dependabot, pinned GitHub Actions, and GitHub Pages
   deployment.
@@ -158,6 +159,20 @@ Run end-to-end tests:
 ```bash
 npm run test:e2e
 ```
+
+Run local visual regression checks:
+
+```bash
+npm run test:visual
+```
+
+Update visual baselines after an intentional UI change:
+
+```bash
+npm run test:visual:update
+```
+
+Visual regression is currently a manual/local check, not a required CI gate.
 
 Run linting and formatting checks:
 
