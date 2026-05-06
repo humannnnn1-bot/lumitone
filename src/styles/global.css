@@ -278,6 +278,9 @@ html:lang(en) .theory-title {
   margin: 0;
   text-align: center;
 }
+.theory-annotation {
+  opacity: 1 !important;
+}
 .theory-binary-svg {
   width: 100%;
   max-width: 480px;
