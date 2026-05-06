@@ -41,6 +41,13 @@ const S_UPDATE_ACTION: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 
+const S_UPDATE_MESSAGE: React.CSSProperties = {
+  minWidth: 0,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+
 const S_UPDATE_DISMISS: React.CSSProperties = {
   border: 0,
   background: "transparent",
@@ -54,7 +61,7 @@ const S_UPDATE_DISMISS: React.CSSProperties = {
 export const PwaUpdateToast = React.memo(function PwaUpdateToast({ reloading, onReload, onDismiss, t }: PwaUpdateToastProps) {
   return (
     <div role="status" aria-live="polite" style={S_UPDATE_TOAST}>
-      <span style={{ minWidth: 0 }}>{t("pwa_update_available")}</span>
+      <span style={S_UPDATE_MESSAGE}>{t("pwa_update_available")}</span>
       <button type="button" onClick={onReload} disabled={reloading} style={S_UPDATE_ACTION}>
         {reloading ? t("pwa_update_reloading") : t("pwa_update_reload")}
       </button>

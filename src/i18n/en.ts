@@ -144,7 +144,7 @@ export const en = {
 
   // App - toast messages
   toast_restore_failed: "Failed to restore saved data",
-  toast_restore_invalid: "Saved data could not be used. Started with a blank canvas without overwriting the saved data.",
+  toast_restore_invalid: "Saved data could not be used. Started with a blank canvas.",
   toast_autosave_failed: "Auto-save failed",
   toast_image_gen_failed: "Failed to generate image (possibly out of memory)",
   toast_save_long_press: "Long-press to save: {0}",
@@ -174,7 +174,7 @@ export const en = {
 
   // FileDrop
   toast_image_load_failed: "Failed to load image",
-  toast_image_permission_failed: "Could not read this file. On Android, choose a locally saved image from Files/Downloads.",
+  toast_image_permission_failed: "Could not read this file. Choose an image from Files/Downloads.",
   toast_image_process_failed: "Image processing failed",
   toast_image_too_large: "Image too large",
   toast_image_resized: "Resized: {0}×{1} → {2}×{3}",

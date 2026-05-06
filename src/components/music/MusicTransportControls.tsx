@@ -34,6 +34,24 @@ interface MusicTransportControlsProps {
 
 const SCALE_MODES: ScaleMode[] = ["ji", "diatonic7", "octatonic", "12tet"];
 
+const S_TRANSPORT_BTN: React.CSSProperties = {
+  ...S_BTN_SM,
+  boxSizing: "border-box",
+  fontSize: FS.lg,
+  height: 22,
+  lineHeight: 1,
+  minWidth: 36,
+};
+
+const S_TRANSPORT_BTN_ACTIVE: React.CSSProperties = {
+  ...S_BTN_SM_ACTIVE,
+  boxSizing: "border-box",
+  fontSize: FS.lg,
+  height: 22,
+  lineHeight: 1,
+  minWidth: 36,
+};
+
 export const MusicTransportControls = React.memo(function MusicTransportControls({
   scaleMode,
   onScaleModeChange,
@@ -109,7 +127,7 @@ export const MusicTransportControls = React.memo(function MusicTransportControls
       <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
         <button
           type="button"
-          style={{ ...(hueDir === -1 ? S_BTN_SM_ACTIVE : S_BTN_SM), minWidth: 36 }}
+          style={hueDir === -1 ? S_TRANSPORT_BTN_ACTIVE : S_TRANSPORT_BTN}
           onClick={onHueReverse}
           aria-label={t("linkedviz_hue_reverse")}
           title={t("linkedviz_hue_reverse")}
@@ -118,7 +136,7 @@ export const MusicTransportControls = React.memo(function MusicTransportControls
         </button>
         <button
           type="button"
-          style={{ ...(hueDir === 1 ? S_BTN_SM_ACTIVE : S_BTN_SM), minWidth: 36 }}
+          style={hueDir === 1 ? S_TRANSPORT_BTN_ACTIVE : S_TRANSPORT_BTN}
           onClick={onHuePlay}
           aria-label={t("linkedviz_hue_play")}
           title={t("linkedviz_hue_play")}
@@ -140,7 +158,7 @@ export const MusicTransportControls = React.memo(function MusicTransportControls
       <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
         <button
           type="button"
-          style={{ ...(alphaDir === -1 ? S_BTN_SM_ACTIVE : S_BTN_SM), minWidth: 36 }}
+          style={alphaDir === -1 ? S_TRANSPORT_BTN_ACTIVE : S_TRANSPORT_BTN}
           onClick={onAlphaReverse}
           aria-label={t("linkedviz_alpha_reverse")}
           title={t("linkedviz_alpha_reverse")}
@@ -149,7 +167,7 @@ export const MusicTransportControls = React.memo(function MusicTransportControls
         </button>
         <button
           type="button"
-          style={{ ...(alphaDir === 1 ? S_BTN_SM_ACTIVE : S_BTN_SM), minWidth: 36 }}
+          style={alphaDir === 1 ? S_TRANSPORT_BTN_ACTIVE : S_TRANSPORT_BTN}
           onClick={onAlphaPlay}
           aria-label={t("linkedviz_alpha_play")}
           title={t("linkedviz_alpha_play")}
@@ -186,7 +204,7 @@ export const MusicTransportControls = React.memo(function MusicTransportControls
         <button
           type="button"
           onClick={onMuteToggle}
-          style={{ ...(muted ? S_BTN_SM_ACTIVE : S_BTN_SM), minWidth: 36 }}
+          style={muted ? S_TRANSPORT_BTN_ACTIVE : S_TRANSPORT_BTN}
           aria-label={muted ? t("music_unmute") : t("music_mute")}
           title={muted ? t("music_unmute") : t("music_mute")}
         >
