@@ -32,6 +32,14 @@ export const S_BTN_ACTIVE: React.CSSProperties = {
   color: C.accentBright,
   fontWeight: FW.bold,
 };
+export const S_THEORY_BTN: React.CSSProperties = {
+  ...S_BTN,
+  fontWeight: FW.normal,
+};
+export const S_THEORY_BTN_ACTIVE: React.CSSProperties = {
+  ...S_BTN_ACTIVE,
+  fontWeight: FW.normal,
+};
 const BTN_SM_PADDING = `var(--btn-sm-padding, ${SP.xs}px ${SP.md}px)`;
 const BTN_SM_FONT_SIZE = `var(--btn-sm-font-size, ${FS.md}px)`;
 

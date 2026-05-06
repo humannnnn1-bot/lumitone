@@ -11,15 +11,10 @@ import {
 } from "../../data/theory-data";
 import { C, FS, FW, SP, FONT } from "../../styles/tokens";
 import { usePinReset } from "./pin-reset";
-import { S_BTN, S_BTN_ACTIVE, S_CURSOR_POINTER } from "../../styles/shared";
+import { S_CURSOR_POINTER, S_THEORY_BTN, S_THEORY_BTN_ACTIVE } from "../../styles/shared";
 import { useTranslation } from "../../i18n";
 
 const DOT_R = 11;
-
-const theoryToggleStyle = (active: boolean): React.CSSProperties => ({
-  ...(active ? S_BTN_ACTIVE : S_BTN),
-  fontWeight: FW.normal,
-});
 
 function edgesOf(v: number): number[] {
   return CUBE_EDGES.map((e, i) => (e[0] === v || e[1] === v ? i : -1)).filter((i) => i >= 0);
@@ -464,7 +459,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
       <div style={{ display: "flex", gap: SP.sm, flexWrap: "wrap", justifyContent: "center" }}>
         <button
           className="theory-annotation theory-diagram-button"
-          style={theoryToggleStyle(equatorMode)}
+          style={equatorMode ? S_THEORY_BTN_ACTIVE : S_THEORY_BTN}
           onClick={() => setEquatorMode((v) => !v)}
           aria-pressed={equatorMode}
         >
@@ -472,7 +467,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
         </button>
         <button
           className="theory-annotation theory-diagram-button"
-          style={theoryToggleStyle(showComplements)}
+          style={showComplements ? S_THEORY_BTN_ACTIVE : S_THEORY_BTN}
           onClick={() => setShowComplements((v) => !v)}
           aria-pressed={showComplements}
         >
@@ -480,7 +475,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
         </button>
         <button
           className="theory-annotation theory-diagram-button"
-          style={theoryToggleStyle(showK8)}
+          style={showK8 ? S_THEORY_BTN_ACTIVE : S_THEORY_BTN}
           onClick={() => setShowK8((v) => !v)}
           aria-pressed={showK8}
         >
@@ -488,7 +483,7 @@ export const ColorCube = React.memo(function ColorCube({ hlLevel, onHover }: Pro
         </button>
         <button
           className="theory-annotation theory-diagram-button"
-          style={theoryToggleStyle(hasseMode)}
+          style={hasseMode ? S_THEORY_BTN_ACTIVE : S_THEORY_BTN}
           onClick={() => setHasseMode((v) => !v)}
           aria-pressed={hasseMode}
         >
