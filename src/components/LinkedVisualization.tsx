@@ -82,7 +82,7 @@ const S_TOGGLE_ACTIVE: React.CSSProperties = {
   border: `1px solid ${C.accent}`,
   cursor: "pointer",
   background: C.accent,
-  color: "#fff",
+  color: C.bgRoot,
   transition: "all 0.15s",
   whiteSpace: "nowrap",
 };

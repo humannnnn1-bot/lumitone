@@ -5,7 +5,6 @@ import { S_NAV_ARROW, S_SWATCH } from "../styles/shared";
 import type { ColorAction } from "../state/color-reducer";
 import { useTranslation } from "../i18n";
 import { C, SP, FS, R, DUR, FONT } from "../styles/tokens";
-import { THEORY_LEVELS } from "../data/theory-data";
 import { HEX_CANDIDATE_ANGLES } from "../data/hex-data";
 
 const MOBILE_BP = 600;
@@ -46,7 +45,6 @@ export const ColorMappingList = memo(
             cur = alts[ci],
             has = alts.length > 1;
           const isActive = brushLevel === i;
-          const tl = THEORY_LEVELS[i];
           // L1/L6 are single-candidate chromatic — size row height to the midpoint
           // of achromatic (L0/L7) and multi-candidate (L2–L5) neighbors.
           // L2–L5 height is driven by S_NAV_ARROW minHeight (tap target), constant across breakpoints.
@@ -118,9 +116,10 @@ export const ColorMappingList = memo(
                   const d = hueDelta(hexAngle, canon);
                   const ibs = { display: "inline-block" as const, textAlign: "right" as const };
                   const ibc = { display: "inline-block" as const, textAlign: "center" as const, width: 9 };
+                  const angleTextColor = C.textDimmer;
                   return (
                     <span style={{ fontSize: FS.md, fontFamily: FONT.mono, whiteSpace: "nowrap" }}>
-                      <span style={{ ...ibs, color: tl.color, width: 36 }}>
+                      <span style={{ ...ibs, color: angleTextColor, width: 36 }}>
                         {"\u2B21"}
                         {canon}°
                       </span>
@@ -130,7 +129,7 @@ export const ColorMappingList = memo(
                         {Math.abs(d)}°
                       </span>
                       <span style={{ ...ibc, color: C.textDim }}>=</span>
-                      <span style={{ ...ibs, color: rgbStr(cur.rgb), width: 32 }}>{hexAngle}°</span>
+                      <span style={{ ...ibs, color: angleTextColor, width: 32 }}>{hexAngle}°</span>
                     </span>
                   );
                 })()}

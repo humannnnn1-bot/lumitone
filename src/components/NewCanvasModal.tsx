@@ -145,7 +145,7 @@ export const NewCanvasModal = React.memo(function NewCanvasModal({ open, onConfi
             />
           </label>
         </div>
-        <div style={{ fontSize: FS.sm, color: C.textSubtle, marginBottom: 8 }}>
+        <div style={{ fontSize: FS.sm, color: C.textSecondary, marginBottom: 8 }}>
           {t("new_canvas_max")} {MAX_IMAGE_SIZE}
           {"\u00D7"}
           {MAX_IMAGE_SIZE}

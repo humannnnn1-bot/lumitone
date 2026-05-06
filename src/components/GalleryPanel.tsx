@@ -558,7 +558,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                   padding: `${SP.md}px ${SP.lg}px`,
                   fontSize: FS.xl,
                   background: C.accent,
-                  color: C.textWhite,
+                  color: C.bgRoot,
                   border: `1px solid ${C.accentBright}`,
                 }}
               >

@@ -28,7 +28,7 @@ describe("HexDiagram", () => {
     const { container } = render(<HexDiagram {...makeProps()} />);
     const svg = container.querySelector("svg");
     expect(svg).not.toBeNull();
-    expect(svg!.getAttribute("role")).toBe("img");
+    expect(svg!.getAttribute("role")).toBe("group");
   });
 
   it("has interactive groups with role='button'", () => {

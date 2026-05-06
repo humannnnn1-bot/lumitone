@@ -418,7 +418,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   });
 
   return (
-    <div
+    <main
       style={S_ROOT}
       onDragEnter={fileDrop.onDragEnter}
       onDragOver={fileDrop.onDragOver}
@@ -654,7 +654,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 }
 

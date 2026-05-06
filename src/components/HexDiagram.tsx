@@ -90,7 +90,7 @@ export const HexDiagram = memo(
         <svg
           viewBox="-10 -25 420 445"
           style={{ width: "100%", maxWidth: 462 }}
-          role="img"
+          role="group"
           aria-label={t("hex_diagram_label")}
           onMouseOver={onSvgMouseOver}
           onMouseOut={onSvgMouseOut}
