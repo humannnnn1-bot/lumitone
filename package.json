@@ -15,6 +15,7 @@
     "test:watch": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest run --coverage",
+    "benchmark": "vitest bench --run",
     "deadcode": "knip",
     "icons:generate": "node scripts/generate-icons.mjs",
     "lint": "eslint src e2e scripts eslint.config.mjs vite.config.ts playwright.config.ts playwright.pwa.config.ts",

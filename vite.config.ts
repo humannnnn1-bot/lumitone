@@ -157,6 +157,7 @@ export default defineConfig({
       include: ["src/**/*.{ts,tsx}"],
       exclude: [
         "**/__tests__/**",
+        "**/__benchmarks__/**",
         "**/*.d.ts",
         "src/types.ts",
         "src/i18n/types.ts",
