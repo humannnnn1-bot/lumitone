@@ -47,6 +47,18 @@ type WindowWithFilePicker = Window & {
     types?: Array<{ description?: string; accept: Record<string, string[]> }>;
   }) => Promise<FilePickerHandle[]>;
 };
+const S_SOURCE_ACTION_BUTTON_BASE: React.CSSProperties = {
+  boxSizing: "border-box",
+  height: 22,
+  minHeight: 22,
+  padding: "0 6px",
+  fontSize: FS.lg,
+  lineHeight: "20px",
+  whiteSpace: "nowrap",
+};
+const S_SOURCE_ACTION_BUTTON: React.CSSProperties = { ...S_BTN, ...S_SOURCE_ACTION_BUTTON_BASE };
+const S_SOURCE_ACTION_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_ACTIVE, ...S_SOURCE_ACTION_BUTTON_BASE };
+const S_SOURCE_FILE_BUTTON: React.CSSProperties = { ...S_SOURCE_ACTION_BUTTON, minWidth: 52 };
 
 export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelProps) {
   const {
@@ -351,7 +363,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
                   }}
                   role="radio"
                   aria-checked={tool === tl.id}
-                  style={tool === tl.id ? S_BTN_ACTIVE : S_BTN}
+                  style={tool === tl.id ? S_SOURCE_ACTION_BUTTON_ACTIVE : S_SOURCE_ACTION_BUTTON}
                 >
                   {t("tool_" + tl.id)}({tl.key})
                 </button>
@@ -368,7 +380,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
                   }}
                   role="radio"
                   aria-checked={tool === tl.id}
-                  style={tool === tl.id ? S_BTN_ACTIVE : S_BTN}
+                  style={tool === tl.id ? S_SOURCE_ACTION_BUTTON_ACTIVE : S_SOURCE_ACTION_BUTTON}
                 >
                   {t("tool_" + tl.id)}({tl.key})
                 </button>
@@ -380,7 +392,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             <button
               onClick={undo}
               disabled={!state.undoStack.length}
-              style={{ ...S_BTN, opacity: state.undoStack.length ? 1 : O.disabled }}
+              style={{ ...S_SOURCE_ACTION_BUTTON, opacity: state.undoStack.length ? 1 : O.disabled }}
               title={t("title_undo")}
             >
               {t("btn_undo")}
@@ -388,7 +400,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             <button
               onClick={redo}
               disabled={!state.redoStack.length}
-              style={{ ...S_BTN, opacity: state.redoStack.length ? 1 : O.disabled }}
+              style={{ ...S_SOURCE_ACTION_BUTTON, opacity: state.redoStack.length ? 1 : O.disabled }}
               title={t("title_redo")}
             >
               {t("btn_redo")}
@@ -396,14 +408,17 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             <button
               onClick={handleZoomReset}
               onContextMenu={handleZoomPixelPerfect}
-              style={{ ...S_BTN, lineHeight: 1, gap: SP.xs, marginLeft: SP.lg }}
+              style={{ ...S_SOURCE_ACTION_BUTTON, gap: SP.xs, marginLeft: SP.lg }}
               title={`${t("title_zoom_reset")} (${t("title_zoom_pixel")})`}
               aria-label={t("aria_zoom_reset", Math.round(zoom * 100))}
             >
               <span>{"\u25CE"}</span>
               <span>{Math.round(zoom * 100)}%</span>
             </button>
-            <button onClick={() => setPanZoomMode((prev) => !prev)} style={panZoomMode ? S_BTN_ACTIVE : S_BTN}>
+            <button
+              onClick={() => setPanZoomMode((prev) => !prev)}
+              style={panZoomMode ? S_SOURCE_ACTION_BUTTON_ACTIVE : S_SOURCE_ACTION_BUTTON}
+            >
               {t("btn_pan_mode")}
             </button>
           </div>
@@ -420,11 +435,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             }}
           >
             <span style={{ color: C.textDimmer }}>{t("label_size")}</span>
-            <button
-              onClick={handleSizeDown}
-              aria-label={t("aria_brush_size_decrease")}
-              style={{ ...S_BTN, padding: "2px 6px", fontSize: 13, fontWeight: FW.bold }}
-            >
+            <button onClick={handleSizeDown} aria-label={t("aria_brush_size_decrease")} style={S_BTN}>
               {"\u2212"}
             </button>
             <input
@@ -437,11 +448,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
               onChange={handleSizeChange}
               style={{ flex: 1, minWidth: 60 }}
             />
-            <button
-              onClick={handleSizeUp}
-              aria-label={t("aria_brush_size_increase")}
-              style={{ ...S_BTN, padding: "2px 6px", fontSize: 13, fontWeight: FW.bold }}
-            >
+            <button onClick={handleSizeUp} aria-label={t("aria_brush_size_increase")} style={S_BTN}>
               +
             </button>
             <span style={{ color: C.textSecondary, minWidth: 20 }}>{brushSize}</span>
@@ -516,7 +523,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
           </div>
 
           <div style={{ display: "flex", gap: SP.lg, flexWrap: "wrap", justifyContent: "center", marginTop: SP["3xl"] }}>
-            <button onClick={onNewCanvas} style={S_BTN} title={t("title_new_canvas")}>
+            <button onClick={onNewCanvas} style={S_SOURCE_FILE_BUTTON} title={t("title_new_canvas")}>
               {t("btn_new")}
             </button>
             <button
@@ -524,7 +531,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
               onClick={handleOpenImage}
               aria-label={t("aria_open_image")}
               style={{
-                ...S_BTN,
+                ...S_SOURCE_FILE_BUTTON,
                 border: `1px solid ${C.accentDim}`,
                 color: C.loadBtn,
                 position: "relative",
@@ -535,7 +542,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             >
               {t("btn_load")}
             </button>
-            <button onClick={handleClear} style={S_BTN} title={t("title_clear")}>
+            <button onClick={handleClear} style={S_SOURCE_FILE_BUTTON} title={t("title_clear")}>
               {t("btn_clear")}
             </button>
           </div>
@@ -544,7 +551,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             <button
               onClick={handleSaveGray}
               onContextMenu={handleShareGray}
-              style={S_BTN}
+              style={S_SOURCE_ACTION_BUTTON}
               title={`${t("title_save_gray")} (${t("title_share")})`}
             >
               {t("btn_save_gray")}
@@ -552,7 +559,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             <button
               onClick={handleSaveColor}
               onContextMenu={handleShareColor}
-              style={{ ...S_BTN, color: C.saveColor }}
+              style={{ ...S_SOURCE_ACTION_BUTTON, color: C.saveColor }}
               title={`${t("title_save_color")} (${t("title_share")})`}
             >
               {t("btn_save_color")}
@@ -560,7 +567,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             <button
               onClick={handleSaveGlaze}
               onContextMenu={handleShareGlaze}
-              style={{ ...S_BTN, color: C.saveGlaze }}
+              style={{ ...S_SOURCE_ACTION_BUTTON, color: C.saveGlaze }}
               title={`${t("title_save_glaze")} (${t("title_share")})`}
             >
               {t("btn_save_glaze")}

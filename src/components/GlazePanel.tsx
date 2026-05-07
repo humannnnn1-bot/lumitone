@@ -59,6 +59,17 @@ const GLAZE_TOOLS: { id: GlazeToolId; labelKey: string; key: string }[] = [
   { id: "glaze_eraser", labelKey: "tool_glaze_eraser", key: "e" },
   { id: "glaze_fill", labelKey: "tool_glaze_fill", key: "f" },
 ];
+const S_GLAZE_ACTION_BUTTON_BASE: React.CSSProperties = {
+  boxSizing: "border-box",
+  height: 22,
+  minHeight: 22,
+  padding: "0 6px",
+  fontSize: FS.lg,
+  lineHeight: "20px",
+  whiteSpace: "nowrap",
+};
+const S_GLAZE_ACTION_BUTTON: React.CSSProperties = { ...S_BTN, ...S_GLAZE_ACTION_BUTTON_BASE };
+const S_GLAZE_ACTION_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_ACTIVE, ...S_GLAZE_ACTION_BUTTON_BASE };
 
 export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps) {
   const {
@@ -399,7 +410,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                   if (panZoomMode) setPanZoomMode(false);
                   announce(t("announce_" + gt.id));
                 }}
-                style={glazeTool === gt.id ? S_BTN_ACTIVE : S_BTN}
+                style={glazeTool === gt.id ? S_GLAZE_ACTION_BUTTON_ACTIVE : S_GLAZE_ACTION_BUTTON}
               >
                 {t(gt.labelKey)}({gt.key.toUpperCase()})
               </button>
@@ -408,14 +419,14 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
 
           {/* Undo/Redo + Zoom */}
           <div style={{ display: "flex", gap: SP.lg, alignItems: "center", justifyContent: "center", marginTop: SP.lg }}>
-            <button style={S_BTN} onClick={undo} title={t("title_undo")}>
+            <button style={S_GLAZE_ACTION_BUTTON} onClick={undo} title={t("title_undo")}>
               {t("btn_undo")}
             </button>
-            <button style={S_BTN} onClick={redo} title={t("title_redo")}>
+            <button style={S_GLAZE_ACTION_BUTTON} onClick={redo} title={t("title_redo")}>
               {t("btn_redo")}
             </button>
             <button
-              style={{ ...S_BTN, marginLeft: SP.lg }}
+              style={{ ...S_GLAZE_ACTION_BUTTON, marginLeft: SP.lg }}
               onClick={handleZoomReset}
               title={t("title_zoom_reset")}
               aria-label={t("aria_zoom_reset", Math.round(zoom * 100))}
@@ -423,18 +434,21 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
               {"\u25CE"}
               {Math.round(zoom * 100)}%
             </button>
-            <button onClick={() => setPanZoomMode((prev) => !prev)} style={panZoomMode ? S_BTN_ACTIVE : S_BTN}>
+            <button
+              onClick={() => setPanZoomMode((prev) => !prev)}
+              style={panZoomMode ? S_GLAZE_ACTION_BUTTON_ACTIVE : S_GLAZE_ACTION_BUTTON}
+            >
               {t("btn_pan_mode")}
             </button>
           </div>
 
           {/* Options + Clear */}
-          <div style={{ display: "flex", alignItems: "center", gap: SP.lg, flexWrap: "wrap", justifyContent: "center", marginTop: SP.xl }}>
-            <label style={{ fontSize: FS.sm, color: C.textDim, cursor: "pointer", display: "flex", alignItems: "center", gap: SP.sm }}>
+          <div style={{ display: "flex", alignItems: "center", gap: SP.xl, flexWrap: "wrap", justifyContent: "center", marginTop: SP.xl }}>
+            <label style={{ fontSize: FS.md, color: C.textDim, cursor: "pointer", display: "flex", alignItems: "center", gap: SP.sm }}>
               <input type="checkbox" checked={showHighlight} onChange={(e) => setShowHighlight(e.target.checked)} />
               {t("glaze_show_highlight")}
             </label>
-            <button style={S_BTN} onClick={handleGlazeClear} title={t("title_glaze_clear")}>
+            <button style={S_GLAZE_ACTION_BUTTON} onClick={handleGlazeClear} title={t("title_glaze_clear")}>
               {t("btn_glaze_clear")}
             </button>
             {glazeCount > 0 && <span style={{ fontSize: FS.xs, color: C.textDimmer }}>{glazeCount.toLocaleString()}px</span>}

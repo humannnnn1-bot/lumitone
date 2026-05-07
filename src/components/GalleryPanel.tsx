@@ -167,6 +167,29 @@ const S_HUE_FILTER_INPUT: React.CSSProperties = {
   opacity: 0,
   cursor: "pointer",
 };
+const S_GALLERY_TOOLBAR_BUTTON_BASE: React.CSSProperties = {
+  boxSizing: "border-box",
+  height: 22,
+  minHeight: 22,
+  padding: "0 8px",
+  fontSize: FS.lg,
+  lineHeight: "20px",
+  whiteSpace: "nowrap",
+};
+const S_GALLERY_FILTER_BUTTON: React.CSSProperties = { ...S_BTN, ...S_GALLERY_TOOLBAR_BUTTON_BASE, minWidth: 52 };
+const S_GALLERY_FILTER_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_ACTIVE, ...S_GALLERY_TOOLBAR_BUTTON_BASE, minWidth: 52 };
+const S_GALLERY_BOOKMARK_BUTTON: React.CSSProperties = { ...S_BTN, ...S_GALLERY_TOOLBAR_BUTTON_BASE, minWidth: 92 };
+const S_GALLERY_BOOKMARK_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_ACTIVE, ...S_GALLERY_TOOLBAR_BUTTON_BASE, minWidth: 92 };
+const S_GALLERY_SORT_BUTTON: React.CSSProperties = { ...S_BTN, ...S_GALLERY_TOOLBAR_BUTTON_BASE, minWidth: 64 };
+const S_GALLERY_SORT_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_ACTIVE, ...S_GALLERY_TOOLBAR_BUTTON_BASE, minWidth: 64 };
+const S_GALLERY_SIZE_BUTTON_BASE: React.CSSProperties = {
+  ...S_GALLERY_TOOLBAR_BUTTON_BASE,
+  width: 24,
+  minWidth: 24,
+  padding: 0,
+};
+const S_GALLERY_SIZE_BUTTON: React.CSSProperties = { ...S_BTN_SM, ...S_GALLERY_SIZE_BUTTON_BASE };
+const S_GALLERY_SIZE_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_SM_ACTIVE, ...S_GALLERY_SIZE_BUTTON_BASE };
 
 export const GalleryPanel = React.memo(function GalleryPanel({
   cvs,
@@ -372,10 +395,13 @@ export const GalleryPanel = React.memo(function GalleryPanel({
       <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", alignItems: "center", gap: SP.sm }}>
         {/* Filter group */}
         <div style={{ display: "flex", gap: SP.sm }}>
-          <button onClick={() => setFilter("all")} style={filter === "all" ? S_BTN_ACTIVE : S_BTN}>
+          <button onClick={() => setFilter("all")} style={filter === "all" ? S_GALLERY_FILTER_BUTTON_ACTIVE : S_GALLERY_FILTER_BUTTON}>
             {t("gallery_filter_all")}
           </button>
-          <button onClick={() => setFilter("bookmarks")} style={filter === "bookmarks" ? S_BTN_ACTIVE : S_BTN}>
+          <button
+            onClick={() => setFilter("bookmarks")}
+            style={filter === "bookmarks" ? S_GALLERY_BOOKMARK_BUTTON_ACTIVE : S_GALLERY_BOOKMARK_BUTTON}
+          >
             {t("gallery_filter_bookmarks")} ({bookmarks.length})
           </button>
         </div>
@@ -385,7 +411,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
             onClick={() =>
               setSortMode((m) => (m === "default" ? "hue_asc" : m === "hue_asc" ? "hue_desc" : m === "hue_desc" ? "similar" : "default"))
             }
-            style={sortMode !== "default" ? S_BTN_ACTIVE : S_BTN}
+            style={sortMode !== "default" ? S_GALLERY_SORT_BUTTON_ACTIVE : S_GALLERY_SORT_BUTTON}
             title={t("gallery_sort_title")}
           >
             {sortMode === "hue_asc"
@@ -403,7 +429,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
             <button
               key={sz}
               onClick={() => setThumbSize(sz)}
-              style={thumbSize === sz ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              style={thumbSize === sz ? S_GALLERY_SIZE_BUTTON_ACTIVE : S_GALLERY_SIZE_BUTTON}
               aria-label={t("aria_gallery_thumb_size", sz)}
             >
               {t(`gallery_thumb_${sz}`)}
