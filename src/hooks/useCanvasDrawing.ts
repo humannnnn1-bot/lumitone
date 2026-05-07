@@ -22,6 +22,8 @@ import { useCursorOverlay } from "./useCursorOverlay";
 import { trySetPointerCapture, cPosFromRefs, canvasPosUnclamped, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
 import { unionBBox } from "../drawing/dirty-rect";
+import { createStrokeSmoother, smoothStrokePoint } from "../drawing/stroke-smoothing";
+import type { StrokeSmoother } from "../drawing/stroke-smoothing";
 import type { CanvasData, StrokeState, ImgCache, CanvasAction, DirtyRect } from "../types";
 import { useDrawingContext } from "../state/DrawingContext";
 
@@ -72,6 +74,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
   // Buffer pool: reuse pre/buf allocations across strokes
   const bufPoolRef = useRef<BufferPool>({ pre: null, buf: null, size: 0 });
   const lastRef = useRef<{ x: number; y: number } | null>(null);
+  const strokeSmootherRef = useRef<StrokeSmoother | null>(null);
   const activeCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const paintRafRef = useRef<number | null>(null);
   const pendingPaintDirtyRef = useRef<DirtyRect | null>(null);
@@ -171,6 +174,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
       curBS = brushSizeRef.current;
     const pos = cPos(e, refEl);
     lastRef.current = pos;
+    strokeSmootherRef.current = curTool === "fill" || isShapeTool(curTool) ? null : createStrokeSmoother(pos);
     const cv = cvsRef.current;
     const { pre, buf } = allocateStrokeBuffers(bufPoolRef.current, cv.data);
     strokeRef.current = createStrokeState(buf, pre, curTool, curBL, curBS, pos);
@@ -272,7 +276,8 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     let last = lastRef.current;
     let dirtyBB: DirtyRect | null = null;
     for (const ev of events) {
-      const p = canvasPosUnclamped(ev, canvasEl, zoom, pan, cv);
+      const raw = canvasPosUnclamped(ev, canvasEl, zoom, pan, cv);
+      const p = strokeSmootherRef.current ? smoothStrokePoint(strokeSmootherRef.current, raw) : raw;
       const bb = last ? applyBrushStroke(buf, last, p, sp.brushSize, lv, W, H) : applyBrushDot(buf, p, sp.brushSize, lv, W, H);
       dirtyBB = unionBBox(dirtyBB, bb);
       last = p;
@@ -329,6 +334,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     }
     drawingRef.current = false;
     lastRef.current = null;
+    strokeSmootherRef.current = null;
     strokeRef.current = null;
     activeCanvasRef.current = null;
   }

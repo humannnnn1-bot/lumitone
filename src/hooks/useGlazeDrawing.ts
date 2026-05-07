@@ -19,6 +19,8 @@ import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
 import { trySetPointerCapture, cPosFromRefs, canvasPosUnclamped, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
+import { createStrokeSmoother, smoothStrokePoint } from "../drawing/stroke-smoothing";
+import type { StrokeSmoother } from "../drawing/stroke-smoothing";
 import type { CanvasData, ImgCache, CanvasAction, DirtyRect } from "../types";
 import { useDrawingContext } from "../state/DrawingContext";
 
@@ -68,6 +70,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   const imgCacheRef = useRef<ImgCache>({ src: null, prv: null, s32: null, p32: null });
   const drawingRef = useRef(false);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
+  const strokeSmootherRef = useRef<StrokeSmoother | null>(null);
   const strokeRef = useRef<GlazeStroke | null>(null);
   // Buffer pool: reuse cmPre/cmBuf allocations across strokes
   const cmPoolRef = useRef<{ cmPre: Uint8Array | null; cmBuf: Uint8Array | null; size: number }>({ cmPre: null, cmBuf: null, size: 0 });
@@ -182,6 +185,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     const glazeLUT = isDirect ? buildMultiDirectLUT(dc) : buildGlazeLUT(curHue);
     strokeRef.current = { cmBuf, cmPre, fillChanged: null, glazeLUT };
     const curTool = s.current.glazeTool;
+    strokeSmootherRef.current = curTool === "glaze_fill" ? null : createStrokeSmoother(pos);
     const r = Math.floor(brushSizeRef.current / 2);
     const W = cv.w,
       H = cv.h;
@@ -267,7 +271,8 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     let last = lastRef.current;
     let dirtyBB: DirtyRect | null = null;
     for (const ev of events) {
-      const p = canvasPosUnclamped(ev, canvasEl, zoom, pan, cv);
+      const raw = canvasPosUnclamped(ev, canvasEl, zoom, pan, cv);
+      const p = strokeSmootherRef.current ? smoothStrokePoint(strokeSmootherRef.current, raw) : raw;
       if (curTool === "glaze_eraser") {
         if (last) eraseGlazeLine(cmBuf, last.x, last.y, p.x, p.y, r, W, H);
         else eraseGlazeCircle(cmBuf, p.x, p.y, r, W, H);
@@ -331,6 +336,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     }
     drawingRef.current = false;
     lastRef.current = null;
+    strokeSmootherRef.current = null;
     strokeRef.current = null;
   }
 
