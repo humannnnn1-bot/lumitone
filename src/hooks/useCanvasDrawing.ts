@@ -19,7 +19,7 @@ import { hexStr } from "../utils";
 import type { BufferPool } from "./useStrokeManager";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
-import { trySetPointerCapture, cPosFromRefs, canvasPos, isCanvasPointInBounds, updateStatusBase } from "./useDrawingBase";
+import { trySetPointerCapture, cPosFromRefs, canvasPosUnclamped, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
 import { unionBBox } from "../drawing/dirty-rect";
 import type { CanvasData, StrokeState, ImgCache, CanvasAction, DirtyRect } from "../types";
@@ -238,7 +238,8 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
       H = cv.h;
 
     if (isShapeTool(sp.tool)) {
-      const pos = cPos(e, refEl);
+      const canvasEl = refEl ?? activeCanvasRef.current ?? cursor.curRef.current;
+      const pos = canvasPosUnclamped(e, canvasEl, zoomRef.current, panRef.current, cv);
       const origin = st.shapeStart || pos;
       const { shapeBBox: newBB, dirtyBBox: dirtyBB } = applyShapeStroke(
         buf,
@@ -258,8 +259,9 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
       return;
     }
 
-    // Brush / eraser: iterate coalesced pointer events to capture sub-frame
-    // samples so fast strokes don't render as a long straight segment.
+    // Brush / eraser: keep true canvas-space positions, including samples
+    // outside the canvas. Paint kernels clip to the buffer, which avoids edge
+    // clamping while keeping strokes continuous when the pointer re-enters.
     const nativeEvent = e.nativeEvent;
     const canvasEl = refEl ?? activeCanvasRef.current ?? cursor.curRef.current;
     const zoom = zoomRef.current,
@@ -270,11 +272,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     let last = lastRef.current;
     let dirtyBB: DirtyRect | null = null;
     for (const ev of events) {
-      const p = canvasPos(ev, canvasEl, zoom, pan, cv);
-      if (!isCanvasPointInBounds(p, cv)) {
-        last = null;
-        continue;
-      }
+      const p = canvasPosUnclamped(ev, canvasEl, zoom, pan, cv);
       const bb = last ? applyBrushStroke(buf, last, p, sp.brushSize, lv, W, H) : applyBrushDot(buf, p, sp.brushSize, lv, W, H);
       dirtyBB = unionBBox(dirtyBB, bb);
       last = p;

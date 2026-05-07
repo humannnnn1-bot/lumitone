@@ -1,5 +1,13 @@
 import { describe, it, expect, vi } from "vitest";
-import { canvasPos, canvasPosUnclamped, isCanvasPointInBounds, trySetPointerCapture, tryStartPan, cPosFromRefs } from "../useDrawingBase";
+import {
+  canvasPos,
+  canvasPosUnclamped,
+  isCanvasPointInBounds,
+  trySetPointerCapture,
+  tryStartPan,
+  cPosFromRefs,
+  updateStatusBase,
+} from "../useDrawingBase";
 import type { CanvasData } from "../../types";
 
 /* ── Helpers ────────────────────────────────────────────────── */
@@ -224,5 +232,25 @@ describe("cPosFromRefs", () => {
 
     const pos = cPosFromRefs(event, null, refs);
     expect(pos).toEqual({ x: 0, y: 0 });
+  });
+});
+
+/* ── updateStatusBase ───────────────────────────────────────── */
+describe("updateStatusBase", () => {
+  it("clears the status when pointer capture sends an outside coordinate", () => {
+    const cvs = makeCvs(10, 10);
+    const refs = {
+      zoomRef: { current: 1 },
+      panRef: { current: { x: 0, y: 0 } },
+      cvsRef: { current: cvs },
+    };
+    const el = makeFakeCanvas(makeRect(0, 0, 100, 100));
+    const statusEl = { textContent: "" } as HTMLDivElement;
+    const formatText = vi.fn(() => "inside");
+
+    updateStatusBase({ clientX: 120, clientY: 50 } as React.PointerEvent, statusEl, el, refs, cvs.data, formatText);
+
+    expect(statusEl.textContent).toBe("\u2014");
+    expect(formatText).not.toHaveBeenCalled();
   });
 });

@@ -50,8 +50,8 @@ export function canvasPos(
 
 /**
  * Convert pointer coordinates to canvas pixel coordinates without clamping.
- * Use this for pointer-stream drawing so samples outside the canvas can be
- * skipped instead of being smeared onto the nearest edge.
+ * Use this for pointer-stream drawing so samples outside the canvas remain in
+ * canvas space instead of being smeared onto the nearest edge.
  */
 export function canvasPosUnclamped(
   e: { clientX: number; clientY: number },
@@ -137,7 +137,7 @@ export function updateStatusBase(
 ): void {
   if (!statusEl) return;
   const cv = refs.cvsRef.current;
-  const pos = cPosFromRefs(e, refEl, refs);
+  const pos = canvasPosUnclamped(e, refEl, refs.zoomRef.current, refs.panRef.current, cv);
   if (pos.x < 0 || pos.x >= cv.w || pos.y < 0 || pos.y >= cv.h) {
     statusEl.textContent = "\u2014";
     return;

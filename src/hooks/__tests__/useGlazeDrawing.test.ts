@@ -161,7 +161,7 @@ describe("useGlazeDrawing", () => {
     { glazeTool: "glaze_brush" as GlazeToolId, initialColorMap: 0, expectCenterChanged: true, expectEdgeChanged: true },
     { glazeTool: "glaze_eraser" as GlazeToolId, initialColorMap: 2, expectCenterChanged: false, expectEdgeChanged: false },
   ])(
-    "continues the $glazeTool stroke to the canvas edge when the pointer moves outside",
+    "clips a crossing $glazeTool stroke at the canvas edge when the pointer moves outside",
     ({ glazeTool, initialColorMap, expectCenterChanged, expectEdgeChanged }) => {
       const cvs = makeCvs(10, 10);
       cvs.data.fill(2);
@@ -186,6 +186,36 @@ describe("useGlazeDrawing", () => {
       expect(cmBuf?.[5 * 10 + 9] > 0).toBe(expectEdgeChanged);
     },
   );
+
+  it("keeps outside glaze brush movement from smearing along the nearest edge and connects on re-entry", () => {
+    const cvs = makeCvs(10, 10);
+    cvs.data.fill(2);
+    const dispatch = vi.fn();
+    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, dispatch, brushSize: 1 })));
+    const canvas = result.current.curRef.current!;
+    mockCanvasRect(canvas);
+
+    act(() => {
+      result.current.onDown(pointerEvent({ clientX: 160, clientY: 256, target: canvas }));
+    });
+    act(() => {
+      result.current.onMove(pointerEvent({ clientX: 160, clientY: -160, target: canvas }));
+    });
+    act(() => {
+      result.current.onMove(pointerEvent({ clientX: 256, clientY: -160, target: canvas }));
+    });
+    act(() => {
+      result.current.onMove(pointerEvent({ clientX: 256, clientY: 160, target: canvas }));
+    });
+    act(() => {
+      result.current.onUp();
+    });
+
+    const cmBuf = dispatch.mock.calls[0][0].finalColorMap as Uint8Array;
+    expect(cmBuf[0 * 10 + 5]).toBeGreaterThan(0);
+    expect(cmBuf[0 * 10 + 6]).toBe(0);
+    expect(cmBuf[1 * 10 + 8]).toBeGreaterThan(0);
+  });
 
   it("accumulates dirty rects while a glaze brush render frame is pending", () => {
     const rafCallbacks: FrameRequestCallback[] = [];

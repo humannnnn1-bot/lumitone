@@ -169,7 +169,7 @@ describe("useCanvasDrawing", () => {
     { tool: "brush" as ToolId, initialLevel: 0, expectedCenter: 3, expectedEdge: 3 },
     { tool: "eraser" as ToolId, initialLevel: 7, expectedCenter: 0, expectedEdge: 0 },
   ])(
-    "continues the $tool stroke to the canvas edge when the pointer moves outside",
+    "clips a crossing $tool stroke at the canvas edge when the pointer moves outside",
     ({ tool, initialLevel, expectedCenter, expectedEdge }) => {
       const cvs = makeCvs(10, 10);
       cvs.data.fill(initialLevel);
@@ -189,6 +189,100 @@ describe("useCanvasDrawing", () => {
       expect(buf?.[5 * 10 + 9]).toBe(expectedEdge);
     },
   );
+
+  it("keeps outside brush movement from smearing along the nearest edge and connects on re-entry", () => {
+    const { result } = renderHook(() => useCanvasDrawing(makeOpts({ brushLevel: 3, brushSize: 1 })));
+    const canvas = result.current.curRef.current!;
+    mockCanvasRect(canvas);
+
+    act(() => {
+      result.current.onDown(pointerEvent({ clientX: 160, clientY: 256, target: canvas }));
+    });
+    act(() => {
+      result.current.onMove(pointerEvent({ clientX: 160, clientY: -160, target: canvas }));
+    });
+    act(() => {
+      result.current.onMove(pointerEvent({ clientX: 256, clientY: -160, target: canvas }));
+    });
+
+    let buf = result.current.strokeRef.current?.buf;
+    expect(buf?.[0 * 10 + 5]).toBe(3);
+    expect(buf?.[0 * 10 + 6]).toBe(0);
+
+    act(() => {
+      result.current.onMove(pointerEvent({ clientX: 256, clientY: 160, target: canvas }));
+    });
+
+    buf = result.current.strokeRef.current?.buf;
+    expect(buf?.[1 * 10 + 8]).toBe(3);
+
+    act(() => {
+      result.current.onUp();
+    });
+  });
+
+  it("uses the true outside endpoint for line strokes instead of clamping to the edge", () => {
+    const { result } = renderHook(() => useCanvasDrawing(makeOpts({ tool: "line", brushLevel: 3, brushSize: 1 })));
+    const canvas = result.current.curRef.current!;
+    mockCanvasRect(canvas);
+
+    act(() => {
+      result.current.onDown(pointerEvent({ clientX: 160, clientY: 160, target: canvas }));
+    });
+    act(() => {
+      result.current.onMove(pointerEvent({ clientX: 256, clientY: -160, target: canvas }));
+    });
+
+    const buf = result.current.strokeRef.current?.buf;
+    expect(buf?.[0 * 10 + 6]).toBe(3);
+    expect(buf?.[0 * 10 + 8]).toBe(0);
+
+    act(() => {
+      result.current.onUp();
+    });
+  });
+
+  it("uses the true outside endpoint for rectangle strokes instead of drawing a clamped edge", () => {
+    const { result } = renderHook(() => useCanvasDrawing(makeOpts({ tool: "rect", brushLevel: 3, brushSize: 1 })));
+    const canvas = result.current.curRef.current!;
+    mockCanvasRect(canvas);
+
+    act(() => {
+      result.current.onDown(pointerEvent({ clientX: 160, clientY: 160, target: canvas }));
+    });
+    act(() => {
+      result.current.onMove(pointerEvent({ clientX: 256, clientY: -160, target: canvas }));
+    });
+
+    const buf = result.current.strokeRef.current?.buf;
+    expect(buf?.[0 * 10 + 5]).toBe(3);
+    expect(buf?.[0 * 10 + 6]).toBe(0);
+    expect(buf?.[0 * 10 + 8]).toBe(3);
+
+    act(() => {
+      result.current.onUp();
+    });
+  });
+
+  it("uses the true outside endpoint for ellipse strokes instead of clamping the radius", () => {
+    const { result } = renderHook(() => useCanvasDrawing(makeOpts({ tool: "ellipse", brushLevel: 3, brushSize: 1 })));
+    const canvas = result.current.curRef.current!;
+    mockCanvasRect(canvas);
+
+    act(() => {
+      result.current.onDown(pointerEvent({ clientX: 160, clientY: 160, target: canvas }));
+    });
+    act(() => {
+      result.current.onMove(pointerEvent({ clientX: 160, clientY: -160, target: canvas }));
+    });
+
+    const buf = result.current.strokeRef.current?.buf;
+    expect(buf?.[0 * 10 + 5]).toBe(3);
+
+    act(() => {
+      result.current.onUp();
+    });
+  });
 
   it("accumulates dirty rects while a brush render frame is pending", () => {
     const rafCallbacks: FrameRequestCallback[] = [];

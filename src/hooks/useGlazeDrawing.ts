@@ -17,7 +17,7 @@ import { renderBuf } from "../drawing/render-buf";
 import { hexStr } from "../utils";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
-import { trySetPointerCapture, cPosFromRefs, canvasPos, isCanvasPointInBounds, updateStatusBase } from "./useDrawingBase";
+import { trySetPointerCapture, cPosFromRefs, canvasPosUnclamped, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
 import type { CanvasData, ImgCache, CanvasAction, DirtyRect } from "../types";
 import { useDrawingContext } from "../state/DrawingContext";
@@ -254,8 +254,9 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
       H = cv.h;
     const curTool = s.current.glazeTool;
 
-    // Brush / eraser: iterate coalesced pointer events so fast strokes keep
-    // sub-frame sample fidelity instead of collapsing to one straight segment.
+    // Brush / eraser: keep true canvas-space positions, including samples
+    // outside the canvas. Glaze paint functions clip writes to the color map,
+    // so re-entry remains continuous without smearing along the nearest edge.
     const nativeEvent = e.nativeEvent;
     const canvasEl = cursor.curRef.current;
     const zoom = zoomRef.current,
@@ -266,11 +267,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     let last = lastRef.current;
     let dirtyBB: DirtyRect | null = null;
     for (const ev of events) {
-      const p = canvasPos(ev, canvasEl, zoom, pan, cv);
-      if (!isCanvasPointInBounds(p, cv)) {
-        last = null;
-        continue;
-      }
+      const p = canvasPosUnclamped(ev, canvasEl, zoom, pan, cv);
       if (curTool === "glaze_eraser") {
         if (last) eraseGlazeLine(cmBuf, last.x, last.y, p.x, p.y, r, W, H);
         else eraseGlazeCircle(cmBuf, p.x, p.y, r, W, H);

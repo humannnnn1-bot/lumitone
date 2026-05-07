@@ -233,10 +233,21 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
         onPinchUp(e);
         return;
       }
+      const el = prvRef.current;
+      if (el && glazeDrawing.drawingRef.current) {
+        try {
+          if (typeof el.hasPointerCapture === "function" && el.hasPointerCapture(e.pointerId)) {
+            glazeDrawing.clearCursor();
+            return;
+          }
+        } catch (err) {
+          console.warn("CHROMALUM: pointerCapture check failed:", err);
+        }
+      }
       glazeDrawing.onUp();
       glazeDrawing.clearCursor();
     },
-    [glazeDrawing, panZoomMode, onPinchUp],
+    [glazeDrawing, panZoomMode, onPinchUp, prvRef],
   );
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => e.preventDefault(), []);
