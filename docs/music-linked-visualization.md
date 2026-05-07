@@ -11,7 +11,7 @@
 
 ## Purpose
 
-本ノートは、CHROMALUM の `LinkedVisualization` と Music タブで使う、色相角・luma 半径・位相回転・音高写像の関係を整理する。
+本ノートは、CHROMALUM の `LinkedVisualization` と Music タブで使う、色相角・luma 半径・色相位相（実装上の `alpha`）・音高写像の関係を整理する。
 
 これは「色彩の明るさそのものが三角関数で変化する」という主張ではない。BT.601 luma によって決まる各レベルの半径を固定し、その点を RGB 色相環上で回転させ、画面上の x/y 射影をグラフ化している、という意味で三角関数が現れる。
 
@@ -47,7 +47,7 @@ Y = 0.299 R' + 0.587 G' + 0.114 B'
 
 を 8-bit RGB 頂点へ適用した値である。この luma は CIE 明度や WCAG 相対輝度ではない。
 
-色相角を `theta`、位相・原点回転角を `alpha` とすると、実装上の円上の点は次の角度で置かれる。
+色相角を `theta`、色相位相・原点回転角を `alpha` とすると、実装上の円上の点は次の角度で置かれる。
 
 ```text
 rad = theta - alpha - 90deg
@@ -70,9 +70,9 @@ right graph  = screen-y projection = -r cos(theta - alpha)
 bottom graph = screen-x projection =  r sin(theta - alpha)
 ```
 
-## Meaning of Alpha
+## Hue Phase and `alpha`
 
-ここでの `alpha` は CSS や画像処理でいう透明度ではない。`LinkedVisualization` では、`alpha0` と `alpha7` は L0 原点系・L7 原点系それぞれの位相回転角である。
+UI 上ではこの操作を **Hue Phase** / **色相位相** と呼ぶ。ここでの `alpha` は CSS や画像処理でいう透明度ではなく、実装上の内部名である。`LinkedVisualization` では、`alpha0` と `alpha7` は L0 原点系・L7 原点系それぞれの色相位相回転角である。
 
 Music タブでは、現在の原点モードに応じて
 
@@ -151,7 +151,7 @@ freq = 220 * 2^((liveAngle mod 360) / 360 * 2)
 
 純正律、オクタトニック、ダイアトニックの各モードでは、連続角度をそれぞれのスケール度数へスナップする。したがって、これらは連続的な三角関数音高ではなく、角度から離散音階への量子化である。
 
-単音バースト、持続音、音程表示はいずれも `activeAlpha` を含む角度を使う。これにより、alpha 回転後にクリックした単音と、画面上の音程表示・ドローン音高が一致する。
+単音バースト、持続音、音程表示はいずれも `activeAlpha` を含む角度を使う。これにより、色相位相を回転させた後にクリックした単音と、画面上の音程表示・ドローン音高が一致する。
 
 ## Algebraic Timbre / Bit Spectrum
 
@@ -190,12 +190,15 @@ Music タブの手動バーストは `Pitch` 固定にする。一方で、Fano 
 | responsibility | implementation |
 | --- | --- |
 | BT.601 luma, hue candidates, default candidates | `src/color-engine.ts` |
-| bit-spectrum timbre basis and music invariants | `src/data/music-data.ts` |
-| luma radii, alpha rotation, x/y projections, complement curves | `src/components/LinkedVisualization.tsx` |
-| Music-specific wrapper and interval overlay | `src/components/music/MusicLinkedVisualization.tsx`, `src/components/music/IntervalRatios.tsx` |
+| bit-spectrum timbre basis and music constants | `src/data/music-data.ts` |
+| luma radii, hue-phase (`alpha`) rotation, x/y projections, complement curves | `src/components/linked-visualization-geometry.ts`, `src/components/LinkedVisualization.tsx`, `src/components/LinkedVisualizationWheel.tsx`, `src/components/LinkedVisualizationProjectionGraphs.tsx`, `src/components/LinkedVisualizationGuides.tsx`, `src/components/LinkedVisualizationLegend.tsx` |
+| Music-specific wrapper, candidate grid, transport, interval overlay, and algebra panels | `src/components/music/` |
 | angle-to-frequency mapping | `src/data/music-frequency.ts` |
-| drone, bursts, phase gain, algebraic sonification | `src/hooks/useMusicEngine.ts` |
-| Music tab state and controls | `src/components/MusicPanel.tsx` |
+| Music tab state partitions | `src/hooks/useMusicPanelState.ts` |
+| Web Audio lifecycle, graph updates, bursts, and teardown | `src/hooks/useMusicAudioSession.ts`, `src/music/music-audio-graph.ts` |
+| sonification command surface | `src/hooks/useMusicEngine.ts` |
+| playback runners, schedules, and algebraic sequences | `src/music/music-playback-runner.ts`, `src/music/music-playback-sequences.ts`, `src/music/music-scheduler.ts`, `src/music/music-engine-core.ts` |
+| Music tab composition | `src/components/MusicPanel.tsx` |
 
 ## Scope Limits
 

@@ -16,13 +16,13 @@ geometry, Fano planes, Hamming codes, and related polyhedral structures.
 
 ## Screenshots
 
-| Source canvas                                                  | Glaze overlay                                                 |
-| -------------------------------------------------------------- | ------------------------------------------------------------- |
-| ![CHROMALUM source canvas](./docs/assets/chromalum-source.png) | ![CHROMALUM glaze overlay](./docs/assets/chromalum-glaze.png) |
+| Glaze overlay                                                 | Pattern gallery                                           |
+| ------------------------------------------------------------- | --------------------------------------------------------- |
+| ![CHROMALUM glaze overlay](./docs/assets/chromalum-glaze.png) | ![CHROMALUM gallery](./docs/assets/chromalum-gallery.png) |
 
-| Pattern gallery                                           | Theory tab                                                  |
-| --------------------------------------------------------- | ----------------------------------------------------------- |
-| ![CHROMALUM gallery](./docs/assets/chromalum-gallery.png) | ![CHROMALUM theory tab](./docs/assets/chromalum-theory.png) |
+| Theory tab                                                  | Music tab                                                 |
+| ----------------------------------------------------------- | --------------------------------------------------------- |
+| ![CHROMALUM theory tab](./docs/assets/chromalum-theory.png) | ![CHROMALUM music tab](./docs/assets/chromalum-music.png) |
 
 ## Features
 
@@ -33,8 +33,8 @@ geometry, Fano planes, Hamming codes, and related polyhedral structures.
   source luma structure.
 - Gallery generation for color-pattern variants, bookmarks, previews, and
   saved PNG exports.
-- Map/statistics views for composition, local diversity, edge depth, gradients,
-  regions, luminance, and chromatic luminance.
+- Map/statistics views for composition, tone, color tone, connected regions,
+  gradients, edge depth, isolation, and local diversity.
 - Theory tab explaining the color system through binary levels, XOR, cube
   geometry, Fano planes, Hamming codes, tetrahedra, octahedra, and compound
   polyhedra.
@@ -91,7 +91,12 @@ For the detailed technical architecture, see
 ```text
 src/
   components/  React panels, controls, diagrams, and visualizations
+  components/music/
+               Music-tab controls, diagrams, and sonification widgets
+  components/theory/
+               Theory-tab diagrams and interaction helpers
   hooks/       UI state, canvas interaction, workers, export, pan/zoom, audio
+  music/       Audio graph helpers, playback runners, schedules, and sequences
   drawing/     Paint primitives, flood fill, dirty rects, render buffers
   state/       Canvas reducer, color reducer, contexts, undo diff logic
   workers/     Flood fill and pixel-analysis worker entry points
@@ -134,6 +139,14 @@ Create an itch.io-style relative-path build:
 
 ```bash
 npm run build:itch
+```
+
+Run type checks:
+
+```bash
+npm run typecheck:app
+npm run typecheck:tooling
+npm run typecheck:all
 ```
 
 Run unit tests:
@@ -181,14 +194,28 @@ npm run lint
 npm run format:check
 ```
 
+Run the standard local verification set:
+
+```bash
+npm run verify
+```
+
+Run broader browser/PWA or full coverage verification:
+
+```bash
+npm run verify:e2e
+npm run verify:full
+```
+
 To inspect canvas performance locally, open the app with `?debugPerf` appended
 to the URL. The console reports rolling `avgMs`, `p95Ms`, and `maxMs` for
 `renderBuf`, analysis map rendering, flood fill requests, and pixel-analysis
 requests.
 
 `format:check` covers source, tests, GitHub configuration, root Markdown, and
-technical Markdown in `docs/`. Long-form research notes keep their editorial
-line wrapping and are excluded in `.prettierignore`.
+technical Markdown in `docs/`, plus TypeScript and tooling config files.
+Long-form research notes keep their editorial line wrapping and are excluded in
+`.prettierignore`.
 
 ## Documentation
 

@@ -37,8 +37,9 @@ sonification. These notes are companion documents to the core corpus rather
 than additional parts of _Tractatus Chromaticus_.
 
 1. [Appendix A - Music-Linked Visualization](./music-linked-visualization.md)  
-   Describes the luma-radius hue graph, alpha rotation, complement phase
-   behavior, pitch mapping, and bit-spectrum timbre layer.
+   Describes the luma-radius hue graph, hue-phase rotation (`alpha` in the
+   implementation), complement phase behavior, pitch mapping, and bit-spectrum
+   timbre layer.
 2. [Appendix B - Music-Linked Visualization — 先行研究と設計ノート](./prior-art-music-linked-visualization.md)  
    Surveys related sonification, color-to-sound, luma, hue, and accessibility
    references, and records design guidance for the Music tab.

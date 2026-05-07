@@ -442,11 +442,13 @@ The current CHROMALUM implementation stores the core data and invariants in:
 ```text
 src/data/theory-data.ts
 src/components/TheoryPanel.tsx
+src/components/theory/
 src/i18n/ja.ts
 src/i18n/en.ts
 src/data/__tests__/theory-data.test.ts
 src/i18n/__tests__/theory-copy.test.ts
 src/components/__tests__/TheoryPanel.test.tsx
+src/components/theory/__tests__/
 ```
 
 Important invariants currently tested include:

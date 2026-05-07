@@ -30,13 +30,18 @@ App.tsx
   useCanvasDrawing()     source drawing interactions
   useGlazeDrawing()      per-pixel color variant interactions
   usePixelMaps()         analysis maps, worker-backed where useful
-  useMusicEngine()       Web Audio scheduling and playback state
+  useMusicPanelState()   Music palette, transport, Fano, and algebra demo state
+  useMusicEngine()       sonification command surface for the Music tab
+    useMusicAudioSession()  Web Audio lifecycle, graph updates, and teardown
+    src/music/*        audio graph helpers, playback runners, schedules,
+                       and algebraic sequences
 ```
 
 React components stay focused on panels, controls, diagrams, and view
 composition. Hooks own workflow state and side effects. Pure drawing and
 analysis logic lives under `src/drawing` and `src/utils` so it can be tested
-without rendering the whole app.
+without rendering the whole app. Music playback logic that does not need React
+lives under `src/music`, with React hooks wiring it to Web Audio and UI state.
 
 ## State Model
 
@@ -119,16 +124,24 @@ environments can still run the same behavior.
 
 ## Theory And Music Data
 
-The Theory and Music tabs are driven by structured data under `src/data`,
-localized copy under `src/i18n`, and visual components under `src/components`.
+The Theory tab is driven by structured data under `src/data`, localized copy
+under `src/i18n`, and diagram components under `src/components/theory`.
+
+The Music tab layers UI state from `src/hooks/useMusicPanelState.ts`, Web Audio
+session management from `src/hooks/useMusicAudioSession.ts`, the command surface
+in `src/hooks/useMusicEngine.ts`, pure playback helpers under `src/music`, and
+visual/control components under `src/components/music`.
+
 The research notes in `docs/` define claim boundaries, prior-art positioning,
-and citation guidance for the algebraic color model.
+implementation correspondence, and citation guidance for the algebraic color
+model and its Music-linked visualization layer.
 
 ## Quality Gates
 
 The main local checks are:
 
 ```bash
+npm run typecheck:all
 npm run lint
 npm run format:check
 npm run test:coverage
@@ -136,6 +149,11 @@ npm run build
 npm run test:e2e
 ```
 
-GitHub Actions run CI checks on pull requests, CodeQL scans JavaScript and
-TypeScript, Dependabot tracks npm and GitHub Actions updates, and the deployment
-workflow rebuilds the static GitHub Pages site from `main`.
+`npm run verify` runs formatting, linting, full type checking, the production
+build, and the unit suite. `npm run verify:e2e` adds the browser and PWA suites,
+while `npm run verify:full` uses coverage plus the browser and PWA suites.
+
+GitHub Actions run CI checks on pull requests, including `typecheck:all`.
+CodeQL scans JavaScript and TypeScript, Dependabot tracks npm and GitHub
+Actions updates, and the deployment workflow rebuilds the static GitHub Pages
+site from `main`.
