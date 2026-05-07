@@ -9,9 +9,10 @@ interface ConfirmModalProps {
   message: string;
   onConfirm: () => void;
   onCancel: () => void;
+  children?: React.ReactNode;
 }
 
-export const ConfirmModal = React.memo(function ConfirmModal({ open, message, onConfirm, onCancel }: ConfirmModalProps) {
+export const ConfirmModal = React.memo(function ConfirmModal({ open, message, onConfirm, onCancel, children }: ConfirmModalProps) {
   const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
   const yesBtnRef = useRef<HTMLButtonElement>(null);
@@ -61,6 +62,7 @@ export const ConfirmModal = React.memo(function ConfirmModal({ open, message, on
             {t("btn_no")}
           </button>
         </div>
+        {children && <div style={{ marginTop: SP["2xl"] }}>{children}</div>}
       </div>
     </div>
   );

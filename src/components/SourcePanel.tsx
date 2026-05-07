@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { TOOLS, BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX } from "../constants";
+import { TOOLS, BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX, EXPORT_SCALES, type ExportScale } from "../constants";
 import { LEVEL_INFO } from "../color-engine";
 import { S_BTN, S_BTN_ACTIVE, S_CHECKERBOARD } from "../styles/shared";
 import { rgbStr, timestamp } from "../utils";
@@ -59,6 +59,16 @@ const S_SOURCE_ACTION_BUTTON_BASE: React.CSSProperties = {
 const S_SOURCE_ACTION_BUTTON: React.CSSProperties = { ...S_BTN, ...S_SOURCE_ACTION_BUTTON_BASE };
 const S_SOURCE_ACTION_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_ACTIVE, ...S_SOURCE_ACTION_BUTTON_BASE };
 const S_SOURCE_FILE_BUTTON: React.CSSProperties = { ...S_SOURCE_ACTION_BUTTON, minWidth: 52 };
+const S_EXPORT_SCALE_BUTTON_BASE: React.CSSProperties = {
+  boxSizing: "border-box",
+  height: 28,
+  minWidth: 48,
+  padding: "0 10px",
+  fontSize: FS.md,
+  lineHeight: "26px",
+};
+const S_EXPORT_SCALE_BUTTON: React.CSSProperties = { ...S_BTN, ...S_EXPORT_SCALE_BUTTON_BASE };
+const S_EXPORT_SCALE_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_ACTIVE, ...S_EXPORT_SCALE_BUTTON_BASE };
 
 export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelProps) {
   const {
@@ -184,31 +194,27 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
     openWithInput();
   }, [loadImg]);
   const [confirmSave, setConfirmSave] = useState<"gray" | "color" | "glaze" | null>(null);
+  const [exportScale, setExportScale] = useState<ExportScale>(1);
   const doSave = useCallback(
-    (kind: "gray" | "color" | "glaze") => {
+    (kind: "gray" | "color" | "glaze", scale: ExportScale) => {
       const ts = timestamp();
-      if (kind === "gray") saveColor(srcRef, `chromalum_gray_${ts}.png`);
-      else if (kind === "color") saveColor(prvRef, `chromalum_color_${ts}.png`);
-      else saveGlaze(`chromalum_glaze_${ts}.png`);
+      if (kind === "gray") saveColor(srcRef, `chromalum_gray_${ts}.png`, scale);
+      else if (kind === "color") saveColor(prvRef, `chromalum_color_${ts}.png`, scale);
+      else saveGlaze(`chromalum_glaze_${ts}.png`, scale);
     },
     [saveColor, saveGlaze, srcRef, prvRef],
   );
-  // Touch devices get a confirm step (hard to cancel an accidental share sheet on mobile);
-  // pointer-fine (mouse) saves immediately as before.
-  const requestSave = useCallback(
-    (kind: "gray" | "color" | "glaze") => {
-      if (window.matchMedia("(pointer: fine)").matches) doSave(kind);
-      else setConfirmSave(kind);
-    },
-    [doSave],
-  );
+  const requestSave = useCallback((kind: "gray" | "color" | "glaze") => {
+    setExportScale(1);
+    setConfirmSave(kind);
+  }, []);
   const handleSaveColor = useCallback(() => requestSave("color"), [requestSave]);
   const handleSaveGray = useCallback(() => requestSave("gray"), [requestSave]);
   const handleSaveGlaze = useCallback(() => requestSave("glaze"), [requestSave]);
   const handleConfirmSave = useCallback(() => {
-    if (confirmSave) doSave(confirmSave);
+    if (confirmSave) doSave(confirmSave, exportScale);
     setConfirmSave(null);
-  }, [confirmSave, doSave]);
+  }, [confirmSave, doSave, exportScale]);
   const handleCancelSave = useCallback(() => setConfirmSave(null), []);
   const confirmMsg =
     confirmSave === "gray"
@@ -577,7 +583,26 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
         {/* panel-sidebar */}
       </div>
       {/* panel-layout */}
-      <ConfirmModal open={confirmSave !== null} message={confirmMsg} onConfirm={handleConfirmSave} onCancel={handleCancelSave} />
+      <ConfirmModal open={confirmSave !== null} message={confirmMsg} onConfirm={handleConfirmSave} onCancel={handleCancelSave}>
+        <div role="radiogroup" aria-label={t("label_png_scale")}>
+          <div style={{ fontSize: FS.sm, color: C.textDimmer, marginBottom: SP.sm }}>{t("label_png_scale")}</div>
+          <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", flexWrap: "wrap" }}>
+            {EXPORT_SCALES.map((scale) => (
+              <button
+                key={scale}
+                type="button"
+                role="radio"
+                aria-checked={exportScale === scale}
+                aria-label={t("aria_png_scale", scale)}
+                onClick={() => setExportScale(scale)}
+                style={exportScale === scale ? S_EXPORT_SCALE_BUTTON_ACTIVE : S_EXPORT_SCALE_BUTTON}
+              >
+                {scale}x
+              </button>
+            ))}
+          </div>
+        </div>
+      </ConfirmModal>
     </div>
   );
 });

@@ -239,6 +239,47 @@ describe("useExport", () => {
       expect(mockShare).not.toHaveBeenCalled();
       expect(mockAnchor.click).toHaveBeenCalled();
     });
+
+    it("exports a nearest-neighbor scaled PNG with the scale in the filename", () => {
+      const { result } = setup();
+      const sourceCanvas = document.createElement("canvas");
+      sourceCanvas.width = 3;
+      sourceCanvas.height = 2;
+      const ref = { current: sourceCanvas } as React.RefObject<HTMLCanvasElement | null>;
+      const drawImage = vi.fn();
+      let scaled: HTMLCanvasElement | null = null;
+
+      const fakeUrl = "blob:http://localhost/scaled";
+      vi.spyOn(URL, "createObjectURL").mockReturnValue(fakeUrl);
+      vi.spyOn(URL, "revokeObjectURL").mockReturnValue();
+
+      const mockAnchor = { href: "", download: "", click: vi.fn() } as unknown as HTMLAnchorElement;
+      const realCreateElement = document.createElement.bind(document);
+      vi.spyOn(document, "createElement").mockImplementation((tagName: string) => {
+        if (tagName === "a") return mockAnchor as unknown as HTMLElement;
+        if (tagName === "canvas") {
+          scaled = realCreateElement("canvas");
+          vi.spyOn(scaled, "getContext").mockReturnValue({
+            imageSmoothingEnabled: true,
+            drawImage,
+          } as unknown as CanvasRenderingContext2D);
+          return scaled;
+        }
+        return realCreateElement(tagName);
+      });
+      vi.spyOn(document.body, "appendChild").mockReturnValue(mockAnchor as unknown as Node);
+      vi.spyOn(document.body, "removeChild").mockReturnValue(mockAnchor as unknown as Node);
+
+      result.current.saveColor(ref, "tiny.png", 4);
+
+      const scaledCanvas = scaled as HTMLCanvasElement | null;
+      expect(scaledCanvas).not.toBeNull();
+      expect((scaledCanvas as HTMLCanvasElement).width).toBe(12);
+      expect((scaledCanvas as HTMLCanvasElement).height).toBe(8);
+      expect(drawImage).toHaveBeenCalledWith(sourceCanvas, 0, 0, 12, 8);
+      expect(mockAnchor.download).toBe("tiny@4x.png");
+      expect(mockAnchor.click).toHaveBeenCalled();
+    });
   });
 
   /* ---------- shareColor ---------- */

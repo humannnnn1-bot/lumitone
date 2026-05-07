@@ -225,21 +225,27 @@ describe("SourcePanel interactions", () => {
     expect(saveColor).toHaveBeenCalledWith(
       expect.any(Object),
       expect.stringMatching(/^chromalum_gray_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png$/),
+      1,
     );
   });
 
-  it("uses immediate save/share actions on pointer-fine devices", () => {
+  it("uses save confirmation on pointer-fine devices and keeps share actions immediate", () => {
     mockPointerFine(true);
     const { saveColor, saveGlaze, shareColor, shareGlaze } = renderSource();
 
     fireEvent.click(screen.getByRole("button", { name: "btn_save_color" }));
+    expect(screen.getByRole("dialog", { name: "confirm_save_color" })).toBeTruthy();
+    fireEvent.click(screen.getByRole("radio", { name: "aria_png_scale(8)" }));
+    fireEvent.click(screen.getByRole("button", { name: "btn_yes" }));
     expect(saveColor).toHaveBeenCalledWith(
       expect.any(Object),
       expect.stringMatching(/^chromalum_color_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png$/),
+      8,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "btn_save_glaze" }));
-    expect(saveGlaze).toHaveBeenCalledWith(expect.stringMatching(/^chromalum_glaze_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png$/));
+    fireEvent.click(screen.getByRole("button", { name: "btn_yes" }));
+    expect(saveGlaze).toHaveBeenCalledWith(expect.stringMatching(/^chromalum_glaze_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png$/), 1);
 
     fireEvent.contextMenu(screen.getByRole("button", { name: "btn_save_gray" }));
     expect(shareColor).toHaveBeenCalledWith(
@@ -255,6 +261,23 @@ describe("SourcePanel interactions", () => {
 
     fireEvent.contextMenu(screen.getByRole("button", { name: "btn_save_glaze" }));
     expect(shareGlaze).toHaveBeenCalledWith(expect.stringMatching(/^chromalum_glaze_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png$/));
+  });
+
+  it("resets the export scale each time the save dialog opens", () => {
+    const { saveColor } = renderSource();
+
+    fireEvent.click(screen.getByRole("button", { name: "btn_save_gray" }));
+    fireEvent.click(screen.getByRole("radio", { name: "aria_png_scale(16)" }));
+    fireEvent.click(screen.getByRole("button", { name: "btn_no" }));
+
+    fireEvent.click(screen.getByRole("button", { name: "btn_save_gray" }));
+    fireEvent.click(screen.getByRole("button", { name: "btn_yes" }));
+
+    expect(saveColor).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.stringMatching(/^chromalum_gray_\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2}\.png$/),
+      1,
+    );
   });
 
   it("routes pixel-perfect zoom, brush range, level double-click, and pan-mode pointer controls", () => {

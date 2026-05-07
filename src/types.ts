@@ -3,6 +3,7 @@
    ═══════════════════════════════════════════ */
 
 import type React from "react";
+import type { ExportScale } from "./constants";
 import type { RingBuffer } from "./utils/ring-buffer";
 
 export type MapMode = "entropy" | "noise" | "depth" | "gradient" | "region" | "luminance" | "colorlum";
@@ -125,9 +126,9 @@ export interface DrawingHandlers {
 }
 
 export interface SaveActions {
-  saveColor: (ref: React.RefObject<HTMLCanvasElement | null>, name: string) => void;
-  saveColorWithLUT: (lut: [number, number, number][], name: string) => void;
-  saveGlaze: (name: string) => void;
+  saveColor: (ref: React.RefObject<HTMLCanvasElement | null>, name: string, scale?: ExportScale) => void;
+  saveColorWithLUT: (lut: [number, number, number][], name: string, scale?: ExportScale) => void;
+  saveGlaze: (name: string, scale?: ExportScale) => void;
   shareColor: (ref: React.RefObject<HTMLCanvasElement | null>, name: string) => void;
   shareGlaze: (name: string) => void;
 }

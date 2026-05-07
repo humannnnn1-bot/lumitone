@@ -78,7 +78,7 @@ export const AnalyzePanel = React.memo(
               className="map-mode-buttons"
               style={{ display: "flex", flexWrap: "wrap", gap: SP.xs, justifyContent: "center", marginTop: SP.xs }}
             >
-              {(["luminance", "colorlum", "region", "gradient"] as const).map((m) => (
+              {(["luminance", "colorlum", "region"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setMapMode(m)}
@@ -91,7 +91,7 @@ export const AnalyzePanel = React.memo(
                 </button>
               ))}
               <span className="map-mode-break" />
-              {(["depth", "noise", "entropy"] as const).map((m) => (
+              {(["gradient", "depth", "noise", "entropy"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setMapMode(m)}

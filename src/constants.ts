@@ -19,6 +19,8 @@ export const MAX_IMAGE_PIXELS = 50_000_000;
 export const GRID_ZOOM_THRESHOLD = 4;
 export const MIN_TAP_SIZE = 44;
 export const TOAST_DURATION = 2500;
+export const EXPORT_SCALES = [1, 4, 8, 16] as const;
+export type ExportScale = (typeof EXPORT_SCALES)[number];
 
 /* ═══════════════════════════════════════════
    MODULE-LEVEL CONSTANTS (early, used by HEX data)

@@ -404,11 +404,16 @@ export const HexDiagram = memo(
             })()}
             {/* Dice button at center */}
             <g
+              className="hex-dice-button"
               onClick={canRandomize ? handleRandomize : undefined}
               style={{
                 cursor: canRandomize ? "pointer" : "default",
                 opacity: canRandomize ? 1 : 0.3,
                 pointerEvents: canRandomize ? "auto" : "none",
+                WebkitTapHighlightColor: "transparent",
+                touchAction: "manipulation",
+                userSelect: "none",
+                outline: "none",
               }}
               tabIndex={canRandomize ? 0 : -1}
               role="button"

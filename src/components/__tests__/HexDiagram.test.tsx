@@ -44,6 +44,14 @@ describe("HexDiagram", () => {
     expect(withAriaPressed.length).toBe(buttons.length);
   });
 
+  it("suppresses the mobile tap highlight on the dice button", () => {
+    render(<HexDiagram {...makeProps()} />);
+    const diceButton = screen.getByRole("button", { name: "btn_random_color()" });
+    expect(diceButton.classList.contains("hex-dice-button")).toBe(true);
+    expect(diceButton.getAttribute("style")).toContain("touch-action: manipulation");
+    expect(diceButton.getAttribute("style")).toContain("outline: none");
+  });
+
   it("keyboard Enter triggers onClick (dispatch)", () => {
     const dispatch = vi.fn();
     render(<HexDiagram {...makeProps({ dispatch })} />);
