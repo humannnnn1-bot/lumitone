@@ -69,6 +69,15 @@ describe("TheoryPanel", () => {
     expect(ids.some((id) => id.startsWith("t1-tfg-"))).toBe(true);
   });
 
+  it("keeps Color Tetra T0 and T1 diagrams side by side in narrow layouts", () => {
+    renderWithLanguage();
+
+    const tetraPair = screen.getByTestId("tetra-pair");
+    expect(tetraPair.style.display).toBe("grid");
+    expect(tetraPair.style.gridTemplateColumns).toBe("repeat(2, minmax(0, 1fr))");
+    expect(tetraPair.querySelectorAll("svg")).toHaveLength(2);
+  });
+
   it("shows Color Star surface ridges and returns from K8 to surface mode", () => {
     renderWithLanguage();
 

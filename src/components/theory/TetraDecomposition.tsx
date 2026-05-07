@@ -28,6 +28,43 @@ const MT_W = 200,
   MT_H = 200;
 const MT_CX = MT_W / 2,
   MT_CY = MT_H / 2;
+const TETRA_PAIR_MAX_W = MT_W * 2 + SP.xl;
+
+const S_MINI_TETRA: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: 3,
+  width: "100%",
+  maxWidth: MT_W,
+  minWidth: 0,
+};
+
+const S_MINI_TETRA_SVG: React.CSSProperties = {
+  width: "100%",
+  height: "auto",
+  maxWidth: MT_W,
+  aspectRatio: `${MT_W} / ${MT_H}`,
+  display: "block",
+};
+
+const S_TETRA_BODY: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  gap: SP.md,
+  width: "100%",
+};
+
+const S_TETRA_PAIR: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+  alignItems: "start",
+  justifyItems: "center",
+  gap: SP.xl,
+  width: "100%",
+  maxWidth: TETRA_PAIR_MAX_W,
+};
 
 /* Uniform rescaling: compute bounding box of all 8 cube points, then scale to fit */
 const _cpVals = Object.values(CUBE_POINTS);
@@ -78,8 +115,8 @@ function MiniTetra({
   const faceColor = (f: [number, number, number]) => f[0] ^ f[1] ^ f[2];
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 3 }}>
-      <svg viewBox={`0 0 ${MT_W} ${MT_H}`} style={{ width: MT_W, height: MT_H }}>
+    <div style={S_MINI_TETRA}>
+      <svg viewBox={`0 0 ${MT_W} ${MT_H}`} style={S_MINI_TETRA_SVG}>
         {/* Ghost cube edges (back edges dashed, front edges solid) */}
         {CUBE_EDGES.map(([a, b], i) => {
           const back = isBackEdge(a, b);
@@ -290,8 +327,8 @@ export const TetraDecomposition = React.memo(function TetraDecomposition({ hlLev
       >
         {t("theory_dice_tetra")}
       </p>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.md }}>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: SP.xl, justifyContent: "center", maxWidth: "100%" }}>
+      <div style={S_TETRA_BODY}>
+        <div data-testid="tetra-pair" style={S_TETRA_PAIR}>
           <MiniTetra
             idPrefix="t0"
             verts={TETRA_T0}
