@@ -1,5 +1,7 @@
 import { LEVEL_MASK } from "../constants";
 import { findClosestCandidate } from "../color-engine";
+import { forEachBrushPixel } from "./brush-mask";
+import type { BrushMask } from "./brush-mask";
 
 /* ═══════════════════════════════════════════
    GLAZE PAINT FUNCTIONS
@@ -21,6 +23,119 @@ export function buildMultiDirectLUT(candidates: Map<number, number>): Uint8Array
     lut[level] = idx + 1;
   });
   return lut;
+}
+
+export function paintGlazeBrush(
+  colorMap: Uint8Array,
+  data: Uint8Array,
+  cx: number,
+  cy: number,
+  mask: BrushMask,
+  w: number,
+  h: number,
+  glazeLUT: Uint8Array,
+): void {
+  forEachBrushPixel(mask, cx, cy, w, h, (x, y) => {
+    const idx = y * w + x;
+    const lv = data[idx] & LEVEL_MASK;
+    const cmVal = glazeLUT[lv];
+    if (cmVal === 0) return;
+    colorMap[idx] = cmVal;
+  });
+}
+
+export function paintGlazeBrushLine(
+  colorMap: Uint8Array,
+  data: Uint8Array,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  mask: BrushMask,
+  w: number,
+  h: number,
+  glazeLUT: Uint8Array,
+): void {
+  if (w <= 0 || h <= 0) return;
+  const ax = Math.abs(x1 - x0),
+    ay = Math.abs(y1 - y0);
+  const sx = x0 < x1 ? 1 : -1,
+    sy = y0 < y1 ? 1 : -1;
+  let e = ax - ay;
+  const skipDist = Math.max(1, Math.floor(mask.size / 8));
+  const skipDist2 = skipDist * skipDist;
+  let lastPX = x0,
+    lastPY = y0;
+  paintGlazeBrush(colorMap, data, x0, y0, mask, w, h, glazeLUT);
+  for (;;) {
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * e;
+    if (e2 > -ay) {
+      e -= ay;
+      x0 += sx;
+    }
+    if (e2 < ax) {
+      e += ax;
+      y0 += sy;
+    }
+    const dx = x0 - lastPX,
+      dy = y0 - lastPY;
+    if (dx * dx + dy * dy >= skipDist2) {
+      paintGlazeBrush(colorMap, data, x0, y0, mask, w, h, glazeLUT);
+      lastPX = x0;
+      lastPY = y0;
+    }
+  }
+  paintGlazeBrush(colorMap, data, x1, y1, mask, w, h, glazeLUT);
+}
+
+export function eraseGlazeBrush(colorMap: Uint8Array, cx: number, cy: number, mask: BrushMask, w: number, h: number): void {
+  forEachBrushPixel(mask, cx, cy, w, h, (x, y) => {
+    colorMap[y * w + x] = 0;
+  });
+}
+
+export function eraseGlazeBrushLine(
+  colorMap: Uint8Array,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  mask: BrushMask,
+  w: number,
+  h: number,
+): void {
+  if (w <= 0 || h <= 0) return;
+  const ax = Math.abs(x1 - x0),
+    ay = Math.abs(y1 - y0);
+  const sx = x0 < x1 ? 1 : -1,
+    sy = y0 < y1 ? 1 : -1;
+  let e = ax - ay;
+  const skipDist = Math.max(1, Math.floor(mask.size / 8));
+  const skipDist2 = skipDist * skipDist;
+  let lastPX = x0,
+    lastPY = y0;
+  eraseGlazeBrush(colorMap, x0, y0, mask, w, h);
+  for (;;) {
+    if (x0 === x1 && y0 === y1) break;
+    const e2 = 2 * e;
+    if (e2 > -ay) {
+      e -= ay;
+      x0 += sx;
+    }
+    if (e2 < ax) {
+      e += ax;
+      y0 += sy;
+    }
+    const dx = x0 - lastPX,
+      dy = y0 - lastPY;
+    if (dx * dx + dy * dy >= skipDist2) {
+      eraseGlazeBrush(colorMap, x0, y0, mask, w, h);
+      lastPX = x0;
+      lastPY = y0;
+    }
+  }
+  eraseGlazeBrush(colorMap, x1, y1, mask, w, h);
 }
 
 /** Paint a glaze circle: for each pixel, use pre-computed LUT to assign variant. */

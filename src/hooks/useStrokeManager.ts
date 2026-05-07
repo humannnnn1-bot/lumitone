@@ -6,8 +6,9 @@
 
 import { isShapeTool } from "../constants";
 import type { ToolId } from "../constants";
-import { paintCircle, paintLine, SHAPE_PAINTERS } from "../drawing/paint";
-import { shapeBBox, unionBBox, brushBBox, restoreRect } from "../drawing/dirty-rect";
+import { BRUSH_SHAPE_PAINTERS, paintBrush, paintBrushLine } from "../drawing/paint";
+import { unionBBox, restoreRect } from "../drawing/dirty-rect";
+import { brushMaskBBox, getBrushMask, shapeMaskBBox } from "../drawing/brush-mask";
 import { computeDiff, buildDiffFromFill } from "../state/undo-diff";
 import type { DirtyRect, Point, StrokeState, Diff } from "../types";
 
@@ -65,14 +66,14 @@ export function applyBrushStroke(
   w: number,
   h: number,
 ): DirtyRect | null {
-  const r = Math.floor(brushSize / 2);
-  paintLine(buf, last.x, last.y, current.x, current.y, r, level, w, h);
-  return brushBBox(
+  const mask = getBrushMask(brushSize);
+  paintBrushLine(buf, last.x, last.y, current.x, current.y, mask, level, w, h);
+  return brushMaskBBox(
     [
       [last.x, last.y],
       [current.x, current.y],
     ],
-    r,
+    mask,
     w,
     h,
   );
@@ -80,9 +81,9 @@ export function applyBrushStroke(
 
 /** Apply initial brush dot at a single point. Returns dirty rect. */
 export function applyBrushDot(buf: Uint8Array, pos: Point, brushSize: number, level: number, w: number, h: number): DirtyRect | null {
-  const r = Math.floor(brushSize / 2);
-  paintCircle(buf, pos.x, pos.y, r, level, w, h);
-  return brushBBox([[pos.x, pos.y]], r, w, h);
+  const mask = getBrushMask(brushSize);
+  paintBrush(buf, pos.x, pos.y, mask, level, w, h);
+  return brushMaskBBox([[pos.x, pos.y]], mask, w, h);
 }
 
 /* ── Shape stroke application ──────────────── */
@@ -100,11 +101,11 @@ export function applyShapeStroke(
   h: number,
   prevBBox: DirtyRect | null,
 ): { shapeBBox: DirtyRect | null; dirtyBBox: DirtyRect | null } {
-  const r = Math.floor(brushSize / 2);
-  const newBB = shapeBBox(origin.x, origin.y, current.x, current.y, r, w, h);
+  const mask = getBrushMask(brushSize);
+  const newBB = shapeMaskBBox(origin.x, origin.y, current.x, current.y, mask, w, h);
   const dirtyBB = unionBBox(prevBBox, newBB);
   if (dirtyBB) restoreRect(buf, pre, w, dirtyBB);
-  SHAPE_PAINTERS[tool]?.(buf, origin.x, origin.y, current.x, current.y, r, level, w, h);
+  BRUSH_SHAPE_PAINTERS[tool]?.(buf, origin.x, origin.y, current.x, current.y, mask, level, w, h);
   return { shapeBBox: newBB, dirtyBBox: dirtyBB };
 }
 
@@ -118,9 +119,9 @@ export function applyShapeDot(
   w: number,
   h: number,
 ): DirtyRect | null {
-  const r = Math.floor(brushSize / 2);
-  SHAPE_PAINTERS[tool]?.(buf, pos.x, pos.y, pos.x, pos.y, r, level, w, h);
-  return shapeBBox(pos.x, pos.y, pos.x, pos.y, r, w, h);
+  const mask = getBrushMask(brushSize);
+  BRUSH_SHAPE_PAINTERS[tool]?.(buf, pos.x, pos.y, pos.x, pos.y, mask, level, w, h);
+  return shapeMaskBBox(pos.x, pos.y, pos.x, pos.y, mask, w, h);
 }
 
 /* ── Stroke result computation ─────────────── */

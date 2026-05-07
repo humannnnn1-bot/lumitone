@@ -1,6 +1,7 @@
 import { useRef, useLayoutEffect, useCallback } from "react";
 import { GRID_ZOOM_THRESHOLD, isShapeTool } from "../constants";
 import type { ToolId } from "../constants";
+import { brushMaskHas, getBrushMask } from "../drawing/brush-mask";
 import { useRectCache } from "./useRectCache";
 
 interface CursorOverlayRefs {
@@ -80,7 +81,6 @@ export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.Mutab
     const pos = posRef.current;
     if (!pos || panningRef.current) return;
     const curBS = brushSizeRef.current;
-    const rPx = Math.floor(curBS / 2);
     const curTool = toolRef.current;
     // snap cursor to canvas pixel center
     const rx = pos.dx / dW,
@@ -92,33 +92,35 @@ export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.Mutab
     const sdx = dW * (((cx + 0.5) / cv.w - 0.5 + p.x / cv.w) * z + 0.5);
     const sdy = dH * (((cy + 0.5) / cv.h - 0.5 + p.y / cv.h) * z + 0.5);
     const brushColor = curTool === "eraser" ? "rgba(255,100,100,.8)" : "rgba(255,255,255,.8)";
-    const brushR = rPx;
     if (curTool !== "fill") {
+      const mask = getBrushMask(curBS);
       ctx.beginPath();
-      if (brushR <= 0) {
-        ctx.rect(sdx - pxPerCell / 2, sdy - pxPerCell / 2, pxPerCell, pxPerCell);
+      if (mask.size === 1) {
+        const dot = mask.offsets[0];
+        if (dot) {
+          const px = sdx + (dot.dx - 0.5) * pxPerCell;
+          const py = sdy + (dot.dy - 0.5) * pxPerCell;
+          ctx.rect(px, py, pxPerCell, pxPerCell);
+        }
       } else {
-        for (let dy = -brushR; dy <= brushR; dy++) {
-          for (let dx = -brushR; dx <= brushR; dx++) {
-            if (dx * dx + dy * dy > brushR * brushR) continue;
-            const px = sdx + (dx - 0.5) * pxPerCell;
-            const py = sdy + (dy - 0.5) * pxPerCell;
-            if (dy === -brushR || dx * dx + (dy - 1) * (dy - 1) > brushR * brushR) {
-              ctx.moveTo(px, py);
-              ctx.lineTo(px + pxPerCell, py);
-            }
-            if (dy === brushR || dx * dx + (dy + 1) * (dy + 1) > brushR * brushR) {
-              ctx.moveTo(px, py + pxPerCell);
-              ctx.lineTo(px + pxPerCell, py + pxPerCell);
-            }
-            if (dx === -brushR || (dx - 1) * (dx - 1) + dy * dy > brushR * brushR) {
-              ctx.moveTo(px, py);
-              ctx.lineTo(px, py + pxPerCell);
-            }
-            if (dx === brushR || (dx + 1) * (dx + 1) + dy * dy > brushR * brushR) {
-              ctx.moveTo(px + pxPerCell, py);
-              ctx.lineTo(px + pxPerCell, py + pxPerCell);
-            }
+        for (const { dx, dy } of mask.offsets) {
+          const px = sdx + (dx - 0.5) * pxPerCell;
+          const py = sdy + (dy - 0.5) * pxPerCell;
+          if (!brushMaskHas(mask, dx, dy - 1)) {
+            ctx.moveTo(px, py);
+            ctx.lineTo(px + pxPerCell, py);
+          }
+          if (!brushMaskHas(mask, dx, dy + 1)) {
+            ctx.moveTo(px, py + pxPerCell);
+            ctx.lineTo(px + pxPerCell, py + pxPerCell);
+          }
+          if (!brushMaskHas(mask, dx - 1, dy)) {
+            ctx.moveTo(px, py);
+            ctx.lineTo(px, py + pxPerCell);
+          }
+          if (!brushMaskHas(mask, dx + 1, dy)) {
+            ctx.moveTo(px + pxPerCell, py);
+            ctx.lineTo(px + pxPerCell, py + pxPerCell);
           }
         }
       }

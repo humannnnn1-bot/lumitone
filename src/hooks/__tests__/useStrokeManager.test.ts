@@ -122,6 +122,25 @@ describe("applyBrushDot", () => {
     expect(dirty!.y).toBeLessThanOrEqual(5);
   });
 
+  it("uses distinct exact footprints for adjacent small brush sizes", () => {
+    const size2 = mkBuf(10, 10);
+    const dirty2 = applyBrushDot(size2, { x: 4, y: 4 }, 2, 3, 10, 10);
+    expect(dirty2).toEqual({ x: 4, y: 4, w: 2, h: 2 });
+    expect(size2[4 * 10 + 4]).toBe(3);
+    expect(size2[4 * 10 + 5]).toBe(3);
+    expect(size2[5 * 10 + 4]).toBe(3);
+    expect(size2[5 * 10 + 5]).toBe(3);
+    expect(size2[4 * 10 + 3]).toBe(0);
+
+    const size3 = mkBuf(10, 10);
+    const dirty3 = applyBrushDot(size3, { x: 4, y: 4 }, 3, 3, 10, 10);
+    expect(dirty3).toEqual({ x: 3, y: 3, w: 3, h: 3 });
+    expect(size3[4 * 10 + 4]).toBe(3);
+    expect(size3[3 * 10 + 4]).toBe(3);
+    expect(size3[4 * 10 + 3]).toBe(3);
+    expect(size3[3 * 10 + 3]).toBe(0);
+  });
+
   it("handles brush size > 1", () => {
     const buf = mkBuf(20, 20);
     const dirty = applyBrushDot(buf, { x: 10, y: 10 }, 5, 2, 20, 20);

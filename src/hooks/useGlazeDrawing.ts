@@ -5,12 +5,13 @@ import { LEVEL_CANDIDATES, findClosestCandidate, rgb2hue } from "../color-engine
 import {
   buildGlazeLUT,
   buildMultiDirectLUT,
-  paintGlazeCircle,
-  paintGlazeLine,
-  eraseGlazeCircle,
-  eraseGlazeLine,
+  paintGlazeBrush,
+  paintGlazeBrushLine,
+  eraseGlazeBrush,
+  eraseGlazeBrushLine,
 } from "../drawing/glaze-paint";
-import { brushBBox, dirtyFromChanged, unionBBox } from "../drawing/dirty-rect";
+import { dirtyFromChanged, unionBBox } from "../drawing/dirty-rect";
+import { brushMaskBBox, getBrushMask } from "../drawing/brush-mask";
 import { computeGlazeDiff, buildDiffFromGlazeFill } from "../state/undo-diff";
 import { useFloodFillWorker } from "./useFloodFillWorker";
 import { renderBuf } from "../drawing/render-buf";
@@ -188,7 +189,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     strokeRef.current = { cmBuf, cmPre, fillChanged: null, glazeLUT };
     const curTool = s.current.glazeTool;
     strokeSmootherRef.current = curTool === "glaze_fill" ? null : createStrokeSmoother(pos);
-    const r = Math.floor(pressureAdjustedBrushSize(brushSizeRef.current, e.nativeEvent) / 2);
+    const mask = getBrushMask(pressureAdjustedBrushSize(brushSizeRef.current, e.nativeEvent));
     const W = cv.w,
       H = cv.h;
 
@@ -234,11 +235,11 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
         });
       return;
     } else if (curTool === "glaze_eraser") {
-      eraseGlazeCircle(cmBuf, pos.x, pos.y, r, W, H);
+      eraseGlazeBrush(cmBuf, pos.x, pos.y, mask, W, H);
     } else {
-      paintGlazeCircle(cmBuf, cv.data, pos.x, pos.y, r, W, H, glazeLUT);
+      paintGlazeBrush(cmBuf, cv.data, pos.x, pos.y, mask, W, H, glazeLUT);
     }
-    const dirtyBB = brushBBox([[pos.x, pos.y]], r, W, H);
+    const dirtyBB = brushMaskBBox([[pos.x, pos.y]], mask, W, H);
     renderBuf(cv.data, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB, cmBuf);
   }
 
@@ -274,25 +275,25 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     for (const ev of events) {
       const raw = canvasPosUnclamped(ev, canvasEl, zoom, pan, cv);
       const p = strokeSmootherRef.current ? smoothStrokePoint(strokeSmootherRef.current, raw) : raw;
-      const r = Math.floor(pressureAdjustedBrushSize(brushSizeRef.current, ev) / 2);
+      const mask = getBrushMask(pressureAdjustedBrushSize(brushSizeRef.current, ev));
       if (curTool === "glaze_eraser") {
-        if (last) eraseGlazeLine(cmBuf, last.x, last.y, p.x, p.y, r, W, H);
-        else eraseGlazeCircle(cmBuf, p.x, p.y, r, W, H);
+        if (last) eraseGlazeBrushLine(cmBuf, last.x, last.y, p.x, p.y, mask, W, H);
+        else eraseGlazeBrush(cmBuf, p.x, p.y, mask, W, H);
       } else {
-        if (last) paintGlazeLine(cmBuf, cv.data, last.x, last.y, p.x, p.y, r, W, H, st.glazeLUT);
-        else paintGlazeCircle(cmBuf, cv.data, p.x, p.y, r, W, H, st.glazeLUT);
+        if (last) paintGlazeBrushLine(cmBuf, cv.data, last.x, last.y, p.x, p.y, mask, W, H, st.glazeLUT);
+        else paintGlazeBrush(cmBuf, cv.data, p.x, p.y, mask, W, H, st.glazeLUT);
       }
       const bb = last
-        ? brushBBox(
+        ? brushMaskBBox(
             [
               [last.x, last.y],
               [p.x, p.y],
             ],
-            r,
+            mask,
             W,
             H,
           )
-        : brushBBox([[p.x, p.y]], r, W, H);
+        : brushMaskBBox([[p.x, p.y]], mask, W, H);
       dirtyBB = unionBBox(dirtyBB, bb);
       last = p;
     }
