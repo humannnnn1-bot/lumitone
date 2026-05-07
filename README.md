@@ -16,9 +16,9 @@ geometry, the Fano plane, Hamming codes, and related polyhedral structures.
 
 ## Screenshots
 
-| Glaze overlay                                                 | Pattern gallery                                           |
-| ------------------------------------------------------------- | --------------------------------------------------------- |
-| ![CHROMALUM glaze overlay](./docs/assets/chromalum-glaze.png) | ![CHROMALUM gallery](./docs/assets/chromalum-gallery.png) |
+| Glaze tab                                                 | Gallery tab                                                   |
+| --------------------------------------------------------- | ------------------------------------------------------------- |
+| ![CHROMALUM Glaze tab](./docs/assets/chromalum-glaze.png) | ![CHROMALUM Gallery tab](./docs/assets/chromalum-gallery.png) |
 
 | Theory tab                                                  | Music tab                                                 |
 | ----------------------------------------------------------- | --------------------------------------------------------- |
