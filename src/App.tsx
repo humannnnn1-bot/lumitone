@@ -537,7 +537,6 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
                 panZoom={panZoomHandlers}
                 glazeDrawing={glazeDrawing}
                 announce={announce}
-                showToast={showToast}
                 undo={undo}
                 redo={redo}
                 zoom={panZoom.zoom}

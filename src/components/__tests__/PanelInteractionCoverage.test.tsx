@@ -395,7 +395,6 @@ describe("GlazePanel interactions", () => {
       panZoom,
       glazeDrawing,
       announce: vi.fn(),
-      showToast: vi.fn(),
       undo: vi.fn(),
       redo: vi.fn(),
       zoom: 1,

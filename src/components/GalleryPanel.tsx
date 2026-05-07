@@ -24,11 +24,11 @@ interface GalleryPanelProps {
 
 const BM_KEY = "chromalum_bookmarks";
 const BM_MAX = 500;
-// Gallery-regeneration cache. Tracks cvs.data by reference identity rather than by
-// sampled pixels: canvas-reducer returns a fresh Uint8Array on every mutation
-// (stroke_end/undo/redo/clear/new_canvas/load_image), so identity equality is a
-// reliable invalidation signal. hist is included because patternCount depends on
-// it — without it, drawing on an all-black canvas could leave the thumbnail set
+// Single-app-instance gallery-regeneration cache. Tracks cvs.data by reference
+// identity rather than by sampled pixels: canvas-reducer returns a fresh Uint8Array
+// on every mutation (stroke_end/undo/redo/clear/new_canvas/load_image), so identity
+// equality is a reliable invalidation signal. hist is included because patternCount
+// depends on it; without it, drawing on an all-black canvas could leave thumbnails
 // out of sync with the "N patterns" label.
 const _genCache = {
   data: null as Uint8Array | null,

@@ -1,16 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-interface AxeViolationSummary {
-  id: string;
-  impact: string | null;
-  help: string;
-  nodes: {
-    html?: string | null;
-    target: string[];
-    failureSummary?: string | null;
-  }[];
-}
+type AxeViolation = Awaited<ReturnType<AxeBuilder["analyze"]>>["violations"][number];
 
 const INTENTIONAL_COLOR_SAMPLE_ATTR = 'data-a11y-color-contrast-exception="intentional-color-sample"';
 
@@ -22,12 +13,12 @@ test.beforeEach(async ({ page }) => {
   });
 });
 
-function formatViolations(violations: AxeViolationSummary[]): string {
+function formatViolations(violations: AxeViolation[]): string {
   return violations
     .map((violation) => {
       const targets = violation.nodes
         .slice(0, 3)
-        .map((node) => `    - ${node.target.join(" ")}${node.failureSummary ? `\n      ${node.failureSummary}` : ""}`)
+        .map((node) => `    - ${node.target.map(String).join(" ")}${node.failureSummary ? `\n      ${node.failureSummary}` : ""}`)
         .join("\n");
       const extra = violation.nodes.length > 3 ? `\n    - ...and ${violation.nodes.length - 3} more node(s)` : "";
       return `[${violation.impact ?? "unknown"}] ${violation.id}: ${violation.help}\n${targets}${extra}`;
@@ -35,7 +26,7 @@ function formatViolations(violations: AxeViolationSummary[]): string {
     .join("\n\n");
 }
 
-function filterIntentionalColorSampleContrast(violations: AxeViolationSummary[]): AxeViolationSummary[] {
+function filterIntentionalColorSampleContrast(violations: AxeViolation[]): AxeViolation[] {
   return violations
     .map((violation) => {
       if (violation.id !== "color-contrast") return violation;

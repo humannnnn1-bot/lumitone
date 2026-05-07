@@ -85,7 +85,8 @@ function calcThumbSize(w: number, h: number): { tw: number; th: number } {
   return { tw: Math.max(1, Math.round(w * scale)), th: Math.max(1, Math.round(h * scale)) };
 }
 
-// Cache shared across hook instances via ref-like pattern (survives tab switches)
+// Single-app-instance cache shared across hook mounts. This preserves thumbnails
+// across tab switches while the Gallery panel is hidden.
 const _cache = { items: [] as GalleryItem[] };
 
 export function useGallery(cvs: CanvasData, cc: number[], locked: boolean[], hist: number[]) {

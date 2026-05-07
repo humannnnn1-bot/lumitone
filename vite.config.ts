@@ -1,8 +1,8 @@
-/// <reference types="vitest" />
 import { createHash } from "node:crypto";
 import { readdir, readFile, writeFile } from "node:fs/promises";
 import { join, relative, sep } from "node:path";
-import { defineConfig, type Plugin, type ResolvedConfig } from "vite";
+import { defineConfig } from "vitest/config";
+import type { Plugin, ResolvedConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 const reactVendorPackages = ["/node_modules/react/", "/node_modules/react-dom/"];
@@ -151,7 +151,6 @@ export default defineConfig({
     globals: true,
     exclude: ["e2e/**", "node_modules/**"],
     setupFiles: ["./src/__tests__/setup.ts"],
-    environmentMatchGlobs: [["**/*.test.tsx", "jsdom"]],
     coverage: {
       provider: "v8",
       include: ["src/**/*.{ts,tsx}"],

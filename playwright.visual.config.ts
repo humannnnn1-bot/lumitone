@@ -20,7 +20,6 @@ export default defineConfig({
     baseURL: "http://127.0.0.1:4175/chromalum/",
     colorScheme: "light",
     deviceScaleFactor: 1,
-    reducedMotion: "reduce",
     screenshot: "only-on-failure",
     trace: "on-first-retry",
     video: "retain-on-failure",

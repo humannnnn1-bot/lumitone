@@ -10,7 +10,7 @@ import {
   eraseGlazeCircle,
   eraseGlazeLine,
 } from "../drawing/glaze-paint";
-import { brushBBox, dirtyFromChanged, shapeBBox, unionBBox, restoreRect } from "../drawing/dirty-rect";
+import { brushBBox, dirtyFromChanged, unionBBox } from "../drawing/dirty-rect";
 import { computeGlazeDiff, buildDiffFromGlazeFill } from "../state/undo-diff";
 import { useFloodFillWorker } from "./useFloodFillWorker";
 import { renderBuf } from "../drawing/render-buf";
@@ -56,8 +56,6 @@ interface GlazeStroke {
   cmPre: Uint8Array;
   fillChanged: Uint32Array | null;
   glazeLUT: Uint8Array;
-  shapeStart: { x: number; y: number } | null;
-  prevShapeBBox: DirtyRect | null;
 }
 
 export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
@@ -182,7 +180,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     const isDirect = dc.size > 0;
     const curHue = s.current.hueAngle;
     const glazeLUT = isDirect ? buildMultiDirectLUT(dc) : buildGlazeLUT(curHue);
-    strokeRef.current = { cmBuf, cmPre, fillChanged: null, glazeLUT, shapeStart: pos, prevShapeBBox: null };
+    strokeRef.current = { cmBuf, cmPre, fillChanged: null, glazeLUT };
     const curTool = s.current.glazeTool;
     const r = Math.floor(brushSizeRef.current / 2);
     const W = cv.w,
@@ -255,21 +253,6 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     const W = cv.w,
       H = cv.h;
     const curTool = s.current.glazeTool;
-
-    // Shape tools: restore only the dirty region from cmPre, then redraw shape
-    if (st.shapeStart && curTool !== "glaze_brush" && curTool !== "glaze_eraser") {
-      const pos = cPos(e);
-      const origin = st.shapeStart;
-      const newBB = shapeBBox(origin.x, origin.y, pos.x, pos.y, r, W, H);
-      const prevBB = st.prevShapeBBox;
-      const dirtyBB = unionBBox(prevBB, newBB);
-      if (dirtyBB) restoreRect(cmBuf, st.cmPre, W, dirtyBB);
-      // Future: paint glaze shape here
-      st.prevShapeBBox = newBB;
-      lastRef.current = pos;
-      renderBuf(cv.data, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB, cmBuf);
-      return;
-    }
 
     // Brush / eraser: iterate coalesced pointer events so fast strokes keep
     // sub-frame sample fidelity instead of collapsing to one straight segment.

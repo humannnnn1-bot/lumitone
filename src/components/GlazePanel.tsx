@@ -24,7 +24,6 @@ interface GlazePanelProps {
   panZoom: PanZoomHandlers;
   glazeDrawing: GlazeDrawingResult;
   announce: (msg: string) => void;
-  showToast: (message: string, type: "error" | "success" | "info") => void;
   undo: () => void;
   redo: () => void;
   zoom: number;
