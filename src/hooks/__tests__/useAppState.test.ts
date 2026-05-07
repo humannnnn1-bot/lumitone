@@ -65,6 +65,27 @@ describe("useAppState", () => {
     expect(result.current.locked[0]).toBe(false);
   });
 
+  it("updates the untouched brush size when canvas dimensions change", () => {
+    const { result } = renderHook(() => useAppState(t));
+
+    act(() => {
+      result.current.dispatch({ type: "new_canvas", w: 64, h: 64 });
+    });
+
+    expect(result.current.brushSize).toBe(2);
+  });
+
+  it("keeps a manually selected brush size across canvas dimension changes", () => {
+    const { result } = renderHook(() => useAppState(t));
+
+    act(() => {
+      result.current.setBrushSize(24);
+      result.current.dispatch({ type: "new_canvas", w: 1024, h: 1024 });
+    });
+
+    expect(result.current.brushSize).toBe(24);
+  });
+
   it("does not mark a failed autosave as saved", async () => {
     vi.useFakeTimers();
     const saveStateMock = vi.mocked(saveState);

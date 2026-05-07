@@ -26,6 +26,14 @@ const PAIRS: [number, number][] = [
   [3, 4],
 ];
 
+const S_COLUMN_HEADER: React.CSSProperties = {
+  fontSize: FS.xs,
+  fontFamily: FONT.mono,
+  color: C.textDimmer,
+  textAlign: "center",
+  whiteSpace: "nowrap",
+};
+
 /* ── Mini isometric cube geometry ──────── */
 
 const M_EDGE = 24;
@@ -222,10 +230,10 @@ export const ColorDice = React.memo(function ColorDice({ hlLevel, onHover }: Pro
       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.sm }}>
         {/* Column headers */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: SP.xl, width: "100%", maxWidth: 220, marginTop: SP.sm }}>
-          <div className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: FONT.mono, color: C.textDimmer, textAlign: "center" }}>
+          <div className="theory-annotation" style={S_COLUMN_HEADER}>
             {t("theory_dice_additive_col")}
           </div>
-          <div className="theory-annotation" style={{ fontSize: FS.xs, fontFamily: FONT.mono, color: C.textDimmer, textAlign: "center" }}>
+          <div className="theory-annotation" style={S_COLUMN_HEADER}>
             {t("theory_dice_subtractive_col")}
           </div>
         </div>

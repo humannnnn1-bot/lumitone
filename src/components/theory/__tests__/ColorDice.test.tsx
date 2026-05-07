@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, expect, it, vi } from "vitest";
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { LanguageProvider } from "../../../i18n";
 import { ColorDice } from "../ColorDice";
 
@@ -23,5 +23,12 @@ describe("ColorDice", () => {
     expect(text).toContain("For disjoint colors (a ∧ b = 0)");
     expect(text).toContain("(a ⊕ b)' = a' ∧ b'");
     expect(text).toContain("a ∨ b = 7");
+  });
+
+  it("keeps the additive and subtractive column headers on one line", () => {
+    renderWithLanguage();
+
+    expect(screen.getByText("XOR view (additive reading)").style.whiteSpace).toBe("nowrap");
+    expect(screen.getByText("AND view (subtractive reading)").style.whiteSpace).toBe("nowrap");
   });
 });

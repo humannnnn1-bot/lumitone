@@ -31,6 +31,7 @@ export function useAppState(t: import("../i18n").TranslationFn) {
   const uiState = useUIState(t);
   const colorState = useColorState(state.hist);
 
+  const { resetBrushSizeForCanvas } = toolState;
   const { showToast, toastTimerRef } = uiState;
   const { cc, ccDispatch, locked, setLocked } = colorState;
 
@@ -173,6 +174,10 @@ export function useAppState(t: import("../i18n").TranslationFn) {
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  useEffect(() => {
+    resetBrushSizeForCanvas(cvs.w, cvs.h);
+  }, [cvs.w, cvs.h, resetBrushSizeForCanvas]);
 
   const { displayW, displayH } = useMemo(() => {
     const safeW = Math.max(1, cvs.w),
