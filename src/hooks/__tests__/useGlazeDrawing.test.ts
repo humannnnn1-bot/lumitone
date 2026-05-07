@@ -157,6 +157,30 @@ describe("useGlazeDrawing", () => {
     expect(Array.from(action.diff.idx)).toContain(centerIndex);
   });
 
+  it("uses pen pressure for glaze brush size", () => {
+    const cvs = makeCvs(20, 20);
+    cvs.data.fill(2);
+    const dispatch = vi.fn();
+    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, dispatch, brushSize: 10 })));
+    const canvas = result.current.curRef.current!;
+    mockCanvasRect(canvas);
+
+    act(() => {
+      result.current.onDown(
+        pointerEvent({
+          target: canvas,
+          nativeEvent: { clientX: 160, clientY: 160, pointerType: "pen", pressure: 1 } as PointerEvent,
+        }),
+      );
+    });
+    act(() => {
+      result.current.onUp();
+    });
+
+    const cmBuf = dispatch.mock.calls[0][0].finalColorMap as Uint8Array;
+    expect(cmBuf[10 * 20 + 16]).toBeGreaterThan(0);
+  });
+
   it.each([
     { glazeTool: "glaze_brush" as GlazeToolId, initialColorMap: 0, expectCenterChanged: true, expectEdgeChanged: true },
     { glazeTool: "glaze_eraser" as GlazeToolId, initialColorMap: 2, expectCenterChanged: false, expectEdgeChanged: false },

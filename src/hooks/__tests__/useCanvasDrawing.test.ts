@@ -165,6 +165,38 @@ describe("useCanvasDrawing", () => {
     expect(Array.from(action.diff.idx)).toContain(centerIndex);
   });
 
+  it("uses pen pressure for brush size while keeping mouse input fixed", () => {
+    const mouse = renderHook(() => useCanvasDrawing(makeOpts({ cvs: makeCvs(20, 20), brushLevel: 3, brushSize: 10 })));
+    const mouseCanvas = mouse.result.current.curRef.current!;
+    mockCanvasRect(mouseCanvas);
+
+    act(() => {
+      mouse.result.current.onDown(
+        pointerEvent({
+          target: mouseCanvas,
+          nativeEvent: { clientX: 160, clientY: 160, pointerType: "mouse", pressure: 1 } as PointerEvent,
+        }),
+      );
+    });
+
+    expect(mouse.result.current.strokeRef.current?.buf[10 * 20 + 16]).toBe(0);
+
+    const pen = renderHook(() => useCanvasDrawing(makeOpts({ cvs: makeCvs(20, 20), brushLevel: 3, brushSize: 10 })));
+    const penCanvas = pen.result.current.curRef.current!;
+    mockCanvasRect(penCanvas);
+
+    act(() => {
+      pen.result.current.onDown(
+        pointerEvent({
+          target: penCanvas,
+          nativeEvent: { clientX: 160, clientY: 160, pointerType: "pen", pressure: 1 } as PointerEvent,
+        }),
+      );
+    });
+
+    expect(pen.result.current.strokeRef.current?.buf[10 * 20 + 16]).toBe(3);
+  });
+
   it.each([
     { tool: "brush" as ToolId, initialLevel: 0, expectedCenter: 3, expectedEdge: 3 },
     { tool: "eraser" as ToolId, initialLevel: 7, expectedCenter: 0, expectedEdge: 0 },

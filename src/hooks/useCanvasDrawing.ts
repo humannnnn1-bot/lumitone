@@ -24,6 +24,8 @@ import type { DrawingRefs } from "./useDrawingBase";
 import { unionBBox } from "../drawing/dirty-rect";
 import { createStrokeSmoother, smoothStrokePoint } from "../drawing/stroke-smoothing";
 import type { StrokeSmoother } from "../drawing/stroke-smoothing";
+import { pressureAdjustedBrushSize } from "../drawing/stroke-pressure";
+import type { PointerPressureSample } from "../drawing/stroke-pressure";
 import type { CanvasData, StrokeState, ImgCache, CanvasAction, DirtyRect } from "../types";
 import { useDrawingContext } from "../state/DrawingContext";
 
@@ -218,7 +220,8 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
       strokeRef.current.prevShapeBBox = bb;
       renderBuf(buf, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, bb);
     } else {
-      const dirtyBB = applyBrushDot(buf, pos, curBS, lv, W, H);
+      const effectiveBrushSize = pressureAdjustedBrushSize(curBS, e.nativeEvent);
+      const dirtyBB = applyBrushDot(buf, pos, effectiveBrushSize, lv, W, H);
       renderBuf(buf, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB);
     }
   }
@@ -271,14 +274,15 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     const zoom = zoomRef.current,
       pan = panRef.current;
     const coalesced = typeof nativeEvent.getCoalescedEvents === "function" ? nativeEvent.getCoalescedEvents() : [];
-    const events: Array<{ clientX: number; clientY: number }> = coalesced.length > 0 ? coalesced : [nativeEvent];
+    const events: Array<{ clientX: number; clientY: number } & PointerPressureSample> = coalesced.length > 0 ? coalesced : [nativeEvent];
 
     let last = lastRef.current;
     let dirtyBB: DirtyRect | null = null;
     for (const ev of events) {
       const raw = canvasPosUnclamped(ev, canvasEl, zoom, pan, cv);
       const p = strokeSmootherRef.current ? smoothStrokePoint(strokeSmootherRef.current, raw) : raw;
-      const bb = last ? applyBrushStroke(buf, last, p, sp.brushSize, lv, W, H) : applyBrushDot(buf, p, sp.brushSize, lv, W, H);
+      const effectiveBrushSize = pressureAdjustedBrushSize(sp.brushSize, ev);
+      const bb = last ? applyBrushStroke(buf, last, p, effectiveBrushSize, lv, W, H) : applyBrushDot(buf, p, effectiveBrushSize, lv, W, H);
       dirtyBB = unionBBox(dirtyBB, bb);
       last = p;
     }

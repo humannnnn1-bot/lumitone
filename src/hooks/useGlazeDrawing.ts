@@ -21,6 +21,8 @@ import { trySetPointerCapture, cPosFromRefs, canvasPosUnclamped, updateStatusBas
 import type { DrawingRefs } from "./useDrawingBase";
 import { createStrokeSmoother, smoothStrokePoint } from "../drawing/stroke-smoothing";
 import type { StrokeSmoother } from "../drawing/stroke-smoothing";
+import { pressureAdjustedBrushSize } from "../drawing/stroke-pressure";
+import type { PointerPressureSample } from "../drawing/stroke-pressure";
 import type { CanvasData, ImgCache, CanvasAction, DirtyRect } from "../types";
 import { useDrawingContext } from "../state/DrawingContext";
 
@@ -186,7 +188,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     strokeRef.current = { cmBuf, cmPre, fillChanged: null, glazeLUT };
     const curTool = s.current.glazeTool;
     strokeSmootherRef.current = curTool === "glaze_fill" ? null : createStrokeSmoother(pos);
-    const r = Math.floor(brushSizeRef.current / 2);
+    const r = Math.floor(pressureAdjustedBrushSize(brushSizeRef.current, e.nativeEvent) / 2);
     const W = cv.w,
       H = cv.h;
 
@@ -253,7 +255,6 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     e.preventDefault();
     const cmBuf = st.cmBuf;
     const cv = cvsRef.current;
-    const r = Math.floor(brushSizeRef.current / 2);
     const W = cv.w,
       H = cv.h;
     const curTool = s.current.glazeTool;
@@ -266,13 +267,14 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     const zoom = zoomRef.current,
       pan = panRef.current;
     const coalesced = typeof nativeEvent.getCoalescedEvents === "function" ? nativeEvent.getCoalescedEvents() : [];
-    const events: Array<{ clientX: number; clientY: number }> = coalesced.length > 0 ? coalesced : [nativeEvent];
+    const events: Array<{ clientX: number; clientY: number } & PointerPressureSample> = coalesced.length > 0 ? coalesced : [nativeEvent];
 
     let last = lastRef.current;
     let dirtyBB: DirtyRect | null = null;
     for (const ev of events) {
       const raw = canvasPosUnclamped(ev, canvasEl, zoom, pan, cv);
       const p = strokeSmootherRef.current ? smoothStrokePoint(strokeSmootherRef.current, raw) : raw;
+      const r = Math.floor(pressureAdjustedBrushSize(brushSizeRef.current, ev) / 2);
       if (curTool === "glaze_eraser") {
         if (last) eraseGlazeLine(cmBuf, last.x, last.y, p.x, p.y, r, W, H);
         else eraseGlazeCircle(cmBuf, p.x, p.y, r, W, H);
