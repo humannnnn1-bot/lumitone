@@ -61,12 +61,13 @@ const S_SOURCE_ACTION_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_ACTIVE, ..
 const S_SOURCE_FILE_BUTTON: React.CSSProperties = { ...S_SOURCE_ACTION_BUTTON, minWidth: 52 };
 const S_EXPORT_SCALE_BUTTON_BASE: React.CSSProperties = {
   boxSizing: "border-box",
-  height: 22,
-  minWidth: 38,
-  minHeight: 22,
-  padding: "0 6px",
+  width: 26,
+  height: 24,
+  minWidth: 26,
+  minHeight: 24,
+  padding: 0,
   fontSize: FS.sm,
-  lineHeight: "20px",
+  lineHeight: 1,
 };
 const S_EXPORT_SCALE_BUTTON: React.CSSProperties = { ...S_BTN, ...S_EXPORT_SCALE_BUTTON_BASE };
 const S_EXPORT_SCALE_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_ACTIVE, ...S_EXPORT_SCALE_BUTTON_BASE };
@@ -586,7 +587,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
       {/* panel-layout */}
       <ConfirmModal open={confirmSave !== null} message={confirmMsg} onConfirm={handleConfirmSave} onCancel={handleCancelSave}>
         <div role="radiogroup" aria-label={t("label_png_scale")}>
-          <div style={{ display: "flex", gap: SP.lg, justifyContent: "center", flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: SP.xl, justifyContent: "center", flexWrap: "wrap" }}>
             {EXPORT_SCALES.map((scale) => (
               <button
                 key={scale}
