@@ -11,30 +11,18 @@ export interface GalleryItem {
 const THUMB_MAX = 260;
 const CHUNK_SIZE = 8;
 
-const MAX_VARIANTS = 10_000;
-
 /** Generate all cc[] variants as a Cartesian product of unlocked candidate indices. */
 export function generateAllVariants(cc: number[], locked: boolean[], hist: number[]): number[][] {
   const options: number[][] = [];
-  let total = 1;
   for (let lv = 0; lv < 8; lv++) {
     const n = LEVEL_CANDIDATES[lv].length;
     if (locked[lv] || hist[lv] === 0 || n <= 1) {
       options.push([cc[lv] % n]);
     } else {
       options.push(Array.from({ length: n }, (_, i) => i));
-      total *= n;
     }
   }
-  // Safety: cap variant count to avoid memory explosion
-  if (total > MAX_VARIANTS) {
-    console.warn(`CHROMALUM: Variant count ${total} exceeds limit ${MAX_VARIANTS}, sampling randomly`);
-    const results: number[][] = [];
-    for (let i = 0; i < MAX_VARIANTS; i++) {
-      results.push(options.map((opts) => opts[(Math.random() * opts.length) | 0]));
-    }
-    return results;
-  }
+
   // Cartesian product
   const results: number[][] = [];
   const recurse = (lv: number, current: number[]) => {

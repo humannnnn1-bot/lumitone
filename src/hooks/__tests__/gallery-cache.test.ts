@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { generateAllVariants } from "../useGallery";
+import { LEVEL_CANDIDATES } from "../../color-engine";
 
 describe("generateAllVariants", () => {
   const defaultCc = [0, 0, 0, 0, 0, 0, 0, 0];
@@ -30,11 +31,14 @@ describe("generateAllVariants", () => {
     }
   });
 
-  it("respects MAX_VARIANTS cap", () => {
-    // Unlocking all levels with all having pixels should generate many variants
+  it("generates the current maximum of 81 variants when all levels are used and unlocked", () => {
     const hist = [100, 100, 100, 100, 100, 100, 100, 100];
+    const currentMax = LEVEL_CANDIDATES.reduce((total, candidates) => total * candidates.length, 1);
+
     const result = generateAllVariants(defaultCc, noneLocked, hist);
-    expect(result.length).toBeLessThanOrEqual(10_000);
+
+    expect(currentMax).toBe(81);
+    expect(result).toHaveLength(81);
   });
 
   it("variant values are valid indices", () => {

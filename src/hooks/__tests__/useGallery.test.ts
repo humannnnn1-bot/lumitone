@@ -48,12 +48,15 @@ describe("generateAllVariants", () => {
     expect(result.length).toBe(1);
   });
 
-  it("caps at MAX_VARIANTS (10000) for large Cartesian products", () => {
+  it("generates the current maximum of 81 variants when all levels are used and unlocked", () => {
     const locked = new Array(8).fill(false);
     const hist = new Array(8).fill(100);
-    // All levels used and unlocked — product will exceed 10000
+    const currentMax = LEVEL_CANDIDATES.reduce((total, candidates) => total * candidates.length, 1);
+
     const result = generateAllVariants([...DEFAULT_CC], locked, hist);
-    expect(result.length).toBeLessThanOrEqual(10_000);
+
+    expect(currentMax).toBe(81);
+    expect(result).toHaveLength(81);
   });
 
   it("each variant has exactly 8 elements", () => {
