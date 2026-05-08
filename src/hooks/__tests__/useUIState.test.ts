@@ -21,6 +21,7 @@ describe("useUIState", () => {
   it("initial activeTab is 2 (Source)", () => {
     const { result } = renderHook(() => useUIState(t));
     expect(result.current.activeTab).toBe(2);
+    expect(result.current.activeTabId).toBe("source");
   });
 
   it("initial activeTab prefers a supported URL hash", () => {
@@ -29,6 +30,7 @@ describe("useUIState", () => {
     const { result } = renderHook(() => useUIState(t));
 
     expect(result.current.activeTab).toBe(6);
+    expect(result.current.activeTabId).toBe("theory");
   });
 
   it("tracks whether the stats tab has been opened from the initial hash", () => {
@@ -37,6 +39,17 @@ describe("useUIState", () => {
     const { result } = renderHook(() => useUIState(t));
 
     expect(result.current.activeTab).toBe(5);
+    expect(result.current.activeTabId).toBe("stats");
+    expect(result.current.hasOpenedStats).toBe(true);
+  });
+
+  it("initial activeTab supports the legacy stats URL hash alias", () => {
+    window.history.replaceState(null, "", "/#stats");
+
+    const { result } = renderHook(() => useUIState(t));
+
+    expect(result.current.activeTab).toBe(5);
+    expect(result.current.activeTabId).toBe("stats");
     expect(result.current.hasOpenedStats).toBe(true);
   });
 
@@ -46,6 +59,7 @@ describe("useUIState", () => {
     const { result } = renderHook(() => useUIState(t));
 
     expect(result.current.activeTab).toBe(7);
+    expect(result.current.activeTabId).toBe("music");
   });
 
   it("initial activeTab falls back to Source when stored tab cannot be read", () => {
@@ -57,6 +71,7 @@ describe("useUIState", () => {
     const { result } = renderHook(() => useUIState(t));
 
     expect(result.current.activeTab).toBe(2);
+    expect(result.current.activeTabId).toBe("source");
   });
 
   it("setActiveTab changes tab", () => {
@@ -65,6 +80,18 @@ describe("useUIState", () => {
       result.current.setActiveTab(6);
     });
     expect(result.current.activeTab).toBe(6);
+    expect(result.current.activeTabId).toBe("theory");
+    expect(window.location.hash).toBe("#theory");
+    expect(localStorage.getItem("chromalum-active-tab-v2")).toBe("6");
+  });
+
+  it("setActiveTabId changes tab while preserving numeric storage compatibility", () => {
+    const { result } = renderHook(() => useUIState(t));
+    act(() => {
+      result.current.setActiveTabId("theory");
+    });
+    expect(result.current.activeTab).toBe(6);
+    expect(result.current.activeTabId).toBe("theory");
     expect(window.location.hash).toBe("#theory");
     expect(localStorage.getItem("chromalum-active-tab-v2")).toBe("6");
   });
@@ -80,6 +107,7 @@ describe("useUIState", () => {
     });
 
     expect(result.current.activeTab).toBe(6);
+    expect(result.current.activeTabId).toBe("theory");
     expect(window.location.hash).toBe("#theory");
   });
 
@@ -91,11 +119,13 @@ describe("useUIState", () => {
       result.current.setActiveTab(5);
     });
     expect(result.current.hasOpenedStats).toBe(true);
+    expect(result.current.activeTabId).toBe("stats");
 
     act(() => {
       result.current.setActiveTab(2);
     });
     expect(result.current.hasOpenedStats).toBe(true);
+    expect(result.current.activeTabId).toBe("source");
   });
 
   it("syncs activeTab from manual hash changes", () => {
@@ -107,6 +137,7 @@ describe("useUIState", () => {
     });
 
     expect(result.current.activeTab).toBe(7);
+    expect(result.current.activeTabId).toBe("music");
     expect(localStorage.getItem("chromalum-active-tab-v2")).toBe("7");
   });
 
@@ -120,6 +151,7 @@ describe("useUIState", () => {
     });
 
     expect(result.current.activeTab).toBe(5);
+    expect(result.current.activeTabId).toBe("stats");
     expect(result.current.hasOpenedStats).toBe(true);
   });
 
@@ -135,6 +167,7 @@ describe("useUIState", () => {
     });
 
     expect(result.current.activeTab).toBe(2);
+    expect(result.current.activeTabId).toBe("source");
     expect(window.location.hash).toBe("");
     expect(localStorage.getItem("chromalum-active-tab-v2")).toBe("2");
   });
@@ -148,6 +181,7 @@ describe("useUIState", () => {
     const { result } = renderHook(() => useUIState(t));
 
     expect(result.current.activeTab).toBe(2);
+    expect(result.current.activeTabId).toBe("source");
   });
 
   it("ignores storage failures while saving scroll position", () => {

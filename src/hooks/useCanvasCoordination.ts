@@ -1,13 +1,14 @@
 import { useRef, useEffect, useLayoutEffect, useCallback } from "react";
 import { renderBuf } from "../drawing/render-buf";
 import type { CanvasData } from "../types";
+import type { MainTabId } from "../tabs";
 import type { CanvasDrawingResult } from "./useCanvasDrawing";
 import type { GlazeDrawingResult } from "./useGlazeDrawing";
 
 interface CanvasCoordinationOptions {
   cvs: CanvasData;
   colorLUT: [number, number, number][];
-  activeTab: number;
+  activeTabId: MainTabId;
   drawing: CanvasDrawingResult;
   glazeDrawing: GlazeDrawingResult;
   srcWrapRef: React.MutableRefObject<HTMLDivElement | null>;
@@ -24,8 +25,20 @@ interface CanvasCoordinationResult {
 }
 
 export function useCanvasCoordination(opts: CanvasCoordinationOptions): CanvasCoordinationResult {
-  const { cvs, colorLUT, activeTab, drawing, glazeDrawing, srcWrapRef, prvWrapRef, glazeWrapRef, prvRef, hexPrvRef, glazePrvRef, onWheel } =
-    opts;
+  const {
+    cvs,
+    colorLUT,
+    activeTabId,
+    drawing,
+    glazeDrawing,
+    srcWrapRef,
+    prvWrapRef,
+    glazeWrapRef,
+    prvRef,
+    hexPrvRef,
+    glazePrvRef,
+    onWheel,
+  } = opts;
 
   const sharedSchedCursorRef = useRef<(() => void) | null>(null);
 
@@ -57,7 +70,7 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): CanvasCo
       if (p) p.removeEventListener("wheel", onWheel, wheelOpts);
       if (g) g.removeEventListener("wheel", onWheel, wheelOpts);
     };
-  }, [onWheel, srcWrapRef, prvWrapRef, glazeWrapRef, activeTab]);
+  }, [onWheel, srcWrapRef, prvWrapRef, glazeWrapRef, activeTabId]);
 
   const renderGlazeCanvas = useCallback(() => {
     const gp = glazePrvRef.current;
@@ -104,12 +117,12 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): CanvasCo
     // Also render glaze tab canvas (may be null if tab not mounted yet)
     renderGlazeCanvas();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable, renderGlazeCanvas captured via closure
-  }, [cvs, colorLUT, activeTab]);
+  }, [cvs, colorLUT, activeTabId]);
 
   // Glaze tab effect
   useEffect(() => {
-    if (activeTab === 4) renderGlazeCanvas();
-  }, [activeTab, renderGlazeCanvas]);
+    if (activeTabId === "glaze") renderGlazeCanvas();
+  }, [activeTabId, renderGlazeCanvas]);
 
   return { sharedSchedCursorRef };
 }

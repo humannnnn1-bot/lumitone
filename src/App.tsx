@@ -19,7 +19,7 @@ import { timestamp } from "./utils";
 import { C, Z, FS, FW, FONT } from "./styles/tokens";
 import { Toast } from "./components/Toast";
 import { PwaUpdateToast } from "./components/PwaUpdateToast";
-import { MAIN_TABS } from "./tabs";
+import { getTabButtonId, getTabPanelId, tabFromId } from "./tabs";
 import { AppTabBar } from "./components/AppTabBar";
 import { SourcePanel } from "./components/SourcePanel";
 import { ColorPanel } from "./components/ColorPanel";
@@ -120,8 +120,8 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     setBrushSize,
     tool,
     setTool,
-    activeTab,
-    setActiveTab,
+    activeTabId,
+    setActiveTabId,
     hasOpenedStats,
     showHelp,
     setShowHelp,
@@ -154,8 +154,8 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   const pwaUpdate = usePwaUpdate();
 
   useEffect(() => {
-    document.title = `CHROMALUM - ${t(MAIN_TABS[activeTab].key)}`;
-  }, [activeTab, t]);
+    document.title = `CHROMALUM - ${t(tabFromId(activeTabId).key)}`;
+  }, [activeTabId, t]);
 
   const prvRef = useRef<HTMLCanvasElement | null>(null);
   const glazePrvRef = useRef<HTMLCanvasElement | null>(null);
@@ -192,7 +192,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
   const { sharedSchedCursorRef } = useCanvasCoordination({
     cvs,
     colorLUT,
-    activeTab,
+    activeTabId,
     drawing,
     glazeDrawing,
     srcWrapRef,
@@ -239,7 +239,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     t,
     setZoom: panZoom.setZoom,
     onSave: handleKbSave,
-    activeTab,
+    activeTabId,
   });
 
   const handleClear = useCallback(() => {
@@ -425,11 +425,11 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
         </div>
       </div>
 
-      <AppTabBar activeTab={activeTab} onTabChange={setActiveTab} t={t} />
+      <AppTabBar activeTabId={activeTabId} onTabChange={setActiveTabId} t={t} />
 
       <div style={S_TAB_CENTER}>
-        {activeTab === 2 && (
-          <div id="tabpanel-2" role="tabpanel" aria-labelledby="tab-2">
+        {activeTabId === "source" && (
+          <div id={getTabPanelId("source")} role="tabpanel" aria-labelledby={getTabButtonId("source")}>
             <SourcePanel
               srcRef={drawing.srcRef}
               curRef={drawing.curRef}
@@ -461,8 +461,8 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             />
           </div>
         )}
-        {activeTab === 3 && (
-          <div id="tabpanel-3" role="tabpanel" aria-labelledby="tab-3">
+        {activeTabId === "color" && (
+          <div id={getTabPanelId("color")} role="tabpanel" aria-labelledby={getTabButtonId("color")}>
             <ColorPanel
               prvRef={prvRef}
               prvCurRef={drawing.prvCurRef}
@@ -481,8 +481,8 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             />
           </div>
         )}
-        {activeTab === 1 && (
-          <div id="tabpanel-1" role="tabpanel" aria-labelledby="tab-1">
+        {activeTabId === "hex" && (
+          <div id={getTabPanelId("hex")} role="tabpanel" aria-labelledby={getTabButtonId("hex")}>
             <HexPanel
               hexPrvRef={hexPrvRef}
               displayW={displayW}
@@ -500,13 +500,13 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
               t={t}
               onPatternClick={() => {
                 setScrollToGallery(true);
-                setActiveTab(0);
+                setActiveTabId("gallery");
               }}
             />
           </div>
         )}
-        {activeTab === 4 && (
-          <div id="tabpanel-4" role="tabpanel" aria-labelledby="tab-4">
+        {activeTabId === "glaze" && (
+          <div id={getTabPanelId("glaze")} role="tabpanel" aria-labelledby={getTabButtonId("glaze")}>
             <GlazeContextProvider
               hueAngle={hueAngle}
               setHueAngle={setHueAngle}
@@ -550,8 +550,13 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             </GlazeContextProvider>
           </div>
         )}
-        {(activeTab === 5 || hasOpenedStats) && (
-          <div id="tabpanel-5" role="tabpanel" aria-labelledby="tab-5" style={{ display: activeTab === 5 ? undefined : "none" }}>
+        {(activeTabId === "stats" || hasOpenedStats) && (
+          <div
+            id={getTabPanelId("stats")}
+            role="tabpanel"
+            aria-labelledby={getTabButtonId("stats")}
+            style={{ display: activeTabId === "stats" ? undefined : "none" }}
+          >
             <AnalyzePanel
               hist={hist}
               total={cvs.w * cvs.h}
@@ -562,7 +567,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
               cvs={cvs}
               displayW={displayW}
               displayH={displayH}
-              active={activeTab === 5}
+              active={activeTabId === "stats"}
               mapMode={mapMode}
               setMapMode={setMapMode}
               showToast={showToast}
@@ -570,10 +575,10 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
           </div>
         )}
         <div
-          id="tabpanel-0"
+          id={getTabPanelId("gallery")}
           role="tabpanel"
-          aria-labelledby="tab-0"
-          style={{ width: "100%", display: activeTab === 0 ? undefined : "none" }}
+          aria-labelledby={getTabButtonId("gallery")}
+          style={{ width: "100%", display: activeTabId === "gallery" ? undefined : "none" }}
         >
           <GalleryPanel
             cvs={cvs}
@@ -583,21 +588,21 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
             hist={hist}
             showToast={showToast}
             saveColorWithLUT={saveColorWithLUT}
-            active={activeTab === 0}
+            active={activeTabId === "gallery"}
             scrollToCurrent={scrollToGallery}
             onScrollDone={() => setScrollToGallery(false)}
           />
         </div>
         <div
-          id="tabpanel-6"
+          id={getTabPanelId("theory")}
           role="tabpanel"
-          aria-labelledby="tab-6"
-          style={{ width: "100%", display: activeTab === 6 ? undefined : "none" }}
+          aria-labelledby={getTabButtonId("theory")}
+          style={{ width: "100%", display: activeTabId === "theory" ? undefined : "none" }}
         >
           <TheoryPanel />
         </div>
-        {activeTab === 7 && (
-          <div id="tabpanel-7" role="tabpanel" aria-labelledby="tab-7" style={{ width: "100%" }}>
+        {activeTabId === "music" && (
+          <div id={getTabPanelId("music")} role="tabpanel" aria-labelledby={getTabButtonId("music")} style={{ width: "100%" }}>
             <Suspense fallback={<div style={S_LAZY_PANEL_FALLBACK}>Loading...</div>}>
               <MusicPanel />
             </Suspense>

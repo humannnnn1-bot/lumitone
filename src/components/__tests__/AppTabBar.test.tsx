@@ -13,14 +13,15 @@ describe("AppTabBar", () => {
   it("renders app tabs and reports tab changes", () => {
     const onTabChange = vi.fn();
 
-    render(<AppTabBar activeTab={2} onTabChange={onTabChange} t={t} />);
+    render(<AppTabBar activeTabId="source" onTabChange={onTabChange} t={t} />);
 
     expect(screen.getByRole("tablist", { name: en.tablist_label })).toBeTruthy();
     expect(screen.getAllByRole("tab")).toHaveLength(MAIN_TABS.length);
     expect(screen.getByRole("tab", { name: "Source" }).getAttribute("aria-selected")).toBe("true");
+    expect(screen.getByRole("tab", { name: "Source" }).getAttribute("aria-controls")).toBe("tabpanel-source");
 
     fireEvent.click(screen.getByRole("tab", { name: "Theory" }));
 
-    expect(onTabChange).toHaveBeenCalledWith(6);
+    expect(onTabChange).toHaveBeenCalledWith("theory");
   });
 });

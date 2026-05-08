@@ -39,7 +39,7 @@ function makeArgs() {
     t,
     setZoom,
     onSave,
-    activeTab: 0,
+    activeTabId: "gallery",
   };
 
   return {
@@ -116,6 +116,28 @@ describe("useKeyboardShortcuts", () => {
         expect(vi.mocked(announce)).toHaveBeenCalled();
       });
     }
+  });
+
+  it("leaves Music number shortcuts available to the Music tab", () => {
+    const { deps, setBrushLevel, announce } = makeArgs();
+    const { unmount } = renderHook(() => useKeyboardShortcuts({ ...deps, activeTabId: "music" }));
+    cleanup = unmount;
+
+    fireKey("3");
+
+    expect(vi.mocked(setBrushLevel)).not.toHaveBeenCalled();
+    expect(vi.mocked(announce)).not.toHaveBeenCalled();
+  });
+
+  it("leaves Hex number shortcuts available to the Hex tab", () => {
+    const { deps, setBrushLevel, announce } = makeArgs();
+    const { unmount } = renderHook(() => useKeyboardShortcuts({ ...deps, activeTabId: "hex" }));
+    cleanup = unmount;
+
+    fireKey("3");
+
+    expect(vi.mocked(setBrushLevel)).not.toHaveBeenCalled();
+    expect(vi.mocked(announce)).not.toHaveBeenCalled();
   });
 
   describe("undo/redo shortcuts", () => {

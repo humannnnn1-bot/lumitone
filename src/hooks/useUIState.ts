@@ -1,18 +1,17 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { TOAST_DURATION } from "../constants";
-import { MAIN_TABS } from "../tabs";
+import { DEFAULT_TAB_ID, MAIN_TABS, STATS_TAB_ID, tabFromId, tabIdFromIndex, tabIndexFromId } from "../tabs";
+import type { MainTabId } from "../tabs";
 import type { MapMode } from "../types";
 import type { TranslationFn } from "../i18n";
 
 const LS_TAB = "chromalum-active-tab-v2";
 const LS_SCROLL = "chromalum-scroll-y";
-const DEFAULT_TAB = 2;
-const STATS_TAB = 5;
 const HISTORY_TAB_STATE_KEY = "chromalumActiveTab";
-const TAB_HASH_LOOKUP = new Map<string, number>(MAIN_TABS.map(({ hash }, tab) => [hash, tab]));
-TAB_HASH_LOOKUP.set("stats", STATS_TAB);
+const TAB_HASH_LOOKUP = new Map<string, MainTabId>(MAIN_TABS.map(({ hash, id }) => [hash, id]));
+TAB_HASH_LOOKUP.set("stats", STATS_TAB_ID);
 
-function isValidTab(tab: unknown): tab is number {
+function isValidTabIndex(tab: unknown): tab is number {
   return typeof tab === "number" && Number.isInteger(tab) && tab >= 0 && tab < MAIN_TABS.length;
 }
 
@@ -26,71 +25,80 @@ function normalizeHash(hash: string): string {
   return value.trim().toLowerCase().replace(/^\/+/, "");
 }
 
-function readTabFromHash(): number | null {
+function readTabFromHash(): MainTabId | null {
   if (typeof window === "undefined") return null;
   return TAB_HASH_LOOKUP.get(normalizeHash(window.location.hash)) ?? null;
 }
 
-function readStoredTab(): number | null {
+function readStoredTab(): MainTabId | null {
   try {
     if (typeof localStorage === "undefined") return null;
     const saved = localStorage.getItem(LS_TAB);
     if (saved === null) return null;
     const tab = Number(saved);
-    return isValidTab(tab) ? tab : null;
+    return isValidTabIndex(tab) ? tabIdFromIndex(tab) : null;
   } catch {
     return null;
   }
 }
 
-function writeStoredTab(tab: number): void {
+function writeStoredTab(tabId: MainTabId): void {
   try {
-    if (typeof localStorage !== "undefined") localStorage.setItem(LS_TAB, String(tab));
+    if (typeof localStorage !== "undefined") localStorage.setItem(LS_TAB, String(tabIndexFromId(tabId)));
   } catch {
     // URL/history state still preserves navigation when storage is unavailable.
   }
 }
 
-function readInitialActiveTab(): number {
-  return readTabFromHash() ?? readStoredTab() ?? DEFAULT_TAB;
+function readInitialActiveTab(): MainTabId {
+  return readTabFromHash() ?? readStoredTab() ?? DEFAULT_TAB_ID;
 }
 
-function getHistoryStateWithTab(tab: number): object {
+function getHistoryStateWithTab(tabId: MainTabId): object {
   const state = typeof window !== "undefined" ? window.history.state : null;
+  const tab = tabIndexFromId(tabId);
   return state && typeof state === "object" ? { ...state, [HISTORY_TAB_STATE_KEY]: tab } : { [HISTORY_TAB_STATE_KEY]: tab };
 }
 
-function replaceCurrentHistoryState(tab: number): void {
+function replaceCurrentHistoryState(tabId: MainTabId): void {
   if (typeof window === "undefined") return;
-  window.history.replaceState(getHistoryStateWithTab(tab), "", window.location.href);
+  window.history.replaceState(getHistoryStateWithTab(tabId), "", window.location.href);
 }
 
-function pushTabHash(tab: number): void {
+function pushTabHash(tabId: MainTabId): void {
   if (typeof window === "undefined") return;
-  const hash = MAIN_TABS[tab].hash;
+  const hash = tabFromId(tabId).hash;
   if (normalizeHash(window.location.hash) === hash) {
-    replaceCurrentHistoryState(tab);
+    replaceCurrentHistoryState(tabId);
     return;
   }
-  window.history.pushState(getHistoryStateWithTab(tab), "", `#${hash}`);
+  window.history.pushState(getHistoryStateWithTab(tabId), "", `#${hash}`);
 }
 
-function readTabFromHistoryState(state: unknown): number | null {
+function readTabFromHistoryState(state: unknown): MainTabId | null {
   if (!state || typeof state !== "object") return null;
   const tab = (state as Record<string, unknown>)[HISTORY_TAB_STATE_KEY];
-  return isValidTab(tab) ? tab : null;
+  return isValidTabIndex(tab) ? tabIdFromIndex(tab) : null;
 }
 
 export function useUIState(_t: TranslationFn) {
-  const [activeTab, setActiveTabRaw] = useState(readInitialActiveTab);
-  const [hasOpenedStats, setHasOpenedStats] = useState(() => activeTab === STATS_TAB);
-  const setActiveTab = useCallback((tab: number) => {
-    if (!isValidTab(tab)) return;
-    setActiveTabRaw(tab);
-    if (tab === STATS_TAB) setHasOpenedStats(true);
-    writeStoredTab(tab);
-    pushTabHash(tab);
+  const [activeTabId, setActiveTabIdRaw] = useState(readInitialActiveTab);
+  const activeTab = tabIndexFromId(activeTabId);
+  const [hasOpenedStats, setHasOpenedStats] = useState(() => activeTabId === STATS_TAB_ID);
+  const setActiveTabId = useCallback((tabId: MainTabId) => {
+    setActiveTabIdRaw(tabId);
+    if (tabId === STATS_TAB_ID) setHasOpenedStats(true);
+    writeStoredTab(tabId);
+    pushTabHash(tabId);
   }, []);
+  const setActiveTab = useCallback(
+    (tab: number) => {
+      const tabId = tabIdFromIndex(tab);
+      if (tabId === null) return;
+      setActiveTabId(tabId);
+    },
+    [setActiveTabId],
+  );
   const [showHelp, setShowHelp] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" | "info" } | null>(null);
   const [showNewCanvas, setShowNewCanvas] = useState(false);
@@ -99,24 +107,24 @@ export function useUIState(_t: TranslationFn) {
   const [directCandidates, setDirectCandidates] = useState<Map<number, number>>(new Map());
 
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const initialActiveTabRef = useRef(activeTab);
+  const initialActiveTabIdRef = useRef(activeTabId);
 
   useEffect(() => {
-    replaceCurrentHistoryState(initialActiveTabRef.current);
+    replaceCurrentHistoryState(initialActiveTabIdRef.current);
 
-    const applyTab = (tab: number) => {
-      setActiveTabRaw(tab);
-      if (tab === STATS_TAB) setHasOpenedStats(true);
-      writeStoredTab(tab);
-      replaceCurrentHistoryState(tab);
+    const applyTab = (tabId: MainTabId) => {
+      setActiveTabIdRaw(tabId);
+      if (tabId === STATS_TAB_ID) setHasOpenedStats(true);
+      writeStoredTab(tabId);
+      replaceCurrentHistoryState(tabId);
     };
     const onPopState = (event: PopStateEvent) => {
-      const tab = readTabFromHistoryState(event.state) ?? readTabFromHash();
-      if (tab !== null) applyTab(tab);
+      const tabId = readTabFromHistoryState(event.state) ?? readTabFromHash();
+      if (tabId !== null) applyTab(tabId);
     };
     const onHashChange = () => {
-      const tab = readTabFromHash();
-      if (tab !== null) applyTab(tab);
+      const tabId = readTabFromHash();
+      if (tabId !== null) applyTab(tabId);
     };
 
     window.addEventListener("popstate", onPopState);
@@ -160,7 +168,9 @@ export function useUIState(_t: TranslationFn) {
 
   return {
     activeTab,
+    activeTabId,
     setActiveTab,
+    setActiveTabId,
     hasOpenedStats,
     showHelp,
     setShowHelp,

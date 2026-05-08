@@ -4,6 +4,7 @@ import type { ToolId } from "../constants";
 import { LEVEL_INFO } from "../color-engine";
 import type { CanvasAction } from "../types";
 import type { TranslationFn } from "../i18n";
+import type { MainTabId } from "../tabs";
 
 export interface KeyboardShortcutDeps {
   setTool: React.Dispatch<React.SetStateAction<ToolId>>;
@@ -21,7 +22,7 @@ export interface KeyboardShortcutDeps {
   t: TranslationFn;
   setZoom: React.Dispatch<React.SetStateAction<number>>;
   onSave: () => void;
-  activeTab: number;
+  activeTabId: MainTabId;
 }
 
 interface KeyCommand {
@@ -48,7 +49,7 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps) {
     t,
     setZoom,
     onSave,
-    activeTab,
+    activeTabId,
   } = deps;
 
   useEffect(() => {
@@ -197,8 +198,8 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps) {
 
       // Level keys 0-7 (no ctrl) — skip on Music tab (1-6) and Hex tab (2-5)
       if (!isCtrl && key >= "0" && key <= "7") {
-        if (activeTab === 7 && key >= "1" && key <= "6") return;
-        if (activeTab === 1 && key >= "2" && key <= "5") return;
+        if (activeTabId === "music" && key >= "1" && key <= "6") return;
+        if (activeTabId === "hex" && key >= "2" && key <= "5") return;
         setBrushLevel(+key);
         announce(t("announce_level", key, LEVEL_INFO[+key].name));
         return;
