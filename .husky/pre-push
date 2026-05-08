@@ -1,3 +1,4 @@
 npm run typecheck:all
+npm run deadcode
 npm test
 npm run build

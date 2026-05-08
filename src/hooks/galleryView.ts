@@ -22,7 +22,7 @@ export function getGalleryPatternCount(locked: boolean[], hist: number[]): numbe
 }
 
 /** Compute average hue angle for a pattern's cc[] for sorting/display. */
-export function patternHue(patternCc: number[]): number {
+function patternHue(patternCc: number[]): number {
   let sumAngle = 0;
   let count = 0;
   for (let lv = 0; lv < 8; lv++) {
@@ -38,7 +38,7 @@ export function patternHue(patternCc: number[]): number {
 }
 
 /** Check whether any chromatic level in a pattern matches the hue filter. */
-export function matchesHueFilter(patternCc: number[], filterHue: number, filterRange: number): boolean {
+function matchesHueFilter(patternCc: number[], filterHue: number, filterRange: number): boolean {
   for (let lv = 1; lv <= 6; lv++) {
     const cands = LEVEL_CANDIDATES[lv];
     if (cands.length <= 1) continue;
@@ -52,7 +52,7 @@ export function matchesHueFilter(patternCc: number[], filterHue: number, filterR
 }
 
 /** Count how many variant levels differ between two cc[] arrays. */
-export function ccDistance(a: number[], b: number[]): number {
+function ccDistance(a: number[], b: number[]): number {
   let dist = 0;
   for (let i = 0; i < 8; i++) {
     const na = LEVEL_CANDIDATES[i].length;

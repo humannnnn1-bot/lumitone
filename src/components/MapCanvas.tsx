@@ -9,6 +9,8 @@ import { recordDebugPerf, startDebugPerf } from "../utils/perf-debug";
 import { useTranslation } from "../i18n";
 import { ConfirmModal } from "./ConfirmModal";
 
+const EMPTY_REGION_SIZE_BY_ID = new Map<number, number>();
+
 /* ── Map canvas component ── */
 export function MapCanvas({
   mode,
@@ -57,7 +59,7 @@ export function MapCanvas({
 
   // Hover info
   const [hoverInfo, setHoverInfo] = useState<string | null>(null);
-  const regionSizeCache = useMemo(() => buildRegionSizeMap(pixelMaps), [pixelMaps]);
+  const regionSizeCache = useMemo(() => (mode === "region" ? buildRegionSizeMap(pixelMaps) : EMPTY_REGION_SIZE_BY_ID), [mode, pixelMaps]);
 
   const onMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {

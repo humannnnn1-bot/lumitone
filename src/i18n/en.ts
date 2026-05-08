@@ -443,6 +443,8 @@ export const en = {
   gallery_unbookmark: "Remove bookmark",
   toast_bookmark: "Bookmarked",
   toast_unbookmark: "Bookmark removed",
+  toast_bookmark_failed: "Could not bookmark",
+  toast_unbookmark_failed: "Could not remove bookmark",
   gallery_filter_all: "All",
   gallery_filter_bookmarks: "Bookmarks",
   gallery_empty: "Open the Gallery tab to auto-generate color variations",

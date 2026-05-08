@@ -444,6 +444,8 @@ export const ja: Record<TranslationKey, string> = {
   gallery_unbookmark: "ブックマークを解除する",
   toast_bookmark: "ブックマークしました",
   toast_unbookmark: "ブックマーク解除しました",
+  toast_bookmark_failed: "ブックマークできませんでした",
+  toast_unbookmark_failed: "ブックマークを解除できませんでした",
   gallery_filter_all: "すべて",
   gallery_filter_bookmarks: "ブックマーク",
   gallery_empty: "Galleryタブを開くと配色バリエーションが自動生成されます",

@@ -4,6 +4,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 type AxeViolation = Awaited<ReturnType<AxeBuilder["analyze"]>>["violations"][number];
 
 const INTENTIONAL_COLOR_SAMPLE_ATTR = 'data-a11y-color-contrast-exception="intentional-color-sample"';
+const MAIN_ACCESSIBILITY_TABS = ["Source", "Color", "Hex", "Glaze", "Map", "Gallery", "Theory", "Music"] as const;
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => {
@@ -55,14 +56,13 @@ async function drawAtCenter(page: Page, canvas: Locator) {
   await page.mouse.up();
 }
 
-test("has no detectable accessibility violations on the main tabs", async ({ page }) => {
-  await page.goto("/");
-
-  for (const tab of ["Source", "Color", "Hex", "Glaze", "Map", "Gallery", "Theory", "Music"]) {
+for (const tab of MAIN_ACCESSIBILITY_TABS) {
+  test(`has no detectable accessibility violations on the ${tab} tab`, async ({ page }) => {
+    await page.goto("/");
     await page.getByRole("tab", { name: tab }).click();
     await expectNoA11yViolations(page, `${tab} tab`);
-  }
-});
+  });
+}
 
 test("has no detectable accessibility violations in representative dialogs", async ({ page }) => {
   await gotoSource(page);

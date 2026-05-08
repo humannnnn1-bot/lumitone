@@ -172,6 +172,37 @@ describe("GalleryPanel", () => {
     expect(JSON.parse(localStorage.getItem(BM_KEY) ?? "[]")).toHaveLength(500);
   });
 
+  it("reports bookmark storage failures without changing bookmark state", () => {
+    const itemCc = withLevel(2, 1);
+    galleryMock.items = [makeItem(itemCc)];
+    const { props } = renderGallery();
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation((key) => {
+      if (key === BM_KEY) throw new DOMException("Quota exceeded", "QuotaExceededError");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "gallery_bookmark (1)" }));
+
+    expect(props.showToast).toHaveBeenCalledWith("toast_bookmark_failed", "error");
+    expect(screen.getByRole("button", { name: "gallery_bookmark (1)" }).getAttribute("aria-pressed")).toBe("false");
+    expect(localStorage.getItem(BM_KEY)).toBeNull();
+  });
+
+  it("reports unbookmark storage failures without removing the bookmark", () => {
+    const itemCc = withLevel(2, 1);
+    galleryMock.items = [makeItem(itemCc)];
+    localStorage.setItem(BM_KEY, JSON.stringify([itemCc]));
+    const { props } = renderGallery();
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation((key) => {
+      if (key === BM_KEY) throw new DOMException("Quota exceeded", "QuotaExceededError");
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "gallery_unbookmark (1)" }));
+
+    expect(props.showToast).toHaveBeenCalledWith("toast_unbookmark_failed", "error");
+    expect(screen.getByRole("button", { name: "gallery_unbookmark (1)" }).getAttribute("aria-pressed")).toBe("true");
+    expect(JSON.parse(localStorage.getItem(BM_KEY) ?? "[]")).toHaveLength(1);
+  });
+
   it("opens the preview dialog and routes apply, bookmark, save, and dismiss actions", () => {
     const itemCc = withLevel(3, 1);
     galleryMock.items = [makeItem(itemCc)];

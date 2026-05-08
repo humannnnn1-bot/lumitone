@@ -24,6 +24,9 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Dead code check
+        run: npm run deadcode
+
       - name: Format check
         run: npm run format:check
 

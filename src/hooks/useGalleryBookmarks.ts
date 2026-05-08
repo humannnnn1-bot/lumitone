@@ -2,19 +2,24 @@ import { useCallback, useState } from "react";
 import { LEVEL_CANDIDATES } from "../color-engine";
 import { ccEqual } from "./galleryView";
 
-export const GALLERY_BOOKMARKS_KEY = "chromalum_bookmarks";
+const GALLERY_BOOKMARKS_KEY = "chromalum_bookmarks";
 export const GALLERY_BOOKMARKS_MAX = 500;
 
 interface UseGalleryBookmarksOptions {
   limit?: number;
   onLimitReached?: () => void;
+  onSaveFailed?: (action: "add" | "remove") => void;
 }
 
 function getStorage(): Storage | null {
-  return typeof localStorage === "undefined" ? null : localStorage;
+  try {
+    return typeof localStorage === "undefined" ? null : localStorage;
+  } catch {
+    return null;
+  }
 }
 
-export function normalizeGalleryBookmark(value: unknown): number[] | null {
+function normalizeGalleryBookmark(value: unknown): number[] | null {
   if (!Array.isArray(value)) return null;
   if (value.length !== 8) return null;
   if (!value.every((v: unknown) => typeof v === "number" && Number.isFinite(v))) return null;
@@ -25,7 +30,7 @@ export function normalizeGalleryBookmark(value: unknown): number[] | null {
   });
 }
 
-export function loadGalleryBookmarks(storage: Storage | null = getStorage()): number[][] {
+function loadGalleryBookmarks(storage: Storage | null = getStorage()): number[][] {
   if (!storage) return [];
   try {
     const raw = storage.getItem(GALLERY_BOOKMARKS_KEY);
@@ -38,12 +43,17 @@ export function loadGalleryBookmarks(storage: Storage | null = getStorage()): nu
   }
 }
 
-export function saveGalleryBookmarks(bookmarks: number[][], storage: Storage | null = getStorage()): void {
-  if (!storage) return;
-  storage.setItem(GALLERY_BOOKMARKS_KEY, JSON.stringify(bookmarks));
+function saveGalleryBookmarks(bookmarks: number[][], storage: Storage | null = getStorage()): boolean {
+  if (!storage) return false;
+  try {
+    storage.setItem(GALLERY_BOOKMARKS_KEY, JSON.stringify(bookmarks));
+    return true;
+  } catch {
+    return false;
+  }
 }
 
-export function useGalleryBookmarks({ limit = GALLERY_BOOKMARKS_MAX, onLimitReached }: UseGalleryBookmarksOptions = {}) {
+export function useGalleryBookmarks({ limit = GALLERY_BOOKMARKS_MAX, onLimitReached, onSaveFailed }: UseGalleryBookmarksOptions = {}) {
   const [bookmarks, setBookmarks] = useState<number[][]>(loadGalleryBookmarks);
 
   const isBookmarked = useCallback((itemCc: number[]) => bookmarks.some((bookmark) => ccEqual(bookmark, itemCc)), [bookmarks]);
@@ -53,7 +63,10 @@ export function useGalleryBookmarks({ limit = GALLERY_BOOKMARKS_MAX, onLimitReac
       const idx = bookmarks.findIndex((bookmark) => ccEqual(bookmark, itemCc));
       if (idx >= 0) {
         const next = [...bookmarks.slice(0, idx), ...bookmarks.slice(idx + 1)];
-        saveGalleryBookmarks(next);
+        if (!saveGalleryBookmarks(next)) {
+          onSaveFailed?.("remove");
+          return;
+        }
         setBookmarks(next);
         return;
       }
@@ -64,10 +77,13 @@ export function useGalleryBookmarks({ limit = GALLERY_BOOKMARKS_MAX, onLimitReac
       }
 
       const next = [...bookmarks, [...itemCc]];
-      saveGalleryBookmarks(next);
+      if (!saveGalleryBookmarks(next)) {
+        onSaveFailed?.("add");
+        return;
+      }
       setBookmarks(next);
     },
-    [bookmarks, limit, onLimitReached],
+    [bookmarks, limit, onLimitReached, onSaveFailed],
   );
 
   return { bookmarks, isBookmarked, toggleBookmark };

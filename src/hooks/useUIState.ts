@@ -32,15 +32,23 @@ function readTabFromHash(): number | null {
 }
 
 function readStoredTab(): number | null {
-  if (typeof localStorage === "undefined") return null;
-  const saved = localStorage.getItem(LS_TAB);
-  if (saved === null) return null;
-  const tab = Number(saved);
-  return isValidTab(tab) ? tab : null;
+  try {
+    if (typeof localStorage === "undefined") return null;
+    const saved = localStorage.getItem(LS_TAB);
+    if (saved === null) return null;
+    const tab = Number(saved);
+    return isValidTab(tab) ? tab : null;
+  } catch {
+    return null;
+  }
 }
 
 function writeStoredTab(tab: number): void {
-  if (typeof localStorage !== "undefined") localStorage.setItem(LS_TAB, String(tab));
+  try {
+    if (typeof localStorage !== "undefined") localStorage.setItem(LS_TAB, String(tab));
+  } catch {
+    // URL/history state still preserves navigation when storage is unavailable.
+  }
 }
 
 function readInitialActiveTab(): number {
@@ -130,13 +138,21 @@ export function useUIState(_t: TranslationFn) {
 
   /* Persist scroll position on beforeunload, restore on mount */
   useEffect(() => {
-    const savedY = localStorage.getItem(LS_SCROLL);
-    if (savedY !== null) {
-      const y = Number(savedY);
-      requestAnimationFrame(() => window.scrollTo(0, y));
+    try {
+      const savedY = localStorage.getItem(LS_SCROLL);
+      if (savedY !== null) {
+        const y = Number(savedY);
+        requestAnimationFrame(() => window.scrollTo(0, y));
+      }
+    } catch {
+      // Ignore blocked storage; scroll persistence is best-effort.
     }
     const onBeforeUnload = () => {
-      localStorage.setItem(LS_SCROLL, String(window.scrollY));
+      try {
+        localStorage.setItem(LS_SCROLL, String(window.scrollY));
+      } catch {
+        // Ignore blocked storage; scroll persistence is best-effort.
+      }
     };
     window.addEventListener("beforeunload", onBeforeUnload);
     return () => window.removeEventListener("beforeunload", onBeforeUnload);

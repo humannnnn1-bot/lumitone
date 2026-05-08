@@ -109,7 +109,16 @@ export const GalleryPanel = React.memo(function GalleryPanel({
   const { t } = useTranslation();
   const { items, generating, progress } = useGallery(cvs, cc, locked, hist, active === true);
   const handleBookmarkLimit = useCallback(() => showToast(t("toast_bookmark_limit", GALLERY_BOOKMARKS_MAX), "error"), [showToast, t]);
-  const { bookmarks, isBookmarked, toggleBookmark } = useGalleryBookmarks({ onLimitReached: handleBookmarkLimit });
+  const handleBookmarkSaveFailed = useCallback(
+    (action: "add" | "remove") => {
+      showToast(t(action === "add" ? "toast_bookmark_failed" : "toast_unbookmark_failed"), "error");
+    },
+    [showToast, t],
+  );
+  const { bookmarks, isBookmarked, toggleBookmark } = useGalleryBookmarks({
+    onLimitReached: handleBookmarkLimit,
+    onSaveFailed: handleBookmarkSaveFailed,
+  });
   const [filter, setFilter] = useState<GalleryFilter>("all");
   const [sortMode, setSortMode] = useState<GallerySortMode>("default");
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);

@@ -7,9 +7,13 @@ const dictionaries: Record<Language, Translations> = { ja, en };
 const STORAGE_KEY = "chromalum_lang";
 
 function getInitialLang(): Language {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (stored === "ja" || stored === "en") return stored;
-  return navigator.language.startsWith("ja") ? "ja" : "en";
+  try {
+    const stored = typeof localStorage !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+    if (stored === "ja" || stored === "en") return stored;
+  } catch {
+    // Fall back to browser language when storage is unavailable.
+  }
+  return typeof navigator !== "undefined" && navigator.language.startsWith("ja") ? "ja" : "en";
 }
 
 interface LanguageContextValue {
@@ -25,15 +29,18 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLang = useCallback((l: Language) => {
     setLangState(l);
-    localStorage.setItem(STORAGE_KEY, l);
-    document.documentElement.lang = l;
+    try {
+      if (typeof localStorage !== "undefined") localStorage.setItem(STORAGE_KEY, l);
+    } catch {
+      // Language switching should still work when storage is blocked.
+    }
   }, []);
 
-  // Initial lang attribute set (setLang handles subsequent changes).
+  // Keep the document language in sync with the active UI language.
   // RTL support: add document.documentElement.dir = "rtl" here when adding RTL languages.
   useEffect(() => {
-    document.documentElement.lang = lang;
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    if (typeof document !== "undefined") document.documentElement.lang = lang;
+  }, [lang]);
 
   const t = useCallback(
     (key: TranslationKey | (string & {}), ...params: (string | number)[]): string => {
