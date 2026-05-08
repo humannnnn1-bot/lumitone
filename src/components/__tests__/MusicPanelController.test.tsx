@@ -109,6 +109,39 @@ describe("MusicPanel controller integration", () => {
     expect(screen.getByRole("button", { name: "Mute" })).toBeTruthy();
   });
 
+  it("restores the pre-mute volume when unmuted", () => {
+    renderWithLanguage(<MusicPanel />);
+
+    fireEvent.change(screen.getByLabelText("Volume"), { target: { value: "25" } });
+    expect(latestEngineParams().volume).toBe(0.25);
+
+    fireEvent.click(screen.getByRole("button", { name: "Mute" }));
+    expect(latestEngineParams().volume).toBe(0);
+    expect(screen.getByRole("button", { name: "Unmute" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Unmute" }));
+    expect(latestEngineParams().volume).toBe(0.25);
+    expect(screen.getByRole("button", { name: "Mute" })).toBeTruthy();
+  });
+
+  it("initializes audio and resumes the drone from hue and alpha rotation controls", () => {
+    renderWithLanguage(<MusicPanel />);
+    musicEngineMock.engine.initAudio.mockClear();
+    musicEngineMock.engine.setDroneMuted.mockClear();
+
+    for (const name of [
+      "Auto-rotate hue backward",
+      "Auto-rotate hue forward",
+      "Auto-rotate hue phase backward",
+      "Auto-rotate hue phase forward",
+    ]) {
+      fireEvent.click(screen.getByRole("button", { name }));
+    }
+
+    expect(musicEngineMock.engine.initAudio).toHaveBeenCalledTimes(4);
+    expect(musicEngineMock.engine.setDroneMuted).toHaveBeenCalledWith(false);
+  });
+
   it("starts traversal playback and Stop All resets active playback state", () => {
     musicEngineMock.engine.playGrayMelody.mockImplementation((_tempo: number, onStep: (lv: number | null) => void) => onStep(2));
     musicEngineMock.engine.startFanoRhythm.mockImplementation((_tempo: number, onBeat: (lines: number[], pos: number) => void) =>
@@ -134,8 +167,42 @@ describe("MusicPanel controller integration", () => {
     expect(musicEngineMock.engine.stopAlgebra).toHaveBeenCalled();
     expect(musicEngineMock.engine.stopZigzagMelody).toHaveBeenCalled();
     expect(musicEngineMock.engine.setDroneMuted).toHaveBeenCalledWith(true);
+    expect(musicEngineMock.engine.stopAudio).not.toHaveBeenCalled();
     expect(screen.getByRole("button", { name: "\u25b6 Gray" })).toBeTruthy();
     expect(screen.getByRole("button", { name: "\u25b6 Rhythm" })).toBeTruthy();
+  });
+
+  it("resets transport settings back to defaults", () => {
+    renderWithLanguage(<MusicPanel />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Just" }));
+    fireEvent.click(screen.getByRole("button", { name: "FM" }));
+    fireEvent.click(screen.getByRole("button", { name: "Luma" }));
+    fireEvent.change(screen.getByLabelText("Volume"), { target: { value: "25" } });
+    fireEvent.change(screen.getByLabelText("BPM"), { target: { value: "160" } });
+    fireEvent.click(screen.getByRole("button", { name: "Mute" }));
+
+    expect(latestEngineParams()).toMatchObject({
+      scaleMode: "ji",
+      fmEnabled: true,
+      luminanceMode: "luminance",
+      volume: 0,
+    });
+    expect((screen.getByLabelText("BPM") as HTMLInputElement).value).toBe("160");
+
+    fireEvent.click(screen.getByRole("button", { name: "Reset" }));
+
+    expect(latestEngineParams()).toMatchObject({
+      scaleMode: "diatonic7",
+      fmEnabled: false,
+      luminanceMode: "symmetric",
+      volume: 0.7,
+    });
+    expect(screen.getByRole("button", { name: "Mute" })).toBeTruthy();
+    expect((screen.getByLabelText("BPM") as HTMLInputElement).value).toBe("120");
+    expect(musicEngineMock.engine.resetGL32Transform).toHaveBeenCalledWith(expect.any(Function));
+    expect(musicEngineMock.engine.setDroneMuted).toHaveBeenCalledWith(true);
+    expect(musicEngineMock.engine.setDroneMuted).toHaveBeenCalledWith(false);
   });
 
   it("restarts active traversal playback when the tempo changes", async () => {

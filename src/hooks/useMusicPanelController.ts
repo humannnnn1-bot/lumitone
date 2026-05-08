@@ -469,6 +469,7 @@ export function useMusicPanelController() {
     setHueAngle(0);
     setDirectCandidates(createDefaultMusicDirectCandidates());
     setSelectedLevels(new Set());
+    setMuted(false);
     setVolume(0.7);
     setScaleMode("diatonic7");
     setFmEnabled(false);
@@ -514,6 +515,7 @@ export function useMusicPanelController() {
     setResetSignal,
     setRhythmTempo,
     setScaleMode,
+    setMuted,
     setSelectedLevels,
     setVolume,
   ]);
