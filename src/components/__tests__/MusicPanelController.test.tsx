@@ -1,0 +1,175 @@
+// @vitest-environment jsdom
+import type { ReactNode } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { LanguageProvider } from "../../i18n";
+import { MusicPanel } from "../MusicPanel";
+
+type MusicEngineParams = Parameters<(typeof import("../../hooks/useMusicEngine"))["useMusicEngine"]>[0];
+
+const musicEngineMock = vi.hoisted(() => {
+  const engine = {
+    initAudio: vi.fn(),
+    stopAudio: vi.fn(),
+    triggerToneBurst: vi.fn(),
+    playGrayMelody: vi.fn(),
+    stopGrayMelody: vi.fn(),
+    startFanoRhythm: vi.fn(),
+    stopFanoRhythm: vi.fn(),
+    analyserNode: null,
+    playXorTriple: vi.fn(),
+    playParityChord: vi.fn(),
+    playComplementChord: vi.fn(),
+    playLineAndComplement: vi.fn(),
+    playSyndromeDemo: vi.fn(),
+    playGray3Voice: vi.fn(),
+    playWeightSpectrum: vi.fn(),
+    playCayleyRow: vi.fn(),
+    applyGL32Transform: vi.fn(),
+    resetGL32Transform: vi.fn(),
+    setLuminanceMode: vi.fn(),
+    stopAlgebra: vi.fn(),
+    setDroneMuted: vi.fn(),
+    playComplementCanon: vi.fn(),
+    playZigzagMelody: vi.fn(),
+    stopZigzagMelody: vi.fn(),
+    playPointFanoContext: vi.fn(),
+    playExtendedHamming: vi.fn(),
+    playDistributiveLaw: vi.fn(),
+    playAndTriads: vi.fn(),
+    playOctahedronMix: vi.fn(),
+    playTetraSplit: vi.fn(),
+    playTetraT0: vi.fn(),
+    playTetraT1: vi.fn(),
+    playK8Layer: vi.fn(),
+  };
+  return {
+    engine,
+    useMusicEngine: vi.fn((_params: unknown) => engine),
+  };
+});
+
+vi.mock("../../hooks/useMusicEngine", () => ({
+  useMusicEngine: musicEngineMock.useMusicEngine,
+}));
+
+function isResettableMock(value: unknown): value is { mockReset: () => void } {
+  return typeof value === "function" && "mockReset" in value;
+}
+
+function resetMusicEngineMocks() {
+  for (const value of Object.values(musicEngineMock.engine)) {
+    if (isResettableMock(value)) value.mockReset();
+  }
+  musicEngineMock.useMusicEngine.mockReset();
+  musicEngineMock.useMusicEngine.mockImplementation((_params: unknown) => musicEngineMock.engine);
+}
+
+function renderWithLanguage(node: ReactNode) {
+  localStorage.setItem("chromalum_lang", "en");
+  return render(<LanguageProvider>{node}</LanguageProvider>);
+}
+
+function latestEngineParams(): MusicEngineParams {
+  const latest = musicEngineMock.useMusicEngine.mock.calls[musicEngineMock.useMusicEngine.mock.calls.length - 1];
+  if (!latest) throw new Error("useMusicEngine was not called");
+  return latest[0] as MusicEngineParams;
+}
+
+describe("MusicPanel controller integration", () => {
+  beforeEach(() => {
+    resetMusicEngineMocks();
+  });
+
+  it("passes transport mode changes through to the music engine", () => {
+    renderWithLanguage(<MusicPanel />);
+
+    expect(latestEngineParams()).toMatchObject({
+      scaleMode: "diatonic7",
+      fmEnabled: false,
+      luminanceMode: "symmetric",
+      volume: 0.7,
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Just" }));
+    expect(latestEngineParams().scaleMode).toBe("ji");
+
+    fireEvent.click(screen.getByRole("button", { name: "FM" }));
+    expect(latestEngineParams().fmEnabled).toBe(true);
+
+    fireEvent.click(screen.getByRole("button", { name: "Luma" }));
+    expect(latestEngineParams().luminanceMode).toBe("luminance");
+
+    fireEvent.click(screen.getByRole("button", { name: "Mute" }));
+    expect(latestEngineParams().volume).toBe(0);
+    expect(screen.getByRole("button", { name: "Unmute" })).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Volume"), { target: { value: "25" } });
+    expect(latestEngineParams().volume).toBe(0.25);
+    expect(screen.getByRole("button", { name: "Mute" })).toBeTruthy();
+  });
+
+  it("starts traversal playback and Stop All resets active playback state", () => {
+    musicEngineMock.engine.playGrayMelody.mockImplementation((_tempo: number, onStep: (lv: number | null) => void) => onStep(2));
+    musicEngineMock.engine.startFanoRhythm.mockImplementation((_tempo: number, onBeat: (lines: number[], pos: number) => void) =>
+      onBeat([0, 2], 1),
+    );
+
+    renderWithLanguage(<MusicPanel />);
+    musicEngineMock.engine.initAudio.mockClear();
+
+    fireEvent.click(screen.getByRole("button", { name: "\u25b6 Gray" }));
+    expect(musicEngineMock.engine.initAudio).toHaveBeenCalled();
+    expect(musicEngineMock.engine.playGrayMelody).toHaveBeenCalledWith(120, expect.any(Function));
+    expect(screen.getByRole("button", { name: "\u23f9 Gray" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "\u25b6 Rhythm" }));
+    expect(musicEngineMock.engine.startFanoRhythm).toHaveBeenCalledWith(120, expect.any(Function));
+    expect(screen.getByRole("button", { name: "\u23f9 Rhythm" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "Stop All" }));
+
+    expect(musicEngineMock.engine.stopGrayMelody).toHaveBeenCalled();
+    expect(musicEngineMock.engine.stopFanoRhythm).toHaveBeenCalled();
+    expect(musicEngineMock.engine.stopAlgebra).toHaveBeenCalled();
+    expect(musicEngineMock.engine.stopZigzagMelody).toHaveBeenCalled();
+    expect(musicEngineMock.engine.setDroneMuted).toHaveBeenCalledWith(true);
+    expect(screen.getByRole("button", { name: "\u25b6 Gray" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: "\u25b6 Rhythm" })).toBeTruthy();
+  });
+
+  it("restarts active traversal playback when the tempo changes", async () => {
+    musicEngineMock.engine.playGrayMelody.mockImplementation((_tempo: number, onStep: (lv: number | null) => void) => onStep(1));
+    musicEngineMock.engine.startFanoRhythm.mockImplementation((_tempo: number, onBeat: (lines: number[], pos: number) => void) =>
+      onBeat([1], 0),
+    );
+
+    renderWithLanguage(<MusicPanel />);
+
+    fireEvent.click(screen.getByRole("button", { name: "\u25b6 Gray" }));
+    fireEvent.click(screen.getByRole("button", { name: "\u25b6 Rhythm" }));
+    musicEngineMock.engine.playGrayMelody.mockClear();
+    musicEngineMock.engine.startFanoRhythm.mockClear();
+    musicEngineMock.engine.stopGrayMelody.mockClear();
+    musicEngineMock.engine.stopFanoRhythm.mockClear();
+
+    fireEvent.change(screen.getByLabelText("BPM"), { target: { value: "160" } });
+
+    await waitFor(() => expect(musicEngineMock.engine.playGrayMelody).toHaveBeenCalledWith(160, expect.any(Function)));
+    expect(musicEngineMock.engine.stopGrayMelody).toHaveBeenCalled();
+    expect(musicEngineMock.engine.startFanoRhythm).toHaveBeenCalledWith(160, expect.any(Function));
+    expect(musicEngineMock.engine.stopFanoRhythm).toHaveBeenCalled();
+  });
+
+  it("routes XOR playback through selected operands", () => {
+    renderWithLanguage(<MusicPanel />);
+    musicEngineMock.engine.initAudio.mockClear();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "XOR first color" }), { target: { value: "1" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "XOR second color" }), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: "\u25b6 XOR" }));
+
+    expect(musicEngineMock.engine.initAudio).toHaveBeenCalled();
+    expect(musicEngineMock.engine.playXorTriple).toHaveBeenCalledWith(1, 2, expect.any(Function));
+  });
+});
