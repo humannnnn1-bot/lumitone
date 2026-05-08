@@ -20,6 +20,7 @@ import {
   useMusicSignalsState,
   useMusicTransportState,
 } from "./useMusicPanelState";
+import { useMusicStopAllHandler } from "./useMusicStopAllHandler";
 import { useMusicTransportHandlers } from "./useMusicTransportHandlers";
 
 function useInitialAudio(initAudio: () => void): void {
@@ -383,59 +384,26 @@ export function useMusicPanelController() {
       setHueDir,
     });
 
-  const handleStopAll = useCallback(() => {
-    engine.stopGrayMelody?.();
-    engine.stopFanoRhythm?.();
-    engine.stopAlgebra?.();
-    engine.stopZigzagMelody?.();
-    setAlphaDir(0);
-    setHueDir(0);
-    setGrayStep(null);
-    setRhythmPlaying(false);
-    setRhythmFiringLines([]);
-    setXorStep(null);
-    setFanoContextLine(-1);
-    setPartitionPhase(null);
-    setGray3Playing(false);
-    setWeightPlaying(false);
-    setWeightStep(null);
-    setAndStep(null);
-    setGray3Code(null);
-    setCayleyCol(-1);
-    setDistPhase(null);
-    setOctaPhase(null);
-    setGl32Flash(false);
-    setK8Layer(null);
-    setTetraPhase(null);
-    setErrorPhase(null);
-    setStopSignal((s) => s + 1);
-    engine.setDroneMuted(true);
-    setDroneMuted(true);
-  }, [
+  const handleStopAll = useMusicStopAllHandler({
     engine,
-    setAlphaDir,
-    setAndStep,
-    setCayleyCol,
-    setDistPhase,
-    setDroneMuted,
-    setErrorPhase,
-    setFanoContextLine,
-    setGl32Flash,
-    setGray3Code,
-    setGray3Playing,
-    setGrayStep,
-    setHueDir,
-    setK8Layer,
-    setOctaPhase,
-    setPartitionPhase,
-    setRhythmFiringLines,
-    setRhythmPlaying,
-    setStopSignal,
-    setTetraPhase,
-    setWeightPlaying,
-    setWeightStep,
-    setXorStep,
-  ]);
+    transport: { setAlphaDir, setHueDir, setDroneMuted },
+    fano: { setGrayStep, setRhythmPlaying, setRhythmFiringLines, setXorStep, setFanoContextLine, setPartitionPhase },
+    algebra: {
+      setGray3Playing,
+      setWeightPlaying,
+      setWeightStep,
+      setAndStep,
+      setGray3Code,
+      setCayleyCol,
+      setDistPhase,
+      setOctaPhase,
+      setGl32Flash,
+      setK8Layer,
+      setTetraPhase,
+      setErrorPhase,
+    },
+    signals: { setStopSignal },
+  });
 
   const handleBackgroundStop = useCallback(() => {
     if (backgroundStoppedRef.current) return;
