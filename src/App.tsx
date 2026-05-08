@@ -270,44 +270,6 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
             ? "crosshair"
             : "none";
 
-  const onPointerLeave = useCallback(
-    (e: React.PointerEvent) => {
-      const el = drawing.srcRef.current;
-      if (el && drawing.drawingRef.current) {
-        try {
-          if (typeof el.hasPointerCapture === "function" && el.hasPointerCapture(e.pointerId)) {
-            drawing.clearCursor();
-            return;
-          }
-        } catch (err) {
-          console.warn("CHROMALUM: pointerCapture check failed:", err);
-        }
-      }
-      drawing.onUp();
-      drawing.clearCursor();
-    },
-    [drawing],
-  );
-
-  const onPointerLeavePrv = useCallback(
-    (e: React.PointerEvent) => {
-      const el = prvRef.current;
-      if (el && drawing.drawingRef.current) {
-        try {
-          if (typeof el.hasPointerCapture === "function" && el.hasPointerCapture(e.pointerId)) {
-            drawing.clearCursorPrv();
-            return;
-          }
-        } catch (err) {
-          console.warn("CHROMALUM: pointerCapture check failed:", err);
-        }
-      }
-      drawing.onUp();
-      drawing.clearCursorPrv();
-    },
-    [drawing],
-  );
-
   const schedCursorFn = useCallback(() => {
     drawing.schedCursorRef.current?.();
   }, [drawing.schedCursorRef]);
@@ -376,10 +338,10 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     endPan: panZoom.endPan,
   });
   const drawingHandlers = useStableDrawingHandlers({
-    onDownPrv: drawing.onDownPrv,
-    onMovePrv: drawing.onMovePrv,
+    onDownPrv: drawing.onWorkspaceDownPrv,
+    onMovePrv: drawing.onWorkspaceMovePrv,
     onUp: drawing.onUp,
-    onPointerLeavePrv,
+    onPointerLeavePrv: drawing.onWorkspaceLeavePrv,
     trackCursorPrv: drawing.trackCursorPrv,
     clearCursorPrv: drawing.clearCursorPrv,
   });
@@ -442,10 +404,10 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
               saveActions={saveActionsObj}
               colorLUT={colorLUT}
               state={state}
-              onDown={drawing.onDown}
-              onMove={drawing.onMove}
+              onDown={drawing.onWorkspaceDown}
+              onMove={drawing.onWorkspaceMove}
               onUp={drawing.onUp}
-              onPointerLeave={onPointerLeave}
+              onPointerLeave={drawing.onWorkspaceLeave}
               undo={undo}
               redo={redo}
               handleClear={handleClear}

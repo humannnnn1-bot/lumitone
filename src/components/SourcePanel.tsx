@@ -300,6 +300,11 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             ref={srcWrapRef}
             tabIndex={0}
             onKeyDown={handleKeyDown}
+            onPointerDown={handlePointerDown}
+            onPointerMove={panZoomMode ? onPinchMove : onMove}
+            onPointerUp={panZoomMode ? onPinchUp : onUp}
+            onPointerLeave={panZoomMode ? onPinchUp : onPointerLeave}
+            onContextMenu={handleContextMenu}
             style={{
               border: panZoomMode ? `1px solid ${C.accentBright}` : `1px solid ${C.border}`,
               borderRadius: R.lg,
@@ -308,6 +313,8 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
               width: displayW,
               height: displayH,
               outline: "none",
+              cursor: panZoomMode ? "grab" : canvasCursor,
+              touchAction: "none",
               ...S_CHECKERBOARD,
             }}
           >
@@ -324,11 +331,6 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
                 cursor: panZoomMode ? "grab" : canvasCursor,
                 touchAction: "none",
               }}
-              onPointerDown={handlePointerDown}
-              onPointerMove={panZoomMode ? onPinchMove : onMove}
-              onPointerUp={panZoomMode ? onPinchUp : onUp}
-              onPointerLeave={panZoomMode ? onPinchUp : onPointerLeave}
-              onContextMenu={handleContextMenu}
             />
             <canvas
               ref={curRef}

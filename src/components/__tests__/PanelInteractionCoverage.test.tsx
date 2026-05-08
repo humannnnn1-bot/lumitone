@@ -97,6 +97,9 @@ function makeGlazeDrawing(overrides?: Partial<GlazeDrawingResult>): GlazeDrawing
     onDown: vi.fn(),
     onMove: vi.fn(),
     onUp: vi.fn(),
+    onWorkspaceDown: vi.fn(),
+    onWorkspaceMove: vi.fn(),
+    onWorkspaceLeave: vi.fn(),
     pickHue: vi.fn(),
     trackCursor: vi.fn(),
     clearCursor: vi.fn(),
@@ -457,7 +460,7 @@ describe("GlazePanel interactions", () => {
     expect(glazeDrawing.pickHue).toHaveBeenCalled();
 
     fireEvent.pointerDown(canvas, { button: 0 });
-    expect(glazeDrawing.onDown).toHaveBeenCalled();
+    expect(glazeDrawing.onWorkspaceDown).toHaveBeenCalled();
 
     panZoom.panningRef.current = true;
     fireEvent.pointerMove(canvas);

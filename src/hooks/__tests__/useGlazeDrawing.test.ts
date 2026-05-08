@@ -94,8 +94,11 @@ function pointerEvent(overrides?: Partial<React.PointerEvent>): React.PointerEve
   const clientY = overrides?.clientY ?? 160;
   return {
     button: 0,
+    buttons: 1,
+    altKey: false,
     pointerId: 1,
     target: { setPointerCapture: vi.fn() },
+    currentTarget: { hasPointerCapture: vi.fn(() => false) },
     clientX,
     clientY,
     preventDefault: vi.fn(),
@@ -295,5 +298,46 @@ describe("useGlazeDrawing", () => {
     });
 
     expect(mockAnnounce).toHaveBeenCalledWith("announce_hue_achromatic");
+  });
+
+  it("arms a background drag and starts a glaze brush only after entering the canvas", () => {
+    const cvs = makeCvs(10, 10);
+    cvs.data.fill(2);
+    const dispatch = vi.fn();
+    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, dispatch, brushSize: 1 })));
+    const canvas = result.current.curRef.current!;
+    mockCanvasRect(canvas);
+
+    act(() => {
+      result.current.onWorkspaceDown(pointerEvent({ clientX: -32, clientY: 160, target: canvas }));
+    });
+
+    expect(result.current.drawingRef.current).toBe(false);
+
+    act(() => {
+      result.current.onWorkspaceMove(pointerEvent({ clientX: 160, clientY: 160, target: canvas }));
+    });
+    act(() => {
+      result.current.onUp();
+    });
+
+    const cmBuf = dispatch.mock.calls[0][0].finalColorMap as Uint8Array;
+    expect(cmBuf[5 * 10 + 0]).toBe(0);
+    expect(cmBuf[5 * 10 + 5]).toBeGreaterThan(0);
+  });
+
+  it("ignores pickHue events that start on the checkerboard background", () => {
+    const cvs = makeCvs(10, 10);
+    cvs.data[5 * 10 + 0] = 2;
+    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs })));
+    const canvas = result.current.curRef.current!;
+    mockCanvasRect(canvas);
+
+    act(() => {
+      result.current.pickHue(pointerEvent({ clientX: -32, clientY: 160, target: canvas }));
+    });
+
+    expect(mockSetHueAngle).not.toHaveBeenCalled();
+    expect(mockAnnounce).not.toHaveBeenCalled();
   });
 });

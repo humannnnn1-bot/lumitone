@@ -18,7 +18,7 @@ import { renderBuf } from "../drawing/render-buf";
 import { hexStr } from "../utils";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
-import { trySetPointerCapture, cPosFromRefs, canvasPosUnclamped, updateStatusBase } from "./useDrawingBase";
+import { trySetPointerCapture, cPosFromRefs, canvasPosUnclamped, isCanvasPointInBounds, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
 import { createStrokeSmoother, smoothStrokePoint } from "../drawing/stroke-smoothing";
 import type { StrokeSmoother } from "../drawing/stroke-smoothing";
@@ -51,6 +51,9 @@ export interface GlazeDrawingResult {
   onDown: (e: React.PointerEvent) => void;
   onMove: (e: React.PointerEvent) => void;
   onUp: () => void;
+  onWorkspaceDown: (e: React.PointerEvent) => void;
+  onWorkspaceMove: (e: React.PointerEvent) => void;
+  onWorkspaceLeave: (e: React.PointerEvent) => void;
   pickHue: (e: React.PointerEvent) => void;
   trackCursor: (e: React.PointerEvent) => void;
   clearCursor: () => void;
@@ -91,6 +94,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   } | null>(null);
   const fillPendingRef = useRef(false);
   const pendingUpRef = useRef(false);
+  const pendingWorkspaceStartRef = useRef(false);
   const floodFillWorker = useFloodFillWorker();
 
   // Refs needed by useCursorOverlay (individual for interface compatibility)
@@ -111,6 +115,11 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
 
   function cPos(e: React.PointerEvent) {
     return cPosFromRefs(e, cursor.curRef.current, drawRefs);
+  }
+
+  function isInCanvasBounds(e: React.PointerEvent) {
+    const pos = canvasPosUnclamped(e, cursor.curRef.current, zoomRef.current, panRef.current, cvsRef.current);
+    return isCanvasPointInBounds(pos, cvsRef.current);
   }
 
   function updateStatus(e: React.PointerEvent) {
@@ -151,11 +160,12 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     });
   }
 
-  function doDown(e: React.PointerEvent) {
-    if (e.button !== 0 && e.button !== 1) return;
+  function doDown(e: React.PointerEvent, buttonOverride?: 0 | 1) {
+    const button = buttonOverride ?? e.button;
+    if (button !== 0 && button !== 1) return;
     e.preventDefault();
     if (drawingRef.current) return;
-    if (e.button === 1 || spaceRef.current) {
+    if (button === 1 || spaceRef.current) {
       s.current.startPan(e);
       return;
     }
@@ -241,6 +251,49 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     }
     const dirtyBB = brushMaskBBox([[pos.x, pos.y]], mask, W, H);
     renderBuf(cv.data, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB, cmBuf);
+  }
+
+  function canArmWorkspaceStart(e: React.PointerEvent) {
+    return e.button === 0 && !e.altKey && s.current.glazeTool !== "glaze_fill";
+  }
+
+  function doWorkspaceDown(e: React.PointerEvent) {
+    pendingWorkspaceStartRef.current = false;
+    if (e.button === 1 || spaceRef.current || isInCanvasBounds(e)) {
+      doDown(e);
+      return;
+    }
+    e.preventDefault();
+    cursor.clearCursor();
+    if (!canArmWorkspaceStart(e)) return;
+    trySetPointerCapture(e);
+    pendingWorkspaceStartRef.current = true;
+  }
+
+  function doWorkspaceMove(e: React.PointerEvent) {
+    if (pendingWorkspaceStartRef.current) {
+      e.preventDefault();
+      updateStatus(e);
+      if ((e.buttons & 1) !== 1) {
+        pendingWorkspaceStartRef.current = false;
+        cursor.clearCursor();
+        return;
+      }
+      if (!isInCanvasBounds(e)) {
+        cursor.clearCursor();
+        return;
+      }
+      cursor.trackCursor(e);
+      pendingWorkspaceStartRef.current = false;
+      doDown(e, 0);
+      return;
+    }
+    if (!drawingRef.current && !panningRef.current && !isInCanvasBounds(e)) {
+      updateStatus(e);
+      cursor.clearCursor();
+      return;
+    }
+    doMove(e);
   }
 
   function doMove(e: React.PointerEvent) {
@@ -356,11 +409,52 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable, read via .current
   }, [dispatch]);
 
+  function hasPointerCapture(e: React.PointerEvent) {
+    const candidates = [e.currentTarget as HTMLElement | null, e.target as HTMLElement | null, prvRef.current];
+    for (const el of candidates) {
+      if (!el || typeof el.hasPointerCapture !== "function") continue;
+      try {
+        if (el.hasPointerCapture(e.pointerId)) return true;
+      } catch (err) {
+        console.warn("CHROMALUM: pointerCapture check failed:", err);
+      }
+    }
+    return false;
+  }
+
+  const onWorkspaceDown = useCallback((e: React.PointerEvent) => {
+    doWorkspaceDown(e);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- doWorkspaceDown reads from sync refs
+  }, []);
+
+  const onWorkspaceMove = useCallback((e: React.PointerEvent) => {
+    doWorkspaceMove(e);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- doWorkspaceMove reads from sync refs
+  }, []);
+
+  const onWorkspaceLeave = useCallback(
+    (e: React.PointerEvent) => {
+      if (pendingWorkspaceStartRef.current) {
+        pendingWorkspaceStartRef.current = false;
+        cursor.clearCursor();
+        return;
+      }
+      if (drawingRef.current && hasPointerCapture(e)) {
+        cursor.clearCursor();
+        return;
+      }
+      onUp();
+      cursor.clearCursor();
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hasPointerCapture reads event/current refs only
+    [onUp, cursor.clearCursor],
+  );
+
   /** Eyedropper: pick hue from any pixel (glazed or default). */
   const pickHue = useCallback((e: React.PointerEvent) => {
-    const pos = cPos(e);
     const cv = cvsRef.current;
-    if (pos.x < 0 || pos.x >= cv.w || pos.y < 0 || pos.y >= cv.h) return;
+    const pos = canvasPosUnclamped(e, cursor.curRef.current, zoomRef.current, panRef.current, cv);
+    if (!isCanvasPointInBounds(pos, cv)) return;
     const idx = pos.y * cv.w + pos.x;
     const lv = cv.data[idx] & LEVEL_MASK;
     // L0 (black) and L7 (white) are achromatic — no hue to pick
@@ -397,6 +491,9 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     onDown,
     onMove,
     onUp,
+    onWorkspaceDown,
+    onWorkspaceMove,
+    onWorkspaceLeave,
     pickHue,
     trackCursor: cursor.trackCursor,
     clearCursor: cursor.clearCursor,

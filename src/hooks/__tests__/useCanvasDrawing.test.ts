@@ -98,9 +98,11 @@ function pointerEvent(overrides?: Partial<React.PointerEvent>): React.PointerEve
   const clientY = overrides?.clientY ?? 160;
   return {
     button: 0,
+    buttons: 1,
     altKey: false,
     pointerId: 1,
     target: { setPointerCapture: vi.fn() },
+    currentTarget: { hasPointerCapture: vi.fn(() => false) },
     clientX,
     clientY,
     preventDefault: vi.fn(),
@@ -371,5 +373,64 @@ describe("useCanvasDrawing", () => {
     expect(setBrushLevel).toHaveBeenCalledWith(5);
     expect(mockAnnounce).toHaveBeenCalledWith("announce_level");
     expect(result.current.drawingRef.current).toBe(false);
+  });
+
+  it("arms a background drag and starts a brush stroke only after entering the canvas", () => {
+    const { result } = renderHook(() => useCanvasDrawing(makeOpts({ brushLevel: 3, brushSize: 1 })));
+    const canvas = result.current.curRef.current!;
+    mockCanvasRect(canvas);
+
+    act(() => {
+      result.current.onWorkspaceDown(pointerEvent({ clientX: -32, clientY: 160, target: canvas }));
+    });
+
+    expect(result.current.drawingRef.current).toBe(false);
+    expect(result.current.strokeRef.current).toBeNull();
+
+    act(() => {
+      result.current.onWorkspaceMove(pointerEvent({ clientX: 160, clientY: 160, target: canvas }));
+    });
+
+    const buf = result.current.strokeRef.current?.buf;
+    expect(result.current.drawingRef.current).toBe(true);
+    expect(buf?.[5 * 10 + 5]).toBe(3);
+    expect(buf?.[5 * 10 + 0]).toBe(0);
+  });
+
+  it("does not arm fill from the checkerboard background", () => {
+    const { result } = renderHook(() => useCanvasDrawing(makeOpts({ tool: "fill", brushLevel: 3, brushSize: 1 })));
+    const canvas = result.current.curRef.current!;
+    mockCanvasRect(canvas);
+
+    act(() => {
+      result.current.onWorkspaceDown(pointerEvent({ clientX: -32, clientY: 160, target: canvas }));
+    });
+    act(() => {
+      result.current.onWorkspaceMove(pointerEvent({ clientX: 160, clientY: 160, target: canvas }));
+    });
+
+    expect(result.current.drawingRef.current).toBe(false);
+    expect(result.current.strokeRef.current).toBeNull();
+  });
+
+  it("uses the canvas entry point as the start of a background-armed line stroke", () => {
+    const { result } = renderHook(() => useCanvasDrawing(makeOpts({ tool: "line", brushLevel: 3, brushSize: 1 })));
+    const canvas = result.current.curRef.current!;
+    mockCanvasRect(canvas);
+
+    act(() => {
+      result.current.onWorkspaceDown(pointerEvent({ clientX: -32, clientY: 160, target: canvas }));
+    });
+    act(() => {
+      result.current.onWorkspaceMove(pointerEvent({ clientX: 160, clientY: 160, target: canvas }));
+    });
+    act(() => {
+      result.current.onWorkspaceMove(pointerEvent({ clientX: 256, clientY: 160, target: canvas }));
+    });
+
+    const buf = result.current.strokeRef.current?.buf;
+    expect(buf?.[5 * 10 + 0]).toBe(0);
+    expect(buf?.[5 * 10 + 5]).toBe(3);
+    expect(buf?.[5 * 10 + 8]).toBe(3);
   });
 });

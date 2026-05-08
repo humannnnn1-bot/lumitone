@@ -192,7 +192,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
         glazeDrawing.pickHue(e);
         return;
       }
-      glazeDrawing.onDown(e);
+      glazeDrawing.onWorkspaceDown(e);
     },
     [panZoom, glazeDrawing, panZoomMode, onPinchDown],
   );
@@ -207,7 +207,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
         panZoom.movePan(e);
         return;
       }
-      glazeDrawing.onMove(e);
+      glazeDrawing.onWorkspaceMove(e);
     },
     [panZoom, glazeDrawing, panZoomMode, onPinchMove],
   );
@@ -233,21 +233,9 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
         onPinchUp(e);
         return;
       }
-      const el = prvRef.current;
-      if (el && glazeDrawing.drawingRef.current) {
-        try {
-          if (typeof el.hasPointerCapture === "function" && el.hasPointerCapture(e.pointerId)) {
-            glazeDrawing.clearCursor();
-            return;
-          }
-        } catch (err) {
-          console.warn("CHROMALUM: pointerCapture check failed:", err);
-        }
-      }
-      glazeDrawing.onUp();
-      glazeDrawing.clearCursor();
+      glazeDrawing.onWorkspaceLeave(e);
     },
-    [glazeDrawing, panZoomMode, onPinchUp, prvRef],
+    [glazeDrawing, panZoomMode, onPinchUp],
   );
 
   const handleContextMenu = useCallback((e: React.MouseEvent) => e.preventDefault(), []);
@@ -343,6 +331,11 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
             ref={prvWrapRef}
             tabIndex={0}
             onKeyDown={handleKeyDown}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerLeave={handlePointerLeave}
+            onContextMenu={handleContextMenu}
             style={{
               border: panZoomMode ? `1px solid ${C.accentBright}` : `1px solid ${C.border}`,
               borderRadius: R.lg,
@@ -351,6 +344,8 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
               width: displayW,
               height: displayH,
               outline: "none",
+              cursor: canvasCursor,
+              touchAction: "none",
               ...S_CHECKERBOARD,
             }}
           >
@@ -359,11 +354,6 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
               role="img"
               aria-label={t("label_glaze")}
               style={{ width: displayW, height: displayH, display: "block", ...canvasTransform, cursor: canvasCursor, touchAction: "none" }}
-              onPointerDown={handlePointerDown}
-              onPointerMove={handlePointerMove}
-              onPointerUp={handlePointerUp}
-              onPointerLeave={handlePointerLeave}
-              onContextMenu={handleContextMenu}
             />
             {showHighlight && glazeCount > 0 && (
               <canvas
