@@ -39,7 +39,7 @@ export function generateAllVariants(cc: number[], locked: boolean[], hist: numbe
   return results;
 }
 
-/** Render a thumbnail ImageData for the given data + colorLUT, optionally with colorMap glaze. */
+/** Render a source-only thumbnail ImageData for the given data + colorLUT. Glaze colorMap overrides are intentionally ignored. */
 export function renderThumbnail(
   data: Uint8Array,
   w: number,

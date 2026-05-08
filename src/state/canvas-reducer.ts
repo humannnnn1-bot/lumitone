@@ -7,7 +7,7 @@
 import { MAX_UNDO, LEVEL_MASK, isAllowedCanvasSize } from "../constants";
 import { computeDiff, applyDiff, applyDiffToColorMap, compressDiff, decompressDiff } from "./undo-diff";
 import { RingBuffer } from "../utils/ring-buffer";
-import type { AppState, CanvasAction, CompressedDiff } from "../types";
+import type { AppState, CanvasAction, CompressedDiff, Diff } from "../types";
 import { W0, H0 } from "../constants";
 
 /** Build a merged diff that clears both pixel data and colorMap to zero. */
@@ -61,6 +61,36 @@ function applyHistDelta(hist: number[], diff: { idx: Uint32Array; ov: Uint8Array
   return h;
 }
 
+function clearColorMapForDataChanges(colorMap: Uint8Array, diff: Diff): { colorMap: Uint8Array; diff: Diff } {
+  let hasColorMapClear = false;
+  for (let i = 0; i < diff.idx.length; i++) {
+    const ix = diff.idx[i];
+    if (ix < colorMap.length && diff.ov[i] !== diff.nv[i] && colorMap[ix] !== 0) {
+      hasColorMapClear = true;
+      break;
+    }
+  }
+
+  if (!hasColorMapClear) return { colorMap, diff };
+
+  const nextColorMap = new Uint8Array(colorMap);
+  const cmOv = new Uint8Array(diff.idx.length);
+  const cmNv = new Uint8Array(diff.idx.length);
+  if (diff.cmOv && diff.cmOv.length === diff.idx.length) cmOv.set(diff.cmOv);
+  if (diff.cmNv && diff.cmNv.length === diff.idx.length) cmNv.set(diff.cmNv);
+
+  for (let i = 0; i < diff.idx.length; i++) {
+    const ix = diff.idx[i];
+    if (ix < colorMap.length && diff.ov[i] !== diff.nv[i] && colorMap[ix] !== 0) {
+      cmOv[i] = colorMap[ix];
+      cmNv[i] = 0;
+      nextColorMap[ix] = 0;
+    }
+  }
+
+  return { colorMap: nextColorMap, diff: { ...diff, cmOv, cmNv } };
+}
+
 const initData = new Uint8Array(W0 * H0);
 export const initialState: AppState = {
   cvs: { w: W0, h: H0, data: initData, colorMap: new Uint8Array(W0 * H0) },
@@ -74,16 +104,17 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
     case "stroke_end": {
       const { finalData, finalColorMap, diff } = action;
       if (!diff || diff.idx.length === 0) return state;
+      const colorMapUpdate = finalColorMap ? { colorMap: finalColorMap, diff } : clearColorMapForDataChanges(state.cvs.colorMap, diff);
       const newCvs = { ...state.cvs, data: finalData };
-      if (finalColorMap) newCvs.colorMap = finalColorMap;
+      if (colorMapUpdate.colorMap !== state.cvs.colorMap) newCvs.colorMap = colorMapUpdate.colorMap;
       const newUndo = state.undoStack.clone();
-      newUndo.push(compressDiff(diff));
+      newUndo.push(compressDiff(colorMapUpdate.diff));
       return {
         ...state,
         cvs: newCvs,
         undoStack: newUndo,
         redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
-        hist: applyHistDelta(state.hist, diff, false),
+        hist: applyHistDelta(state.hist, colorMapUpdate.diff, false),
       };
     }
     case "undo": {

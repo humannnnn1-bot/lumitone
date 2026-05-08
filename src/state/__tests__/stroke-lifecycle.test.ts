@@ -157,6 +157,44 @@ describe("stroke lifecycle integration", () => {
     expect(s4.cvs.colorMap[1]).toBe(4);
   });
 
+  it("source stroke clears stale glaze overrides and preserves them through undo/redo", () => {
+    const s0 = mkCanvas(8, 8);
+    const s1 = applyStroke(s0, (d) => {
+      d[0] = 3;
+      d[1] = 5;
+    });
+
+    const newCm = new Uint8Array(s1.cvs.colorMap);
+    newCm[0] = 2;
+    newCm[1] = 1;
+    const glazeDiff = computeGlazeDiff(s1.cvs.colorMap, newCm, s1.cvs.data);
+    const s2 = canvasReducer(s1, {
+      type: "stroke_end",
+      finalData: s1.cvs.data,
+      finalColorMap: newCm,
+      diff: glazeDiff,
+    });
+
+    const finalData = new Uint8Array(s2.cvs.data);
+    finalData[0] = 1;
+    const sourceDiff = computeDiff(s2.cvs.data, finalData);
+    const s3 = canvasReducer(s2, { type: "stroke_end", finalData, diff: sourceDiff });
+
+    expect(s3.cvs.data[0]).toBe(1);
+    expect(s3.cvs.colorMap[0]).toBe(0);
+    expect(s3.cvs.colorMap[1]).toBe(1);
+
+    const s4 = canvasReducer(s3, { type: "undo" });
+    expect(s4.cvs.data[0]).toBe(3);
+    expect(s4.cvs.colorMap[0]).toBe(2);
+    expect(s4.cvs.colorMap[1]).toBe(1);
+
+    const s5 = canvasReducer(s4, { type: "redo" });
+    expect(s5.cvs.data[0]).toBe(1);
+    expect(s5.cvs.colorMap[0]).toBe(0);
+    expect(s5.cvs.colorMap[1]).toBe(1);
+  });
+
   it("histogram tracks level changes through stroke/undo/redo", () => {
     const s0 = mkCanvas(4, 4); // 16 pixels, all level 0
     expect(s0.hist[0]).toBe(16);
