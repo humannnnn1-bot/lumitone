@@ -13,6 +13,7 @@ const galleryMock = vi.hoisted(() => ({
   generate: vi.fn(),
   cancel: vi.fn(),
   progress: { current: 0, total: 0 },
+  useGallery: vi.fn(),
 }));
 
 vi.mock("../../i18n", () => ({
@@ -25,7 +26,7 @@ vi.mock("../../hooks/useGallery", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../hooks/useGallery")>();
   return {
     ...actual,
-    useGallery: () => galleryMock,
+    useGallery: galleryMock.useGallery,
   };
 });
 
@@ -90,22 +91,33 @@ describe("GalleryPanel", () => {
     galleryMock.progress = { current: 0, total: 0 };
     galleryMock.generate.mockClear();
     galleryMock.cancel.mockClear();
+    galleryMock.useGallery.mockImplementation(() => galleryMock);
+    galleryMock.useGallery.mockClear();
   });
 
   afterEach(() => {
     vi.restoreAllMocks();
   });
 
-  it("generates when active and cancels hidden generation", () => {
-    renderGallery({ cvs: makeCvs(3, 3), active: true });
-    expect(galleryMock.generate).toHaveBeenCalledTimes(1);
-    expect(galleryMock.cancel).not.toHaveBeenCalled();
+  it("passes the active state to useGallery", () => {
+    const activeView = renderGallery({ cvs: makeCvs(3, 3), active: true });
+    expect(galleryMock.useGallery).toHaveBeenLastCalledWith(
+      activeView.props.cvs,
+      activeView.props.cc,
+      activeView.props.locked,
+      activeView.props.hist,
+      true,
+    );
 
-    galleryMock.generate.mockClear();
-    galleryMock.generating = true;
-    renderGallery({ cvs: makeCvs(5, 5), active: false });
-    expect(galleryMock.cancel).toHaveBeenCalledTimes(1);
-    expect(galleryMock.generate).not.toHaveBeenCalled();
+    activeView.unmount();
+    const hiddenView = renderGallery({ cvs: makeCvs(5, 5), active: false });
+    expect(galleryMock.useGallery).toHaveBeenLastCalledWith(
+      hiddenView.props.cvs,
+      hiddenView.props.cc,
+      hiddenView.props.locked,
+      hiddenView.props.hist,
+      false,
+    );
   });
 
   it("shows progress, cycles sort modes, and reports an empty hue-filter result", () => {

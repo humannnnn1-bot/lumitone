@@ -4,6 +4,9 @@ import { S_BTN, S_BTN_ACTIVE, S_BTN_SM, S_BTN_SM_ACTIVE } from "../styles/shared
 import { rgbStr, timestamp } from "../utils";
 import { useGallery, renderThumbnail } from "../hooks/useGallery";
 import type { GalleryItem } from "../hooks/useGallery";
+import { useGalleryBookmarks, GALLERY_BOOKMARKS_MAX } from "../hooks/useGalleryBookmarks";
+import { ccEqual, getDisplayGalleryItems, getGalleryPatternCount } from "../hooks/galleryView";
+import type { GalleryFilter, GallerySortMode } from "../hooks/galleryView";
 import type { CanvasData } from "../types";
 import type { ColorAction } from "../state/color-reducer";
 import { useTranslation } from "../i18n";
@@ -20,93 +23,6 @@ interface GalleryPanelProps {
   active?: boolean;
   scrollToCurrent?: boolean;
   onScrollDone?: () => void;
-}
-
-const BM_KEY = "chromalum_bookmarks";
-const BM_MAX = 500;
-// Single-app-instance gallery-regeneration cache. Tracks cvs.data by reference
-// identity rather than by sampled pixels: canvas-reducer returns a fresh Uint8Array
-// on every mutation (stroke_end/undo/redo/clear/new_canvas/load_image), so identity
-// equality is a reliable invalidation signal. hist is included because patternCount
-// depends on it; without it, drawing on an all-black canvas could leave thumbnails
-// out of sync with the "N patterns" label.
-const _genCache = {
-  data: null as Uint8Array | null,
-  w: 0,
-  h: 0,
-  variantKey: "",
-  locked: "",
-  hist: "",
-};
-
-function galleryVariantKey(cc: number[], locked: boolean[], hist: number[]): string {
-  return LEVEL_CANDIDATES.map((cands, lv) => {
-    const n = cands.length;
-    if (locked[lv] || hist[lv] === 0 || n <= 1) return String(cc[lv] % n);
-    return "*";
-  }).join(",");
-}
-
-function loadBookmarks(): number[][] {
-  try {
-    const raw = localStorage.getItem(BM_KEY);
-    if (!raw) return [];
-    const arr = JSON.parse(raw);
-    if (!Array.isArray(arr)) return [];
-    return arr
-      .filter((a: unknown) => Array.isArray(a) && a.length === 8 && a.every((v: unknown) => typeof v === "number" && Number.isFinite(v)))
-      .map((a: number[]) =>
-        a.map((v, lv) => {
-          const maxCand = LEVEL_CANDIDATES[lv]?.length ?? 1;
-          return v >= 0 && v < maxCand ? v : v >= 0 ? v % maxCand : 0;
-        }),
-      );
-  } catch {
-    return [];
-  }
-}
-
-function saveBookmarks(bms: number[][]) {
-  localStorage.setItem(BM_KEY, JSON.stringify(bms));
-}
-
-function ccEqual(a: number[], b: number[]): boolean {
-  for (let i = 0; i < 8; i++) {
-    const na = LEVEL_CANDIDATES[i].length;
-    if (a[i] % na !== b[i] % na) return false;
-  }
-  return true;
-}
-
-/** Compute average hue angle for a pattern's cc[] (for sorting/display). */
-function patternHue(patternCc: number[]): number {
-  let sumAngle = 0,
-    count = 0;
-  for (let lv = 0; lv < 8; lv++) {
-    const cands = LEVEL_CANDIDATES[lv];
-    if (cands.length <= 1) continue;
-    const angle = cands[patternCc[lv] % cands.length].angle;
-    if (angle >= 0) {
-      sumAngle += angle;
-      count++;
-    }
-  }
-  return count > 0 ? sumAngle / count : 0;
-}
-
-/** Check if a pattern's cc[] matches a hue filter on a specific level. */
-function matchesHueFilter(patternCc: number[], filterHue: number, filterRange: number): boolean {
-  // Check if ANY of the 6 chromatic levels (L1-L6) has a candidate within the hue range
-  for (let lv = 1; lv <= 6; lv++) {
-    const cands = LEVEL_CANDIDATES[lv];
-    if (cands.length <= 1) continue;
-    const ci = patternCc[lv] % cands.length;
-    const angle = cands[ci].angle;
-    if (angle < 0) continue;
-    const diff = Math.abs(angle - filterHue);
-    if (Math.min(diff, 360 - diff) <= filterRange) return true;
-  }
-  return false;
 }
 
 const ThumbCanvas = React.memo(function ThumbCanvas({ imageData, w, h }: { imageData: ImageData | null; w: number; h: number }) {
@@ -133,19 +49,6 @@ const ThumbCanvas = React.memo(function ThumbCanvas({ imageData, w, h }: { image
   }, [imageData, w, h]);
   return <canvas ref={ref} className="gallery-thumb-canvas" style={{ width: w, height: h }} />;
 });
-
-type SortMode = "default" | "hue_asc" | "hue_desc" | "similar";
-
-/** Count how many levels differ between two cc[] arrays. */
-function ccDistance(a: number[], b: number[]): number {
-  let dist = 0;
-  for (let i = 0; i < 8; i++) {
-    const na = LEVEL_CANDIDATES[i].length;
-    if (na <= 1) continue;
-    if (a[i] % na !== b[i] % na) dist++;
-  }
-  return dist;
-}
 
 const S_HUE_FILTER_TRACK: React.CSSProperties = {
   flex: "2 1 100px",
@@ -204,10 +107,11 @@ export const GalleryPanel = React.memo(function GalleryPanel({
   onScrollDone,
 }: GalleryPanelProps) {
   const { t } = useTranslation();
-  const { items, generating, generate, cancel, progress } = useGallery(cvs, cc, locked, hist);
-  const [bookmarks, setBookmarks] = useState<number[][]>(loadBookmarks);
-  const [filter, setFilter] = useState<"all" | "bookmarks">("all");
-  const [sortMode, setSortMode] = useState<SortMode>("default");
+  const { items, generating, progress } = useGallery(cvs, cc, locked, hist, active === true);
+  const handleBookmarkLimit = useCallback(() => showToast(t("toast_bookmark_limit", GALLERY_BOOKMARKS_MAX), "error"), [showToast, t]);
+  const { bookmarks, isBookmarked, toggleBookmark } = useGalleryBookmarks({ onLimitReached: handleBookmarkLimit });
+  const [filter, setFilter] = useState<GalleryFilter>("all");
+  const [sortMode, setSortMode] = useState<GallerySortMode>("default");
   const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const currentItemRef = useRef<HTMLDivElement>(null);
@@ -229,69 +133,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
     }
   }, [scrollToCurrent, active, onScrollDone]);
 
-  // Auto-generate only while Gallery is visible; hidden generation is expensive
-  // and makes controls in other tabs feel sluggish.
-  useEffect(() => {
-    if (!active) {
-      if (generating) {
-        _genCache.data = null;
-        _genCache.variantKey = "";
-      }
-      cancel();
-      return;
-    }
-    const variantKey = galleryVariantKey(cc, locked, hist);
-    const lockedStr = locked.join(",");
-    const histStr = hist.join(",");
-    if (
-      _genCache.data !== cvs.data ||
-      _genCache.w !== cvs.w ||
-      _genCache.h !== cvs.h ||
-      _genCache.variantKey !== variantKey ||
-      _genCache.locked !== lockedStr ||
-      _genCache.hist !== histStr
-    ) {
-      _genCache.data = cvs.data;
-      _genCache.w = cvs.w;
-      _genCache.h = cvs.h;
-      _genCache.variantKey = variantKey;
-      _genCache.locked = lockedStr;
-      _genCache.hist = histStr;
-      generate();
-    }
-  }, [active, cancel, cvs, cc, locked, hist, generate, generating]);
-
-  const patternCount = useMemo(() => {
-    let total = 1;
-    for (let lv = 0; lv < 8; lv++) {
-      const n = LEVEL_CANDIDATES[lv].length;
-      if (!locked[lv] && hist[lv] > 0 && n > 1) total *= n;
-    }
-    return total;
-  }, [locked, hist]);
-
-  const isBookmarked = useCallback((itemCc: number[]) => bookmarks.some((b) => ccEqual(b, itemCc)), [bookmarks]);
-
-  const toggleBookmark = useCallback(
-    (itemCc: number[]) => {
-      setBookmarks((prev) => {
-        const idx = prev.findIndex((b) => ccEqual(b, itemCc));
-        let next: number[][];
-        if (idx >= 0) {
-          next = [...prev.slice(0, idx), ...prev.slice(idx + 1)];
-        } else {
-          if (prev.length >= BM_MAX) {
-            showToast(t("toast_bookmark_limit", BM_MAX), "error");
-            return prev;
-          }
-          next = [...prev, [...itemCc]];
-        }
-        saveBookmarks(next);
-        return next;
-      });
-    },
-    [showToast, t],
-  );
+  const patternCount = useMemo(() => getGalleryPatternCount(locked, hist), [locked, hist]);
 
   const applyScheme = useCallback(
     (itemCc: number[]) => {
@@ -313,30 +155,8 @@ export const GalleryPanel = React.memo(function GalleryPanel({
     });
   }, [bookmarks, cvs]);
 
-  // Apply sort + filter to display items
   const displayItems = useMemo(() => {
-    let list = filter === "bookmarks" ? bookmarkItems : items;
-
-    // Hue filter — active when range < 180° (full circle)
-    if (filterRange < 180) {
-      list = list.filter((item) => matchesHueFilter(item.cc, filterHue, filterRange));
-    }
-
-    // Sort
-    if (sortMode !== "default") {
-      const sorted = [...list];
-      if (sortMode === "similar") {
-        sorted.sort((a, b) => ccDistance(a.cc, cc) - ccDistance(b.cc, cc));
-      } else {
-        sorted.sort((a, b) => {
-          const ha = patternHue(a.cc),
-            hb = patternHue(b.cc);
-          return sortMode === "hue_asc" ? ha - hb : hb - ha;
-        });
-      }
-      return sorted;
-    }
-    return list;
+    return getDisplayGalleryItems({ filter, items, bookmarkItems, sortMode, filterHue, filterRange, currentCc: cc });
   }, [filter, items, bookmarkItems, sortMode, filterHue, filterRange, cc]);
 
   type ThumbSize = "S" | "M" | "L";

@@ -1,6 +1,15 @@
+// @vitest-environment jsdom
 import { describe, it, expect } from "vitest";
-import { generateAllVariants, renderThumbnail } from "../useGallery";
+import { renderHook, waitFor } from "@testing-library/react";
+import { generateAllVariants, renderThumbnail, useGallery } from "../useGallery";
 import { DEFAULT_CC, buildColorLUT, LEVEL_CANDIDATES } from "../../color-engine";
+import type { CanvasData } from "../../types";
+
+function makeCvs(w = 4, h = 4): CanvasData {
+  const data = new Uint8Array(w * h);
+  for (let i = 0; i < data.length; i++) data[i] = i % 8;
+  return { w, h, data, colorMap: new Uint8Array(w * h) };
+}
 
 describe("generateAllVariants", () => {
   it("returns single variant when all levels are locked", () => {
@@ -159,5 +168,42 @@ describe("renderThumbnail", () => {
     const img = renderThumbnail(data, 2, 2, lut, 2, 2);
     const rgb = lut[7]; // 0xFF & 7 = 7
     expect(img.data[0]).toBe(rgb[0]);
+  });
+});
+
+describe("useGallery", () => {
+  const locked = new Array(8).fill(true);
+  const hist = new Array(8).fill(1);
+
+  it("waits while inactive and generates when activated", async () => {
+    const cvs = makeCvs();
+    const hook = renderHook(({ active }) => useGallery(cvs, [...DEFAULT_CC], locked, hist, active), { initialProps: { active: false } });
+
+    expect(hook.result.current.items).toHaveLength(0);
+
+    hook.rerender({ active: true });
+
+    await waitFor(() => expect(hook.result.current.items).toHaveLength(1));
+    expect(hook.result.current.items[0].imageData).not.toBeNull();
+
+    hook.unmount();
+  });
+
+  it("reuses generated items for the same canvas data and regenerates when data changes", async () => {
+    const first = makeCvs();
+    const second = makeCvs();
+    const cc = [...DEFAULT_CC];
+    const hook = renderHook(({ cvs }) => useGallery(cvs, cc, locked, hist, true), { initialProps: { cvs: first } });
+
+    await waitFor(() => expect(hook.result.current.items).toHaveLength(1));
+    const firstItems = hook.result.current.items;
+
+    hook.rerender({ cvs: { ...first } });
+    expect(hook.result.current.items).toBe(firstItems);
+
+    hook.rerender({ cvs: second });
+    await waitFor(() => expect(hook.result.current.items).not.toBe(firstItems));
+
+    hook.unmount();
   });
 });
