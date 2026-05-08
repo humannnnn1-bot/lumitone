@@ -20,6 +20,18 @@ describe("LinkedVisualization split", () => {
     expect(screen.queryByText("Diatonic (7-note)")).toBeNull();
   });
 
+  it("keeps color legend label size stable on hover", () => {
+    const { container } = render(<LinkedVisualization hueAngle={0} brushLevel={0} />);
+    const label = Array.from(container.querySelectorAll("text")).find((el) => el.textContent?.trim().startsWith("L2"));
+
+    expect(label?.getAttribute("font-size")).toBe("10");
+    fireEvent.pointerEnter(label!.closest("g")!);
+
+    const hoveredLabel = Array.from(container.querySelectorAll("text")).find((el) => el.textContent?.trim().startsWith("L2"));
+    expect(hoveredLabel?.getAttribute("font-size")).toBe("10");
+    expect(hoveredLabel?.getAttribute("font-weight")).toBeNull();
+  });
+
   it("renders interval ratios only through the music wrapper", () => {
     render(<MusicLinkedVisualization hueAngle={0} brushLevel={0} scaleMode="diatonic7" />);
 

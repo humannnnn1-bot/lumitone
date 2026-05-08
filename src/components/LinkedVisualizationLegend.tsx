@@ -49,8 +49,8 @@ export function LinkedVisualizationLegend({
     return (
       <g key={`info-${d.lv}-${d.ci}`} opacity={hov ? 1 : hoveredDot !== null ? 0.3 : 0.8} {...dotHandlers(d)}>
         <rect x={ix - 2} y={y - 4} width={TW - ix} height={ROW_H} fill="transparent" pointerEvents="all" />
-        <rect x={ix} y={y} width={11} height={11} rx={2} fill={col} stroke={hov ? "#fff" : "none"} strokeWidth={hov ? 0.5 : 0} />
-        <text x={ix + 15} y={y + 9} fontSize={hov ? 11 : 10} fill={hov ? C.textWhite : C.textDimmer} fontWeight={hov ? "bold" : "normal"}>
+        <rect x={ix} y={y} width={11} height={11} rx={2} fill={col} stroke={hov ? C.accent : "none"} strokeWidth={hov ? 0.5 : 0} />
+        <text x={ix + 15} y={y + 9} fontSize={10} fill={hov ? C.textPrimary : C.textDimmer}>
           L{d.lv} <tspan style={{ fontVariantNumeric: "tabular-nums" }}>{String(Math.round(d.a)).padStart(3, "\u2007")}°</tspan>
         </text>
         <text x={ixRgb} y={y + 9} fontSize={10} fill={C.textDimmer}>
@@ -97,16 +97,10 @@ export function LinkedVisualizationLegend({
           height={11}
           rx={2}
           fill="#222"
-          stroke={hovL0 ? "#fff" : "rgba(255,255,255,0.5)"}
+          stroke={hovL0 ? C.accent : "rgba(255,255,255,0.5)"}
           strokeWidth={hovL0 ? 0.8 : 0.6}
         />
-        <text
-          x={ix + 15}
-          y={l0y + 9}
-          fontSize={hovL0 ? 11 : 10}
-          fill={hovL0 ? C.textWhite : C.textDimmer}
-          fontWeight={hovL0 ? "bold" : "normal"}
-        >
+        <text x={ix + 15} y={l0y + 9} fontSize={10} fill={hovL0 ? C.textPrimary : C.textDimmer}>
           {legendL0}
         </text>
         <text x={ixRgb} y={l0y + 9} fontSize={10} fill={C.textDimmer}>
@@ -136,16 +130,10 @@ export function LinkedVisualizationLegend({
           height={11}
           rx={2}
           fill="#fff"
-          stroke={hovL7 ? "#000" : "rgba(0,0,0,0.5)"}
+          stroke={hovL7 ? C.accent : "rgba(0,0,0,0.5)"}
           strokeWidth={hovL7 ? 0.8 : 0.6}
         />
-        <text
-          x={ix + 15}
-          y={l7y + 9}
-          fontSize={hovL7 ? 11 : 10}
-          fill={hovL7 ? C.textWhite : C.textDimmer}
-          fontWeight={hovL7 ? "bold" : "normal"}
-        >
+        <text x={ix + 15} y={l7y + 9} fontSize={10} fill={hovL7 ? C.textPrimary : C.textDimmer}>
           {legendL7}
         </text>
         <text x={ixRgb} y={l7y + 9} fontSize={10} fill={C.textDimmer}>
