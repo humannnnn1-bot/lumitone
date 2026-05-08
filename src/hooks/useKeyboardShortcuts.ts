@@ -241,5 +241,19 @@ export function useKeyboardShortcuts(deps: KeyboardShortcutDeps) {
       window.removeEventListener("blur", blur);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- spaceRef, panningRef, brushSizeRef are stable refs
-  }, [setTool, setBrushLevel, setBrushSize, dispatch, announce, endPan, setShowHelp, setCursorMode, setShowNewCanvas, t, setZoom, onSave]);
+  }, [
+    setTool,
+    setBrushLevel,
+    setBrushSize,
+    dispatch,
+    announce,
+    endPan,
+    setShowHelp,
+    setCursorMode,
+    setShowNewCanvas,
+    t,
+    setZoom,
+    onSave,
+    activeTabId,
+  ]);
 }

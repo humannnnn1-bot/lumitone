@@ -102,12 +102,13 @@ const S_LAZY_PANEL_FALLBACK: React.CSSProperties = {
 interface AppContentProps {
   app: ReturnType<typeof useAppState>;
   panZoom: ReturnType<typeof usePanZoom>;
+  sharedSchedCursorRef: React.MutableRefObject<(() => void) | null>;
   announce: (msg: string) => void;
   ariaLiveRef: React.MutableRefObject<HTMLDivElement | null>;
   t: import("./i18n").TranslationFn;
 }
 
-function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps) {
+function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef, t }: AppContentProps) {
   const {
     state,
     dispatch,
@@ -189,7 +190,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     directCandidates,
   });
 
-  const { sharedSchedCursorRef } = useCanvasCoordination({
+  useCanvasCoordination({
     cvs,
     colorLUT,
     activeTabId,
@@ -201,6 +202,7 @@ function AppContent({ app, panZoom, announce, ariaLiveRef, t }: AppContentProps)
     prvRef,
     hexPrvRef,
     glazePrvRef,
+    sharedSchedCursorRef,
     onWheel: panZoom.onWheel,
   });
 
@@ -644,7 +646,14 @@ export default function App() {
       announce={announce}
       t={t}
     >
-      <AppContent app={app} panZoom={panZoom} announce={announce} ariaLiveRef={ariaLiveRef} t={t} />
+      <AppContent
+        app={app}
+        panZoom={panZoom}
+        sharedSchedCursorRef={sharedSchedCursorRef}
+        announce={announce}
+        ariaLiveRef={ariaLiveRef}
+        t={t}
+      />
     </DrawingContextProvider>
   );
 }

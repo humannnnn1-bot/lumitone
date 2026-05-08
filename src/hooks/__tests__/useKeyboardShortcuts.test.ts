@@ -140,6 +140,42 @@ describe("useKeyboardShortcuts", () => {
     expect(vi.mocked(announce)).not.toHaveBeenCalled();
   });
 
+  it("updates number shortcut ownership after switching to the Music tab", () => {
+    const { deps, setBrushLevel, announce } = makeArgs();
+    let activeTabId: KeyboardShortcutDeps["activeTabId"] = "gallery";
+    const { unmount, rerender } = renderHook(() => useKeyboardShortcuts({ ...deps, activeTabId }));
+    cleanup = unmount;
+
+    fireKey("3");
+    expect(vi.mocked(setBrushLevel)).toHaveBeenCalledWith(3);
+
+    vi.mocked(setBrushLevel).mockClear();
+    vi.mocked(announce).mockClear();
+    activeTabId = "music";
+    rerender();
+    fireKey("3");
+
+    expect(vi.mocked(setBrushLevel)).not.toHaveBeenCalled();
+    expect(vi.mocked(announce)).not.toHaveBeenCalled();
+  });
+
+  it("restores source number shortcuts after leaving the Music tab", () => {
+    const { deps, setBrushLevel, announce } = makeArgs();
+    let activeTabId: KeyboardShortcutDeps["activeTabId"] = "music";
+    const { unmount, rerender } = renderHook(() => useKeyboardShortcuts({ ...deps, activeTabId }));
+    cleanup = unmount;
+
+    fireKey("3");
+    expect(vi.mocked(setBrushLevel)).not.toHaveBeenCalled();
+
+    activeTabId = "source";
+    rerender();
+    fireKey("3");
+
+    expect(vi.mocked(setBrushLevel)).toHaveBeenCalledWith(3);
+    expect(vi.mocked(announce)).toHaveBeenCalled();
+  });
+
   describe("undo/redo shortcuts", () => {
     it("Ctrl+Z dispatches undo", () => {
       const { deps, dispatch } = makeArgs();

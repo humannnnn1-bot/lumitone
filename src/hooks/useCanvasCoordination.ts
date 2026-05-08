@@ -1,4 +1,4 @@
-import { useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import { useEffect, useLayoutEffect, useCallback } from "react";
 import { renderBuf } from "../drawing/render-buf";
 import type { CanvasData } from "../types";
 import type { MainTabId } from "../tabs";
@@ -17,14 +17,11 @@ interface CanvasCoordinationOptions {
   prvRef: React.MutableRefObject<HTMLCanvasElement | null>;
   hexPrvRef: React.MutableRefObject<HTMLCanvasElement | null>;
   glazePrvRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  sharedSchedCursorRef: React.MutableRefObject<(() => void) | null>;
   onWheel: (e: WheelEvent) => void;
 }
 
-interface CanvasCoordinationResult {
-  sharedSchedCursorRef: React.MutableRefObject<(() => void) | null>;
-}
-
-export function useCanvasCoordination(opts: CanvasCoordinationOptions): CanvasCoordinationResult {
+export function useCanvasCoordination(opts: CanvasCoordinationOptions): void {
   const {
     cvs,
     colorLUT,
@@ -37,10 +34,9 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): CanvasCo
     prvRef,
     hexPrvRef,
     glazePrvRef,
+    sharedSchedCursorRef,
     onWheel,
   } = opts;
-
-  const sharedSchedCursorRef = useRef<(() => void) | null>(null);
 
   // Bridge schedCursorRef from drawing hook to shared ref used by panZoom
   useLayoutEffect(() => {
@@ -123,6 +119,4 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): CanvasCo
   useEffect(() => {
     if (activeTabId === "glaze") renderGlazeCanvas();
   }, [activeTabId, renderGlazeCanvas]);
-
-  return { sharedSchedCursorRef };
 }
