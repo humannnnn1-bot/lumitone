@@ -182,6 +182,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     cvs,
     dispatch,
     colorLUT,
+    cc,
     hueAngle,
     setHueAngle,
     glazeTool,
@@ -432,6 +433,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
               prvRef={prvRef}
               prvCurRef={drawing.prvCurRef}
               prvWrapRef={prvWrapRef}
+              statusRef={drawing.statusRef}
               displayW={displayW}
               displayH={displayH}
               canvasTransform={canvasTransform}
@@ -450,6 +452,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
           <div id={getTabPanelId("hex")} role="tabpanel" aria-labelledby={getTabButtonId("hex")}>
             <HexPanel
               hexPrvRef={hexPrvRef}
+              cvs={cvs}
               displayW={displayW}
               displayH={displayH}
               cc={cc}

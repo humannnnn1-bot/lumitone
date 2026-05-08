@@ -33,9 +33,11 @@ function ST({ title }: { title: string }) {
 }
 
 const S_MAP_MODE_BTN: React.CSSProperties = {
+  boxSizing: "border-box",
   height: 22,
   padding: `0 ${SP.md}px`,
   fontSize: FS.lg,
+  fontWeight: FW.normal,
   lineHeight: "12px",
   whiteSpace: "nowrap",
 };
@@ -69,6 +71,7 @@ export const AnalyzePanel = React.memo(
               mode={mapMode}
               pixelMaps={pixelMaps}
               colorLUT={colorLUT}
+              cc={cc}
               cvs={cvs}
               displayW={displayW}
               displayH={displayH}
@@ -78,7 +81,7 @@ export const AnalyzePanel = React.memo(
               className="map-mode-buttons"
               style={{ display: "flex", flexWrap: "wrap", gap: SP.xs, justifyContent: "center", marginTop: SP.xs }}
             >
-              {(["luminance", "colorlum", "region"] as const).map((m) => (
+              {(["luminance", "colorlum", "gradient"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setMapMode(m)}
@@ -91,7 +94,7 @@ export const AnalyzePanel = React.memo(
                 </button>
               ))}
               <span className="map-mode-break" />
-              {(["gradient", "depth", "noise", "entropy"] as const).map((m) => (
+              {(["region", "depth", "noise", "entropy"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setMapMode(m)}

@@ -5,12 +5,12 @@ import { GlazeCandidateGrid, type GlazeLevelPreview } from "./GlazeCandidateGrid
 import { BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX, ZOOM_STEP } from "../constants";
 import { buildGlazeHighlightPixels } from "../drawing/glaze-highlight";
 import type { GlazeToolId } from "../constants";
-import { S_BTN, S_BTN_ACTIVE, S_CHECKERBOARD } from "../styles/shared";
+import { S_BTN, S_BTN_ACTIVE, S_CANVAS_STATUS_STABLE, S_CHECKERBOARD } from "../styles/shared";
 import type { PanZoomHandlers, CanvasAction, CanvasData } from "../types";
 import type { GlazeDrawingResult } from "../hooks/useGlazeDrawing";
 import { useTranslation } from "../i18n";
 import { useGlazeContext } from "../state/GlazeContext";
-import { C, Z, SP, FS, R, HUE_GRADIENT, FONT } from "../styles/tokens";
+import { C, Z, SP, FS, R, HUE_GRADIENT } from "../styles/tokens";
 
 interface GlazePanelProps {
   prvRef: React.RefObject<HTMLCanvasElement | null>;
@@ -399,12 +399,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
               }}
             />
           </div>
-          <div
-            ref={glazeStatusRef}
-            aria-live="polite"
-            aria-atomic="true"
-            style={{ fontSize: FS.sm, color: C.textDimmer, fontFamily: FONT.mono, minHeight: 14, textAlign: "center" }}
-          >
+          <div ref={glazeStatusRef} aria-live="polite" aria-atomic="true" style={S_CANVAS_STATUS_STABLE}>
             {"\u2014"}
           </div>
         </div>

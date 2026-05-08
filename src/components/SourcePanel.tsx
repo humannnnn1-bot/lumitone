@@ -1,11 +1,11 @@
 import React, { useCallback, useState } from "react";
 import { TOOLS, BRUSH_MIN, BRUSH_MAX, BRUSH_STEP, ZOOM_MIN, ZOOM_MAX, EXPORT_SCALES, type ExportScale } from "../constants";
 import { LEVEL_INFO } from "../color-engine";
-import { S_BTN, S_BTN_ACTIVE, S_CHECKERBOARD } from "../styles/shared";
+import { S_BTN, S_BTN_ACTIVE, S_CANVAS_STATUS_STABLE, S_CHECKERBOARD } from "../styles/shared";
 import { rgbStr, timestamp } from "../utils";
 import type { AppState, ToolState, ViewState, SaveActions } from "../types";
 import { useTranslation } from "../i18n";
-import { C, Z, SP, FS, FW, R, O, FONT } from "../styles/tokens";
+import { C, Z, SP, FS, FW, R, O } from "../styles/tokens";
 import { ConfirmModal } from "./ConfirmModal";
 
 interface SourcePanelProps {
@@ -352,12 +352,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
               }}
             />
           </div>
-          <div
-            ref={statusRef}
-            aria-live="polite"
-            aria-atomic="true"
-            style={{ fontSize: FS.sm, color: C.textDimmest, fontFamily: FONT.mono, minHeight: 14, textAlign: "center" }}
-          >
+          <div ref={statusRef} aria-live="polite" aria-atomic="true" style={S_CANVAS_STATUS_STABLE}>
             {"\u2014"}
           </div>
         </div>

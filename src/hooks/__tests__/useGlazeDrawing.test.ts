@@ -71,6 +71,7 @@ function makeOpts(overrides?: Partial<Parameters<typeof useGlazeDrawing>[0]>) {
     cvs: makeCvs(),
     dispatch: vi.fn(),
     colorLUT: Array.from({ length: 8 }, () => [128, 128, 128] as [number, number, number]),
+    cc: [0, 0, 0, 0, 0, 0, 0, 0],
     hueAngle: 180,
     setHueAngle: mockSetHueAngle,
     glazeTool: "glaze_brush" as const,

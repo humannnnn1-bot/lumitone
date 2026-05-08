@@ -8,6 +8,7 @@ import type { PixelMaps as PixelMapsType } from "../../hooks/usePixelMaps";
 import { RingBuffer } from "../../utils/ring-buffer";
 import { GlazeContextProvider, type GlazeContextValue } from "../../state/GlazeContext";
 import type { GlazeDrawingResult } from "../../hooks/useGlazeDrawing";
+import { DEFAULT_CC } from "../../color-engine";
 import { SourcePanel } from "../SourcePanel";
 import { ColorPanel } from "../ColorPanel";
 import { GlazePanel } from "../GlazePanel";
@@ -358,6 +359,7 @@ describe("ColorPanel interactions", () => {
         prvRef={React.createRef<HTMLCanvasElement>()}
         prvCurRef={React.createRef<HTMLCanvasElement>()}
         prvWrapRef={React.createRef<HTMLDivElement>()}
+        statusRef={React.createRef<HTMLDivElement>()}
         displayW={64}
         displayH={64}
         canvasTransform={{}}
@@ -580,11 +582,11 @@ describe("MapCanvas rendering and inspection", () => {
     const cvs = { ...makeCanvasData(2, 2), data: new Uint8Array([0, 2, 5, 7]) };
     const pixelMaps = makePixelMaps(2, 2);
     const { container, rerender } = render(
-      <MapCanvas mode="luminance" pixelMaps={pixelMaps} colorLUT={colorLUT} cvs={cvs} displayW={20} displayH={20} />,
+      <MapCanvas mode="luminance" pixelMaps={pixelMaps} colorLUT={colorLUT} cc={DEFAULT_CC} cvs={cvs} displayW={20} displayH={20} />,
     );
 
     for (const mode of ["entropy", "noise", "depth", "luminance", "colorlum", "gradient", "region"] satisfies MapMode[]) {
-      rerender(<MapCanvas mode={mode} pixelMaps={pixelMaps} colorLUT={colorLUT} cvs={cvs} displayW={20} displayH={20} />);
+      rerender(<MapCanvas mode={mode} pixelMaps={pixelMaps} colorLUT={colorLUT} cc={DEFAULT_CC} cvs={cvs} displayW={20} displayH={20} />);
     }
     expect(putImageData).toHaveBeenCalledTimes(8);
 
@@ -601,9 +603,9 @@ describe("MapCanvas rendering and inspection", () => {
       toJSON: () => ({}),
     });
     fireEvent.mouseMove(canvas, { clientX: 5, clientY: 5 });
-    expect(screen.getByText(/\(0,0\) Region:/)).toBeTruthy();
+    expect(screen.getByText(/\(0,0\) MapRegion L0 base c1\/1 #000000 region#/)).toBeTruthy();
     fireEvent.mouseLeave(canvas);
-    expect(screen.queryByText(/\(0,0\) Region:/)).toBeNull();
+    expect(screen.queryByText(/\(0,0\) MapRegion L0 base c1\/1 #000000 region#/)).toBeNull();
   });
 
   it("clears stale worker output instead of painting mismatched pixel-map dimensions", () => {
@@ -617,7 +619,15 @@ describe("MapCanvas rendering and inspection", () => {
     });
 
     render(
-      <MapCanvas mode="noise" pixelMaps={makePixelMaps(1, 1)} colorLUT={colorLUT} cvs={makeCanvasData(2, 2)} displayW={20} displayH={20} />,
+      <MapCanvas
+        mode="noise"
+        pixelMaps={makePixelMaps(1, 1)}
+        colorLUT={colorLUT}
+        cc={DEFAULT_CC}
+        cvs={makeCanvasData(2, 2)}
+        displayW={20}
+        displayH={20}
+      />,
     );
 
     expect(putImageData).toHaveBeenCalledOnce();

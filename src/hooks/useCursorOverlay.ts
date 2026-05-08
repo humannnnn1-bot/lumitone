@@ -198,7 +198,10 @@ export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.Mutab
     forceSrcRedrawRef.current = true;
     schedCursor();
     const el = statusRef.current;
-    if (el) el.textContent = "\u2014";
+    if (el) {
+      el.textContent = "\u2014";
+      el.title = "";
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- schedCursor is synced through schedCursorRef
   }, [statusRef]);
 
@@ -218,8 +221,13 @@ export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.Mutab
     prvCursorPosRef.current = null;
     forcePrvRedrawRef.current = true;
     schedCursor();
+    const el = statusRef.current;
+    if (el) {
+      el.textContent = "\u2014";
+      el.title = "";
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- schedCursor is synced through schedCursorRef
-  }, []);
+  }, [statusRef]);
 
   return {
     curRef,

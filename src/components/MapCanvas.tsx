@@ -8,6 +8,8 @@ import { openBlobUrlInNewTab, timestamp } from "../utils";
 import { recordDebugPerf, startDebugPerf } from "../utils/perf-debug";
 import { useTranslation } from "../i18n";
 import { ConfirmModal } from "./ConfirmModal";
+import { S_CANVAS_STATUS_STABLE } from "../styles/shared";
+import { getFullStatusText, getVisibleStatusText, type StatusText, useCompactStatus } from "../utils/status-display";
 
 const EMPTY_REGION_SIZE_BY_ID = new Map<number, number>();
 
@@ -16,6 +18,7 @@ export function MapCanvas({
   mode,
   pixelMaps,
   colorLUT,
+  cc,
   cvs,
   displayW,
   displayH,
@@ -24,6 +27,7 @@ export function MapCanvas({
   mode: MapMode;
   pixelMaps: PixelMaps;
   colorLUT: [number, number, number][];
+  cc: number[];
   cvs: CanvasData;
   displayW: number;
   displayH: number;
@@ -34,6 +38,7 @@ export function MapCanvas({
   const cw = cvs.w;
   const ch = cvs.h;
   const regionSizeCache = useMemo(() => (mode === "region" ? buildRegionSizeMap(pixelMaps) : EMPTY_REGION_SIZE_BY_ID), [mode, pixelMaps]);
+  const compactStatus = useCompactStatus();
 
   useEffect(() => {
     const c = ref.current;
@@ -59,7 +64,7 @@ export function MapCanvas({
   }, [mode, pixelMaps, colorLUT, cvs, cw, ch, regionSizeCache]);
 
   // Hover info
-  const [hoverInfo, setHoverInfo] = useState<string | null>(null);
+  const [hoverInfo, setHoverInfo] = useState<StatusText | null>(null);
 
   const onMouseMove = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -76,12 +81,13 @@ export function MapCanvas({
         mode,
         pixelMaps,
         colorLUT,
+        cc,
         cvs,
         regionSizeById: regionSizeCache,
       });
       setHoverInfo(info);
     },
-    [mode, pixelMaps, colorLUT, cvs, cw, ch, regionSizeCache],
+    [mode, pixelMaps, colorLUT, cc, cvs, cw, ch, regionSizeCache],
   );
 
   const onMouseLeave = useCallback(() => setHoverInfo(null), []);
@@ -160,7 +166,7 @@ export function MapCanvas({
   );
 
   return (
-    <div style={{ position: "relative" }}>
+    <div style={{ maxWidth: "100%", position: "relative", width: displayW }}>
       <canvas
         ref={ref}
         role="img"
@@ -203,8 +209,8 @@ export function MapCanvas({
           Saving...
         </div>
       )}
-      <div style={{ fontSize: FS.xs, color: C.textDimmer, fontFamily: FONT.mono, textAlign: "center", minHeight: 14, marginTop: SP.xs }}>
-        {hoverInfo ?? "\u00A0"}
+      <div title={hoverInfo ? getFullStatusText(hoverInfo) : undefined} style={S_CANVAS_STATUS_STABLE}>
+        {hoverInfo ? getVisibleStatusText(hoverInfo, compactStatus) : "\u00A0"}
       </div>
       <ConfirmModal
         open={confirmSaveOpen}

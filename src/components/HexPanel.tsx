@@ -1,14 +1,19 @@
-import React, { useMemo, useEffect } from "react";
-import { S_BTN } from "../styles/shared";
+import React, { useCallback, useMemo, useEffect, useState } from "react";
+import { S_BTN, S_CANVAS_STATUS_STABLE } from "../styles/shared";
 import { LEVEL_CANDIDATES } from "../color-engine";
+import { LEVEL_MASK } from "../constants";
 import { rgbStr } from "../utils";
 import { C, SP, FS, R } from "../styles/tokens";
 import { HexDiagram } from "./HexDiagram";
 import type { ColorAction } from "../state/color-reducer";
 import type { TranslationFn } from "../i18n";
+import type { CanvasData } from "../types";
+import { formatHexPixelStatus } from "../utils/pixel-status";
+import { getFullStatusText, getVisibleStatusText, type StatusText, useCompactStatus } from "../utils/status-display";
 
 interface HexPanelProps {
   hexPrvRef: React.RefObject<HTMLCanvasElement | null>;
+  cvs: CanvasData;
   displayW: number;
   displayH: number;
   cc: number[];
@@ -40,6 +45,7 @@ const S_UNLOCK_ALL_BUTTON: React.CSSProperties = {
 export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
   const {
     hexPrvRef,
+    cvs,
     displayW,
     displayH,
     cc,
@@ -57,6 +63,39 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
   } = props;
 
   const hasLocked = useMemo(() => locked.some(Boolean), [locked]);
+  const compactStatus = useCompactStatus();
+  const [hoverInfo, setHoverInfo] = useState<StatusText | null>(null);
+
+  const handleCanvasPointerMove = useCallback(
+    (e: React.PointerEvent<HTMLCanvasElement>) => {
+      const rect = e.currentTarget.getBoundingClientRect();
+      if (rect.width === 0 || rect.height === 0 || cvs.w === 0 || cvs.h === 0) {
+        setHoverInfo(null);
+        return;
+      }
+      const x = Math.floor(((e.clientX - rect.left) / rect.width) * cvs.w);
+      const y = Math.floor(((e.clientY - rect.top) / rect.height) * cvs.h);
+      if (x < 0 || x >= cvs.w || y < 0 || y >= cvs.h) {
+        setHoverInfo(null);
+        return;
+      }
+      const lv = cvs.data[y * cvs.w + x] & LEVEL_MASK;
+      setHoverInfo(
+        formatHexPixelStatus({
+          x,
+          y,
+          lv,
+          cc,
+          hist,
+          patternFactor: patternInfo.perLevel[lv] ?? 1,
+          locked: locked[lv] ?? false,
+        }),
+      );
+    },
+    [cc, cvs, hist, locked, patternInfo.perLevel],
+  );
+
+  const handleCanvasPointerLeave = useCallback(() => setHoverInfo(null), []);
 
   // Keyboard 2-5: cycle candidate color for that level
   useEffect(() => {
@@ -90,8 +129,18 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
               ref={hexPrvRef}
               role="img"
               aria-label={t("label_diagram")}
+              onPointerMove={handleCanvasPointerMove}
+              onPointerLeave={handleCanvasPointerLeave}
               style={{ width: displayW, height: displayH, display: "block", imageRendering: "pixelated" }}
             />
+          </div>
+          <div
+            aria-live="polite"
+            aria-atomic="true"
+            title={hoverInfo ? getFullStatusText(hoverInfo) : undefined}
+            style={S_CANVAS_STATUS_STABLE}
+          >
+            {hoverInfo ? getVisibleStatusText(hoverInfo, compactStatus) : "\u2014"}
           </div>
         </div>
         <div className="panel-sidebar">

@@ -245,12 +245,31 @@ describe("updateStatusBase", () => {
       cvsRef: { current: cvs },
     };
     const el = makeFakeCanvas(makeRect(0, 0, 100, 100));
-    const statusEl = { textContent: "" } as HTMLDivElement;
+    const statusEl = { textContent: "", title: "inside" } as HTMLDivElement;
     const formatText = vi.fn(() => "inside");
 
     updateStatusBase({ clientX: 120, clientY: 50 } as React.PointerEvent, statusEl, el, refs, cvs.data, formatText);
 
     expect(statusEl.textContent).toBe("\u2014");
+    expect(statusEl.title).toBe("");
     expect(formatText).not.toHaveBeenCalled();
+  });
+
+  it("mirrors visible status text into the title for truncated rows", () => {
+    const cvs = makeCvs(10, 10);
+    cvs.data[55] = 3;
+    const refs = {
+      zoomRef: { current: 1 },
+      panRef: { current: { x: 0, y: 0 } },
+      cvsRef: { current: cvs },
+    };
+    const el = makeFakeCanvas(makeRect(0, 0, 100, 100));
+    const statusEl = { textContent: "", title: "" } as HTMLDivElement;
+    const formatText = vi.fn(() => "long status text");
+
+    updateStatusBase({ clientX: 55, clientY: 55 } as React.PointerEvent, statusEl, el, refs, cvs.data, formatText);
+
+    expect(statusEl.textContent).toBe("long status text");
+    expect(statusEl.title).toBe("long status text");
   });
 });

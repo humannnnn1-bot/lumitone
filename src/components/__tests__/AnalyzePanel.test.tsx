@@ -81,11 +81,31 @@ describe("AnalyzePanel", () => {
     expect(buttons.length).toBeGreaterThanOrEqual(7);
   });
 
+  it("orders map mode buttons from value maps to structural maps", () => {
+    render(<AnalyzePanel {...makeProps()} />);
+
+    expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
+      "stats_map_luminance",
+      "stats_map_colorlum",
+      "stats_map_gradient",
+      "stats_map_region",
+      "stats_map_depth",
+      "stats_map_noise",
+      "stats_map_entropy",
+    ]);
+  });
+
+  it("keeps the active region mode button from changing text width", () => {
+    render(<AnalyzePanel {...makeProps({ mapMode: "region" })} />);
+
+    expect(screen.getByRole("button", { name: "stats_map_region" }).style.fontWeight).toBe("400");
+  });
+
   it("routes every map mode button through setMapMode", () => {
     const setMapMode = vi.fn<(mode: MapMode) => void>();
     render(<AnalyzePanel {...makeProps({ setMapMode })} />);
 
-    for (const mode of ["luminance", "colorlum", "region", "gradient", "depth", "noise", "entropy"] satisfies MapMode[]) {
+    for (const mode of ["luminance", "colorlum", "gradient", "region", "depth", "noise", "entropy"] satisfies MapMode[]) {
       fireEvent.click(screen.getByRole("button", { name: `stats_map_${mode}` }));
       expect(setMapMode).toHaveBeenLastCalledWith(mode);
     }
@@ -105,6 +125,7 @@ describe("AnalyzePanel", () => {
         mode: "noise",
         pixelMaps: analyzeMocks.pixelMaps,
         colorLUT: props.colorLUT,
+        cc: props.cc,
         cvs: props.cvs,
         displayW: props.displayW,
         displayH: props.displayH,

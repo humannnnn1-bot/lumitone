@@ -92,6 +92,7 @@ describe("useCursorOverlay", () => {
   it("tracks and clears source and preview cursor positions", () => {
     const refs = makeRefs();
     const status = document.createElement("div");
+    status.title = "old status";
     status.textContent = "ready";
     const statusRef = { current: status };
     const cur = document.createElement("canvas");
@@ -134,6 +135,7 @@ describe("useCursorOverlay", () => {
     expect(result.current.cursorPosRef.current).toBeNull();
     expect(result.current.prvCursorPosRef.current).toBeNull();
     expect(status.textContent).toBe("\u2014");
+    expect(status.title).toBe("");
 
     raf.flushNextFrame();
     expect(curCtx.clearRect).toHaveBeenCalledTimes(2);

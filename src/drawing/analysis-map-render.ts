@@ -1,6 +1,8 @@
-import { LEVEL_INFO, LUMA_B, LUMA_G, LUMA_R } from "../color-engine";
+import { LEVEL_CANDIDATES, LEVEL_INFO, LUMA_B, LUMA_G, LUMA_R } from "../color-engine";
 import { LEVEL_MASK } from "../constants";
 import type { CanvasData, MapMode } from "../types";
+import { hexStr } from "../utils";
+import type { StatusText } from "../utils/status-display";
 
 export interface AnalysisPixelMaps {
   noise: Float32Array;
@@ -17,6 +19,17 @@ export interface AnalysisPixelMaps {
 
 export type AnalysisColorLUT = [number, number, number][];
 export type AnalysisMapRenderStatus = "rendered" | "stale";
+
+const REGION_SMALL_THRESHOLD = 10;
+const MAP_STATUS_LABEL: Record<MapMode, string> = {
+  luminance: "MapLuma",
+  colorlum: "MapColorLum",
+  region: "MapRegion",
+  gradient: "MapGrad",
+  depth: "MapDepth",
+  noise: "MapIso",
+  entropy: "MapDiv",
+};
 
 function buildLUT(stops: [number, number, number][]): Uint8Array {
   const lut = new Uint8Array(256 * 3);
@@ -41,6 +54,96 @@ function packRgb(r: number, g: number, b: number): number {
 function applyLUTPacked(lut: Uint8Array, v: number): number {
   const i = Math.max(0, Math.min(255, (v * 255) | 0)) * 3;
   return packRgb(lut[i], lut[i + 1], lut[i + 2]);
+}
+
+function clamp01(v: number): number {
+  return Math.max(0, Math.min(1, Number.isFinite(v) ? v : 0));
+}
+
+function pct(v: number): string {
+  return `${Math.round(clamp01(v) * 100)}%`;
+}
+
+function shortCount(n: number): string {
+  const count = Math.max(0, Math.round(n));
+  if (count >= 1_000_000) return `${Math.round(count / 100_000) / 10}M`;
+  if (count >= 10_000) return `${Math.round(count / 1000)}k`;
+  if (count >= 1000) return `${Math.round(count / 100) / 10}k`;
+  return String(count);
+}
+
+function valueAt<T extends Float32Array | Int32Array | Uint8Array>(arr: T, idx: number, fallback = 0): number {
+  const v = arr[idx];
+  return Number.isFinite(v) ? v : fallback;
+}
+
+function signedInt(v: number): string {
+  if (v === 0) return "0";
+  return `${v > 0 ? "+" : ""}${v}`;
+}
+
+function normalizeCandidateIndex(lv: number, idx: number): number {
+  const count = LEVEL_CANDIDATES[lv]?.length ?? 1;
+  return count > 0 ? ((idx % count) + count) % count : 0;
+}
+
+function resolveCandidate(lv: number, idx: number): { ci: number; count: number; rgb: [number, number, number] } {
+  const alts = LEVEL_CANDIDATES[lv] ?? LEVEL_CANDIDATES[0];
+  const ci = normalizeCandidateIndex(lv, idx);
+  return {
+    ci,
+    count: alts.length,
+    rgb: alts[ci]?.rgb ?? alts[0].rgb,
+  };
+}
+
+function candidateLabel(candidate: { ci: number; count: number }): string {
+  return `c${candidate.ci + 1}/${candidate.count}`;
+}
+
+function visualKey(cvs: CanvasData, idx: number): number {
+  return ((cvs.data[idx] & LEVEL_MASK) << 8) | (cvs.colorMap[idx] ?? 0);
+}
+
+function visualLabel(cvs: CanvasData, cc: number[], idx: number, lv: number): string {
+  const cm = cvs.colorMap[idx] ?? 0;
+  const candidate = cm > 0 ? resolveCandidate(lv, cm - 1) : resolveCandidate(lv, cc[lv] ?? 0);
+  return `${cm > 0 ? "override" : "base"} ${candidateLabel(candidate)} ${hexStr(candidate.rgb)}`;
+}
+
+function compactVisualLabel(cvs: CanvasData, cc: number[], idx: number, lv: number): string {
+  const cm = cvs.colorMap[idx] ?? 0;
+  const candidate = cm > 0 ? resolveCandidate(lv, cm - 1) : resolveCandidate(lv, cc[lv] ?? 0);
+  return `${cm > 0 ? "ovr" : "base"} ${candidateLabel(candidate)}`;
+}
+
+function luma255(rgb: [number, number, number]): number {
+  return Math.round(LUMA_R * rgb[0] + LUMA_G * rgb[1] + LUMA_B * rgb[2]);
+}
+
+function gradientVector(cvs: CanvasData, x: number, y: number): { gx: number; gy: number } {
+  const { data, w, h } = cvs;
+  const idx = y * w + x;
+  const center = data[idx] & LEVEL_MASK;
+  const l = x > 0 ? data[idx - 1] & LEVEL_MASK : center;
+  const r = x + 1 < w ? data[idx + 1] & LEVEL_MASK : center;
+  const u = y > 0 ? data[idx - w] & LEVEL_MASK : center;
+  const d = y + 1 < h ? data[idx + w] & LEVEL_MASK : center;
+  return { gx: r - l, gy: d - u };
+}
+
+function diversityWindowInfo(cvs: CanvasData, x: number, y: number): { keys: number; winW: number; winH: number } {
+  const seen = new Set<number>();
+  const x0 = Math.max(0, x - 2);
+  const x1 = Math.min(cvs.w - 1, x + 2);
+  const y0 = Math.max(0, y - 2);
+  const y1 = Math.min(cvs.h - 1, y + 2);
+  for (let ny = y0; ny <= y1; ny++) {
+    for (let nx = x0; nx <= x1; nx++) {
+      seen.add(visualKey(cvs, ny * cvs.w + nx));
+    }
+  }
+  return { keys: seen.size, winW: x1 - x0 + 1, winH: y1 - y0 + 1 };
 }
 
 function hslPacked(hue: number, sat: number, lit: number): number {
@@ -216,7 +319,6 @@ export function rasterizeAnalysisMap({
   } else if (mode === "region" && pixelMaps.regionId.length >= n && pixelMaps.isEdge.length >= n) {
     const phi = 0.618033988749895;
     const regionSize = regionSizeById ?? buildRegionSizeMap(pixelMaps);
-    const smallThreshold = 10;
     for (let i = 0; i < n; i++) {
       if (pixelMaps.isEdge[i]) {
         target[i] = 0xff000000;
@@ -224,8 +326,8 @@ export function rasterizeAnalysisMap({
       }
       const id = pixelMaps.regionId[i];
       const size = regionSize.get(id) || 0;
-      if (size < smallThreshold) {
-        const t = 1 - size / smallThreshold;
+      if (size < REGION_SMALL_THRESHOLD) {
+        const t = 1 - size / REGION_SMALL_THRESHOLD;
         const v = (t * 100) | 0;
         target[i] = 0xff000000 | (v << 16) | (v << 8) | 255;
         continue;
@@ -255,6 +357,7 @@ export function getAnalysisMapHoverInfo({
   mode,
   pixelMaps,
   colorLUT,
+  cc,
   cvs,
   regionSizeById,
 }: {
@@ -263,41 +366,80 @@ export function getAnalysisMapHoverInfo({
   mode: MapMode;
   pixelMaps: AnalysisPixelMaps;
   colorLUT: AnalysisColorLUT;
+  cc: number[];
   cvs: CanvasData;
   regionSizeById: Map<number, number>;
-}): string | null {
+}): StatusText | null {
   const w = cvs.w;
   const h = cvs.h;
   if (x < 0 || x >= w || y < 0 || y >= h) return null;
 
   const idx = y * w + x;
   const lv = cvs.data[idx] & LEVEL_MASK;
-  let info = `(${x},${y}) `;
+  const prefix = `(${x},${y}) ${MAP_STATUS_LABEL[mode]} L${lv}`;
+  const compactPrefix = `(${x},${y}) ${MAP_STATUS_LABEL[mode].replace("Map", "")} L${lv}`;
+  const needsComputedMap = mode !== "luminance" && mode !== "colorlum";
+  if (needsComputedMap && (pixelMaps.w !== w || pixelMaps.h !== h))
+    return { full: `${prefix} pending`, compact: `${compactPrefix} pending` };
 
   if (mode === "entropy") {
-    const count = Math.round(pixelMaps.localDiversity[idx] * 7) + 1;
-    info += `Diversity: ${count}/8 levels`;
+    const { keys, winW, winH } = diversityWindowInfo(cvs, x, y);
+    const score = valueAt(pixelMaps.localDiversity, idx);
+    return {
+      full: `${prefix} ${visualLabel(cvs, cc, idx, lv)} win=${winW}x${winH} keys=${keys} score=${pct(score)}`,
+      compact: `${compactPrefix} ${compactVisualLabel(cvs, cc, idx, lv)} keys=${keys} score=${pct(score)}`,
+    };
   } else if (mode === "gradient") {
-    const mag = pixelMaps.gradMag[idx];
-    const deg = (((pixelMaps.gradAngle[idx] + Math.PI) / (2 * Math.PI)) * 360) | 0;
-    info += mag < 0.01 ? "No gradient" : `Dir: ${deg}\u00B0 Mag: ${(mag * 100) | 0}%`;
+    const mag = valueAt(pixelMaps.gradMag, idx);
+    const deg = Math.round((((valueAt(pixelMaps.gradAngle, idx) + Math.PI) / (2 * Math.PI)) * 360 + 360) % 360);
+    const { gx, gy } = gradientVector(cvs, x, y);
+    return {
+      full: `${prefix} g=(${signedInt(gx)},${signedInt(gy)}) dir=${deg}\u00B0 mag=${pct(mag)} ${mag < 0.01 ? "flat" : "slope"}`,
+      compact: `${compactPrefix} g=(${signedInt(gx)},${signedInt(gy)}) ${deg}\u00B0 ${pct(mag)}`,
+    };
   } else if (mode === "depth") {
-    const raw = pixelMaps.depth[idx];
-    info += `Depth: ${(raw * 100) | 0}%`;
+    const raw = valueAt(pixelMaps.depth, idx);
+    const isEdge = valueAt(pixelMaps.isEdge, idx) > 0;
+    const zone = isEdge ? "edge" : raw < 0.5 ? "near" : "core";
+    return {
+      full: `${prefix} ${visualLabel(cvs, cc, idx, lv)} depth=${pct(raw)} ${zone}`,
+      compact: `${compactPrefix} ${compactVisualLabel(cvs, cc, idx, lv)} d=${pct(raw)} ${zone}`,
+    };
   } else if (mode === "noise") {
-    const n = Math.round(pixelMaps.noise[idx] * 4);
-    info += `Isolation: ${n}/4`;
+    const score = valueAt(pixelMaps.noise, idx);
+    const unlike = Math.round(clamp01(score) * 4);
+    return {
+      full: `${prefix} ${visualLabel(cvs, cc, idx, lv)} unlike=${unlike}/4 same=${4 - unlike}/4 score=${pct(score)}`,
+      compact: `${compactPrefix} ${compactVisualLabel(cvs, cc, idx, lv)} unlike=${unlike}/4 score=${pct(score)}`,
+    };
   } else if (mode === "luminance") {
     const g = LEVEL_INFO[lv].gray;
-    info += `L${lv} ${LEVEL_INFO[lv].name} (Gray ${g})`;
+    return {
+      full: `${prefix} ${LEVEL_INFO[lv].name} gray=${g} level=${lv}/7 t=${pct(lv / 7)}`,
+      compact: `${compactPrefix} gray=${g} t=${pct(lv / 7)}`,
+    };
   } else if (mode === "colorlum") {
     const rgb = colorLUT[lv];
-    const lum = (LUMA_R * rgb[0] + LUMA_G * rgb[1] + LUMA_B * rgb[2]) / 255;
-    info += `Luminance: ${(lum * 100) | 0}%`;
+    const candidate = resolveCandidate(lv, cc[lv] ?? 0);
+    const y255 = luma255(rgb);
+    return {
+      full: `${prefix} ${candidateLabel(candidate)} ${hexStr(rgb)} Y=${y255}/255 ${pct(y255 / 255)} dGray=${signedInt(
+        y255 - LEVEL_INFO[lv].gray,
+      )}`,
+      compact: `${compactPrefix} ${candidateLabel(candidate)} Y=${y255} dG=${signedInt(y255 - LEVEL_INFO[lv].gray)}`,
+    };
   } else if (mode === "region") {
-    const id = pixelMaps.regionId[idx];
-    info += `Region: ${regionSizeById.get(id) ?? "?"}px`;
+    const id = valueAt(pixelMaps.regionId, idx);
+    const size = regionSizeById.get(id) ?? 0;
+    const edge = valueAt(pixelMaps.isEdge, idx) ? "edge" : "interior";
+    const scale = size < REGION_SMALL_THRESHOLD ? "small" : "normal";
+    return {
+      full: `${prefix} ${visualLabel(cvs, cc, idx, lv)} region#${id} size=${size}px ${edge} ${scale}`,
+      compact: `${compactPrefix} ${compactVisualLabel(cvs, cc, idx, lv)} r#${shortCount(id)} ${shortCount(size)}px ${
+        edge === "interior" ? "int" : "edge"
+      } ${scale === "normal" ? "norm" : "small"}`,
+    };
   }
 
-  return info;
+  return { full: prefix, compact: compactPrefix };
 }

@@ -7,6 +7,7 @@
 import { LEVEL_MASK } from "../constants";
 import { LEVEL_INFO } from "../color-engine";
 import type { CanvasData, Point } from "../types";
+import { applyStatusText, type StatusTextLike } from "../utils/status-display";
 
 type CanvasRect = { left: number; top: number; width: number; height: number };
 
@@ -125,7 +126,7 @@ export function cPosFromRefs(e: React.PointerEvent, refEl: HTMLCanvasElement | n
  * pixel level, then delegates to `formatText` for mode-specific text.
  *
  * @param formatText Receives (pos, level index, LEVEL_INFO entry, pixel index)
- *                   and returns the status string to display.
+ *                   and returns the status text to display.
  */
 export function updateStatusBase(
   e: React.PointerEvent,
@@ -133,17 +134,18 @@ export function updateStatusBase(
   refEl: HTMLCanvasElement | null,
   refs: DrawingRefs,
   dataSource: Uint8Array,
-  formatText: (pos: Point, lv: number, info: { name: string }, idx: number) => string,
+  formatText: (pos: Point, lv: number, info: { name: string }, idx: number) => StatusTextLike,
 ): void {
   if (!statusEl) return;
   const cv = refs.cvsRef.current;
   const pos = canvasPosUnclamped(e, refEl, refs.zoomRef.current, refs.panRef.current, cv);
   if (pos.x < 0 || pos.x >= cv.w || pos.y < 0 || pos.y >= cv.h) {
     statusEl.textContent = "\u2014";
+    statusEl.title = "";
     return;
   }
   const idx = pos.y * cv.w + pos.x;
   const lv = dataSource[idx] & LEVEL_MASK;
   const info = LEVEL_INFO[lv];
-  statusEl.textContent = formatText(pos, lv, info, idx);
+  applyStatusText(statusEl, formatText(pos, lv, info, idx));
 }

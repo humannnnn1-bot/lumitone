@@ -15,7 +15,7 @@ import { brushMaskBBox, getBrushMask } from "../drawing/brush-mask";
 import { computeGlazeDiff, buildDiffFromGlazeFill } from "../state/undo-diff";
 import { useFloodFillWorker } from "./useFloodFillWorker";
 import { renderBuf } from "../drawing/render-buf";
-import { hexStr } from "../utils";
+import { formatGlazePixelStatus } from "../utils/pixel-status";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
 import { trySetPointerCapture, cPosFromRefs, canvasPosUnclamped, isCanvasPointInBounds, updateStatusBase } from "./useDrawingBase";
@@ -31,6 +31,7 @@ interface GlazeDrawingOptions {
   cvs: CanvasData;
   dispatch: React.Dispatch<CanvasAction>;
   colorLUT: [number, number, number][];
+  cc: number[];
   hueAngle: number;
   setHueAngle: React.Dispatch<React.SetStateAction<number>>;
   glazeTool: GlazeToolId;
@@ -67,7 +68,7 @@ interface GlazeStroke {
 }
 
 export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
-  const { cvs, dispatch, colorLUT, hueAngle, setHueAngle, glazeTool, brushSize, prvRef, directCandidates } = opts;
+  const { cvs, dispatch, colorLUT, cc, hueAngle, setHueAngle, glazeTool, brushSize, prvRef, directCandidates } = opts;
   const ctx = useDrawingContext();
   const { displayW, displayH, panningRef, spaceRef, zoomRef, panRef, startPan, movePan, endPan, announce, t } = ctx;
 
@@ -108,7 +109,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   );
 
   // Batch-sync remaining values used in imperative callbacks
-  const s = useSyncRefs({ colorLUT, hueAngle, setHueAngle, glazeTool, startPan, movePan, endPan, announce, t, directCandidates });
+  const s = useSyncRefs({ colorLUT, cc, hueAngle, setHueAngle, glazeTool, startPan, movePan, endPan, announce, t, directCandidates });
 
   const cursor = useCursorOverlay({ zoomRef, panRef, cvsRef, displayWRef, displayHRef, panningRef, brushSizeRef, toolRef }, statusRef);
 
@@ -132,13 +133,18 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   }
 
   function updateStatus(e: React.PointerEvent) {
-    updateStatusBase(e, statusRef.current, cursor.curRef.current, drawRefs, cvsRef.current.data, (pos, lv, info, idx) => {
+    updateStatusBase(e, statusRef.current, cursor.curRef.current, drawRefs, cvsRef.current.data, (pos, lv, _info, idx) => {
       const cm = drawingRef.current && strokeRef.current ? strokeRef.current.cmBuf[idx] : cvsRef.current.colorMap[idx];
-      const cmLabel = cm > 0 ? `Glaze:${cm}` : "Default";
-      const alts = LEVEL_CANDIDATES[lv];
-      const ci = cm > 0 ? (cm - 1) % alts.length : -1;
-      const colorHex = ci >= 0 ? hexStr(alts[ci].rgb) : "";
-      return `(${pos.x}, ${pos.y})  L${lv} ${info.name}  ${cmLabel} ${colorHex}`;
+      return formatGlazePixelStatus({
+        x: pos.x,
+        y: pos.y,
+        lv,
+        cc: s.current.cc,
+        colorMapValue: cm,
+        hueAngle: s.current.hueAngle,
+        directCandidates: s.current.directCandidates,
+        glazeTool: s.current.glazeTool,
+      });
     });
   }
 

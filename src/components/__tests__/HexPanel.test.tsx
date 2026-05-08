@@ -3,6 +3,7 @@ import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { DEFAULT_CC } from "../../color-engine";
+import type { CanvasData } from "../../types";
 import { HexPanel } from "../HexPanel";
 
 vi.mock("../../i18n", () => ({
@@ -15,9 +16,16 @@ const t = ((key: string, ...args: unknown[]) => (args.length ? `${key}(${args.jo
   typeof HexPanel
 >["t"];
 
+function makeCvs(): CanvasData {
+  const data = new Uint8Array(4);
+  data.set([0, 3, 4, 7]);
+  return { w: 2, h: 2, data, colorMap: new Uint8Array(4) };
+}
+
 function makeProps(overrides?: Partial<React.ComponentProps<typeof HexPanel>>): React.ComponentProps<typeof HexPanel> {
   return {
     hexPrvRef: React.createRef<HTMLCanvasElement>(),
+    cvs: makeCvs(),
     displayW: 128,
     displayH: 96,
     cc: [...DEFAULT_CC],
@@ -84,5 +92,36 @@ describe("HexPanel", () => {
     render(<HexPanel {...makeProps()} />);
 
     expect(screen.queryByRole("button", { name: "pattern_count_go_gallery(42)" })).toBeNull();
+  });
+
+  it("reports hex candidate details for the hovered preview pixel", () => {
+    const props = makeProps({
+      hist: [1, 0, 0, 1, 1, 0, 0, 1],
+      patternInfo: { total: 3, expanded: "1 x 3", perLevel: [1, 1, 1, 3, 3, 1, 1, 1] },
+      locked: [false, false, false, true, false, false, false, false],
+    });
+    render(<HexPanel {...props} />);
+
+    const canvas = screen.getByRole("img", { name: "label_diagram" });
+    vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
+      left: 0,
+      top: 0,
+      right: 128,
+      bottom: 96,
+      width: 128,
+      height: 96,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+
+    fireEvent.pointerMove(canvas, { clientX: 96, clientY: 24 });
+
+    const status = screen.getByText("(1,0) Hex L3 c3/3 @300° used=1px factor×3 locked");
+    expect(status).toBeTruthy();
+    expect(status.getAttribute("title")).toBe("(1,0) Hex L3 c3/3 @300° used=1px factor×3 locked");
+
+    fireEvent.pointerLeave(canvas);
+    expect(screen.queryByText("(1,0) Hex L3 c3/3 @300° used=1px factor×3 locked")).toBeNull();
   });
 });

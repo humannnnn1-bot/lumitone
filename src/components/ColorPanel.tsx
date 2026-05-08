@@ -5,13 +5,14 @@ import { ColorMappingList } from "./ColorMappingList";
 import type { ColorAction } from "../state/color-reducer";
 import type { PanZoomHandlers, DrawingHandlers } from "../types";
 import { useTranslation } from "../i18n";
-import { S_CHECKERBOARD } from "../styles/shared";
+import { S_CANVAS_STATUS_STABLE, S_CHECKERBOARD } from "../styles/shared";
 import { C, Z, SP, FS, R } from "../styles/tokens";
 
 interface ColorPanelProps {
   prvRef: React.RefObject<HTMLCanvasElement | null>;
   prvCurRef: React.RefObject<HTMLCanvasElement | null>;
   prvWrapRef: React.RefObject<HTMLDivElement | null>;
+  statusRef: React.RefObject<HTMLDivElement | null>;
   displayW: number;
   displayH: number;
   canvasTransform: React.CSSProperties;
@@ -30,6 +31,7 @@ export const ColorPanel = React.memo(function ColorPanel(props: ColorPanelProps)
     prvRef,
     prvCurRef,
     prvWrapRef,
+    statusRef,
     displayW,
     displayH,
     canvasTransform,
@@ -174,6 +176,9 @@ export const ColorPanel = React.memo(function ColorPanel(props: ColorPanelProps)
                 zIndex: Z.cursorOverlay,
               }}
             />
+          </div>
+          <div ref={statusRef} aria-live="polite" aria-atomic="true" style={S_CANVAS_STATUS_STABLE}>
+            {"\u2014"}
           </div>
         </div>
         <div className="panel-sidebar" style={{ marginTop: SP.xl }}>

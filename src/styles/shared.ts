@@ -1,6 +1,6 @@
 import type React from "react";
 import { MIN_TAP_SIZE } from "../constants";
-import { C, SP, FS, FW, R, DUR } from "./tokens";
+import { C, SP, FS, FW, R, DUR, FONT } from "./tokens";
 
 /* ═══════════════════════════════════════════
    SHARED STYLES
@@ -94,3 +94,22 @@ export const S_TAB_INACTIVE: React.CSSProperties = {
 };
 export const S_SWATCH: React.CSSProperties = { borderRadius: R.md, cursor: "pointer", padding: 0, background: "none" };
 export const S_CURSOR_POINTER: React.CSSProperties = { cursor: "pointer" };
+const S_CANVAS_STATUS: React.CSSProperties = {
+  fontSize: FS.xs,
+  color: C.textDimmer,
+  fontFamily: FONT.mono,
+  textAlign: "center",
+  minHeight: 14,
+  marginTop: SP.xs,
+};
+export const S_CANVAS_STATUS_STABLE: React.CSSProperties = {
+  ...S_CANVAS_STATUS,
+  alignSelf: "stretch",
+  boxSizing: "border-box",
+  maxWidth: "100%",
+  minWidth: 0,
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+  width: "100%",
+};

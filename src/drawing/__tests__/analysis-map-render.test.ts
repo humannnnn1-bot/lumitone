@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { DEFAULT_CC } from "../../color-engine";
 import type { CanvasData, MapMode } from "../../types";
 import {
   buildRegionSizeMap,
@@ -109,27 +110,31 @@ describe("analysis-map-render", () => {
     const regionSizeById = buildRegionSizeMap(pixelMaps);
 
     expect(regionSizeById.get(1)).toBe(2);
-    expect(
-      getAnalysisMapHoverInfo({
+    const cases: Array<[MapMode, string]> = [
+      ["luminance", "(0,0) MapLuma L0 Black gray=0 level=0/7 t=0%"],
+      ["colorlum", "(0,0) MapColorLum L0 c1/1 #000000 Y=0/255 0% dGray=0"],
+      ["region", "(0,0) MapRegion L0 base c1/1 #000000 region#1 size=2px interior small"],
+      ["gradient", "(0,0) MapGrad L0 g=(+2,+5) dir=180° mag=0% flat"],
+      ["depth", "(0,0) MapDepth L0 base c1/1 #000000 depth=0% near"],
+      ["noise", "(0,0) MapIso L0 base c1/1 #000000 unlike=0/4 same=4/4 score=0%"],
+      ["entropy", "(0,0) MapDiv L0 base c1/1 #000000 win=2x2 keys=4 score=0%"],
+    ];
+
+    for (const [mode, expected] of cases) {
+      const status = getAnalysisMapHoverInfo({
         x: 0,
         y: 0,
-        mode: "luminance",
+        mode,
         pixelMaps,
         colorLUT,
+        cc: DEFAULT_CC,
         cvs,
         regionSizeById,
-      }),
-    ).toBe("(0,0) L0 Black (Gray 0)");
-    expect(
-      getAnalysisMapHoverInfo({
-        x: 1,
-        y: 0,
-        mode: "region",
-        pixelMaps,
-        colorLUT,
-        cvs,
-        regionSizeById,
-      }),
-    ).toBe("(1,0) Region: 2px");
+      });
+      expect(status?.full).toBe(expected);
+      expect(status?.compact).not.toBe(expected);
+      expect(status?.full).not.toMatch(/[\u3040-\u30ff\u3400-\u9fff]/);
+      expect(status?.compact).not.toMatch(/[\u3040-\u30ff\u3400-\u9fff]/);
+    }
   });
 });
