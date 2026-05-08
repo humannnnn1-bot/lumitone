@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { LanguageProvider } from "../../i18n";
 import { MusicPanel } from "../MusicPanel";
 
@@ -172,6 +172,29 @@ describe("MusicPanel controller integration", () => {
     expect(screen.getByRole("button", { name: "\u25b6 Rhythm" })).toBeTruthy();
   });
 
+  it("stops active traversal playback from the Fano controls", () => {
+    musicEngineMock.engine.playGrayMelody.mockImplementation((_tempo: number, onStep: (lv: number | null) => void) => onStep(2));
+    musicEngineMock.engine.startFanoRhythm.mockImplementation((_tempo: number, onBeat: (lines: number[], pos: number) => void) =>
+      onBeat([0, 2], 1),
+    );
+
+    renderWithLanguage(<MusicPanel />);
+
+    fireEvent.click(screen.getByRole("button", { name: "\u25b6 Gray" }));
+    expect(screen.getByRole("button", { name: "\u23f9 Gray" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "\u23f9 Gray" }));
+    expect(musicEngineMock.engine.stopGrayMelody).toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "\u25b6 Gray" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "\u25b6 Rhythm" }));
+    expect(screen.getByRole("button", { name: "\u23f9 Rhythm" })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole("button", { name: "\u23f9 Rhythm" }));
+    expect(musicEngineMock.engine.stopFanoRhythm).toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "\u25b6 Rhythm" })).toBeTruthy();
+  });
+
   it("resets transport settings back to defaults", () => {
     renderWithLanguage(<MusicPanel />);
 
@@ -241,14 +264,64 @@ describe("MusicPanel controller integration", () => {
   });
 
   it("routes XOR playback through selected operands", () => {
+    let onXorStep: ((lv: number | null) => void) | undefined;
+    musicEngineMock.engine.playXorTriple.mockImplementation((_a: number, _b: number, onStep: (lv: number | null) => void) => {
+      onXorStep = onStep;
+      onStep(5);
+    });
+
     renderWithLanguage(<MusicPanel />);
     musicEngineMock.engine.initAudio.mockClear();
 
-    fireEvent.change(screen.getByRole("combobox", { name: "XOR first color" }), { target: { value: "1" } });
-    fireEvent.change(screen.getByRole("combobox", { name: "XOR second color" }), { target: { value: "2" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "XOR first color" }), { target: { value: "3" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "XOR second color" }), { target: { value: "5" } });
     fireEvent.click(screen.getByRole("button", { name: "\u25b6 XOR" }));
 
     expect(musicEngineMock.engine.initAudio).toHaveBeenCalled();
-    expect(musicEngineMock.engine.playXorTriple).toHaveBeenCalledWith(1, 2, expect.any(Function));
+    expect(musicEngineMock.engine.playXorTriple).toHaveBeenCalledWith(3, 5, expect.any(Function));
+    expect((screen.getByRole("combobox", { name: "Fano line" }) as HTMLSelectElement).value).toBe("6");
+
+    act(() => onXorStep?.(null));
+    expect((screen.getByRole("combobox", { name: "Fano line" }) as HTMLSelectElement).value).toBe("0");
+  });
+
+  it("routes point context playback callback through the selected Fano line", () => {
+    let onContextLine: ((idx: number | null) => void) | undefined;
+    musicEngineMock.engine.playPointFanoContext.mockImplementation((_point: number, onLine: (idx: number | null) => void) => {
+      onContextLine = onLine;
+      onLine(4);
+    });
+
+    renderWithLanguage(<MusicPanel />);
+    musicEngineMock.engine.initAudio.mockClear();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Fano point" }), { target: { value: "6" } });
+    fireEvent.click(screen.getByRole("button", { name: "\u25b6 Lines" }));
+
+    expect(musicEngineMock.engine.initAudio).toHaveBeenCalled();
+    expect(musicEngineMock.engine.playPointFanoContext).toHaveBeenCalledWith(6, expect.any(Function));
+    expect((screen.getByRole("combobox", { name: "Fano line" }) as HTMLSelectElement).value).toBe("4");
+
+    act(() => onContextLine?.(null));
+    expect((screen.getByRole("combobox", { name: "Fano line" }) as HTMLSelectElement).value).toBe("0");
+  });
+
+  it("routes partition playback through the selected Fano line and stops active partition playback", () => {
+    musicEngineMock.engine.playLineAndComplement.mockImplementation(
+      (_line: number, onPhase: (phase: "line" | "complement" | null) => void) => onPhase("line"),
+    );
+
+    renderWithLanguage(<MusicPanel />);
+    musicEngineMock.engine.initAudio.mockClear();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Fano line" }), { target: { value: "2" } });
+    fireEvent.click(screen.getByRole("button", { name: "\u25b6 Complement" }));
+
+    expect(musicEngineMock.engine.initAudio).toHaveBeenCalled();
+    expect(musicEngineMock.engine.playLineAndComplement).toHaveBeenCalledWith(2, expect.any(Function));
+
+    fireEvent.click(screen.getByRole("button", { name: "\u25b6 Complement" }));
+    expect(musicEngineMock.engine.stopAlgebra).toHaveBeenCalled();
+    expect(musicEngineMock.engine.playLineAndComplement).toHaveBeenCalledTimes(1);
   });
 });
