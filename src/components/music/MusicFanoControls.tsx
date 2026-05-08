@@ -4,7 +4,7 @@ import { FANO_LINES } from "../../data/theory-data";
 import { C, FS, SP } from "../../styles/tokens";
 import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
 import { MiniFanoChord } from "./MiniFanoChord";
-import type { ActiveMusicLevel } from "./types";
+import type { ActiveMusicLevel } from "../../music/types";
 import { S_LABEL, S_SELECT, S_SECTION } from "./music-panel-styles";
 
 interface MusicFanoControlsProps {

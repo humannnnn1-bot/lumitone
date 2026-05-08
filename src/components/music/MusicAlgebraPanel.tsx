@@ -16,7 +16,7 @@ import { ParityChordCard } from "./ParityChordCard";
 import { TetraSplitCard } from "./TetraSplitCard";
 import { WeightHistogram } from "./WeightHistogram";
 import { ZigzagCard } from "./ZigzagCard";
-import type { ActiveMusicLevel, DecoderPhase } from "./types";
+import type { ActiveMusicLevel, DecoderPhase } from "../../music/types";
 import {
   S_CARD_ALGEBRA,
   S_CARD_CODE,

@@ -5,7 +5,7 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { LEVEL_CANDIDATES } from "../../../color-engine";
 import { LanguageProvider } from "../../../i18n";
 import type { MusicEngineReturn } from "../../../hooks/useMusicEngine";
-import type { DecoderPhase } from "../types";
+import type { DecoderPhase } from "../../../music/types";
 import { ErrorCorrectionCard } from "../ErrorCorrectionCard";
 import { MusicAlgebraPanel } from "../MusicAlgebraPanel";
 import { MusicFanoControls } from "../MusicFanoControls";

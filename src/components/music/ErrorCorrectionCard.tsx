@@ -4,7 +4,7 @@ import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
 import { C, FS, R, FONT } from "../../styles/tokens";
 import { SyndromeTimeline } from "./SyndromeTimeline";
 import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
-import type { DecoderPhase } from "./types";
+import type { DecoderPhase } from "../../music/types";
 
 interface ErrorCorrectionCardProps {
   engine: MusicEngineReturn;

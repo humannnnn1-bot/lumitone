@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "../../i18n";
 import { C, FS, FONT, SP } from "../../styles/tokens";
-import type { MusicHueTick } from "./types";
+import type { MusicHueTick } from "../../music/types";
 import { S_ALPHA_TRACK, S_HUE_INPUT, S_HUE_TRACK, S_HUE_WRAP } from "./music-panel-styles";
 
 interface MusicHueAlphaControlsProps {

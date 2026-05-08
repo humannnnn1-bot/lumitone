@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { LEVEL_CANDIDATES, findClosestCandidate } from "../../color-engine";
 import { useTranslation } from "../../i18n";
 import { C, R, SHADOW, SP } from "../../styles/tokens";
-import type { MusicCandidateHover, MusicLevelPreview } from "./types";
+import type { MusicCandidateHover, MusicLevelPreview } from "../../music/types";
 
 interface MusicLevelCandidateGridProps {
   levelPreview: MusicLevelPreview[];
