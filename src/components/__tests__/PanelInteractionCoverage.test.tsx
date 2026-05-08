@@ -589,6 +589,7 @@ describe("MapCanvas rendering and inspection", () => {
       rerender(<MapCanvas mode={mode} pixelMaps={pixelMaps} colorLUT={colorLUT} cc={DEFAULT_CC} cvs={cvs} displayW={20} displayH={20} />);
     }
     expect(putImageData).toHaveBeenCalledTimes(8);
+    expect(screen.getByText("\u2014")).toBeTruthy();
 
     const canvas = container.querySelector("canvas")!;
     vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
@@ -606,6 +607,7 @@ describe("MapCanvas rendering and inspection", () => {
     expect(screen.getByText(/\(0,0\) MapRegion L0 base c1\/1 #000000 region#/)).toBeTruthy();
     fireEvent.mouseLeave(canvas);
     expect(screen.queryByText(/\(0,0\) MapRegion L0 base c1\/1 #000000 region#/)).toBeNull();
+    expect(screen.getByText("\u2014")).toBeTruthy();
   });
 
   it("clears stale worker output instead of painting mismatched pixel-map dimensions", () => {

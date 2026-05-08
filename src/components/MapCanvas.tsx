@@ -210,7 +210,7 @@ export function MapCanvas({
         </div>
       )}
       <div title={hoverInfo ? getFullStatusText(hoverInfo) : undefined} style={S_CANVAS_STATUS_STABLE}>
-        {hoverInfo ? getVisibleStatusText(hoverInfo, compactStatus) : "\u00A0"}
+        {hoverInfo ? getVisibleStatusText(hoverInfo, compactStatus) : "\u2014"}
       </div>
       <ConfirmModal
         open={confirmSaveOpen}
