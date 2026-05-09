@@ -10,6 +10,7 @@ const DOT_R = 16;
 const WALKER_R = 8;
 const STEP_MS = 900;
 const CHANNEL_COLORS: Record<string, string> = { G: "#00ff00", R: "#ff0000", B: "#0000ff" };
+type Direction = "cw" | "ccw";
 
 interface Props {
   hlLevel: number | null;
@@ -19,7 +20,8 @@ interface Props {
 export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }: Props) {
   const { t } = useTranslation();
   const [step, setStep] = useState(0);
-  const [playing, setPlaying] = useState<false | "cw" | "ccw">(false);
+  const [direction, setDirection] = useState<Direction>("cw");
+  const [playing, setPlaying] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval>>(undefined);
   const reducedMotion = useRef(typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
 
@@ -28,20 +30,26 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
       clearInterval(timerRef.current);
       return;
     }
-    const dir = playing === "cw" ? 1 : 5; // +1 = clockwise, +5 = counterclockwise (mod 6)
+    const dir = direction === "cw" ? 1 : 5; // +1 = clockwise, +5 = counterclockwise (mod 6)
     timerRef.current = setInterval(() => setStep((s) => (s + dir) % 6), STEP_MS);
     return () => clearInterval(timerRef.current);
-  }, [playing]);
+  }, [direction, playing]);
 
   useEffect(() => {
     if (reducedMotion.current) setPlaying(false);
   }, []);
 
-  const handlePlayCW = useCallback(() => setPlaying("cw"), []);
-  const handlePlayCCW = useCallback(() => setPlaying("ccw"), []);
+  const handlePlayCW = useCallback(() => {
+    setDirection("cw");
+    setPlaying(true);
+  }, []);
+  const handlePlayCCW = useCallback(() => {
+    setDirection("ccw");
+    setPlaying(true);
+  }, []);
   const handlePause = useCallback(() => setPlaying(false), []);
 
-  const isCCW = playing === "ccw";
+  const isCCW = direction === "ccw";
   const currentLv = GRAY_PATH[step];
   const fwdStep = (step + 1) % 6;
   const bwdStep = (step + 5) % 6;
@@ -49,6 +57,7 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
   const nextLv = GRAY_PATH[nextStep];
   const toggle = isCCW ? GRAY_TOGGLES[bwdStep] : GRAY_TOGGLES[step];
   const toggleColor = CHANNEL_COLORS[toggle];
+  const currentEdgeStep = isCCW ? bwdStep : step;
   const wp = GRAY_POINTS[currentLv];
 
   const currentBits = THEORY_LEVELS[currentLv].bits;
@@ -64,7 +73,7 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
             p1 = GRAY_POINTS[nLv];
           const tg = GRAY_TOGGLES[i];
           const tgColor = CHANNEL_COLORS[tg];
-          const isCurrentEdge = i === step;
+          const isCurrentEdge = i === currentEdgeStep;
           const mx = (p0.x + p1.x) / 2,
             my = (p0.y + p1.y) / 2;
           const dx = mx - 150,
@@ -129,7 +138,11 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
               onMouseEnter={() => onHover(lv)}
               onMouseLeave={() => onHover(null)}
               onClick={() => {
-                setStep(GRAY_PATH.indexOf(lv as (typeof GRAY_PATH)[number]));
+                const clickedStep = GRAY_PATH.indexOf(lv as (typeof GRAY_PATH)[number]);
+                const delta = (clickedStep - step + GRAY_PATH.length) % GRAY_PATH.length;
+                if (delta === 1) setDirection("cw");
+                else if (delta === GRAY_PATH.length - 1) setDirection("ccw");
+                setStep(clickedStep);
                 onHover(lv);
               }}
               style={S_CURSOR_POINTER}
@@ -244,7 +257,7 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
 
       {/* Controls */}
       <div style={{ display: "flex", gap: SP.lg }}>
-        {playing === "cw" ? (
+        {playing && direction === "cw" ? (
           <button className="theory-annotation theory-diagram-button" style={S_BTN} onClick={handlePause}>
             {t("theory_gray_pause")}
           </button>
@@ -253,7 +266,7 @@ export const GrayCodeHex = React.memo(function GrayCodeHex({ hlLevel, onHover }:
             {t("theory_gray_cw")}
           </button>
         )}
-        {playing === "ccw" ? (
+        {playing && direction === "ccw" ? (
           <button className="theory-annotation theory-diagram-button" style={S_BTN} onClick={handlePause}>
             {t("theory_gray_pause")}
           </button>
