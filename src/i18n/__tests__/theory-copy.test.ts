@@ -3,6 +3,12 @@ import { en } from "../en";
 import { ja } from "../ja";
 
 describe("theory copy high-risk claims", () => {
+  it("defines the Venn characteristic function by channel membership", () => {
+    expect(ja.theory_venn_desc).toContain("特性関数 χ_A(x)");
+    expect(ja.theory_venn_desc).toContain("x ∈ A なら 1");
+    expect(ja.theory_venn_desc).not.toContain("A ∈ {G,R,B} なら 1");
+  });
+
   it("keeps Boolean-color identities scoped to the cases where they are true", () => {
     expect(en.theory_dice_footer_demorgan).toMatch(/disjoint colors/i);
     expect(en.theory_dice_footer_demorgan).toContain("a ∧ b = 0");
@@ -20,6 +26,10 @@ describe("theory copy high-risk claims", () => {
 
   it("describes Hamming/Fano links as position labels and subspaces, not channel flips or literal slices", () => {
     expect(en.theory_hamming_desc.toLowerCase()).toContain("position");
+    expect(en.theory_hamming_desc).toContain("parity-bit positions");
+    expect(en.theory_hamming_desc).toContain("parity-check rows");
+    expect(en.theory_hamming_desc2).toContain("parity-check row labeled B");
+    expect(en.theory_hamming_desc2).not.toContain("Blue(1) checks");
     expect(en.theory_hamming_desc.toLowerCase()).not.toContain("single channel flips");
     expect(en.theory_fano_desc.toLowerCase()).toContain("zero vector");
     expect(en.theory_hamming_desc.toLowerCase()).toContain("same nonzero 3-bit labels");
@@ -30,6 +40,10 @@ describe("theory copy high-risk claims", () => {
     expect(en.theory_conn_cube_geometry_hook.toLowerCase()).not.toContain("7 fano lines are planar cross-sections");
 
     expect(ja.theory_hamming_desc).toContain("位置");
+    expect(ja.theory_hamming_desc).toContain("パリティビット位置");
+    expect(ja.theory_hamming_desc).toContain("パリティ検査行");
+    expect(ja.theory_hamming_desc2).toContain("パリティ検査行 B");
+    expect(ja.theory_hamming_desc2).not.toContain("Blue(1) は");
     expect(ja.theory_fano_desc).toContain("零ベクトル");
     expect(ja.theory_conn_extended).toContain("座標");
     expect(ja.theory_conn_cube_geometry_hook).toContain("2次元部分空間");
@@ -78,7 +92,7 @@ describe("theory copy high-risk claims", () => {
     expect(en.theory_tetra_desc).not.toContain("T0 (even weight: Black, M, C, Y)");
     expect(en.theory_dice_tetra_subgroup).toContain("T0 = {K, M, C, Y}");
     expect(ja.theory_tetra_desc).toContain("T0（偶数重み：K, M, C, Y）");
-    expect(ja.theory_hamming_desc2).toContain("Blue(1)");
+    expect(ja.theory_hamming_desc2).toContain("Blue=1");
     expect(ja.theory_hamming_desc2).not.toContain("青(1)");
   });
 });

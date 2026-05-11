@@ -269,9 +269,9 @@ export const en = {
     "XOR defines every color relationship in this system. The three primaries {G,R,B} are the basis: every color is their unique XOR combination, and for each color c, the XOR of c with its complement c \u2295 7 always equals 7 (White). Arithmetically, XOR is carry-free binary addition (1\u22951 = 0). For numbers whose bits do not overlap, integer addition agrees with XOR directly (1+4 = 5 = 1\u22954). In general, a + b = (a \u2295 b) + 2(a \u2227 b): the overlap term a \u2227 b is what ordinary arithmetic counts twice. When two operands jointly cover all three channels (a \u2228 b = 7), this reduces to a + b - 7 = a \u2227 b \u2014 the Boolean-AND identities underlying subtractive mixing (CMY).",
   theory_hamming_title: "Hamming Code",
   theory_hamming_desc:
-    "The positions 1..7 used here are the same nonzero 3-bit labels as the Fano plane\u2019s 7 points. The RGB primaries (B=1, R=2, G=4) are exactly the powers of 2 \u2014 each has a single 1-bit, making them natural parity checks.",
+    "The positions 1..7 used here are the same nonzero 3-bit labels as the Fano plane\u2019s 7 points. In the standard Hamming(7,4) coordinate layout, the power-of-two coordinates B=1, R=2, and G=4 are parity-bit positions and also label the three parity-check rows for bits 0, 1, and 2.",
   theory_hamming_desc2:
-    "Blue(1) checks positions with bit 0 set {1,3,5,7}, Red(2) checks positions with bit 1 set {2,3,6,7}, and Green(4) checks positions with bit 2 set {4,5,6,7}. The remaining colors (M=3, C=5, Y=6, W=7) occupy the data positions. If a single position is corrupted, the failed parity checks identify that position; this 3-bit vector (the syndrome) is precisely the error position in binary.",
+    "The parity-check row labeled B (Blue=1, bit 0) covers positions {1,3,5,7}; R (Red=2, bit 1) covers {2,3,6,7}; and G (Green=4, bit 2) covers {4,5,6,7}. The remaining coordinate labels (M=3, C=5, Y=6, W=7) occupy the data positions. If a single coordinate position is corrupted, the failed parity-check rows identify that position; this 3-bit vector (the syndrome) is precisely the error position in binary.",
   theory_hamming_parity: "Parity",
   theory_hamming_checks: "Checks",
   theory_hamming_flip: "Click a position to inject an error",
