@@ -174,6 +174,31 @@ describe("useCursorOverlay", () => {
     expect(prvCtx.lineTo).toHaveBeenCalled();
   });
 
+  it("snaps grid lines to device-pixel centers", () => {
+    const refs = makeRefs({
+      zoomRef: { current: 4.25 },
+      panRef: { current: { x: 0.1, y: 0 } },
+      brushSizeRef: { current: 3 },
+    });
+    const cur = document.createElement("canvas");
+    const ctx = makeContext();
+    installCanvasContexts(new Map([[cur, ctx]]));
+    const raf = installRafQueue();
+
+    const { result } = renderHook(() => useCursorOverlay(refs, { current: null }));
+    result.current.curRef.current = cur;
+
+    act(() => {
+      result.current.schedCursor();
+    });
+
+    raf.flushNextFrame();
+    const firstVerticalX = vi.mocked(ctx.moveTo).mock.calls[0]?.[0] as number | undefined;
+    expect(firstVerticalX).toBeDefined();
+    expect(firstVerticalX! - Math.floor(firstVerticalX!)).toBeCloseTo(0.5);
+    expect(ctx.lineWidth).toBe(0.5);
+  });
+
   it("draws brush, eraser, fill, and shape cursor overlays", () => {
     const refs = makeRefs({ zoomRef: { current: 2 } });
     const cur = document.createElement("canvas");

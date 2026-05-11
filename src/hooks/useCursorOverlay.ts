@@ -29,6 +29,14 @@ interface CursorOverlayResult {
   schedCursor: () => void;
 }
 
+function snapGridLine(value: number): number {
+  return Math.round(value) + 0.5;
+}
+
+function snapGridEdge(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, Math.round(value)));
+}
+
 export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.MutableRefObject<HTMLDivElement | null>): CursorOverlayResult {
   const curRef = useRef<HTMLCanvasElement | null>(null);
   const prvCurRef = useRef<HTMLCanvasElement | null>(null);
@@ -68,15 +76,19 @@ export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.Mutab
       ctx.strokeStyle = "rgba(255,255,255,.08)";
       ctx.lineWidth = 0.5;
       ctx.beginPath();
+      const gridTop = snapGridEdge(offsetY, 0, dH);
+      const gridBottom = snapGridEdge(endY, 0, dH);
+      const gridLeft = snapGridEdge(offsetX, 0, dW);
+      const gridRight = snapGridEdge(endX, 0, dW);
       for (let x = xStart; x <= xEnd; x++) {
-        const px = offsetX + x * pxPerCell;
-        ctx.moveTo(px, Math.max(0, offsetY));
-        ctx.lineTo(px, endY);
+        const px = snapGridLine(offsetX + x * pxPerCell);
+        ctx.moveTo(px, gridTop);
+        ctx.lineTo(px, gridBottom);
       }
       for (let y = yStart; y <= yEnd; y++) {
-        const py = offsetY + y * pxPerCell;
-        ctx.moveTo(Math.max(0, offsetX), py);
-        ctx.lineTo(endX, py);
+        const py = snapGridLine(offsetY + y * pxPerCell);
+        ctx.moveTo(gridLeft, py);
+        ctx.lineTo(gridRight, py);
       }
       ctx.stroke();
     }
