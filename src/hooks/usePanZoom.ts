@@ -48,7 +48,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
   const [zoom, _setZoomRaw] = useState(1);
   const [pan, _setPanRaw] = useState({ x: 0, y: 0 });
   const [cursorMode, setCursorMode] = useState<null | "grab" | "grabbing">(null);
-  const [panZoomMode, setPanZoomMode] = useState(false);
+  const [panZoomMode, _setPanZoomModeRaw] = useState(false);
 
   const panningRef = useRef(false);
   const panStartRef = useRef({ x: 0, y: 0 });
@@ -58,6 +58,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
 
   const zoomRef = useSyncRef(zoom);
   const panRef = useSyncRef(pan);
+  const panZoomModeRef = useSyncRef(panZoomMode);
   const cvsRef = useSyncRef(cvs);
 
   const setZoom = useCallback(
@@ -85,6 +86,25 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
   const pinchStartZoomRef = useRef(1);
   const pinchStartPanRef = useRef({ x: 0, y: 0 });
   const pinchStartCenterRef = useRef({ x: 0, y: 0 });
+
+  const clearPanInteraction = useCallback(() => {
+    panningRef.current = false;
+    spaceRef.current = false;
+    pointersRef.current.clear();
+    pinchStartDistRef.current = 0;
+    setCursorMode(null);
+    schedCursorRef.current?.();
+  }, [schedCursorRef]);
+
+  const setPanZoomMode: React.Dispatch<React.SetStateAction<boolean>> = useCallback(
+    (v) => {
+      const next = typeof v === "function" ? v(panZoomModeRef.current) : v;
+      panZoomModeRef.current = next;
+      _setPanZoomModeRaw(next);
+      if (!next) clearPanInteraction();
+    },
+    [clearPanInteraction, panZoomModeRef],
+  );
 
   /** Clamp pan so canvas never drifts fully off-screen (max ±w or ±h). */
   const clampPan = useCallback(

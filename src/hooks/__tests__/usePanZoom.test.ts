@@ -130,6 +130,29 @@ describe("usePanZoom", () => {
     expect(result.current.panOriginRef.current).toEqual({ x: 0, y: 0 });
   });
 
+  it("clears transient pan state when pan-zoom mode is disabled", () => {
+    const { cvs, displayW, schedCursorRef } = makeMocks();
+    const schedCursor = vi.fn();
+    schedCursorRef.current = schedCursor;
+    const { result } = renderHook(() => usePanZoom(cvs, displayW, schedCursorRef));
+
+    act(() => {
+      result.current.setPanZoomMode(true);
+      result.current.setCursorMode("grab");
+      result.current.panningRef.current = true;
+      result.current.spaceRef.current = true;
+    });
+    act(() => {
+      result.current.setPanZoomMode((prev) => !prev);
+    });
+
+    expect(result.current.panZoomMode).toBe(false);
+    expect(result.current.cursorMode).toBeNull();
+    expect(result.current.panningRef.current).toBe(false);
+    expect(result.current.spaceRef.current).toBe(false);
+    expect(schedCursor).toHaveBeenCalled();
+  });
+
   it("movePan clamps pan to canvas bounds and schedules cursor redraw", () => {
     const { cvs, displayW, schedCursorRef } = makeMocks();
     let scheduledPan: { x: number; y: number } | null = null;
