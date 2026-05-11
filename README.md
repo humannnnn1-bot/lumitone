@@ -69,9 +69,9 @@ undo/redo stores compact diffs, and autosave uses IndexedDB.
   and local visual-regression checks covering canvas pixels, save flows, gallery
   previews, glaze clearing, Theory rendering, offline behavior, mobile touch
   input, and stable layouts.
-- **Quality gates:** TypeScript strict mode, ESLint, Prettier, coverage
-  thresholds, CodeQL, Dependabot, pinned GitHub Actions, and GitHub Pages
-  deployment.
+- **Quality gates:** TypeScript strict mode, ESLint, Prettier, Knip dead-code
+  detection, coverage thresholds, CodeQL, Dependabot, pinned GitHub Actions, and
+  GitHub Pages deployment.
 
 ## Offline and Local Data
 
@@ -162,6 +162,12 @@ Run coverage:
 
 ```bash
 npm run test:coverage
+```
+
+Run dead-code detection:
+
+```bash
+npm run deadcode
 ```
 
 Run local performance benchmarks:

@@ -194,11 +194,13 @@ Music タブの手動バーストは `Pitch` 固定にする。一方で、Fano 
 | luma radii, hue-phase (`alpha`) rotation, x/y projections, complement curves | `src/components/linked-visualization-geometry.ts`, `src/components/LinkedVisualization.tsx`, `src/components/LinkedVisualizationWheel.tsx`, `src/components/LinkedVisualizationProjectionGraphs.tsx`, `src/components/LinkedVisualizationGuides.tsx`, `src/components/LinkedVisualizationLegend.tsx` |
 | Music-specific wrapper, candidate grid, transport, interval overlay, and algebra panels | `src/components/music/` |
 | angle-to-frequency mapping | `src/data/music-frequency.ts` |
+| Music tab composition and controller | `src/components/MusicPanel.tsx`, `src/hooks/useMusicPanelController.ts` |
 | Music tab state partitions | `src/hooks/useMusicPanelState.ts` |
+| Music tab handler partitions | `src/hooks/useMusicTransportHandlers.ts`, `src/hooks/useMusicHuePaletteHandlers.ts`, `src/hooks/useMusicFanoHandlers.ts`, `src/hooks/useMusicStopAllHandler.ts`, `src/hooks/useMusicResetDefaultsHandler.ts` |
+| Music tab derived data | `src/music/music-panel-derived.ts` |
 | Web Audio lifecycle, graph updates, bursts, and teardown | `src/hooks/useMusicAudioSession.ts`, `src/music/music-audio-graph.ts` |
 | sonification command surface | `src/hooks/useMusicEngine.ts` |
 | playback runners, schedules, and algebraic sequences | `src/music/music-playback-runner.ts`, `src/music/music-playback-sequences.ts`, `src/music/music-scheduler.ts`, `src/music/music-engine-core.ts` |
-| Music tab composition | `src/components/MusicPanel.tsx` |
 
 ## Scope Limits
 

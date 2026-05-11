@@ -29,12 +29,21 @@ App.tsx
 
   useCanvasDrawing()     source drawing interactions
   useGlazeDrawing()      per-pixel color variant interactions
+  usePanZoom()           wheel, middle-button, pan-mode, and pinch viewport state
+  useCanvasCoordination()
+                       shared rendering, wheel listeners, and cursor scheduling
   usePixelMaps()         analysis maps, worker-backed where useful
-  useMusicPanelState()   Music palette, transport, Fano, and algebra demo state
-  useMusicEngine()       sonification command surface for the Music tab
-    useMusicAudioSession()  Web Audio lifecycle, graph updates, and teardown
-    src/music/*        audio graph helpers, playback runners, schedules,
-                       and algebraic sequences
+
+MusicPanel.tsx
+  useMusicPanelController()
+    useMusicPanelState()      Music palette, transport, Fano, and algebra state
+    useMusic*Handlers()       transport, hue/palette, Fano, stop, and reset flows
+    src/music/music-panel-derived.ts
+                           derived preview, active-level, hue-tick, and Fano data
+    useMusicEngine()          sonification command surface for the Music tab
+      useMusicAudioSession()  Web Audio lifecycle, graph updates, and teardown
+      src/music/*             audio graph helpers, playback runners, schedules,
+                              and algebraic sequences
 ```
 
 React components stay focused on panels, controls, diagrams, and view
@@ -71,6 +80,19 @@ Source drawing and glaze drawing share the same broad flow:
 Brush and shape tools use CPU-side typed-array operations from `src/drawing`.
 Flood fill uses `useFloodFillWorker` for larger canvases and falls back to a
 synchronous fill for small canvases or worker failures.
+
+## Interaction And Viewport
+
+`usePanZoom` owns the shared zoom, pan, pan-mode, and cursor-mode state for the
+canvas workspaces. It handles pointer-centered wheel zoom, middle-button panning
+and reset, pan-mode touch gestures, and two-finger pinch zoom that keeps the
+pinch focal point stable.
+
+`useCanvasCoordination` connects the shared viewport state back to the mounted
+canvas surfaces. It bridges cursor redraw scheduling between source and glaze
+drawing hooks, attaches non-passive wheel listeners to the source, color, and
+glaze workspaces, and redraws the source/color/hex/glaze buffers when canvas
+state or color lookup tables change.
 
 ## Rendering
 
@@ -120,17 +142,23 @@ Two worker paths keep expensive pixel operations away from the main thread:
   gradient, and regions.
 
 Both paths have synchronous fallbacks so tests and restricted browser
-environments can still run the same behavior.
+environments can still run the same behavior. `usePixelMaps` also caches results
+per canvas buffer and mode, preloads remaining map modes after the active map is
+ready, and invalidates the cache when either source data or `colorMap` changes.
 
 ## Theory And Music Data
 
 The Theory tab is driven by structured data under `src/data`, localized copy
 under `src/i18n`, and diagram components under `src/components/theory`.
 
-The Music tab layers UI state from `src/hooks/useMusicPanelState.ts`, Web Audio
-session management from `src/hooks/useMusicAudioSession.ts`, the command surface
-in `src/hooks/useMusicEngine.ts`, pure playback helpers under `src/music`, and
-visual/control components under `src/components/music`.
+The Music tab composes presentational sections in `src/components/music` through
+`src/components/MusicPanel.tsx`. `src/hooks/useMusicPanelController.ts`
+aggregates state partitions from `src/hooks/useMusicPanelState.ts`, extracted
+transport, hue/palette, Fano, stop, and reset handler hooks, Web Audio session
+management from `src/hooks/useMusicAudioSession.ts`, the command surface in
+`src/hooks/useMusicEngine.ts`, derived helpers in
+`src/music/music-panel-derived.ts`, and pure playback helpers under
+`src/music`.
 
 The research notes in `docs/` define claim boundaries, prior-art positioning,
 implementation correspondence, and citation guidance for the algebraic color
@@ -143,17 +171,21 @@ The main local checks are:
 ```bash
 npm run typecheck:all
 npm run lint
+npm run deadcode
 npm run format:check
 npm run test:coverage
 npm run build
 npm run test:e2e
+npm run test:pwa
 ```
 
-`npm run verify` runs formatting, linting, full type checking, the production
-build, and the unit suite. `npm run verify:e2e` adds the browser and PWA suites,
-while `npm run verify:full` uses coverage plus the browser and PWA suites.
+`npm run verify` runs formatting, linting, dead-code detection, full type
+checking, the production build, and the unit suite. `npm run verify:e2e` adds
+the browser and PWA suites, while `npm run verify:full` uses coverage plus the
+browser and PWA suites.
 
-GitHub Actions run CI checks on pull requests, including `typecheck:all`.
-CodeQL scans JavaScript and TypeScript, Dependabot tracks npm and GitHub
-Actions updates, and the deployment workflow rebuilds the static GitHub Pages
-site from `main`.
+GitHub Actions run CI checks on pull requests: full type checking, linting,
+dead-code detection, format checking, coverage, browser end-to-end tests, and
+PWA tests. CodeQL scans JavaScript and TypeScript, Dependabot tracks npm and
+GitHub Actions updates, and the deployment workflow reruns the non-browser CI
+checks before rebuilding the static GitHub Pages site from `main`.

@@ -142,14 +142,15 @@ x2 > x1 + x0 and x1 > x0.
 
 ## Tests To Keep
 
-1. `BT.601` coefficients force `GRB` as the unique strictly monotone bit assignment.
-2. Complementation `lv xor 7` reverses chromatic luma ranks and die-opposite rank sums are 7.
-3. Fano lines form a Steiner triple system.
-4. Hamming labels are coordinate positions, not color codewords.
-5. Gray cycle uses only one-bit flips.
-6. K8 edges partition by Hamming distance.
-7. Cube-face spanning trees enumerate the 11 free cube nets and verify the hue-order staircase.
-8. UI copy tests reject `人間の色覚の帰結` and Japanese `輝度` for BT.601 luma labels.
+1. Venn copy defines the characteristic function by channel membership `x ∈ A`, not by treating `A` itself as an element of `{G,R,B}`.
+2. `BT.601` coefficients force `GRB` as the unique strictly monotone bit assignment.
+3. Complementation `lv xor 7` reverses chromatic luma ranks and die-opposite rank sums are 7.
+4. Fano lines form a Steiner triple system.
+5. Hamming labels are coordinate positions and parity-check labels, not color codewords.
+6. Gray cycle uses only one-bit flips.
+7. K8 edges partition by Hamming distance.
+8. Cube-face spanning trees enumerate the 11 free cube nets and verify the hue-order staircase.
+9. UI copy tests reject `人間の色覚の帰結` and Japanese `輝度` for BT.601 luma labels.
 
 ## Bottom Line
 

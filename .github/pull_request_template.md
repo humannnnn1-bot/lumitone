@@ -6,6 +6,7 @@
 
 - [ ] Ran `npm run format:check`
 - [ ] Ran `npm run lint`
+- [ ] Ran `npm run deadcode`
 - [ ] Ran `npm run typecheck:all`
 - [ ] Ran `npm run build`
 - [ ] Ran targeted tests if code behavior changed
