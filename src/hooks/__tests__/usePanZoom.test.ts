@@ -18,7 +18,19 @@ function makeMocks() {
 }
 
 describe("usePanZoom", () => {
-  function makeFakePointerEvent(overrides?: Partial<React.PointerEvent>): React.PointerEvent {
+  function makeFakePointerEvent(overrides?: Partial<React.PointerEvent> & { rect?: Partial<DOMRect> }): React.PointerEvent {
+    const rect = {
+      left: 0,
+      top: 0,
+      width: 320,
+      height: 320,
+      right: 320,
+      bottom: 320,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+      ...overrides?.rect,
+    } as DOMRect;
     return {
       button: 0,
       clientX: 100,
@@ -26,8 +38,21 @@ describe("usePanZoom", () => {
       pointerId: 1,
       preventDefault: vi.fn(),
       target: { setPointerCapture: vi.fn() },
+      currentTarget: { getBoundingClientRect: () => rect },
       ...overrides,
     } as unknown as React.PointerEvent;
+  }
+
+  function focusAtViewportPoint(
+    point: { x: number; y: number },
+    zoom: number,
+    pan: { x: number; y: number },
+    cvs: { w: number; h: number },
+  ) {
+    return {
+      x: (point.x - 0.5) / zoom + 0.5 - pan.x / cvs.w,
+      y: (point.y - 0.5) / zoom + 0.5 - pan.y / cvs.h,
+    };
   }
 
   function makeWheelEvent(overrides?: Partial<WheelEvent> & { rect?: Partial<DOMRect> }): WheelEvent {
@@ -295,6 +320,31 @@ describe("usePanZoom", () => {
       expect(result.current.zoom).toBeCloseTo(1);
       expect(result.current.pan).toEqual({ x: 40, y: 30 });
       expect(schedCursor).toHaveBeenCalled();
+    });
+
+    it("keeps the pinch focal point stable near the canvas edge", () => {
+      const { cvs, displayW, schedCursorRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(cvs, displayW, schedCursorRef));
+      const startCenter = { x: 280 / displayW, y: 160 / displayW };
+
+      act(() => {
+        result.current.setPan({ x: 40, y: 0 });
+      });
+      const startFocus = focusAtViewportPoint(startCenter, result.current.zoom, result.current.pan, cvs);
+
+      act(() => {
+        result.current.onPinchDown(makeFakePointerEvent({ pointerId: 1, clientX: 260, clientY: 160 }));
+        result.current.onPinchDown(makeFakePointerEvent({ pointerId: 2, clientX: 300, clientY: 160 }));
+      });
+      act(() => {
+        result.current.onPinchMove(makeFakePointerEvent({ pointerId: 1, clientX: 240, clientY: 160 }));
+        result.current.onPinchMove(makeFakePointerEvent({ pointerId: 2, clientX: 320, clientY: 160 }));
+      });
+
+      expect(result.current.zoom).toBe(2);
+      const endFocus = focusAtViewportPoint(startCenter, result.current.zoom, result.current.pan, cvs);
+      expect(endFocus.x).toBeCloseTo(startFocus.x);
+      expect(endFocus.y).toBeCloseTo(startFocus.y);
     });
   });
 

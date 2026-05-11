@@ -29,6 +29,7 @@ interface PanZoomResult {
 }
 
 type PointerPoint = { x: number; y: number };
+type ViewportPoint = { x: number; y: number };
 
 function getPinchDist(ptrs: Map<number, PointerPoint>) {
   const pts = [...ptrs.values()];
@@ -42,6 +43,28 @@ function getPinchCenter(ptrs: Map<number, PointerPoint>) {
   const pts = [...ptrs.values()];
   if (pts.length < 2) return { x: 0, y: 0 };
   return { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+}
+
+function getViewportPoint(point: PointerPoint, target: EventTarget | null): ViewportPoint | null {
+  const el = target as HTMLElement | null;
+  if (!el || typeof el.getBoundingClientRect !== "function") return null;
+  const rect = el.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return null;
+  return { x: (point.x - rect.left) / rect.width, y: (point.y - rect.top) / rect.height };
+}
+
+function canvasFocusFromViewportPoint(point: ViewportPoint, zoom: number, pan: { x: number; y: number }, cv: { w: number; h: number }) {
+  return {
+    x: (point.x - 0.5) / zoom + 0.5 - pan.x / cv.w,
+    y: (point.y - 0.5) / zoom + 0.5 - pan.y / cv.h,
+  };
+}
+
+function panForCanvasFocus(point: ViewportPoint, zoom: number, focus: ViewportPoint, cv: { w: number; h: number }) {
+  return {
+    x: ((point.x - 0.5) / zoom + 0.5 - focus.x) * cv.w,
+    y: ((point.y - 0.5) / zoom + 0.5 - focus.y) * cv.h,
+  };
 }
 
 export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: React.MutableRefObject<(() => void) | null>): PanZoomResult {
@@ -86,6 +109,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
   const pinchStartZoomRef = useRef(1);
   const pinchStartPanRef = useRef({ x: 0, y: 0 });
   const pinchStartCenterRef = useRef({ x: 0, y: 0 });
+  const pinchStartFocusRef = useRef({ x: 0.5, y: 0.5 });
 
   const clearPanInteraction = useCallback(() => {
     panningRef.current = false;
@@ -176,15 +200,11 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
       const factor = e.deltaY < 0 ? ZOOM_STEP : 1 / ZOOM_STEP;
       const newZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, curZoom * factor));
       if (newZoom === curZoom) return;
-      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
-      const mx2 = (e.clientX - rect.left) / rect.width,
-        my2 = (e.clientY - rect.top) / rect.height;
-      const cx0 = (mx2 - 0.5) / curZoom + 0.5 - curPan.x / cv.w;
-      const cy0 = (my2 - 0.5) / curZoom + 0.5 - curPan.y / cv.h;
-      const newPanX = ((mx2 - 0.5) / newZoom + 0.5 - cx0) * cv.w;
-      const newPanY = ((my2 - 0.5) / newZoom + 0.5 - cy0) * cv.h;
+      const pointer = getViewportPoint({ x: e.clientX, y: e.clientY }, e.currentTarget);
+      if (!pointer) return;
+      const focus = canvasFocusFromViewportPoint(pointer, curZoom, curPan, cv);
       setZoom(newZoom);
-      setPan(clampPan({ x: newPanX, y: newPanY }, cv));
+      setPan(clampPan(panForCanvasFocus(pointer, newZoom, focus, cv), cv));
       schedCursorRef.current?.();
     },
     [zoomRef, panRef, cvsRef, schedCursorRef, clampPan, setZoom, setPan],
@@ -212,9 +232,14 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
         pinchStartZoomRef.current = zoomRef.current;
         pinchStartPanRef.current = { ...panRef.current };
         pinchStartCenterRef.current = getPinchCenter(pointersRef.current);
+        const cv = cvsRef.current;
+        const startViewportCenter = getViewportPoint(pinchStartCenterRef.current, e.currentTarget);
+        pinchStartFocusRef.current = startViewportCenter
+          ? canvasFocusFromViewportPoint(startViewportCenter, zoomRef.current, panRef.current, cv)
+          : { x: 0.5 - panRef.current.x / cv.w, y: 0.5 - panRef.current.y / cv.h };
       }
     },
-    [panRef, zoomRef],
+    [cvsRef, panRef, zoomRef],
   );
 
   const onPinchMove = useCallback(
@@ -231,13 +256,14 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
         const currentCenter = getPinchCenter(pointersRef.current);
         const centerDx = currentCenter.x - pinchStartCenterRef.current.x;
         const centerDy = currentCenter.y - pinchStartCenterRef.current.y;
-        const scale = (displayW * newZoom) / cv.w;
-        // Preserve existing pinch zoom behavior while letting the two-finger center drag pan.
-        const zRatio = newZoom / pinchStartZoomRef.current;
-        const rawPan = {
-          x: pinchStartPanRef.current.x * zRatio + centerDx / scale,
-          y: pinchStartPanRef.current.y * zRatio + centerDy / scale,
-        };
+        const viewportCenter = getViewportPoint(currentCenter, e.currentTarget);
+        const rawPan = viewportCenter
+          ? panForCanvasFocus(viewportCenter, newZoom, pinchStartFocusRef.current, cv)
+          : {
+              // Fallback for synthetic or unusual pointer events without an element rect.
+              x: pinchStartPanRef.current.x * (newZoom / pinchStartZoomRef.current) + centerDx / ((displayW * newZoom) / cv.w),
+              y: pinchStartPanRef.current.y * (newZoom / pinchStartZoomRef.current) + centerDy / ((displayW * newZoom) / cv.w),
+            };
         setZoom(newZoom);
         setPan(clampPan(rawPan, cv));
         schedCursorRef.current?.();
