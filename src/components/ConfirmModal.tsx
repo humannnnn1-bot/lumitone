@@ -12,6 +12,12 @@ interface ConfirmModalProps {
   children?: React.ReactNode;
 }
 
+const S_CONFIRM_ACTION_BUTTON_BASE: React.CSSProperties = {
+  boxSizing: "border-box",
+  width: 78,
+  padding: "6px 0",
+};
+
 export const ConfirmModal = React.memo(function ConfirmModal({ open, message, onConfirm, onCancel, children }: ConfirmModalProps) {
   const { t } = useTranslation();
   const modalRef = useRef<HTMLDivElement>(null);
@@ -55,10 +61,10 @@ export const ConfirmModal = React.memo(function ConfirmModal({ open, message, on
       >
         <div style={{ fontSize: FS.xl, fontWeight: FW.bold, color: C.textPrimary, marginBottom: SP["2xl"] }}>{message}</div>
         <div style={{ display: "flex", gap: SP.xl, justifyContent: "center" }}>
-          <button ref={yesBtnRef} onClick={onConfirm} style={{ ...S_BTN_ACTIVE, padding: "6px 24px" }}>
+          <button ref={yesBtnRef} onClick={onConfirm} style={{ ...S_BTN_ACTIVE, ...S_CONFIRM_ACTION_BUTTON_BASE }}>
             {t("btn_yes")}
           </button>
-          <button onClick={onCancel} style={{ ...S_BTN, padding: "6px 24px" }}>
+          <button onClick={onCancel} style={{ ...S_BTN, ...S_CONFIRM_ACTION_BUTTON_BASE }}>
             {t("btn_no")}
           </button>
         </div>

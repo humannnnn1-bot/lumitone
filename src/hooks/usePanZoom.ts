@@ -45,15 +45,8 @@ function getPinchCenter(ptrs: Map<number, PointerPoint>) {
 }
 
 export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: React.MutableRefObject<(() => void) | null>): PanZoomResult {
-  const [zoom, setZoom] = useState(1);
-  // Wrap useState setPan with equality check to skip re-renders when values haven't changed
+  const [zoom, _setZoomRaw] = useState(1);
   const [pan, _setPanRaw] = useState({ x: 0, y: 0 });
-  const setPan = useCallback((v: React.SetStateAction<{ x: number; y: number }>) => {
-    _setPanRaw((prev) => {
-      const next = typeof v === "function" ? v(prev) : v;
-      return next.x === prev.x && next.y === prev.y ? prev : next;
-    });
-  }, []);
   const [cursorMode, setCursorMode] = useState<null | "grab" | "grabbing">(null);
   const [panZoomMode, setPanZoomMode] = useState(false);
 
@@ -66,6 +59,25 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
   const zoomRef = useSyncRef(zoom);
   const panRef = useSyncRef(pan);
   const cvsRef = useSyncRef(cvs);
+
+  const setZoom = useCallback(
+    (v: React.SetStateAction<number>) => {
+      const next = typeof v === "function" ? v(zoomRef.current) : v;
+      zoomRef.current = next;
+      _setZoomRaw(next);
+    },
+    [zoomRef],
+  );
+
+  // Keep panRef ahead of React rendering so same-frame grid redraws follow active pans.
+  const setPan = useCallback(
+    (v: React.SetStateAction<{ x: number; y: number }>) => {
+      const next = typeof v === "function" ? v(panRef.current) : v;
+      panRef.current = next;
+      _setPanRaw((prev) => (next.x === prev.x && next.y === prev.y ? prev : next));
+    },
+    [panRef],
+  );
 
   // Pinch-to-zoom state
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
@@ -155,7 +167,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
       setPan(clampPan({ x: newPanX, y: newPanY }, cv));
       schedCursorRef.current?.();
     },
-    [zoomRef, panRef, cvsRef, schedCursorRef, clampPan, setPan],
+    [zoomRef, panRef, cvsRef, schedCursorRef, clampPan, setZoom, setPan],
   );
 
   // ── Pinch-to-zoom handlers ──
@@ -220,7 +232,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
         schedCursorRef.current?.();
       }
     },
-    [cvsRef, displayW, zoomRef, schedCursorRef, clampPan, setPan],
+    [cvsRef, displayW, zoomRef, schedCursorRef, clampPan, setZoom, setPan],
   );
 
   const onPinchUp = useCallback(

@@ -69,7 +69,7 @@ function makeDrawingResult(schedCursor: (() => void) | null): CanvasDrawingResul
   };
 }
 
-function makeGlazeDrawingResult(): GlazeDrawingResult {
+function makeGlazeDrawingResult(schedCursor: (() => void) | null = null): GlazeDrawingResult {
   return {
     srcRef: ref<HTMLCanvasElement | null>(null),
     curRef: ref<HTMLCanvasElement | null>(null),
@@ -77,7 +77,7 @@ function makeGlazeDrawingResult(): GlazeDrawingResult {
     imgCacheRef: ref(makeImgCache()),
     drawingRef: ref(false),
     cursorRafRef: ref(null),
-    schedCursorRef: ref(null),
+    schedCursorRef: ref(schedCursor),
     cursorPosRef: ref(null),
     onDown: vi.fn(),
     onMove: vi.fn(),
@@ -92,17 +92,20 @@ function makeGlazeDrawingResult(): GlazeDrawingResult {
 }
 
 describe("useCanvasCoordination", () => {
-  it("bridges the drawing cursor scheduler into the caller-owned shared ref", () => {
+  it("bridges drawing and glaze cursor schedulers into the caller-owned shared ref", () => {
     const firstScheduler = vi.fn();
     const secondScheduler = vi.fn();
+    const firstGlazeScheduler = vi.fn();
+    const secondGlazeScheduler = vi.fn();
     const drawing = makeDrawingResult(firstScheduler);
+    const glazeDrawing = makeGlazeDrawingResult(firstGlazeScheduler);
     const sharedSchedCursorRef = ref<(() => void) | null>(null);
     const baseOptions = {
       cvs: makeCanvasData(),
       colorLUT: Array.from({ length: 8 }, () => [0, 0, 0] as [number, number, number]),
       activeTabId: "source" as const,
       drawing,
-      glazeDrawing: makeGlazeDrawingResult(),
+      glazeDrawing,
       srcWrapRef: ref<HTMLDivElement | null>(null),
       prvWrapRef: ref<HTMLDivElement | null>(null),
       glazeWrapRef: ref<HTMLDivElement | null>(null),
@@ -115,12 +118,17 @@ describe("useCanvasCoordination", () => {
 
     const { rerender } = renderHook(() => useCanvasCoordination(baseOptions));
 
-    expect(sharedSchedCursorRef.current).toBe(firstScheduler);
+    sharedSchedCursorRef.current?.();
+    expect(firstScheduler).toHaveBeenCalledTimes(1);
+    expect(firstGlazeScheduler).toHaveBeenCalledTimes(1);
 
     drawing.schedCursorRef.current = secondScheduler;
+    glazeDrawing.schedCursorRef.current = secondGlazeScheduler;
     rerender();
 
-    expect(sharedSchedCursorRef.current).toBe(secondScheduler);
+    sharedSchedCursorRef.current?.();
+    expect(secondScheduler).toHaveBeenCalledTimes(1);
+    expect(secondGlazeScheduler).toHaveBeenCalledTimes(1);
   });
 
   it("clears cursor overlays when the pointer leaves a mounted workspace", () => {

@@ -132,9 +132,14 @@ describe("usePanZoom", () => {
 
   it("movePan clamps pan to canvas bounds and schedules cursor redraw", () => {
     const { cvs, displayW, schedCursorRef } = makeMocks();
-    const schedCursor = vi.fn();
+    let scheduledPan: { x: number; y: number } | null = null;
+    let readCurrentPan: (() => { x: number; y: number }) | null = null;
+    const schedCursor = vi.fn(() => {
+      scheduledPan = readCurrentPan?.() ?? null;
+    });
     schedCursorRef.current = schedCursor;
     const { result } = renderHook(() => usePanZoom(cvs, displayW, schedCursorRef));
+    readCurrentPan = () => result.current.panRef.current;
 
     act(() => {
       result.current.startPan(makeFakePointerEvent({ clientX: 0, clientY: 0 }));
@@ -144,6 +149,7 @@ describe("usePanZoom", () => {
     });
 
     expect(result.current.pan).toEqual({ x: cvs.w, y: -cvs.h });
+    expect(scheduledPan).toEqual({ x: cvs.w, y: -cvs.h });
     expect(schedCursor).toHaveBeenCalled();
   });
 

@@ -40,10 +40,13 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): void {
   const { clearCursor, clearCursorPrv } = drawing;
   const { clearCursor: clearGlazeCursor } = glazeDrawing;
 
-  // Bridge schedCursorRef from drawing hook to shared ref used by panZoom
+  // Bridge cursor schedulers into the shared ref used by pan/zoom.
   useLayoutEffect(() => {
-    sharedSchedCursorRef.current = drawing.schedCursorRef.current;
-  });
+    sharedSchedCursorRef.current = () => {
+      drawing.schedCursorRef.current?.();
+      glazeDrawing.schedCursorRef.current?.();
+    };
+  }, [drawing.schedCursorRef, glazeDrawing.schedCursorRef, sharedSchedCursorRef]);
 
   // Cleanup RAF on unmount
   useEffect(
