@@ -28,6 +28,22 @@ interface PanZoomResult {
   panRef: React.MutableRefObject<{ x: number; y: number }>;
 }
 
+type PointerPoint = { x: number; y: number };
+
+function getPinchDist(ptrs: Map<number, PointerPoint>) {
+  const pts = [...ptrs.values()];
+  if (pts.length < 2) return 0;
+  const dx = pts[0].x - pts[1].x,
+    dy = pts[0].y - pts[1].y;
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+function getPinchCenter(ptrs: Map<number, PointerPoint>) {
+  const pts = [...ptrs.values()];
+  if (pts.length < 2) return { x: 0, y: 0 };
+  return { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 };
+}
+
 export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: React.MutableRefObject<(() => void) | null>): PanZoomResult {
   const [zoom, setZoom] = useState(1);
   // Wrap useState setPan with equality check to skip re-renders when values haven't changed
@@ -56,6 +72,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
   const pinchStartDistRef = useRef(0);
   const pinchStartZoomRef = useRef(1);
   const pinchStartPanRef = useRef({ x: 0, y: 0 });
+  const pinchStartCenterRef = useRef({ x: 0, y: 0 });
 
   /** Clamp pan so canvas never drifts fully off-screen (max ±w or ±h). */
   const clampPan = useCallback(
@@ -143,14 +160,6 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
 
   // ── Pinch-to-zoom handlers ──
 
-  const getPinchDist = (ptrs: Map<number, { x: number; y: number }>) => {
-    const pts = [...ptrs.values()];
-    if (pts.length < 2) return 0;
-    const dx = pts[0].x - pts[1].x,
-      dy = pts[0].y - pts[1].y;
-    return Math.sqrt(dx * dx + dy * dy);
-  };
-
   const onPinchDown = useCallback(
     (e: React.PointerEvent) => {
       pointersRef.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -170,6 +179,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
         pinchStartDistRef.current = getPinchDist(pointersRef.current);
         pinchStartZoomRef.current = zoomRef.current;
         pinchStartPanRef.current = { ...panRef.current };
+        pinchStartCenterRef.current = getPinchCenter(pointersRef.current);
       }
     },
     [panRef, zoomRef],
@@ -186,14 +196,19 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
         const ratio = newDist / pinchStartDistRef.current;
         const newZoom = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, pinchStartZoomRef.current * ratio));
         const cv = cvsRef.current;
-        // Adjust pan to keep pinch center stable
+        const currentCenter = getPinchCenter(pointersRef.current);
+        const centerDx = currentCenter.x - pinchStartCenterRef.current.x;
+        const centerDy = currentCenter.y - pinchStartCenterRef.current.y;
+        const scale = (displayW * newZoom) / cv.w;
+        // Preserve existing pinch zoom behavior while letting the two-finger center drag pan.
         const zRatio = newZoom / pinchStartZoomRef.current;
         const rawPan = {
-          x: pinchStartPanRef.current.x * zRatio,
-          y: pinchStartPanRef.current.y * zRatio,
+          x: pinchStartPanRef.current.x * zRatio + centerDx / scale,
+          y: pinchStartPanRef.current.y * zRatio + centerDy / scale,
         };
         setZoom(newZoom);
         setPan(clampPan(rawPan, cv));
+        schedCursorRef.current?.();
       } else if (pointersRef.current.size === 1 && panningRef.current) {
         // Single finger pan
         const dx = e.clientX - panStartRef.current.x,
@@ -202,9 +217,10 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
         const scale = (displayW * zoomRef.current) / cv.w;
         const raw = { x: panOriginRef.current.x + dx / scale, y: panOriginRef.current.y + dy / scale };
         setPan(clampPan(raw, cv));
+        schedCursorRef.current?.();
       }
     },
-    [cvsRef, displayW, zoomRef, clampPan, setPan],
+    [cvsRef, displayW, zoomRef, schedCursorRef, clampPan, setPan],
   );
 
   const onPinchUp = useCallback(

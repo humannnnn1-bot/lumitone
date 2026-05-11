@@ -246,6 +246,27 @@ describe("usePanZoom", () => {
       });
       expect(result.current.panningRef.current).toBe(true);
     });
+
+    it("pans with two pointers when the pinch center moves", () => {
+      const { cvs, displayW, schedCursorRef } = makeMocks();
+      const schedCursor = vi.fn();
+      schedCursorRef.current = schedCursor;
+      const { result } = renderHook(() => usePanZoom(cvs, displayW, schedCursorRef));
+
+      act(() => {
+        result.current.onPinchDown(makeFakePointerEvent({ pointerId: 1, clientX: 100, clientY: 100 }));
+        result.current.onPinchDown(makeFakePointerEvent({ pointerId: 2, clientX: 200, clientY: 100 }));
+      });
+
+      act(() => {
+        result.current.onPinchMove(makeFakePointerEvent({ pointerId: 1, clientX: 140, clientY: 130 }));
+        result.current.onPinchMove(makeFakePointerEvent({ pointerId: 2, clientX: 240, clientY: 130 }));
+      });
+
+      expect(result.current.zoom).toBeCloseTo(1);
+      expect(result.current.pan).toEqual({ x: 40, y: 30 });
+      expect(schedCursor).toHaveBeenCalled();
+    });
   });
 
   /* ---------- handleMiddleDown ---------- */
