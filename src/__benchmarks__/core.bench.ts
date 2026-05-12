@@ -1,8 +1,8 @@
 import { bench, describe } from "vitest";
-import { DEFAULT_CC, buildColorLUT } from "../color-engine";
+import { DEFAULT_COLOR_CHOICE_INDICES, buildColorLUT } from "../color-engine";
 import { floodFill } from "../drawing/flood-fill";
 import { renderBuf } from "../drawing/render-buf";
-import { computeDiversity, computeEdgeDepth, computeGradient, computeNoiseLevelNorm, computeRegion } from "../utils/pixel-analysis";
+import { computeDiversity, computeBoundaryDistance, computeGradient, computeNoiseLevelNorm, computeRegion } from "../utils/pixel-analysis";
 import { applyDiff, compressDiff, computeDiff, decompressDiff } from "../state/undo-diff";
 import type { ImgCache } from "../types";
 
@@ -64,7 +64,7 @@ describe("renderBuf", () => {
   const h = 320;
   const data = makePattern(w, h);
   const colorMap = makeColorMap(data);
-  const lut = buildColorLUT(DEFAULT_CC);
+  const lut = buildColorLUT(DEFAULT_COLOR_CHOICE_INDICES);
 
   bench(
     "full render, source and preview",
@@ -131,7 +131,7 @@ describe("pixel analysis", () => {
   bench(
     "edge depth",
     () => {
-      computeEdgeDepth(data, w, h, new Uint8Array(n), new Float32Array(n), colorMap);
+      computeBoundaryDistance(data, w, h, new Uint8Array(n), new Float32Array(n), colorMap);
     },
     BENCH_OPTIONS,
   );

@@ -2,7 +2,7 @@
 import React from "react";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_CC } from "../../color-engine";
+import { DEFAULT_COLOR_CHOICE_INDICES } from "../../color-engine";
 import type { CanvasData } from "../../types";
 import { HexPanel } from "../HexPanel";
 
@@ -28,8 +28,8 @@ function makeProps(overrides?: Partial<React.ComponentProps<typeof HexPanel>>): 
     cvs: makeCvs(),
     displayW: 128,
     displayH: 96,
-    cc: [...DEFAULT_CC],
-    ccDispatch: vi.fn(),
+    colorChoiceIndices: [...DEFAULT_COLOR_CHOICE_INDICES],
+    colorChoiceDispatch: vi.fn(),
     hist: [1, 2, 3, 4, 5, 6, 7, 8],
     total: 36,
     locked: new Array(8).fill(false),
@@ -57,9 +57,9 @@ describe("HexPanel", () => {
     fireEvent.keyDown(document, { key: "3", ctrlKey: true });
     fireEvent.keyDown(document, { key: "1" });
 
-    expect(props.ccDispatch).toHaveBeenCalledTimes(2);
-    expect(props.ccDispatch).toHaveBeenNthCalledWith(1, { type: "cycle_color", lv: 2, dir: 1 });
-    expect(props.ccDispatch).toHaveBeenNthCalledWith(2, { type: "cycle_color", lv: 5, dir: 1 });
+    expect(props.colorChoiceDispatch).toHaveBeenCalledTimes(2);
+    expect(props.colorChoiceDispatch).toHaveBeenNthCalledWith(1, { type: "cycle_color", levelIndex: 2, direction: 1 });
+    expect(props.colorChoiceDispatch).toHaveBeenNthCalledWith(2, { type: "cycle_color", levelIndex: 5, direction: 1 });
   });
 
   it("routes pattern-count click and keyboard activation when a gallery link is provided", () => {

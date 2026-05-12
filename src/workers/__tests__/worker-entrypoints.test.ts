@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import type { FloodFillWorkerRequest, FloodFillWorkerResponse } from "../flood-fill.worker";
-import type { MapMode, WorkerRequest, WorkerResponse } from "../pixel-analysis.worker";
+import type { MapMode } from "../../types";
+import type { WorkerRequest, WorkerResponse } from "../pixel-analysis.worker";
 
 interface WorkerSelf {
   onmessage?: (event: MessageEvent<unknown>) => void;
@@ -74,7 +75,7 @@ describe("worker entrypoints", () => {
 
   it("pixel-analysis worker allocates only the maps required by each mode", async () => {
     const fakeSelf = await loadWorker("../pixel-analysis.worker");
-    const modes: MapMode[] = ["noise", "entropy", "depth", "gradient", "region", "luminance", "colorlum"];
+    const modes: MapMode[] = ["noise", "entropy", "boundaryDistance", "gradient", "region", "luminance", "colorLuma"];
 
     modes.forEach((mode, index) => {
       const req: WorkerRequest = {
@@ -93,10 +94,10 @@ describe("worker entrypoints", () => {
     expect(responses[0].noise).toHaveLength(4);
     expect(responses[0].levelNorm).toHaveLength(4);
     expect(responses[1].localDiversity).toHaveLength(4);
-    expect(responses[2].depth).toHaveLength(4);
+    expect(responses[2].boundaryDistance).toHaveLength(4);
     expect(responses[2].isEdge).toHaveLength(4);
-    expect(responses[3].gradAngle).toHaveLength(4);
-    expect(responses[3].gradMag).toHaveLength(4);
+    expect(responses[3].gradientAngle).toHaveLength(4);
+    expect(responses[3].gradientMagnitude).toHaveLength(4);
     expect(responses[4].regionId).toHaveLength(4);
     expect(responses[5].levelNorm[3]).toBe(1);
     expect(responses[6].noise).toHaveLength(0);

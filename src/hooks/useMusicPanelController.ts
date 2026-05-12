@@ -70,8 +70,8 @@ function useMusicTransportAnimation({
         const drift = phaseSpeed * dt;
         const a0d = base + (originMode === 0 ? drift : 0);
         const a7d = base + (originMode === 7 ? drift : 0);
-        if (a0d !== 0) setAlpha0((a) => (((a + a0d) % 360) + 360) % 360);
-        if (a7d !== 0) setAlpha7((a) => (((a + a7d) % 360) + 360) % 360);
+        if (a0d !== 0) setAlpha0((angleDeg) => (((angleDeg + a0d) % 360) + 360) % 360);
+        if (a7d !== 0) setAlpha7((angleDeg) => (((angleDeg + a7d) % 360) + 360) % 360);
         if (hueDir !== 0) {
           const hd = hueSpeed * dt * hueDir;
           const next = (((hueRef.current + hd) % 360) + 360) % 360;
@@ -133,8 +133,8 @@ export function useMusicPanelController() {
   const {
     hueAngle,
     setHueAngle,
-    directCandidates,
-    setDirectCandidates,
+    candidateOverridesByLevel,
+    setCandidateOverridesByLevel,
     hoveredCandidate,
     setHoveredCandidate,
     selectedLevels,
@@ -279,12 +279,15 @@ export function useMusicPanelController() {
   const { stopSignal, setStopSignal, resetSignal, setResetSignal, backgroundStoppedRef } = useMusicSignalsState();
   const { burstHighlight, setBurstHighlight, burstTimersRef } = useMusicBurstHighlightState();
 
-  const sonificationLevels = useMemo(() => buildMusicSonificationLevels(directCandidates, hueAngle), [hueAngle, directCandidates]);
+  const sonificationLevels = useMemo(
+    () => buildMusicSonificationLevels(candidateOverridesByLevel, hueAngle),
+    [hueAngle, candidateOverridesByLevel],
+  );
 
   const engine = useMusicEngine({
     enabled: true,
     levels: sonificationLevels,
-    hoveredLv: hoveredCandidate?.lv ?? null,
+    hoveredLv: hoveredCandidate?.levelIndex ?? null,
     alpha0,
     alpha7,
     volume: muted ? 0 : volume,
@@ -347,7 +350,7 @@ export function useMusicPanelController() {
   const handleResetDefaults = useMusicResetDefaultsHandler({
     engine,
     stopAll: handleStopAll,
-    palette: { setHueAngle, setDirectCandidates, setSelectedLevels },
+    palette: { setHueAngle, setCandidateOverridesByLevel, setSelectedLevels },
     transport: {
       setDroneMuted,
       setMuted,
@@ -381,7 +384,7 @@ export function useMusicPanelController() {
     resumeDrone,
     ensureAudio,
     sonificationLevels,
-    palette: { setHueAngle, setDirectCandidates, setSelectedLevels, prevCandidatesRef },
+    palette: { setHueAngle, setCandidateOverridesByLevel, setSelectedLevels, prevCandidatesRef },
     transport: { setAlpha0, setAlpha7, setOriginMode },
     burst: { setBurstHighlight, burstTimersRef },
   });
@@ -419,7 +422,7 @@ export function useMusicPanelController() {
     },
   });
 
-  const levelPreview = useMemo(() => buildMusicLevelPreview(directCandidates, hueAngle), [hueAngle, directCandidates]);
+  const levelPreview = useMemo(() => buildMusicLevelPreview(candidateOverridesByLevel, hueAngle), [hueAngle, candidateOverridesByLevel]);
   const activeLevels = useMemo(() => buildActiveMusicLevels(levelPreview), [levelPreview]);
   const hueTicks = useMemo(() => buildMusicHueTicks(), []);
 
@@ -436,12 +439,12 @@ export function useMusicPanelController() {
   return {
     engine,
     hueAngle,
-    directCandidates,
+    candidateOverridesByLevel,
     hoveredCandidate,
     setHoveredCandidate,
     selectedLevels,
     setSelectedLevels,
-    setDirectCandidates,
+    setCandidateOverridesByLevel,
     volume,
     muted,
     scaleMode,

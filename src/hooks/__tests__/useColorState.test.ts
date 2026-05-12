@@ -2,7 +2,7 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useColorState } from "../useColorState";
-import { DEFAULT_CC, LEVEL_CANDIDATES } from "../../color-engine";
+import { DEFAULT_COLOR_CHOICE_INDICES, LEVEL_CANDIDATES } from "../../color-engine";
 import { LEVEL_COUNT } from "../../constants";
 
 // Provide a simple histogram (all zeros)
@@ -15,9 +15,9 @@ describe("useColorState", () => {
     vi.restoreAllMocks();
   });
 
-  it("initial cc matches DEFAULT_CC", () => {
+  it("initial colorChoiceIndices matches DEFAULT_COLOR_CHOICE_INDICES", () => {
     const { result } = renderHook(() => useColorState(emptyHist));
-    expect(result.current.cc).toEqual([...DEFAULT_CC]);
+    expect(result.current.colorChoiceIndices).toEqual([...DEFAULT_COLOR_CHOICE_INDICES]);
   });
 
   it("initial locked array is all false with LEVEL_COUNT entries", () => {
@@ -42,9 +42,9 @@ describe("useColorState", () => {
     expect(result.current.locked[3]).toBe(false);
   });
 
-  it("handleRandomize changes cc values (with Math.random mock)", () => {
+  it("handleRandomize changes colorChoiceIndices values (with Math.random mock)", () => {
     const { result } = renderHook(() => useColorState(activeHist));
-    const originalCc = [...result.current.cc];
+    const originalColorChoiceIndices = [...result.current.colorChoiceIndices];
 
     // Mock Math.random to return a predictable value
     vi.spyOn(Math, "random").mockReturnValue(0.99);
@@ -52,12 +52,12 @@ describe("useColorState", () => {
     act(() => {
       result.current.handleRandomize();
     });
-    const newCc = result.current.cc;
+    const newColorChoiceIndices = result.current.colorChoiceIndices;
 
     // At least some levels with multiple candidates should change
     const hasMultiple = LEVEL_CANDIDATES.some((alts) => alts.length > 1);
     if (hasMultiple) {
-      expect(newCc).not.toEqual(originalCc);
+      expect(newColorChoiceIndices).not.toEqual(originalColorChoiceIndices);
     }
   });
 
@@ -68,17 +68,17 @@ describe("useColorState", () => {
     act(() => {
       result.current.toggleLock(0);
     });
-    const level0Before = result.current.cc[0];
+    const level0Before = result.current.colorChoiceIndices[0];
 
     vi.spyOn(Math, "random").mockReturnValue(0.99);
     act(() => {
       result.current.handleRandomize();
     });
 
-    expect(result.current.cc[0]).toBe(level0Before);
+    expect(result.current.colorChoiceIndices[0]).toBe(level0Before);
   });
 
-  it("colorLUT is built from cc and has LEVEL_COUNT RGB tuples", () => {
+  it("colorLUT is built from colorChoiceIndices and has LEVEL_COUNT RGB tuples", () => {
     const { result } = renderHook(() => useColorState(emptyHist));
     expect(result.current.colorLUT.length).toBe(LEVEL_COUNT);
     for (const rgb of result.current.colorLUT) {
@@ -89,16 +89,16 @@ describe("useColorState", () => {
     }
   });
 
-  it("ccDispatch with set_color changes a specific level", () => {
+  it("colorChoiceDispatch with set_color changes a specific level", () => {
     const { result } = renderHook(() => useColorState(emptyHist));
 
     const lv = 0;
     const maxIdx = LEVEL_CANDIDATES[lv].length - 1;
     if (maxIdx > 0) {
       act(() => {
-        result.current.ccDispatch({ type: "set_color", lv, idx: maxIdx });
+        result.current.colorChoiceDispatch({ type: "set_color", levelIndex: lv, candidateIndex: maxIdx });
       });
-      expect(result.current.cc[lv]).toBe(maxIdx);
+      expect(result.current.colorChoiceIndices[lv]).toBe(maxIdx);
     }
   });
 

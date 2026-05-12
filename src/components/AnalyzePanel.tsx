@@ -11,7 +11,7 @@ interface AnalyzePanelProps {
   hist: number[];
   total: number;
   colorLUT: [number, number, number][];
-  cc: readonly number[];
+  colorChoiceIndices: readonly number[];
   brushLevel: number;
   setBrushLevel: (lv: number) => void;
   cvs: CanvasData;
@@ -48,7 +48,7 @@ export const AnalyzePanel = React.memo(
     hist,
     total,
     colorLUT,
-    cc,
+    colorChoiceIndices,
     brushLevel: _brushLevel,
     setBrushLevel: _setBrushLevel,
     cvs,
@@ -71,7 +71,7 @@ export const AnalyzePanel = React.memo(
               mode={mapMode}
               pixelMaps={pixelMaps}
               colorLUT={colorLUT}
-              cc={cc}
+              colorChoiceIndices={colorChoiceIndices}
               cvs={cvs}
               displayW={displayW}
               displayH={displayH}
@@ -81,7 +81,7 @@ export const AnalyzePanel = React.memo(
               className="map-mode-buttons"
               style={{ display: "flex", flexWrap: "wrap", gap: SP.xs, justifyContent: "center", marginTop: SP.xs }}
             >
-              {(["luminance", "colorlum", "gradient"] as const).map((m) => (
+              {(["luminance", "colorLuma", "gradient"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setMapMode(m)}
@@ -94,7 +94,7 @@ export const AnalyzePanel = React.memo(
                 </button>
               ))}
               <span className="map-mode-break" />
-              {(["region", "depth", "noise", "entropy"] as const).map((m) => (
+              {(["region", "boundaryDistance", "noise", "entropy"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setMapMode(m)}
@@ -111,7 +111,7 @@ export const AnalyzePanel = React.memo(
           <div className="panel-sidebar">
             <ST title={t("stats_composition")} />
             <div style={{ marginTop: -4 }}>
-              <CompositionDonut cvs={cvs} hist={hist} total={total} colorLUT={colorLUT} cc={cc} />
+              <CompositionDonut cvs={cvs} hist={hist} total={total} colorLUT={colorLUT} colorChoiceIndices={colorChoiceIndices} />
             </div>
           </div>
         </div>
@@ -122,7 +122,7 @@ export const AnalyzePanel = React.memo(
     if (prev.mapMode !== next.mapMode) return false;
     if (prev.total !== next.total || prev.brushLevel !== next.brushLevel) return false;
     if (prev.cvs !== next.cvs) return false;
-    if (prev.cc !== next.cc) return false;
+    if (prev.colorChoiceIndices !== next.colorChoiceIndices) return false;
     if (prev.active !== next.active) return false;
     if (prev.displayW !== next.displayW || prev.displayH !== next.displayH) return false;
     for (let i = 0; i < 8; i++) {

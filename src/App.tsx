@@ -112,8 +112,8 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     state,
     dispatch,
     cvs,
-    cc,
-    ccDispatch,
+    colorChoiceIndices,
+    colorChoiceDispatch,
     brushLevel,
     setBrushLevel,
     brushSize,
@@ -136,8 +136,8 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     setHueAngle,
     glazeTool,
     setGlazeTool,
-    directCandidates,
-    setDirectCandidates,
+    candidateOverridesByLevel,
+    setCandidateOverridesByLevel,
     colorLUT,
     displayW,
     displayH,
@@ -169,7 +169,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     cvs,
     dispatch,
     colorLUT,
-    cc,
+    colorChoiceIndices,
     brushLevel,
     brushSize,
     tool,
@@ -181,13 +181,13 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     cvs,
     dispatch,
     colorLUT,
-    cc,
+    colorChoiceIndices,
     hueAngle,
     setHueAngle,
     glazeTool,
     brushSize,
     prvRef: glazePrvRef,
-    directCandidates,
+    candidateOverridesByLevel,
   });
 
   useCanvasCoordination({
@@ -432,8 +432,8 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
               displayH={displayH}
               canvasTransform={canvasTransform}
               canvasCursor={canvasCursor}
-              cc={cc}
-              ccDispatch={ccDispatch}
+              colorChoiceIndices={colorChoiceIndices}
+              colorChoiceDispatch={colorChoiceDispatch}
               brushLevel={brushLevel}
               setBrushLevel={setBrushLevel}
               tool={tool}
@@ -449,8 +449,8 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
               cvs={cvs}
               displayW={displayW}
               displayH={displayH}
-              cc={cc}
-              ccDispatch={ccDispatch}
+              colorChoiceIndices={colorChoiceIndices}
+              colorChoiceDispatch={colorChoiceDispatch}
               hist={hist}
               total={cvs.w * cvs.h}
               locked={locked}
@@ -476,8 +476,8 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
               setGlazeTool={setGlazeTool}
               brushSize={brushSize}
               setBrushSize={setBrushSize}
-              directCandidates={directCandidates}
-              setDirectCandidates={setDirectCandidates}
+              candidateOverridesByLevel={candidateOverridesByLevel}
+              setCandidateOverridesByLevel={setCandidateOverridesByLevel}
             >
               <GlazePanel
                 prvRef={glazePrvRef}
@@ -523,7 +523,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
               hist={hist}
               total={cvs.w * cvs.h}
               colorLUT={colorLUT}
-              cc={cc}
+              colorChoiceIndices={colorChoiceIndices}
               brushLevel={brushLevel}
               setBrushLevel={setBrushLevel}
               cvs={cvs}
@@ -544,8 +544,8 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
         >
           <GalleryPanel
             cvs={cvs}
-            cc={cc}
-            ccDispatch={ccDispatch}
+            colorChoiceIndices={colorChoiceIndices}
+            colorChoiceDispatch={colorChoiceDispatch}
             locked={locked}
             hist={hist}
             showToast={showToast}

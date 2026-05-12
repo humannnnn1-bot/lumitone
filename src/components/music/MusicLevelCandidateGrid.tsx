@@ -7,14 +7,14 @@ import type { MusicCandidateHover, MusicLevelPreview } from "../../music/types";
 interface MusicLevelCandidateGridProps {
   levelPreview: MusicLevelPreview[];
   hueAngle: number;
-  directCandidates: Map<number, number>;
+  candidateOverridesByLevel: Map<number, number>;
   selectedLevels: Set<number>;
   burstHighlight: Set<number>;
   hoveredCandidate: MusicCandidateHover;
-  onDirectCandidatesChange: React.Dispatch<React.SetStateAction<Map<number, number>>>;
+  onCandidateOverridesByLevelChange: React.Dispatch<React.SetStateAction<Map<number, number>>>;
   onSelectedLevelsChange: React.Dispatch<React.SetStateAction<Set<number>>>;
   onHoveredCandidateChange: (candidate: MusicCandidateHover) => void;
-  onBlockClick: (lv: number, angle: number) => void;
+  onBlockClick: (levelIndex: number, angle: number) => void;
 }
 
 interface MusicLevelCandidateColumnProps extends Omit<MusicLevelCandidateGridProps, "levelPreview"> {
@@ -28,57 +28,58 @@ function candidateHex(rgb: readonly number[]) {
 const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn({
   level,
   hueAngle,
-  directCandidates,
+  candidateOverridesByLevel,
   selectedLevels,
   burstHighlight,
   hoveredCandidate,
-  onDirectCandidatesChange,
+  onCandidateOverridesByLevelChange,
   onSelectedLevelsChange,
   onHoveredCandidateChange,
   onBlockClick,
 }: MusicLevelCandidateColumnProps) {
   const { t } = useTranslation();
   const swipeStartRef = useRef({ current: 0, startX: 0 });
-  const cands = LEVEL_CANDIDATES[level.lv];
+  const cands = LEVEL_CANDIDATES[level.levelIndex];
   const hasCands = cands.length > 1;
-  const isDirect = directCandidates.has(level.lv);
-  const directIdx = directCandidates.get(level.lv);
-  const autoIdx = hasCands ? findClosestCandidate(level.lv, hueAngle) : 0;
-  const currentIdx = isDirect ? directIdx! : autoIdx;
-  const prevIdx = hasCands ? (currentIdx - 1 + cands.length) % cands.length : -1;
-  const nextIdx = hasCands ? (currentIdx + 1) % cands.length : -1;
+  const isDirect = candidateOverridesByLevel.has(level.levelIndex);
+  const overrideCandidateIndex = candidateOverridesByLevel.get(level.levelIndex);
+  const autoCandidateIndex = hasCands ? findClosestCandidate(level.levelIndex, hueAngle) : 0;
+  const currentCandidateIndex = isDirect ? overrideCandidateIndex! : autoCandidateIndex;
+  const previousCandidateIndex = hasCands ? (currentCandidateIndex - 1 + cands.length) % cands.length : -1;
+  const nextCandidateIndex = hasCands ? (currentCandidateIndex + 1) % cands.length : -1;
   const isTouchDevice = typeof window !== "undefined" && "ontouchstart" in window;
 
-  const selectCandidate = (ci: number, clearSelected: boolean) => {
-    onDirectCandidatesChange((prev) => {
+  const selectCandidate = (candidateIndex: number, clearSelected: boolean) => {
+    onCandidateOverridesByLevelChange((prev) => {
       const next = new Map(prev);
-      next.set(level.lv, ci);
+      next.set(level.levelIndex, candidateIndex);
       return next;
     });
     if (clearSelected) {
       onSelectedLevelsChange((prev) => {
         const next = new Set(prev);
-        next.delete(level.lv);
+        next.delete(level.levelIndex);
         return next;
       });
     }
     onHoveredCandidateChange(null);
   };
 
-  const makeSwatch = (ci: number, size: number) => {
-    const cand = cands[ci];
+  const makeSwatch = (candidateIndex: number, size: number) => {
+    const cand = cands[candidateIndex];
     const candHex = candidateHex(cand.rgb);
-    const isSwatchHovered = hoveredCandidate !== null && hoveredCandidate.lv === level.lv && hoveredCandidate.ci === ci;
+    const isSwatchHovered =
+      hoveredCandidate !== null && hoveredCandidate.levelIndex === level.levelIndex && hoveredCandidate.candidateIndex === candidateIndex;
     const swatchClick = () => {
-      selectCandidate(ci, true);
-      onBlockClick(level.lv, cand.angle);
+      selectCandidate(candidateIndex, true);
+      onBlockClick(level.levelIndex, cand.angle);
     };
     return (
       <div
-        key={ci}
+        key={candidateIndex}
         role="button"
         tabIndex={0}
-        aria-label={t("aria_color_candidate", level.lv, candHex, `${Math.round(cand.angle)}°`)}
+        aria-label={t("aria_color_candidate", level.levelIndex, candHex, `${Math.round(cand.angle)}°`)}
         onClick={swatchClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -86,7 +87,7 @@ const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn(
             swatchClick();
           }
         }}
-        onPointerEnter={isTouchDevice ? undefined : () => onHoveredCandidateChange({ lv: level.lv, ci })}
+        onPointerEnter={isTouchDevice ? undefined : () => onHoveredCandidateChange({ levelIndex: level.levelIndex, candidateIndex })}
         onPointerLeave={isTouchDevice ? undefined : () => onHoveredCandidateChange(null)}
         title={`${candHex} ${Math.round(cand.angle)}\u00B0`}
         style={{
@@ -105,14 +106,14 @@ const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn(
   };
 
   const cycleCand = (dir: number) => {
-    const cur = directCandidates.has(level.lv) ? directCandidates.get(level.lv)! : autoIdx;
+    const cur = candidateOverridesByLevel.has(level.levelIndex) ? candidateOverridesByLevel.get(level.levelIndex)! : autoCandidateIndex;
     const newIdx = (((cur + dir) % cands.length) + cands.length) % cands.length;
-    onDirectCandidatesChange((prev) => {
+    onCandidateOverridesByLevelChange((prev) => {
       const next = new Map(prev);
-      next.set(level.lv, newIdx);
+      next.set(level.levelIndex, newIdx);
       return next;
     });
-    onHoveredCandidateChange({ lv: level.lv, ci: newIdx });
+    onHoveredCandidateChange({ levelIndex: level.levelIndex, candidateIndex: newIdx });
   };
 
   const handleWheel = hasCands
@@ -137,22 +138,23 @@ const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn(
       }
     : undefined;
 
-  const mainCi = currentIdx;
-  const mainCand = cands[mainCi];
+  const mainCandidateIndex = currentCandidateIndex;
+  const mainCand = cands[mainCandidateIndex];
   const mainHex = mainCand ? candidateHex(mainCand.rgb) : "";
-  const isMainHovered = hoveredCandidate !== null && hoveredCandidate.lv === level.lv && hoveredCandidate.ci === mainCi;
-  const isSelected = selectedLevels.has(level.lv);
-  const isBurst = burstHighlight.has(level.lv);
+  const isMainHovered =
+    hoveredCandidate !== null && hoveredCandidate.levelIndex === level.levelIndex && hoveredCandidate.candidateIndex === mainCandidateIndex;
+  const isSelected = selectedLevels.has(level.levelIndex);
+  const isBurst = burstHighlight.has(level.levelIndex);
 
   const mainClick = () => {
     if (!mainCand) return;
     onSelectedLevelsChange((prev) => {
       const next = new Set(prev);
-      if (isSelected) next.delete(level.lv);
-      else next.add(level.lv);
+      if (isSelected) next.delete(level.levelIndex);
+      else next.add(level.levelIndex);
       return next;
     });
-    onBlockClick(level.lv, mainCand.angle);
+    onBlockClick(level.levelIndex, mainCand.angle);
   };
 
   return (
@@ -169,11 +171,11 @@ const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn(
         touchAction: hasCands ? "none" : "auto",
       }}
     >
-      {hasCands ? makeSwatch(prevIdx, 20) : <div style={{ height: 20 }} />}
+      {hasCands ? makeSwatch(previousCandidateIndex, 20) : <div style={{ height: 20 }} />}
       <div
         role="button"
         tabIndex={0}
-        aria-label={mainCand ? t("aria_color_candidate", level.lv, mainHex, `${Math.round(mainCand.angle)}°`) : undefined}
+        aria-label={mainCand ? t("aria_color_candidate", level.levelIndex, mainHex, `${Math.round(mainCand.angle)}°`) : undefined}
         aria-pressed={isSelected}
         onClick={mainClick}
         onKeyDown={
@@ -186,14 +188,16 @@ const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn(
                 }
               }
         }
-        onPointerEnter={isTouchDevice ? undefined : () => onHoveredCandidateChange({ lv: level.lv, ci: mainCi })}
+        onPointerEnter={
+          isTouchDevice ? undefined : () => onHoveredCandidateChange({ levelIndex: level.levelIndex, candidateIndex: mainCandidateIndex })
+        }
         onPointerLeave={isTouchDevice ? undefined : () => onHoveredCandidateChange(null)}
         title={mainCand ? `${mainHex} ${Math.round(mainCand.angle)}\u00B0` : undefined}
         style={{
           width: 28,
           height: 28,
           borderRadius: R.md,
-          background: isDirect ? `rgb(${cands[directIdx!]?.rgb.join(",")})` : level.hex,
+          background: isDirect ? `rgb(${cands[overrideCandidateIndex!]?.rgb.join(",")})` : level.hex,
           border: `2px solid ${isBurst ? "#ffffff" : isMainHovered || isSelected ? C.accent : C.border}`,
           boxSizing: "border-box" as const,
           cursor: "pointer",
@@ -201,7 +205,7 @@ const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn(
           transition: isBurst ? "none" : "background 0.4s, box-shadow 0.5s, border-color 0.5s",
         }}
       />
-      {hasCands ? makeSwatch(nextIdx, 20) : <div style={{ height: 20 }} />}
+      {hasCands ? makeSwatch(nextCandidateIndex, 20) : <div style={{ height: 20 }} />}
     </div>
   );
 });
@@ -213,7 +217,7 @@ export const MusicLevelCandidateGrid = React.memo(function MusicLevelCandidateGr
   return (
     <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center", marginTop: SP.lg }}>
       {levelPreview.map((level) => (
-        <MusicLevelCandidateColumn key={level.lv} {...columnProps} level={level} />
+        <MusicLevelCandidateColumn key={level.levelIndex} {...columnProps} level={level} />
       ))}
     </div>
   );

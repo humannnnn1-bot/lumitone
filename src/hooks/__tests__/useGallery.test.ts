@@ -2,7 +2,7 @@
 import { describe, it, expect } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { generateAllVariants, renderThumbnail, useGallery } from "../useGallery";
-import { DEFAULT_CC, buildColorLUT, LEVEL_CANDIDATES } from "../../color-engine";
+import { DEFAULT_COLOR_CHOICE_INDICES, buildColorLUT, LEVEL_CANDIDATES } from "../../color-engine";
 import type { CanvasData } from "../../types";
 
 function makeCvs(w = 4, h = 4): CanvasData {
@@ -15,7 +15,7 @@ describe("generateAllVariants", () => {
   it("returns single variant when all levels are locked", () => {
     const locked = new Array(8).fill(true);
     const hist = new Array(8).fill(100);
-    const result = generateAllVariants([...DEFAULT_CC], locked, hist);
+    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
     expect(result.length).toBe(1);
   });
 
@@ -25,7 +25,7 @@ describe("generateAllVariants", () => {
     const hist = new Array(8).fill(0);
     hist[0] = 100; // only black
     hist[7] = 100; // only white
-    const result = generateAllVariants([...DEFAULT_CC], locked, hist);
+    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
     expect(result.length).toBe(1);
   });
 
@@ -35,7 +35,7 @@ describe("generateAllVariants", () => {
     // Unlock level 2 (Red vertex, has candidates)
     locked[2] = false;
     const expected = LEVEL_CANDIDATES[2].length;
-    const result = generateAllVariants([...DEFAULT_CC], locked, hist);
+    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
     expect(result.length).toBe(expected);
   });
 
@@ -43,7 +43,7 @@ describe("generateAllVariants", () => {
     const locked = new Array(8).fill(false);
     const hist = new Array(8).fill(0);
     hist[0] = 100; // only level 0 used
-    const result = generateAllVariants([...DEFAULT_CC], locked, hist);
+    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
     // level 0 has only 1 candidate, all others unused → 1 variant
     expect(result.length).toBe(1);
   });
@@ -53,7 +53,7 @@ describe("generateAllVariants", () => {
     const hist = new Array(8).fill(100);
     const currentMax = LEVEL_CANDIDATES.reduce((total, candidates) => total * candidates.length, 1);
 
-    const result = generateAllVariants([...DEFAULT_CC], locked, hist);
+    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
 
     expect(currentMax).toBe(81);
     expect(result).toHaveLength(81);
@@ -64,7 +64,7 @@ describe("generateAllVariants", () => {
     const hist = new Array(8).fill(100);
     locked[0] = true;
     locked[7] = true; // lock extremes
-    const result = generateAllVariants([...DEFAULT_CC], locked, hist);
+    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
     for (const v of result) {
       expect(v.length).toBe(8);
     }
@@ -75,7 +75,7 @@ describe("generateAllVariants", () => {
     const hist = new Array(8).fill(100);
     locked[0] = true;
     locked[7] = true;
-    const result = generateAllVariants([...DEFAULT_CC], locked, hist);
+    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
     for (const v of result) {
       for (let lv = 0; lv < 8; lv++) {
         expect(v[lv]).toBeGreaterThanOrEqual(0);
@@ -84,16 +84,16 @@ describe("generateAllVariants", () => {
     }
   });
 
-  it("locked levels preserve their cc value", () => {
-    const cc = [...DEFAULT_CC];
+  it("locked levels preserve their colorChoiceIndices value", () => {
+    const colorChoiceIndices = [...DEFAULT_COLOR_CHOICE_INDICES];
     const locked = new Array(8).fill(true);
     locked[3] = false; // only unlock level 3
     const hist = new Array(8).fill(100);
-    const result = generateAllVariants(cc, locked, hist);
+    const result = generateAllVariants(colorChoiceIndices, locked, hist);
     for (const v of result) {
       for (let lv = 0; lv < 8; lv++) {
         if (lv !== 3) {
-          expect(v[lv]).toBe(cc[lv] % LEVEL_CANDIDATES[lv].length);
+          expect(v[lv]).toBe(colorChoiceIndices[lv] % LEVEL_CANDIDATES[lv].length);
         }
       }
     }
@@ -103,7 +103,7 @@ describe("generateAllVariants", () => {
 describe("renderThumbnail", () => {
   it("produces ImageData of correct dimensions", () => {
     const data = new Uint8Array(16).fill(0); // 4x4 canvas
-    const lut = buildColorLUT([...DEFAULT_CC]);
+    const lut = buildColorLUT([...DEFAULT_COLOR_CHOICE_INDICES]);
     const img = renderThumbnail(data, 4, 4, lut, 2, 2);
     expect(img.width).toBe(2);
     expect(img.height).toBe(2);
@@ -112,7 +112,7 @@ describe("renderThumbnail", () => {
 
   it("maps level 0 to correct LUT color", () => {
     const data = new Uint8Array(4).fill(0); // 2x2 all level 0
-    const lut = buildColorLUT([...DEFAULT_CC]);
+    const lut = buildColorLUT([...DEFAULT_COLOR_CHOICE_INDICES]);
     const img = renderThumbnail(data, 2, 2, lut, 2, 2);
     const rgb = lut[0];
     // Check first pixel
@@ -142,7 +142,7 @@ describe("renderThumbnail", () => {
     data[14] = 7;
     data[15] = 7; // bottom-right: level 7
 
-    const lut = buildColorLUT([...DEFAULT_CC]);
+    const lut = buildColorLUT([...DEFAULT_COLOR_CHOICE_INDICES]);
     const img = renderThumbnail(data, 4, 4, lut, 2, 2);
 
     // Each pixel of 2x2 thumbnail samples from a different quadrant
@@ -154,7 +154,7 @@ describe("renderThumbnail", () => {
 
   it("handles 1x1 thumbnail", () => {
     const data = new Uint8Array(100).fill(4);
-    const lut = buildColorLUT([...DEFAULT_CC]);
+    const lut = buildColorLUT([...DEFAULT_COLOR_CHOICE_INDICES]);
     const img = renderThumbnail(data, 10, 10, lut, 1, 1);
     expect(img.width).toBe(1);
     expect(img.height).toBe(1);
@@ -167,7 +167,7 @@ describe("renderThumbnail", () => {
   it("masks pixel values to 3 bits", () => {
     // Value 0xFF should be masked to 7
     const data = new Uint8Array(4).fill(0xff);
-    const lut = buildColorLUT([...DEFAULT_CC]);
+    const lut = buildColorLUT([...DEFAULT_COLOR_CHOICE_INDICES]);
     const img = renderThumbnail(data, 2, 2, lut, 2, 2);
     const rgb = lut[7]; // 0xFF & 7 = 7
     expect(img.data[0]).toBe(rgb[0]);
@@ -180,7 +180,9 @@ describe("useGallery", () => {
 
   it("waits while inactive and generates when activated", async () => {
     const cvs = makeCvs();
-    const hook = renderHook(({ active }) => useGallery(cvs, [...DEFAULT_CC], locked, hist, active), { initialProps: { active: false } });
+    const hook = renderHook(({ active }) => useGallery(cvs, [...DEFAULT_COLOR_CHOICE_INDICES], locked, hist, active), {
+      initialProps: { active: false },
+    });
 
     expect(hook.result.current.items).toHaveLength(0);
 
@@ -195,8 +197,8 @@ describe("useGallery", () => {
   it("reuses generated items for the same canvas data and regenerates when data changes", async () => {
     const first = makeCvs();
     const second = makeCvs();
-    const cc = [...DEFAULT_CC];
-    const hook = renderHook(({ cvs }) => useGallery(cvs, cc, locked, hist, true), { initialProps: { cvs: first } });
+    const colorChoiceIndices = [...DEFAULT_COLOR_CHOICE_INDICES];
+    const hook = renderHook(({ cvs }) => useGallery(cvs, colorChoiceIndices, locked, hist, true), { initialProps: { cvs: first } });
 
     await waitFor(() => expect(hook.result.current.items).toHaveLength(1));
     const firstItems = hook.result.current.items;

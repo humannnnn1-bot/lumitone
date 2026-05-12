@@ -107,7 +107,7 @@ describe("LinkedVisualization split", () => {
     expect(renderOverlay).toHaveBeenCalledWith(
       expect.objectContaining({
         activeAlpha: 45,
-        activeDots: expect.arrayContaining([expect.objectContaining({ lv: 1, act: true })]),
+        activeDots: expect.arrayContaining([expect.objectContaining({ levelIndex: 1, isActive: true })]),
       }),
     );
   });

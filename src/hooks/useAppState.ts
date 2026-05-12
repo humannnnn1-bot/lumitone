@@ -33,7 +33,7 @@ export function useAppState(t: import("../i18n").TranslationFn) {
 
   const { resetBrushSizeForCanvas } = toolState;
   const { showToast, toastTimerRef } = uiState;
-  const { cc, ccDispatch, locked, setLocked } = colorState;
+  const { colorChoiceIndices, colorChoiceDispatch, locked, setLocked } = colorState;
 
   const [loaded, setLoaded] = useState(false);
 
@@ -42,10 +42,15 @@ export function useAppState(t: import("../i18n").TranslationFn) {
   const saveRequestIdRef = useRef(0);
   const baselineSaveCompleteRef = useRef(false);
   const persistentStorageRequestInFlightRef = useRef(false);
-  const lastSavedRef = useRef<{ data: Uint8Array | null; colorMap: Uint8Array | null; cc: number[] | null; locked: boolean[] | null }>({
+  const lastSavedRef = useRef<{
+    data: Uint8Array | null;
+    colorMap: Uint8Array | null;
+    colorChoiceIndices: number[] | null;
+    locked: boolean[] | null;
+  }>({
     data: null,
     colorMap: null,
-    cc: null,
+    colorChoiceIndices: null,
     locked: null,
   });
 
@@ -64,7 +69,7 @@ export function useAppState(t: import("../i18n").TranslationFn) {
             data: result.state.data,
             ...(result.state.colorMap ? { colorMap: result.state.colorMap } : {}),
           });
-          ccDispatch({ type: "load_all", values: result.state.cc });
+          colorChoiceDispatch({ type: "load_all", values: result.state.colorChoiceIndices });
           if (result.state.locked) setLocked(result.state.locked);
           return;
         }
@@ -72,37 +77,48 @@ export function useAppState(t: import("../i18n").TranslationFn) {
         if (result.status === "invalid") {
           console.warn("CHROMALUM: saved state was ignored:", result.reason ?? "unknown reason");
           showToast(t("toast_restore_invalid"), "error");
-          lastSavedRef.current = { data: cvs.data, colorMap: cvs.colorMap, cc, locked };
+          lastSavedRef.current = { data: cvs.data, colorMap: cvs.colorMap, colorChoiceIndices, locked };
           baselineSaveCompleteRef.current = true;
         }
       })
       .catch(createErrorHandler("Restore", () => showToast(t("toast_restore_failed"), "error")))
       .finally(() => setLoaded(true));
-  }, [showToast, t, ccDispatch, setLocked, cvs.data, cvs.colorMap, cc, locked]);
+  }, [showToast, t, colorChoiceDispatch, setLocked, cvs.data, cvs.colorMap, colorChoiceIndices, locked]);
 
   // Auto-save to IndexedDB on changes (debounced, skip if unchanged)
   useEffect(() => {
     if (!loaded) return;
     const prev = lastSavedRef.current;
-    if (prev.data === cvs.data && prev.colorMap === cvs.colorMap && prev.cc === cc && prev.locked === locked) return;
+    if (
+      prev.data === cvs.data &&
+      prev.colorMap === cvs.colorMap &&
+      prev.colorChoiceIndices === colorChoiceIndices &&
+      prev.locked === locked
+    )
+      return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    const _cvs = cvs,
-      _cc = cc,
-      _locked = locked;
+    const pendingCanvas = cvs,
+      pendingColorChoiceIndices = colorChoiceIndices,
+      pendingLocked = locked;
     const doSave = () => {
       const requestId = ++saveRequestIdRef.current;
       saveState({
-        w: _cvs.w,
-        h: _cvs.h,
-        data: _cvs.data,
-        colorMap: new Uint8Array(_cvs.colorMap),
-        cc: [..._cc],
-        locked: [..._locked],
+        w: pendingCanvas.w,
+        h: pendingCanvas.h,
+        data: pendingCanvas.data,
+        colorMap: new Uint8Array(pendingCanvas.colorMap),
+        colorChoiceIndices: [...pendingColorChoiceIndices],
+        locked: [...pendingLocked],
         version: SAVED_STATE_VERSION,
       })
         .then(() => {
           if (requestId === saveRequestIdRef.current) {
-            lastSavedRef.current = { data: _cvs.data, colorMap: _cvs.colorMap, cc: _cc, locked: _locked };
+            lastSavedRef.current = {
+              data: pendingCanvas.data,
+              colorMap: pendingCanvas.colorMap,
+              colorChoiceIndices: pendingColorChoiceIndices,
+              locked: pendingLocked,
+            };
             if (!baselineSaveCompleteRef.current) {
               baselineSaveCompleteRef.current = true;
               return;
@@ -138,7 +154,7 @@ export function useAppState(t: import("../i18n").TranslationFn) {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [cvs, cc, locked, loaded, showToast, t]);
+  }, [cvs, colorChoiceIndices, locked, loaded, showToast, t]);
 
   // Flush pending save on tab hide / page unload to avoid data loss
   useEffect(() => {
@@ -203,8 +219,8 @@ export function useAppState(t: import("../i18n").TranslationFn) {
     state,
     dispatch,
     cvs,
-    cc,
-    ccDispatch,
+    colorChoiceIndices,
+    colorChoiceDispatch,
     ...toolState,
     ...uiState,
     loaded,

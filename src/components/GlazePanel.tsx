@@ -95,11 +95,19 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
     onPinchUp,
   } = props;
   const { statusRef: glazeStatusRef, curRef: glazeCurRef } = glazeDrawing;
-  const { hueAngle, setHueAngle, glazeTool, setGlazeTool, brushSize, setBrushSize, directCandidates, setDirectCandidates } =
-    useGlazeContext();
+  const {
+    hueAngle,
+    setHueAngle,
+    glazeTool,
+    setGlazeTool,
+    brushSize,
+    setBrushSize,
+    candidateOverridesByLevel,
+    setCandidateOverridesByLevel,
+  } = useGlazeContext();
   const { t } = useTranslation();
   const [showHighlight, setShowHighlight] = useState(false);
-  const [hoveredCandidate, setHoveredCandidate] = useState<{ lv: number; ci: number } | null>(null);
+  const [hoveredCandidate, setHoveredCandidate] = useState<{ levelIndex: number; candidateIndex: number } | null>(null);
   const [selectedLevels, setSelectedLevels] = useState<Set<number>>(new Set());
 
   // Keyboard shortcuts for zoom/pan + tool switching
@@ -243,10 +251,10 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
   const handleHueChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setHueAngle(Number(e.target.value));
-      setDirectCandidates(new Map());
+      setCandidateOverridesByLevel(new Map());
       setSelectedLevels(new Set());
     },
-    [setHueAngle, setDirectCandidates],
+    [setHueAngle, setCandidateOverridesByLevel],
   );
 
   const handleGlazeClear = useCallback(() => {
@@ -261,18 +269,18 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
 
   // Preview: for selected hue angle, show what color each level maps to
   const levelPreview = useMemo<GlazeLevelPreview[]>(() => {
-    return LEVEL_INFO.map((info, lv) => {
-      const candidates = LEVEL_CANDIDATES[lv];
-      const ci = findClosestCandidate(lv, hueAngle);
-      const rgb = candidates[ci]?.rgb ?? [128, 128, 128];
-      return { lv, name: info.name, rgb, hex: `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` };
+    return LEVEL_INFO.map((info, levelIndex) => {
+      const candidates = LEVEL_CANDIDATES[levelIndex];
+      const candidateIndex = findClosestCandidate(levelIndex, hueAngle);
+      const rgb = candidates[candidateIndex]?.rgb ?? [128, 128, 128];
+      return { levelIndex, name: info.name, rgb, hex: `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` };
     });
   }, [hueAngle]);
 
   const hueTicks = useMemo(() => {
     const ticks: { deg: number; color: string }[] = [];
-    for (let lv = 2; lv <= 5; lv++) {
-      const cands = LEVEL_CANDIDATES[lv];
+    for (let levelIndex = 2; levelIndex <= 5; levelIndex++) {
+      const cands = LEVEL_CANDIDATES[levelIndex];
       if (cands.length <= 1 || cands[0].angle < 0) continue;
       const angles = cands.map((c) => c.angle).sort((a, b) => a - b);
       for (let i = 0; i < angles.length; i++) {
@@ -552,10 +560,10 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
           <GlazeCandidateGrid
             levelPreview={levelPreview}
             hueAngle={hueAngle}
-            directCandidates={directCandidates}
+            candidateOverridesByLevel={candidateOverridesByLevel}
             selectedLevels={selectedLevels}
             hoveredCandidate={hoveredCandidate}
-            onDirectCandidatesChange={setDirectCandidates}
+            onCandidateOverridesByLevelChange={setCandidateOverridesByLevel}
             onSelectedLevelsChange={setSelectedLevels}
             onHoveredCandidateChange={setHoveredCandidate}
           />
@@ -567,7 +575,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
             onHueAngleChange={setHueAngle}
             hoveredCandidate={hoveredCandidate}
             onHoverCandidate={setHoveredCandidate}
-            directCandidates={directCandidates}
+            candidateOverridesByLevel={candidateOverridesByLevel}
           />
         </div>
         {/* panel-sidebar */}

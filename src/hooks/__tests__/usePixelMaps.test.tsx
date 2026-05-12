@@ -43,9 +43,9 @@ const { MockPixelAnalysisWorker } = vi.hoisted(() => {
             data: {
               id: req.id,
               noise,
-              depth: new Float32Array(0),
-              gradAngle: new Float32Array(0),
-              gradMag: new Float32Array(0),
+              boundaryDistance: new Float32Array(0),
+              gradientAngle: new Float32Array(0),
+              gradientMagnitude: new Float32Array(0),
               regionId: new Int32Array(0),
               isEdge: new Uint8Array(0),
               levelNorm: new Float32Array(0),
@@ -127,13 +127,15 @@ describe("usePixelMaps", () => {
 
   it("reuses cached maps when switching back to the same mode on the same canvas", async () => {
     const cvs = { w: 4, h: 4, data: new Uint8Array(16), colorMap: new Uint8Array(16) };
-    const initialProps: { mode: "noise" | "depth" } = { mode: "noise" };
-    const { result, rerender } = renderHook(({ mode }: { mode: "noise" | "depth" }) => usePixelMaps(cvs, mode), { initialProps });
+    const initialProps: { mode: "noise" | "boundaryDistance" } = { mode: "noise" };
+    const { result, rerender } = renderHook(({ mode }: { mode: "noise" | "boundaryDistance" }) => usePixelMaps(cvs, mode), {
+      initialProps,
+    });
 
     await waitFor(() => expect(result.current.noise[0]).toBe(1));
 
     await act(async () => {
-      rerender({ mode: "depth" as const });
+      rerender({ mode: "boundaryDistance" as const });
     });
     await waitFor(() => expect(result.current.noise[0]).toBe(2));
 
@@ -148,15 +150,18 @@ describe("usePixelMaps", () => {
   it("drops cached maps when the canvas data changes", async () => {
     const first = { w: 4, h: 4, data: new Uint8Array(16), colorMap: new Uint8Array(16) };
     const second = { w: 4, h: 4, data: new Uint8Array(16), colorMap: new Uint8Array(16) };
-    const initialProps: { cvs: typeof first; mode: "noise" | "depth" } = { cvs: first, mode: "noise" };
-    const { result, rerender } = renderHook(({ cvs, mode }: { cvs: typeof first; mode: "noise" | "depth" }) => usePixelMaps(cvs, mode), {
-      initialProps,
-    });
+    const initialProps: { cvs: typeof first; mode: "noise" | "boundaryDistance" } = { cvs: first, mode: "noise" };
+    const { result, rerender } = renderHook(
+      ({ cvs, mode }: { cvs: typeof first; mode: "noise" | "boundaryDistance" }) => usePixelMaps(cvs, mode),
+      {
+        initialProps,
+      },
+    );
 
     await waitFor(() => expect(result.current.noise[0]).toBe(1));
 
     await act(async () => {
-      rerender({ cvs: first, mode: "depth" as const });
+      rerender({ cvs: first, mode: "boundaryDistance" as const });
     });
     await waitFor(() => expect(result.current.noise[0]).toBe(2));
 
@@ -173,23 +178,25 @@ describe("usePixelMaps", () => {
 
     await waitFor(() => expect(result.current.noise[0]).toBe(1));
     await waitFor(() =>
-      expect(MockPixelAnalysisWorker.postedModes).toEqual(["noise", "luminance", "gradient", "region", "depth", "entropy"]),
+      expect(MockPixelAnalysisWorker.postedModes).toEqual(["noise", "luminance", "gradient", "region", "boundaryDistance", "entropy"]),
     );
     expect(MockPixelAnalysisWorker.instances).toHaveLength(2);
   });
 
   it("uses preloaded maps without sending another worker request when switching modes", async () => {
     const cvs = { w: 4, h: 4, data: new Uint8Array(16), colorMap: new Uint8Array(16) };
-    const initialProps: { mode: "noise" | "depth" } = { mode: "noise" };
-    const { result, rerender } = renderHook(({ mode }: { mode: "noise" | "depth" }) => usePixelMaps(cvs, mode, true), { initialProps });
+    const initialProps: { mode: "noise" | "boundaryDistance" } = { mode: "noise" };
+    const { result, rerender } = renderHook(({ mode }: { mode: "noise" | "boundaryDistance" }) => usePixelMaps(cvs, mode, true), {
+      initialProps,
+    });
 
     await waitFor(() =>
-      expect(MockPixelAnalysisWorker.postedModes).toEqual(["noise", "luminance", "gradient", "region", "depth", "entropy"]),
+      expect(MockPixelAnalysisWorker.postedModes).toEqual(["noise", "luminance", "gradient", "region", "boundaryDistance", "entropy"]),
     );
     const postedBeforeSwitch = MockPixelAnalysisWorker.postedModes.slice();
 
     await act(async () => {
-      rerender({ mode: "depth" as const });
+      rerender({ mode: "boundaryDistance" as const });
     });
     await waitFor(() => expect(result.current.noise[0]).toBe(4));
     expect(MockPixelAnalysisWorker.postedModes).toEqual(postedBeforeSwitch);

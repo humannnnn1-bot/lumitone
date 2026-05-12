@@ -19,12 +19,12 @@ import { useTranslation } from "../i18n";
 import { C, FS, FW, O } from "../styles/tokens";
 
 interface Props {
-  cc: readonly number[];
+  colorChoiceIndices: readonly number[];
   dispatch: React.Dispatch<ColorAction>;
   hist: number[];
   total: number;
   locked: boolean[];
-  onToggleLock: (lv: number) => void;
+  onToggleLock: (levelIndex: number) => void;
   onRandomize: () => void;
   canRandomize: boolean;
 }
@@ -37,7 +37,7 @@ const DICE_ROLL_MS = 280;
 const DICE_ROLL_TRANSFORM = "rotate(360deg) scale(1.06)";
 
 export const HexDiagram = memo(
-  function HexDiagram({ cc, dispatch, hist, total, locked, onToggleLock, onRandomize, canRandomize }: Props) {
+  function HexDiagram({ colorChoiceIndices, dispatch, hist, total, locked, onToggleLock, onRandomize, canRandomize }: Props) {
     const { t } = useTranslation();
     const [hl, setHl] = useState<number | null>(null);
     const [focusedLv, setFocusedLv] = useState<number | null>(null);
@@ -50,8 +50,8 @@ export const HexDiagram = memo(
       diceTimer.current = setTimeout(() => setDiceRolling(false), DICE_ROLL_MS);
     }, [onRandomize]);
     const vp = HEX_VP;
-    const sel = (lv: number, ai: number) => dispatch({ type: "set_color", lv, idx: ai });
-    const isA = (lv: number, ai: number) => cc[lv] % LEVEL_CANDIDATES[lv].length === ai;
+    const sel = (levelIndex: number, ai: number) => dispatch({ type: "set_color", levelIndex, candidateIndex: ai });
+    const isA = (levelIndex: number, ai: number) => colorChoiceIndices[levelIndex] % LEVEL_CANDIDATES[levelIndex].length === ai;
 
     // Event delegation for mouse enter/leave on SVG groups with data-lv attribute
     const onSvgMouseOver = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
@@ -62,12 +62,12 @@ export const HexDiagram = memo(
       const g = (e.target as SVGElement).closest<SVGElement>("g[data-lv]");
       if (g) setHl(null);
     }, []);
-    const dR = (lv: number, vertex: boolean, active: boolean) => {
+    const dR = (levelIndex: number, vertex: boolean, active: boolean) => {
       const mn = vertex ? 12 : 8;
       if (!active) return mn;
       const base = vertex ? 15 : 8,
         mx = vertex ? 50 : 30;
-      const r = total > 0 ? hist[lv] / total : 0;
+      const r = total > 0 ? hist[levelIndex] / total : 0;
       return Math.min(mx, Math.max(mn, base * (0.5 + r * 10)));
     };
     const { cp } = useMemo(() => {
@@ -91,7 +91,7 @@ export const HexDiagram = memo(
       const path =
         points.length > 1 ? points.map((p, i) => (i === 0 ? "M" : "L") + p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ") + "Z" : "";
       return { actP: points, cp: path };
-    }, [cc, vp, isA]); // eslint-disable-line react-hooks/exhaustive-deps -- isA depends on cc
+    }, [colorChoiceIndices, vp, isA]); // eslint-disable-line react-hooks/exhaustive-deps -- isA depends on colorChoiceIndices
 
     return (
       <div className="hex-diag-wrap" style={{ display: "inline-flex", flexDirection: "column", alignItems: "center" }}>
@@ -155,7 +155,7 @@ export const HexDiagram = memo(
             {(() => {
               type CircleItem = {
                 key: string;
-                lv: number;
+                levelIndex: number;
                 ai: number;
                 x: number;
                 y: number;
@@ -179,7 +179,7 @@ export const HexDiagram = memo(
                     ai = HEX_EDGE_ALTS[ei][li];
                   const act = isA(lv, ai),
                     r = dR(lv, false, act);
-                  allCircles.push({ key: "m" + ei + li, lv, ai, x, y, r, color: dc, vertex: false });
+                  allCircles.push({ key: "m" + ei + li, levelIndex: lv, ai, x, y, r, color: dc, vertex: false });
                 });
               });
               // Vertex circles
@@ -188,17 +188,17 @@ export const HexDiagram = memo(
                   ai = HEX_VERTEX_ALTS[i];
                 const act = isA(v.lv, ai),
                   r = dR(v.lv, true, act);
-                allCircles.push({ key: "v" + i, lv: v.lv, ai, x: p.x, y: p.y, r, color: v.rgb, vertex: true, vertexIdx: i });
+                allCircles.push({ key: "v" + i, levelIndex: v.lv, ai, x: p.x, y: p.y, r, color: v.rgb, vertex: true, vertexIdx: i });
               });
               // Sort: inactive first (large behind), then active on top
               allCircles.sort((a, b) => {
-                const aAct = isA(a.lv, a.ai) ? 1 : 0;
-                const bAct = isA(b.lv, b.ai) ? 1 : 0;
+                const aAct = isA(a.levelIndex, a.ai) ? 1 : 0;
+                const bAct = isA(b.levelIndex, b.ai) ? 1 : 0;
                 if (aAct !== bAct) return aAct - bAct; // inactive before active
                 return b.r - a.r; // within same group, large behind
               });
               return allCircles.map((item) => {
-                const { key, lv, ai, x, y, r, color, vertex, vertexIdx } = item;
+                const { key, levelIndex: lv, ai, x, y, r, color, vertex, vertexIdx } = item;
                 const act = isA(lv, ai),
                   hov = hl === lv;
                 if (vertex && vertexIdx !== undefined) {
@@ -458,7 +458,7 @@ export const HexDiagram = memo(
   (prev, next) => {
     if (prev.total !== next.total) return false;
     for (let i = 0; i < 8; i++) {
-      if (prev.cc[i] !== next.cc[i]) return false;
+      if (prev.colorChoiceIndices[i] !== next.colorChoiceIndices[i]) return false;
       if (prev.hist[i] !== next.hist[i]) return false;
       if (prev.locked[i] !== next.locked[i]) return false;
     }

@@ -3,12 +3,11 @@ import React from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MAX_UNDO } from "../../constants";
-import type { AppState, CanvasData, CompressedDiff, MapMode, PanZoomHandlers } from "../../types";
-import type { PixelMaps as PixelMapsType } from "../../hooks/usePixelMaps";
+import type { AnalysisPixelMaps, AppState, CanvasData, CompressedDiff, MapMode, PanZoomHandlers } from "../../types";
 import { RingBuffer } from "../../utils/ring-buffer";
 import { GlazeContextProvider, type GlazeContextValue } from "../../state/GlazeContext";
 import type { GlazeDrawingResult } from "../../hooks/useGlazeDrawing";
-import { DEFAULT_CC } from "../../color-engine";
+import { DEFAULT_COLOR_CHOICE_INDICES } from "../../color-engine";
 import { SourcePanel } from "../SourcePanel";
 import { ColorPanel } from "../ColorPanel";
 import { GlazePanel } from "../GlazePanel";
@@ -60,7 +59,7 @@ function makeCanvasData(w = 4, h = 4): CanvasData {
 function makeState(withUndo = false): AppState {
   const undoStack = new RingBuffer<CompressedDiff>(MAX_UNDO);
   if (withUndo) {
-    undoStack.push({ runs: new Uint32Array([0, 1]), ov: new Uint8Array([0]), nv: new Uint8Array([1]) });
+    undoStack.push({ runs: new Uint32Array([0, 1]), oldValues: new Uint8Array([0]), newValues: new Uint8Array([1]) });
   }
   return {
     cvs: makeCanvasData(),
@@ -113,14 +112,14 @@ function makePixelMaps(w = 2, h = 2): PixelMaps {
     w,
     h,
     noise: new Float32Array([0, 0.25, 0.5, 1]),
-    depth: new Float32Array([0, 0.2, 0.8, 1]),
-    gradAngle: new Float32Array([0, Math.PI / 2, Math.PI, -Math.PI / 2]),
-    gradMag: new Float32Array([0, 0.2, 0.5, 1]),
+    boundaryDistance: new Float32Array([0, 0.2, 0.8, 1]),
+    gradientAngle: new Float32Array([0, Math.PI / 2, Math.PI, -Math.PI / 2]),
+    gradientMagnitude: new Float32Array([0, 0.2, 0.5, 1]),
     regionId: new Int32Array([1, 1, 2, 3]),
     isEdge: new Uint8Array([0, 1, 0, 0]),
     levelNorm: new Float32Array([0, 0.25, 0.5, 1]),
     localDiversity: new Float32Array([0, 0.25, 0.75, 1]),
-  } satisfies PixelMapsType & { w: number; h: number };
+  } satisfies AnalysisPixelMaps;
 }
 
 describe("SourcePanel interactions", () => {
@@ -364,8 +363,8 @@ describe("ColorPanel interactions", () => {
         displayH={64}
         canvasTransform={{}}
         canvasCursor="crosshair"
-        cc={[0, 0, 0, 0, 0, 0, 0, 0]}
-        ccDispatch={vi.fn()}
+        colorChoiceIndices={[0, 0, 0, 0, 0, 0, 0, 0]}
+        colorChoiceDispatch={vi.fn()}
         brushLevel={2}
         setBrushLevel={vi.fn()}
         tool="brush"
@@ -403,7 +402,7 @@ describe("GlazePanel interactions", () => {
     const setHueAngle = vi.fn();
     const setGlazeTool = vi.fn();
     const setBrushSize = vi.fn();
-    const setDirectCandidates = vi.fn();
+    const setCandidateOverridesByLevel = vi.fn();
     const context: GlazeContextValue = {
       hueAngle: 45,
       setHueAngle,
@@ -411,8 +410,8 @@ describe("GlazePanel interactions", () => {
       setGlazeTool,
       brushSize: 4,
       setBrushSize,
-      directCandidates: new Map([[2, 0]]),
-      setDirectCandidates,
+      candidateOverridesByLevel: new Map([[2, 0]]),
+      setCandidateOverridesByLevel,
       ...options?.context,
     };
     const panZoom = makePanZoom();
@@ -445,11 +444,11 @@ describe("GlazePanel interactions", () => {
         <GlazePanel {...props} />
       </GlazeContextProvider>,
     );
-    return { ...view, props, context, panZoom, glazeDrawing, setHueAngle, setGlazeTool, setBrushSize, setDirectCandidates };
+    return { ...view, props, context, panZoom, glazeDrawing, setHueAngle, setGlazeTool, setBrushSize, setCandidateOverridesByLevel };
   }
 
   it("routes tool shortcuts, hue selection, clear action, and canvas pointer modes", () => {
-    const { props, panZoom, glazeDrawing, setHueAngle, setGlazeTool, setBrushSize, setDirectCandidates } = renderGlaze();
+    const { props, panZoom, glazeDrawing, setHueAngle, setGlazeTool, setBrushSize, setCandidateOverridesByLevel } = renderGlaze();
 
     fireEvent.click(screen.getByRole("radio", { name: /tool_glaze_fill/ }));
     expect(setGlazeTool).toHaveBeenCalledWith("glaze_fill");
@@ -457,7 +456,7 @@ describe("GlazePanel interactions", () => {
 
     fireEvent.change(screen.getByLabelText("aria_hue_slider"), { target: { value: "120" } });
     expect(setHueAngle).toHaveBeenCalledWith(120);
-    expect(setDirectCandidates).toHaveBeenCalledWith(new Map());
+    expect(setCandidateOverridesByLevel).toHaveBeenCalledWith(new Map());
 
     fireEvent.click(screen.getByRole("button", { name: "btn_glaze_clear" }));
     expect(props.dispatch).toHaveBeenCalledWith({ type: "glaze_clear" });
@@ -492,13 +491,13 @@ describe("GlazePanel interactions", () => {
   });
 
   it("lets direct candidate swatches opt a level into and out of manual selection", () => {
-    const { setDirectCandidates } = renderGlaze({ context: { directCandidates: new Map() } });
+    const { setCandidateOverridesByLevel } = renderGlaze({ context: { candidateOverridesByLevel: new Map() } });
     const candidateButtons = screen.getAllByRole("button").filter((button) => button.getAttribute("title")?.startsWith("#"));
     expect(candidateButtons.length).toBeGreaterThan(0);
 
     fireEvent.click(candidateButtons[0]);
-    expect(setDirectCandidates).toHaveBeenCalledWith(expect.any(Function));
-    const updated = (setDirectCandidates.mock.calls[0][0] as (value: Map<number, number>) => Map<number, number>)(new Map());
+    expect(setCandidateOverridesByLevel).toHaveBeenCalledWith(expect.any(Function));
+    const updated = (setCandidateOverridesByLevel.mock.calls[0][0] as (value: Map<number, number>) => Map<number, number>)(new Map());
     expect(updated.size).toBe(1);
   });
 
@@ -582,11 +581,29 @@ describe("MapCanvas rendering and inspection", () => {
     const cvs = { ...makeCanvasData(2, 2), data: new Uint8Array([0, 2, 5, 7]) };
     const pixelMaps = makePixelMaps(2, 2);
     const { container, rerender } = render(
-      <MapCanvas mode="luminance" pixelMaps={pixelMaps} colorLUT={colorLUT} cc={DEFAULT_CC} cvs={cvs} displayW={20} displayH={20} />,
+      <MapCanvas
+        mode="luminance"
+        pixelMaps={pixelMaps}
+        colorLUT={colorLUT}
+        colorChoiceIndices={DEFAULT_COLOR_CHOICE_INDICES}
+        cvs={cvs}
+        displayW={20}
+        displayH={20}
+      />,
     );
 
-    for (const mode of ["entropy", "noise", "depth", "luminance", "colorlum", "gradient", "region"] satisfies MapMode[]) {
-      rerender(<MapCanvas mode={mode} pixelMaps={pixelMaps} colorLUT={colorLUT} cc={DEFAULT_CC} cvs={cvs} displayW={20} displayH={20} />);
+    for (const mode of ["entropy", "noise", "boundaryDistance", "luminance", "colorLuma", "gradient", "region"] satisfies MapMode[]) {
+      rerender(
+        <MapCanvas
+          mode={mode}
+          pixelMaps={pixelMaps}
+          colorLUT={colorLUT}
+          colorChoiceIndices={DEFAULT_COLOR_CHOICE_INDICES}
+          cvs={cvs}
+          displayW={20}
+          displayH={20}
+        />,
+      );
     }
     expect(putImageData).toHaveBeenCalledTimes(8);
     expect(screen.getByText("\u2014")).toBeTruthy();
@@ -625,7 +642,7 @@ describe("MapCanvas rendering and inspection", () => {
         mode="noise"
         pixelMaps={makePixelMaps(1, 1)}
         colorLUT={colorLUT}
-        cc={DEFAULT_CC}
+        colorChoiceIndices={DEFAULT_COLOR_CHOICE_INDICES}
         cvs={makeCanvasData(2, 2)}
         displayW={20}
         displayH={20}

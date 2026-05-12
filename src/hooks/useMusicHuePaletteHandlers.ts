@@ -13,7 +13,7 @@ type MusicSonificationLevel = { lv: number; angle: number };
 
 function useMusicKeyboardShortcuts(
   sonificationLevels: MusicSonificationLevel[],
-  onLevelTrigger: (lv: number, angle: number) => void,
+  onLevelTrigger: (levelIndex: number, angle: number) => void,
 ): void {
   const sonificationLevelsRef = useRef(sonificationLevels);
   useEffect(() => {
@@ -25,9 +25,9 @@ function useMusicKeyboardShortcuts(
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key;
       if (k >= "1" && k <= "6") {
-        const lv = +k;
-        const entry = sonificationLevelsRef.current.find((s) => s.lv === lv);
-        if (entry) onLevelTrigger(lv, entry.angle);
+        const levelIndex = +k;
+        const entry = sonificationLevelsRef.current.find((s) => s.lv === levelIndex);
+        if (entry) onLevelTrigger(levelIndex, entry.angle);
       }
     };
     document.addEventListener("keydown", handler);
@@ -41,7 +41,7 @@ interface UseMusicHuePaletteHandlersOptions {
   resumeDrone: () => void;
   ensureAudio: () => void;
   sonificationLevels: MusicSonificationLevel[];
-  palette: Pick<MusicPaletteState, "setHueAngle" | "setDirectCandidates" | "setSelectedLevels" | "prevCandidatesRef">;
+  palette: Pick<MusicPaletteState, "setHueAngle" | "setCandidateOverridesByLevel" | "setSelectedLevels" | "prevCandidatesRef">;
   transport: Pick<MusicTransportState, "setAlpha0" | "setAlpha7" | "setOriginMode">;
   burst: Pick<MusicBurstHighlightState, "setBurstHighlight" | "burstTimersRef">;
 }
@@ -56,13 +56,13 @@ export function useMusicHuePaletteHandlers({
   transport,
   burst,
 }: UseMusicHuePaletteHandlersOptions) {
-  const { setHueAngle, setDirectCandidates, setSelectedLevels, prevCandidatesRef } = palette;
+  const { setHueAngle, setCandidateOverridesByLevel, setSelectedLevels, prevCandidatesRef } = palette;
   const { setAlpha0, setAlpha7, setOriginMode } = transport;
   const { setBurstHighlight, burstTimersRef } = burst;
 
   const triggerToneBurstAtActiveAlpha = useCallback(
-    (lv: number, angle: number) => {
-      engine.triggerToneBurst(lv, angle >= 0 ? angle + activeAlpha : angle);
+    (levelIndex: number, angle: number) => {
+      engine.triggerToneBurst(levelIndex, angle >= 0 ? angle + activeAlpha : angle);
     },
     [activeAlpha, engine],
   );
@@ -72,10 +72,10 @@ export function useMusicHuePaletteHandlers({
       engine.initAudio();
       resumeDrone();
       setHueAngle(Number(e.target.value));
-      setDirectCandidates(new Map());
+      setCandidateOverridesByLevel(new Map());
       setSelectedLevels(new Set());
     },
-    [engine, resumeDrone, setDirectCandidates, setHueAngle, setSelectedLevels],
+    [engine, resumeDrone, setCandidateOverridesByLevel, setHueAngle, setSelectedLevels],
   );
 
   const handleAlphaBarChange = useCallback(
@@ -90,28 +90,28 @@ export function useMusicHuePaletteHandlers({
   );
 
   const handleBlockClick = useCallback(
-    (lv: number, angle: number) => {
+    (levelIndex: number, angle: number) => {
       ensureAudio();
       engine.initAudio();
-      triggerToneBurstAtActiveAlpha(lv, angle);
-      const prev = burstTimersRef.current.get(lv);
+      triggerToneBurstAtActiveAlpha(levelIndex, angle);
+      const prev = burstTimersRef.current.get(levelIndex);
       if (prev) clearTimeout(prev);
       setBurstHighlight((s) => {
         const n = new Set(s);
-        n.delete(lv);
+        n.delete(levelIndex);
         return n;
       });
       requestAnimationFrame(() => {
-        setBurstHighlight((s) => new Set(s).add(lv));
+        setBurstHighlight((s) => new Set(s).add(levelIndex));
         burstTimersRef.current.set(
-          lv,
+          levelIndex,
           setTimeout(() => {
             setBurstHighlight((s) => {
               const n = new Set(s);
-              n.delete(lv);
+              n.delete(levelIndex);
               return n;
             });
-            burstTimersRef.current.delete(lv);
+            burstTimersRef.current.delete(levelIndex);
           }, 20),
         );
       });
@@ -122,39 +122,39 @@ export function useMusicHuePaletteHandlers({
   useMusicKeyboardShortcuts(sonificationLevels, handleBlockClick);
 
   const handleLinkedHueAngleChange = useCallback(
-    (a: number) => {
+    (angleDeg: number) => {
       engine.initAudio();
       resumeDrone();
-      for (const lv of MUSIC_ACTIVE_LEVELS) {
-        const ci = findClosestCandidate(lv, a);
-        const prev = prevCandidatesRef.current.get(lv);
-        if (prev !== undefined && prev !== ci) {
-          const cand = LEVEL_CANDIDATES[lv][ci];
-          if (cand && cand.angle >= 0) triggerToneBurstAtActiveAlpha(lv, cand.angle);
+      for (const levelIndex of MUSIC_ACTIVE_LEVELS) {
+        const candidateIndex = findClosestCandidate(levelIndex, angleDeg);
+        const prev = prevCandidatesRef.current.get(levelIndex);
+        if (prev !== undefined && prev !== candidateIndex) {
+          const cand = LEVEL_CANDIDATES[levelIndex][candidateIndex];
+          if (cand && cand.angle >= 0) triggerToneBurstAtActiveAlpha(levelIndex, cand.angle);
         }
-        prevCandidatesRef.current.set(lv, ci);
+        prevCandidatesRef.current.set(levelIndex, candidateIndex);
       }
-      setHueAngle(a);
-      setDirectCandidates(new Map());
+      setHueAngle(angleDeg);
+      setCandidateOverridesByLevel(new Map());
       setSelectedLevels(new Set());
     },
-    [engine, prevCandidatesRef, resumeDrone, setDirectCandidates, setHueAngle, setSelectedLevels, triggerToneBurstAtActiveAlpha],
+    [engine, prevCandidatesRef, resumeDrone, setCandidateOverridesByLevel, setHueAngle, setSelectedLevels, triggerToneBurstAtActiveAlpha],
   );
 
   const handleAlpha0Change = useCallback(
-    (a: number) => {
+    (angleDeg: number) => {
       engine.initAudio();
       resumeDrone();
-      setAlpha0(a);
+      setAlpha0(angleDeg);
     },
     [engine, resumeDrone, setAlpha0],
   );
 
   const handleAlpha7Change = useCallback(
-    (a: number) => {
+    (angleDeg: number) => {
       engine.initAudio();
       resumeDrone();
-      setAlpha7(a);
+      setAlpha7(angleDeg);
     },
     [engine, resumeDrone, setAlpha7],
   );

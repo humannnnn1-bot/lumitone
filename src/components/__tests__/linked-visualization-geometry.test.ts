@@ -30,9 +30,11 @@ describe("linked-visualization geometry", () => {
   it("builds one active visible candidate per chromatic level", () => {
     const dots = buildLinkedVisualizationDots(0);
 
-    expect(dots.some((dot) => dot.lv === 0 || dot.lv === 7)).toBe(false);
-    expect(dots.every((dot) => dot.a >= 0)).toBe(true);
-    expect(ACTIVE_LEVELS.map((lv) => dots.filter((dot) => dot.lv === lv && dot.act).length)).toEqual([1, 1, 1, 1, 1, 1]);
+    expect(dots.some((dot) => dot.levelIndex === 0 || dot.levelIndex === 7)).toBe(false);
+    expect(dots.every((dot) => dot.angleDeg >= 0)).toBe(true);
+    expect(ACTIVE_LEVELS.map((levelIndex) => dots.filter((dot) => dot.levelIndex === levelIndex && dot.isActive).length)).toEqual([
+      1, 1, 1, 1, 1, 1,
+    ]);
   });
 
   it("respects direct candidate overrides when selecting active dots", () => {
@@ -40,7 +42,7 @@ describe("linked-visualization geometry", () => {
 
     const dots = buildLinkedVisualizationDots(0, new Map([[2, 1]]));
 
-    expect(dots.find((dot) => dot.lv === 2 && dot.act)?.ci).toBe(1);
+    expect(dots.find((dot) => dot.levelIndex === 2 && dot.isActive)?.candidateIndex).toBe(1);
   });
 
   it("keeps L0 and L7 radii complementary", () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_CC } from "../../color-engine";
+import { DEFAULT_COLOR_CHOICE_INDICES } from "../../color-engine";
 import { formatColorPixelStatus, formatGlazePixelStatus, formatHexPixelStatus, formatSourcePixelStatus } from "../pixel-status";
 
 describe("pixel status formatters", () => {
@@ -11,7 +11,7 @@ describe("pixel status formatters", () => {
   });
 
   it("formats color pixels as global output candidates", () => {
-    expect(formatColorPixelStatus({ x: 4, y: 2, lv: 3, cc: DEFAULT_CC })).toEqual({
+    expect(formatColorPixelStatus({ x: 4, y: 2, lv: 3, colorChoiceIndices: DEFAULT_COLOR_CHOICE_INDICES })).toEqual({
       full: "(4,2) Color L3 c3/3 #ff00ff rgb(255,0,255) hue=300° Δ0°",
       compact: "(4,2) Color L3 c3/3 #ff00ff h=300°",
     });
@@ -23,7 +23,7 @@ describe("pixel status formatters", () => {
         x: 4,
         y: 2,
         lv: 3,
-        cc: DEFAULT_CC,
+        colorChoiceIndices: DEFAULT_COLOR_CHOICE_INDICES,
         hist: [0, 0, 0, 1248, 0, 0, 0, 0],
         patternFactor: 3,
         locked: false,
@@ -40,10 +40,10 @@ describe("pixel status formatters", () => {
         x: 4,
         y: 2,
         lv: 3,
-        cc: DEFAULT_CC,
+        colorChoiceIndices: DEFAULT_COLOR_CHOICE_INDICES,
         colorMapValue: 1,
         hueAngle: 15,
-        directCandidates: new Map(),
+        candidateOverridesByLevel: new Map(),
         glazeTool: "glaze_brush",
       }),
     ).toEqual({

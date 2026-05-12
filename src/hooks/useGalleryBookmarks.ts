@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { LEVEL_CANDIDATES } from "../color-engine";
-import { ccEqual } from "./galleryView";
+import { colorChoiceIndicesEqual } from "./galleryView";
 
 const GALLERY_BOOKMARKS_KEY = "chromalum_bookmarks";
 export const GALLERY_BOOKMARKS_MAX = 500;
@@ -56,11 +56,14 @@ function saveGalleryBookmarks(bookmarks: number[][], storage: Storage | null = g
 export function useGalleryBookmarks({ limit = GALLERY_BOOKMARKS_MAX, onLimitReached, onSaveFailed }: UseGalleryBookmarksOptions = {}) {
   const [bookmarks, setBookmarks] = useState<number[][]>(loadGalleryBookmarks);
 
-  const isBookmarked = useCallback((itemCc: readonly number[]) => bookmarks.some((bookmark) => ccEqual(bookmark, itemCc)), [bookmarks]);
+  const isBookmarked = useCallback(
+    (itemColorChoiceIndices: readonly number[]) => bookmarks.some((bookmark) => colorChoiceIndicesEqual(bookmark, itemColorChoiceIndices)),
+    [bookmarks],
+  );
 
   const toggleBookmark = useCallback(
-    (itemCc: readonly number[]) => {
-      const idx = bookmarks.findIndex((bookmark) => ccEqual(bookmark, itemCc));
+    (itemColorChoiceIndices: readonly number[]) => {
+      const idx = bookmarks.findIndex((bookmark) => colorChoiceIndicesEqual(bookmark, itemColorChoiceIndices));
       if (idx >= 0) {
         const next = [...bookmarks.slice(0, idx), ...bookmarks.slice(idx + 1)];
         if (!saveGalleryBookmarks(next)) {
@@ -76,7 +79,7 @@ export function useGalleryBookmarks({ limit = GALLERY_BOOKMARKS_MAX, onLimitReac
         return;
       }
 
-      const next = [...bookmarks, [...itemCc]];
+      const next = [...bookmarks, [...itemColorChoiceIndices]];
       if (!saveGalleryBookmarks(next)) {
         onSaveFailed?.("add");
         return;

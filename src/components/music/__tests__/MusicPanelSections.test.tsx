@@ -240,11 +240,11 @@ function makeHueAlphaProps(overrides: Partial<HueAlphaProps> = {}): HueAlphaProp
   };
 }
 
-function makeLevelPreview(lv: number) {
-  const cand = LEVEL_CANDIDATES[lv][0];
+function makeLevelPreview(levelIndex: number) {
+  const cand = LEVEL_CANDIDATES[levelIndex][0];
   return {
-    lv,
-    name: `L${lv}`,
+    levelIndex,
+    name: `L${levelIndex}`,
     rgb: cand.rgb,
     hex: `rgb(${cand.rgb.join(",")})`,
   };
@@ -271,11 +271,11 @@ function makeCandidateGridProps(overrides: Partial<CandidateGridProps> = {}): Ca
   return {
     levelPreview: [makeLevelPreview(2)],
     hueAngle: LEVEL_CANDIDATES[2][0].angle,
-    directCandidates: new Map([[2, 0]]),
+    candidateOverridesByLevel: new Map([[2, 0]]),
     selectedLevels: new Set(),
     burstHighlight: new Set(),
     hoveredCandidate: null,
-    onDirectCandidatesChange: mockFn<CandidateGridProps["onDirectCandidatesChange"]>(),
+    onCandidateOverridesByLevelChange: mockFn<CandidateGridProps["onCandidateOverridesByLevelChange"]>(),
     onSelectedLevelsChange: mockFn<CandidateGridProps["onSelectedLevelsChange"]>(),
     onHoveredCandidateChange: mockFn<CandidateGridProps["onHoveredCandidateChange"]>(),
     onBlockClick: vi.fn(),
@@ -304,7 +304,7 @@ describe("MusicPanel section components", () => {
 
     const candidates = screen.getAllByRole("button", { name: /Level 2 color candidate/ });
     fireEvent.click(candidates[0]);
-    expect(props.onDirectCandidatesChange).toHaveBeenCalled();
+    expect(props.onCandidateOverridesByLevelChange).toHaveBeenCalled();
     expect(props.onSelectedLevelsChange).toHaveBeenCalled();
     expect(props.onHoveredCandidateChange).toHaveBeenCalledWith(null);
     expect(props.onBlockClick).toHaveBeenCalledWith(2, expect.any(Number));

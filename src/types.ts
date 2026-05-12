@@ -6,31 +6,44 @@ import type React from "react";
 import type { ExportScale } from "./constants";
 import type { RingBuffer } from "./utils/ring-buffer";
 
-export type MapMode = "entropy" | "noise" | "depth" | "gradient" | "region" | "luminance" | "colorlum";
+export type MapMode = "entropy" | "noise" | "boundaryDistance" | "gradient" | "region" | "luminance" | "colorLuma";
+
+export interface AnalysisPixelMaps {
+  noise: Float32Array;
+  boundaryDistance: Float32Array;
+  gradientAngle: Float32Array;
+  gradientMagnitude: Float32Array;
+  regionId: Int32Array;
+  isEdge: Uint8Array;
+  levelNorm: Float32Array;
+  localDiversity: Float32Array;
+  w: number;
+  h: number;
+}
 
 export interface Diff {
-  idx: Uint32Array;
-  ov: Uint8Array;
-  nv: Uint8Array;
-  /** Optional colorMap diff (same idx array). Undefined for Canvas-tab-only strokes. */
-  cmOv?: Uint8Array;
-  cmNv?: Uint8Array;
+  indices: Uint32Array;
+  oldValues: Uint8Array;
+  newValues: Uint8Array;
+  /** Optional colorMap diff (same indices array). Undefined for Canvas-tab-only strokes. */
+  oldColorMapValues?: Uint8Array;
+  newColorMapValues?: Uint8Array;
 }
 
 export interface CompressedDiff {
   /** RLE-encoded index runs: [start0, len0, start1, len1, ...] */
   runs: Uint32Array;
-  ov: Uint8Array;
-  nv: Uint8Array;
-  cmOv?: Uint8Array;
-  cmNv?: Uint8Array;
+  oldValues: Uint8Array;
+  newValues: Uint8Array;
+  oldColorMapValues?: Uint8Array;
+  newColorMapValues?: Uint8Array;
 }
 
 export interface CanvasData {
   w: number;
   h: number;
   data: Uint8Array;
-  /** Per-pixel color variant override. 0=default(cc[]), 1+=specific variant (1-indexed). */
+  /** Per-pixel color variant override. 0=default(colorChoiceIndices[]), 1+=specific variant (1-indexed). */
   colorMap: Uint8Array;
 }
 

@@ -1,16 +1,16 @@
 import { LEVEL_CANDIDATES, LEVEL_INFO, findClosestCandidate } from "../color-engine";
 
 export interface LinkedVisualizationDot {
-  lv: number;
-  ci: number;
-  a: number;
+  levelIndex: number;
+  candidateIndex: number;
+  angleDeg: number;
   rgb: readonly [number, number, number];
-  act: boolean;
+  isActive: boolean;
 }
 
 export interface LinkedVisualizationHover {
-  lv: number;
-  ci: number;
+  levelIndex: number;
+  candidateIndex: number;
 }
 
 interface LinkedVisualizationPoint {
@@ -51,14 +51,14 @@ export const HUE_LABELS = [0, 60, 120, 180, 240, 300, 360] as const;
 export const LV_COLORS = ["", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", ""] as const;
 export const C2_PAIR: Readonly<Record<number, number>> = { 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1 };
 
-export const lumR0 = (lv: number) => (LEVEL_INFO[lv].gray / 255) * WR;
-export const lumR7 = (lv: number) => (1 - LEVEL_INFO[lv].gray / 255) * WR;
+export const lumR0 = (levelIndex: number) => (LEVEL_INFO[levelIndex].gray / 255) * WR;
+export const lumR7 = (levelIndex: number) => (1 - LEVEL_INFO[levelIndex].gray / 255) * WR;
 
 export function wheelPoint(
   angle: number,
   level: number,
   alpha: number,
-  radiusFn: (lv: number) => number,
+  radiusFn: (levelIndex: number) => number,
   cx = CX,
   cy = CY,
 ): LinkedVisualizationPoint {
@@ -83,20 +83,28 @@ export function clampHueFromBottomGraphY(y: number): number {
   return Math.max(0, Math.min(360, ((y - BY - 8) / (BH - 16)) * 360));
 }
 
-export function buildLinkedVisualizationDots(hueAngle: number, directCandidates?: Map<number, number>): LinkedVisualizationDot[] {
+export function buildLinkedVisualizationDots(hueAngle: number, candidateOverridesByLevel?: Map<number, number>): LinkedVisualizationDot[] {
   const result: LinkedVisualizationDot[] = [];
-  for (let lv = 0; lv < LEVEL_CANDIDATES.length; lv++) {
-    for (let ci = 0; ci < LEVEL_CANDIDATES[lv].length; ci++) {
-      const candidate = LEVEL_CANDIDATES[lv][ci];
+  for (let levelIndex = 0; levelIndex < LEVEL_CANDIDATES.length; levelIndex++) {
+    for (let candidateIndex = 0; candidateIndex < LEVEL_CANDIDATES[levelIndex].length; candidateIndex++) {
+      const candidate = LEVEL_CANDIDATES[levelIndex][candidateIndex];
       if (candidate.angle < 0) continue;
-      const activeCI = directCandidates?.has(lv) ? directCandidates.get(lv)! : findClosestCandidate(lv, hueAngle);
-      result.push({ lv, ci, a: candidate.angle, rgb: candidate.rgb, act: activeCI === ci });
+      const activeCandidateIndex = candidateOverridesByLevel?.has(levelIndex)
+        ? candidateOverridesByLevel.get(levelIndex)!
+        : findClosestCandidate(levelIndex, hueAngle);
+      result.push({
+        levelIndex,
+        candidateIndex,
+        angleDeg: candidate.angle,
+        rgb: candidate.rgb,
+        isActive: activeCandidateIndex === candidateIndex,
+      });
     }
   }
   return result;
 }
 
-export function sinePath(level: number, radiusFn: (lv: number) => number, alpha: number): string {
+export function sinePath(level: number, radiusFn: (levelIndex: number) => number, alpha: number): string {
   const r = radiusFn(level);
   if (r < 1) return "";
   const pts: string[] = [];
@@ -108,7 +116,7 @@ export function sinePath(level: number, radiusFn: (lv: number) => number, alpha:
   return pts.join(" ");
 }
 
-export function cosinePath(level: number, radiusFn: (lv: number) => number, alpha: number): string {
+export function cosinePath(level: number, radiusFn: (levelIndex: number) => number, alpha: number): string {
   const r = radiusFn(level);
   if (r < 1) return "";
   const pts: string[] = [];

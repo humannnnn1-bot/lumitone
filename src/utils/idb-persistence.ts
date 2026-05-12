@@ -6,17 +6,22 @@ const KEY = "current";
 /** Increment when schema changes; add migration logic in onupgradeneeded. */
 const DB_VERSION = 2;
 /** Increment when the serialized SavedState shape changes. */
-export const SAVED_STATE_VERSION = 1;
+export const SAVED_STATE_VERSION = 2;
 
 export interface SavedState {
   w: number;
   h: number;
   data: Uint8Array;
   colorMap?: Uint8Array;
-  cc: number[];
+  colorChoiceIndices: number[];
   version: number;
   locked?: boolean[];
 }
+
+type RawSavedState = Partial<SavedState> & {
+  /** Legacy v1 name for colorChoiceIndices. */
+  cc?: number[];
+};
 
 type LoadStateStatus = "loaded" | "empty" | "invalid";
 
@@ -137,14 +142,15 @@ function normalizeLoadedState(val: unknown): LoadStateResult {
   if (!val) return emptyResult();
   if (typeof val !== "object") return invalidResult("saved state is not an object");
 
-  const saved = val as Partial<SavedState>;
+  const saved = val as RawSavedState;
+  const colorChoiceIndices = Array.isArray(saved.colorChoiceIndices) ? saved.colorChoiceIndices : saved.cc;
   if (
     typeof saved.w !== "number" ||
     typeof saved.h !== "number" ||
     typeof saved.version !== "number" ||
     !(saved.data instanceof Uint8Array) ||
-    !Array.isArray(saved.cc) ||
-    saved.cc.length !== 8
+    !Array.isArray(colorChoiceIndices) ||
+    colorChoiceIndices.length !== 8
   ) {
     return invalidResult("saved state has an unsupported shape");
   }
@@ -169,12 +175,15 @@ function normalizeLoadedState(val: unknown): LoadStateResult {
     return invalidResult("saved state canvas dimensions are invalid");
   }
 
-  // Clamp pixel data to valid range [0, 7] and cc indices to valid bounds.
+  saved.colorChoiceIndices = colorChoiceIndices;
+  delete saved.cc;
+
+  // Clamp pixel data to valid range [0, 7] and colorChoiceIndices indices to valid bounds.
   for (let i = 0; i < saved.data.length; i++) {
     if (saved.data[i] > 7) saved.data[i] = saved.data[i] & 7;
   }
-  for (let i = 0; i < saved.cc.length; i++) {
-    if (typeof saved.cc[i] !== "number" || saved.cc[i] < 0) saved.cc[i] = 0;
+  for (let i = 0; i < saved.colorChoiceIndices.length; i++) {
+    if (typeof saved.colorChoiceIndices[i] !== "number" || saved.colorChoiceIndices[i] < 0) saved.colorChoiceIndices[i] = 0;
   }
   if (saved.locked && (!Array.isArray(saved.locked) || saved.locked.length !== 8)) {
     delete saved.locked;

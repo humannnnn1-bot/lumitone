@@ -16,12 +16,12 @@ interface HexPanelProps {
   cvs: CanvasData;
   displayW: number;
   displayH: number;
-  cc: readonly number[];
-  ccDispatch: React.Dispatch<ColorAction>;
+  colorChoiceIndices: readonly number[];
+  colorChoiceDispatch: React.Dispatch<ColorAction>;
   hist: number[];
   total: number;
   locked: boolean[];
-  toggleLock: (lv: number) => void;
+  toggleLock: (levelIndex: number) => void;
   handleRandomize: () => void;
   handleUnlockAll: () => void;
   canRandomize: boolean;
@@ -48,8 +48,8 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
     cvs,
     displayW,
     displayH,
-    cc,
-    ccDispatch,
+    colorChoiceIndices,
+    colorChoiceDispatch,
     hist,
     total,
     locked,
@@ -85,14 +85,14 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
           x,
           y,
           lv,
-          cc,
+          colorChoiceIndices,
           hist,
           patternFactor: patternInfo.perLevel[lv] ?? 1,
           locked: locked[lv] ?? false,
         }),
       );
     },
-    [cc, cvs, hist, locked, patternInfo.perLevel],
+    [colorChoiceIndices, cvs, hist, locked, patternInfo.perLevel],
   );
 
   const handleCanvasPointerLeave = useCallback(() => setHoverInfo(null), []);
@@ -103,12 +103,12 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key;
       if (k >= "2" && k <= "5") {
-        ccDispatch({ type: "cycle_color", lv: +k, dir: 1 });
+        colorChoiceDispatch({ type: "cycle_color", levelIndex: +k, direction: 1 });
       }
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [ccDispatch]);
+  }, [colorChoiceDispatch]);
 
   return (
     <div style={S_FLEX_COL_CENTER}>
@@ -145,8 +145,8 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
         </div>
         <div className="panel-sidebar">
           <HexDiagram
-            cc={cc}
-            dispatch={ccDispatch}
+            colorChoiceIndices={colorChoiceIndices}
+            dispatch={colorChoiceDispatch}
             hist={hist}
             total={total}
             locked={locked}
@@ -236,7 +236,7 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
               {patternInfo.perLevel.map((_, lv) => {
                 const active = hist[lv] > 0;
                 const cands = LEVEL_CANDIDATES[lv];
-                const rgb = cands[cc[lv] % cands.length]?.rgb ?? [128, 128, 128];
+                const rgb = cands[colorChoiceIndices[lv] % cands.length]?.rgb ?? [128, 128, 128];
                 return (
                   <React.Fragment key={"d" + lv}>
                     {lv > 0 && <span />}

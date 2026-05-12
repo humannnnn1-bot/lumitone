@@ -11,7 +11,7 @@ vi.mock("../../i18n", () => ({
 
 function makeProps(overrides?: Partial<Parameters<typeof HexDiagram>[0]>) {
   return {
-    cc: [0, 0, 0, 0, 0, 0, 0, 0],
+    colorChoiceIndices: [0, 0, 0, 0, 0, 0, 0, 0],
     dispatch: vi.fn(),
     hist: [100, 50, 30, 20, 10, 5, 3, 1],
     total: 219,

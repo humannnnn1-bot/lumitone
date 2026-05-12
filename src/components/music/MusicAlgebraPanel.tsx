@@ -424,9 +424,9 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
                 aria-label={t("music_octa_first_select")}
                 style={S_SELECT}
               >
-                {CHROMA_LEVELS.map((lv) => (
-                  <option key={lv} value={lv}>
-                    {lv}
+                {CHROMA_LEVELS.map((levelIndex) => (
+                  <option key={levelIndex} value={levelIndex}>
+                    {levelIndex}
                   </option>
                 ))}
               </select>
@@ -436,9 +436,9 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
                 aria-label={t("music_octa_second_select")}
                 style={S_SELECT}
               >
-                {CHROMA_LEVELS.map((lv) => (
-                  <option key={lv} value={lv}>
-                    {lv}
+                {CHROMA_LEVELS.map((levelIndex) => (
+                  <option key={levelIndex} value={levelIndex}>
+                    {levelIndex}
                   </option>
                 ))}
               </select>
@@ -477,8 +477,8 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
                   onGray3CodeChange(null);
                 } else {
                   engine.initAudio();
-                  engine.playGray3Voice?.((lv: number | null) => {
-                    onGray3CodeChange(lv);
+                  engine.playGray3Voice?.((levelIndex: number | null) => {
+                    onGray3CodeChange(levelIndex);
                   });
                   onGray3PlayingChange(true);
                 }

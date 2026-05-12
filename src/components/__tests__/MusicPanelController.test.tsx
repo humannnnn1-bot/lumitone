@@ -196,7 +196,7 @@ describe("MusicPanel controller integration", () => {
   });
 
   it("starts traversal playback and Stop All resets active playback state", () => {
-    musicEngineMock.engine.playGrayMelody.mockImplementation((_tempo: number, onStep: (lv: number | null) => void) => onStep(2));
+    musicEngineMock.engine.playGrayMelody.mockImplementation((_tempo: number, onStep: (levelIndex: number | null) => void) => onStep(2));
     musicEngineMock.engine.startFanoRhythm.mockImplementation((_tempo: number, onBeat: (lines: number[], pos: number) => void) =>
       onBeat([0, 2], 1),
     );
@@ -226,7 +226,7 @@ describe("MusicPanel controller integration", () => {
   });
 
   it("stops active traversal playback from the Fano controls", () => {
-    musicEngineMock.engine.playGrayMelody.mockImplementation((_tempo: number, onStep: (lv: number | null) => void) => onStep(2));
+    musicEngineMock.engine.playGrayMelody.mockImplementation((_tempo: number, onStep: (levelIndex: number | null) => void) => onStep(2));
     musicEngineMock.engine.startFanoRhythm.mockImplementation((_tempo: number, onBeat: (lines: number[], pos: number) => void) =>
       onBeat([0, 2], 1),
     );
@@ -294,7 +294,7 @@ describe("MusicPanel controller integration", () => {
   });
 
   it("restarts active traversal playback when the tempo changes", async () => {
-    musicEngineMock.engine.playGrayMelody.mockImplementation((_tempo: number, onStep: (lv: number | null) => void) => onStep(1));
+    musicEngineMock.engine.playGrayMelody.mockImplementation((_tempo: number, onStep: (levelIndex: number | null) => void) => onStep(1));
     musicEngineMock.engine.startFanoRhythm.mockImplementation((_tempo: number, onBeat: (lines: number[], pos: number) => void) =>
       onBeat([1], 0),
     );
@@ -317,8 +317,8 @@ describe("MusicPanel controller integration", () => {
   });
 
   it("routes XOR playback through selected operands", () => {
-    let onXorStep: ((lv: number | null) => void) | undefined;
-    musicEngineMock.engine.playXorTriple.mockImplementation((_a: number, _b: number, onStep: (lv: number | null) => void) => {
+    let onXorStep: ((levelIndex: number | null) => void) | undefined;
+    musicEngineMock.engine.playXorTriple.mockImplementation((_a: number, _b: number, onStep: (levelIndex: number | null) => void) => {
       onXorStep = onStep;
       onStep(5);
     });

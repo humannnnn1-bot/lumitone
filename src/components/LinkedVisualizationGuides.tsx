@@ -16,7 +16,7 @@ interface LinkedVisualizationGuidesProps {
   activeDots: LinkedVisualizationDot[];
   hoveredDot: LinkedVisualizationHover | null;
   activeAlpha: number;
-  activeRadiusFn: (lv: number) => number;
+  activeRadiusFn: (levelIndex: number) => number;
   alpha0: number;
   alpha7: number;
   mode: 0 | 7;
@@ -35,21 +35,22 @@ export function LinkedVisualizationGuides({
   return (
     <>
       {dots
-        .filter((dot) => !dot.act)
+        .filter((dot) => !dot.isActive)
         .map((dot) => {
-          const wheel = wheelPoint(dot.a, dot.lv, activeAlpha, activeRadiusFn);
-          const rad = ((dot.a - activeAlpha - 90) * Math.PI) / 180;
-          const projectedY = CY + activeRadiusFn(dot.lv) * Math.sin(rad);
-          const projectedX = CX + activeRadiusFn(dot.lv) * Math.cos(rad);
+          const wheel = wheelPoint(dot.angleDeg, dot.levelIndex, activeAlpha, activeRadiusFn);
+          const rad = ((dot.angleDeg - activeAlpha - 90) * Math.PI) / 180;
+          const projectedY = CY + activeRadiusFn(dot.levelIndex) * Math.sin(rad);
+          const projectedX = CX + activeRadiusFn(dot.levelIndex) * Math.cos(rad);
           const color = `rgb(${dot.rgb.join(",")})`;
-          const hovered = hoveredDot !== null && hoveredDot.lv === dot.lv && hoveredDot.ci === dot.ci;
+          const hovered =
+            hoveredDot !== null && hoveredDot.levelIndex === dot.levelIndex && hoveredDot.candidateIndex === dot.candidateIndex;
 
           return (
-            <g key={`gli-${dot.lv}-${dot.ci}`} opacity={hovered ? 0.6 : 0.2}>
+            <g key={`gli-${dot.levelIndex}-${dot.candidateIndex}`} opacity={hovered ? 0.6 : 0.2}>
               <line
                 x1={wheel.x}
                 y1={wheel.y}
-                x2={rightProjectionX(dot.a)}
+                x2={rightProjectionX(dot.angleDeg)}
                 y2={projectedY}
                 stroke={color}
                 strokeWidth={hovered ? 0.7 : 0.4}
@@ -59,7 +60,7 @@ export function LinkedVisualizationGuides({
                 x1={wheel.x}
                 y1={wheel.y}
                 x2={projectedX}
-                y2={bottomProjectionY(dot.a)}
+                y2={bottomProjectionY(dot.angleDeg)}
                 stroke={color}
                 strokeWidth={hovered ? 0.7 : 0.4}
                 strokeDasharray="2,3"
@@ -69,19 +70,19 @@ export function LinkedVisualizationGuides({
         })}
 
       {activeDots.map((dot) => {
-        const wheel = wheelPoint(dot.a, dot.lv, activeAlpha, activeRadiusFn);
-        const rad = ((dot.a - activeAlpha - 90) * Math.PI) / 180;
-        const projectedY = CY + activeRadiusFn(dot.lv) * Math.sin(rad);
-        const projectedX = CX + activeRadiusFn(dot.lv) * Math.cos(rad);
+        const wheel = wheelPoint(dot.angleDeg, dot.levelIndex, activeAlpha, activeRadiusFn);
+        const rad = ((dot.angleDeg - activeAlpha - 90) * Math.PI) / 180;
+        const projectedY = CY + activeRadiusFn(dot.levelIndex) * Math.sin(rad);
+        const projectedX = CX + activeRadiusFn(dot.levelIndex) * Math.cos(rad);
         const color = `rgb(${dot.rgb.join(",")})`;
-        const hovered = hoveredDot !== null && hoveredDot.lv === dot.lv && hoveredDot.ci === dot.ci;
+        const hovered = hoveredDot !== null && hoveredDot.levelIndex === dot.levelIndex && hoveredDot.candidateIndex === dot.candidateIndex;
 
         return (
-          <g key={`gl-${dot.lv}-${dot.ci}`} opacity={hovered ? 0.7 : 0.4}>
+          <g key={`gl-${dot.levelIndex}-${dot.candidateIndex}`} opacity={hovered ? 0.7 : 0.4}>
             <line
               x1={wheel.x}
               y1={wheel.y}
-              x2={rightProjectionX(dot.a)}
+              x2={rightProjectionX(dot.angleDeg)}
               y2={projectedY}
               stroke={color}
               strokeWidth={hovered ? 0.8 : 0.6}
@@ -91,7 +92,7 @@ export function LinkedVisualizationGuides({
               x1={wheel.x}
               y1={wheel.y}
               x2={projectedX}
-              y2={bottomProjectionY(dot.a)}
+              y2={bottomProjectionY(dot.angleDeg)}
               stroke={color}
               strokeWidth={hovered ? 0.8 : 0.6}
               strokeDasharray="3,2"
@@ -101,16 +102,16 @@ export function LinkedVisualizationGuides({
       })}
 
       {hoveredDot &&
-        hoveredDot.lv >= 1 &&
-        hoveredDot.lv <= 6 &&
+        hoveredDot.levelIndex >= 1 &&
+        hoveredDot.levelIndex <= 6 &&
         (() => {
-          const pairLevel = C2_PAIR[hoveredDot.lv];
-          const pairDot = activeDots.find((dot) => dot.lv === pairLevel);
+          const pairLevel = C2_PAIR[hoveredDot.levelIndex];
+          const pairDot = activeDots.find((dot) => dot.levelIndex === pairLevel);
           if (!pairDot) return null;
 
           const otherRadiusFn = mode === 0 ? lumR7 : lumR0;
           const otherAlpha = mode === 0 ? alpha7 : alpha0;
-          const rad = ((pairDot.a - otherAlpha - 90) * Math.PI) / 180;
+          const rad = ((pairDot.angleDeg - otherAlpha - 90) * Math.PI) / 180;
           const radius = otherRadiusFn(pairLevel);
           const x = CX + radius * Math.cos(rad);
           const y = CY + radius * Math.sin(rad);

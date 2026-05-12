@@ -1,10 +1,10 @@
 import { useState, useReducer, useMemo, useCallback } from "react";
-import { buildColorLUT, DEFAULT_CC, LEVEL_CANDIDATES } from "../color-engine";
+import { buildColorLUT, DEFAULT_COLOR_CHOICE_INDICES, LEVEL_CANDIDATES } from "../color-engine";
 import { LEVEL_COUNT } from "../constants";
 import { colorReducer } from "../state/color-reducer";
 
 export function useColorState(hist: number[]) {
-  const [cc, ccDispatch] = useReducer(colorReducer, [...DEFAULT_CC]);
+  const [colorChoiceIndices, colorChoiceDispatch] = useReducer(colorReducer, [...DEFAULT_COLOR_CHOICE_INDICES]);
   const [locked, setLocked] = useState<boolean[]>(new Array(LEVEL_COUNT).fill(false));
 
   const toggleLock = useCallback((lv: number) => {
@@ -16,8 +16,8 @@ export function useColorState(hist: number[]) {
   }, []);
 
   const handleRandomize = useCallback(() => {
-    ccDispatch({ type: "randomize", locked, hist });
-  }, [ccDispatch, locked, hist]);
+    colorChoiceDispatch({ type: "randomize", locked, hist });
+  }, [colorChoiceDispatch, locked, hist]);
 
   const handleUnlockAll = useCallback(() => {
     setLocked(new Array(LEVEL_COUNT).fill(false));
@@ -25,7 +25,7 @@ export function useColorState(hist: number[]) {
 
   const canRandomize = useMemo(() => LEVEL_CANDIDATES.some((alts, lv) => hist[lv] > 0 && !locked[lv] && alts.length > 1), [hist, locked]);
 
-  const colorLUT = useMemo(() => buildColorLUT(cc), [cc]);
+  const colorLUT = useMemo(() => buildColorLUT(colorChoiceIndices), [colorChoiceIndices]);
 
   const patternInfo = useMemo(() => {
     const allC: number[] = [];
@@ -39,8 +39,8 @@ export function useColorState(hist: number[]) {
   }, [hist, locked]);
 
   return {
-    cc,
-    ccDispatch,
+    colorChoiceIndices,
+    colorChoiceDispatch,
     locked,
     setLocked,
     toggleLock,

@@ -19,7 +19,7 @@ type MusicSignalsState = ReturnType<typeof useMusicSignalsState>;
 interface UseMusicResetDefaultsHandlerOptions {
   engine: MusicEngineReturn;
   stopAll: () => void;
-  palette: Pick<MusicPaletteState, "setHueAngle" | "setDirectCandidates" | "setSelectedLevels">;
+  palette: Pick<MusicPaletteState, "setHueAngle" | "setCandidateOverridesByLevel" | "setSelectedLevels">;
   transport: Pick<
     MusicTransportState,
     | "setDroneMuted"
@@ -49,7 +49,7 @@ export function useMusicResetDefaultsHandler({
   algebra,
   signals,
 }: UseMusicResetDefaultsHandlerOptions) {
-  const { setHueAngle, setDirectCandidates, setSelectedLevels } = palette;
+  const { setHueAngle, setCandidateOverridesByLevel, setSelectedLevels } = palette;
   const {
     setDroneMuted,
     setMuted,
@@ -73,7 +73,7 @@ export function useMusicResetDefaultsHandler({
     engine.setDroneMuted(false);
     setDroneMuted(false);
     setHueAngle(0);
-    setDirectCandidates(createDefaultMusicDirectCandidates());
+    setCandidateOverridesByLevel(createDefaultMusicDirectCandidates());
     setSelectedLevels(new Set());
     setMuted(false);
     setVolume(0.7);
@@ -101,7 +101,7 @@ export function useMusicResetDefaultsHandler({
     setAlpha0,
     setAlpha7,
     setAlphaSpeed,
-    setDirectCandidates,
+    setCandidateOverridesByLevel,
     setDistA,
     setDistB,
     setDistC,

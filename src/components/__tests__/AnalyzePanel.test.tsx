@@ -49,7 +49,7 @@ function makeProps(overrides?: Partial<Parameters<typeof AnalyzePanel>[0]>) {
       [255, 255, 0],
       [255, 255, 255],
     ] as [number, number, number][],
-    cc: [0, 0, 0, 0, 0, 0, 0, 0],
+    colorChoiceIndices: [0, 0, 0, 0, 0, 0, 0, 0],
     brushLevel: 0,
     setBrushLevel: vi.fn(),
     cvs: { w, h, data: new Uint8Array(w * h), colorMap: new Uint8Array(w * h) },
@@ -86,10 +86,10 @@ describe("AnalyzePanel", () => {
 
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
       "stats_map_luminance",
-      "stats_map_colorlum",
+      "stats_map_colorLuma",
       "stats_map_gradient",
       "stats_map_region",
-      "stats_map_depth",
+      "stats_map_boundaryDistance",
       "stats_map_noise",
       "stats_map_entropy",
     ]);
@@ -105,7 +105,7 @@ describe("AnalyzePanel", () => {
     const setMapMode = vi.fn<(mode: MapMode) => void>();
     render(<AnalyzePanel {...makeProps({ setMapMode })} />);
 
-    for (const mode of ["luminance", "colorlum", "gradient", "region", "depth", "noise", "entropy"] satisfies MapMode[]) {
+    for (const mode of ["luminance", "colorLuma", "gradient", "region", "boundaryDistance", "noise", "entropy"] satisfies MapMode[]) {
       fireEvent.click(screen.getByRole("button", { name: `stats_map_${mode}` }));
       expect(setMapMode).toHaveBeenLastCalledWith(mode);
     }
@@ -125,7 +125,7 @@ describe("AnalyzePanel", () => {
         mode: "noise",
         pixelMaps: analyzeMocks.pixelMaps,
         colorLUT: props.colorLUT,
-        cc: props.cc,
+        colorChoiceIndices: props.colorChoiceIndices,
         cvs: props.cvs,
         displayW: props.displayW,
         displayH: props.displayH,

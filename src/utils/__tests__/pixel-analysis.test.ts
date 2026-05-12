@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeNoiseLevelNorm, computeDiversity, computeEdgeDepth, computeGradient, computeRegion } from "../pixel-analysis";
+import { computeNoiseLevelNorm, computeDiversity, computeBoundaryDistance, computeGradient, computeRegion } from "../pixel-analysis";
 
 describe("pixel-analysis", () => {
   describe("computeNoiseLevelNorm", () => {
@@ -58,7 +58,7 @@ describe("pixel-analysis", () => {
     });
   });
 
-  describe("computeEdgeDepth", () => {
+  describe("computeBoundaryDistance", () => {
     it("marks edges between different levels", () => {
       // 4x4 image: left half 0, right half 3
       const w = 4,
@@ -71,7 +71,7 @@ describe("pixel-analysis", () => {
       }
       const isEdge = new Uint8Array(w * h);
       const depth = new Float32Array(w * h);
-      computeEdgeDepth(data, w, h, isEdge, depth);
+      computeBoundaryDistance(data, w, h, isEdge, depth);
       // Pixels at x=1 and x=2 should be edges (boundary)
       expect(isEdge[0 * w + 1]).toBe(1); // (1,0) is next to (2,0) which is different
       expect(isEdge[0 * w + 2]).toBe(1);
@@ -90,7 +90,7 @@ describe("pixel-analysis", () => {
       }
       const isEdge = new Uint8Array(w * h);
       const depth = new Float32Array(w * h);
-      computeEdgeDepth(data, w, h, isEdge, depth);
+      computeBoundaryDistance(data, w, h, isEdge, depth);
       // Edge pixels have depth 0
       for (let i = 0; i < w * h; i++) {
         if (isEdge[i]) expect(depth[i]).toBe(0);
@@ -104,11 +104,11 @@ describe("pixel-analysis", () => {
         h = 4;
       const data = new Uint8Array(w * h).fill(3);
       const levelNorm = new Float32Array(w * h);
-      const gradAngle = new Float32Array(w * h);
-      const gradMag = new Float32Array(w * h);
-      computeGradient(data, w, h, levelNorm, gradAngle, gradMag);
+      const gradientAngle = new Float32Array(w * h);
+      const gradientMagnitude = new Float32Array(w * h);
+      computeGradient(data, w, h, levelNorm, gradientAngle, gradientMagnitude);
       for (let i = 0; i < w * h; i++) {
-        expect(gradMag[i]).toBe(0);
+        expect(gradientMagnitude[i]).toBe(0);
       }
     });
 
@@ -116,20 +116,20 @@ describe("pixel-analysis", () => {
       // 4x1 image: [0, 2, 5, 7]
       const data = new Uint8Array([0, 2, 5, 7]);
       const levelNorm = new Float32Array(4);
-      const gradAngle = new Float32Array(4);
-      const gradMag = new Float32Array(4);
-      computeGradient(data, 4, 1, levelNorm, gradAngle, gradMag);
+      const gradientAngle = new Float32Array(4);
+      const gradientMagnitude = new Float32Array(4);
+      computeGradient(data, 4, 1, levelNorm, gradientAngle, gradientMagnitude);
       // Interior pixels should have non-zero gradient magnitude
-      expect(gradMag[1]).toBeGreaterThan(0);
-      expect(gradMag[2]).toBeGreaterThan(0);
+      expect(gradientMagnitude[1]).toBeGreaterThan(0);
+      expect(gradientMagnitude[2]).toBeGreaterThan(0);
     });
 
     it("populates levelNorm even when the first pixel is black", () => {
       const data = new Uint8Array([0, 2, 5, 7]);
       const levelNorm = new Float32Array(4);
-      const gradAngle = new Float32Array(4);
-      const gradMag = new Float32Array(4);
-      computeGradient(data, 4, 1, levelNorm, gradAngle, gradMag);
+      const gradientAngle = new Float32Array(4);
+      const gradientMagnitude = new Float32Array(4);
+      computeGradient(data, 4, 1, levelNorm, gradientAngle, gradientMagnitude);
       expect(levelNorm[0]).toBe(0);
       expect(levelNorm[1]).toBeCloseTo(2 / 7);
       expect(levelNorm[2]).toBeCloseTo(5 / 7);

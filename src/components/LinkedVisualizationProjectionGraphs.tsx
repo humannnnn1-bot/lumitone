@@ -25,8 +25,8 @@ import {
 } from "./linked-visualization-geometry";
 
 interface LinkedVisualizationHover {
-  lv: number;
-  ci: number;
+  levelIndex: number;
+  candidateIndex: number;
 }
 
 interface ProjectionPaths {
@@ -46,12 +46,12 @@ interface ProjectionGraphProps {
   alpha0: number;
   alpha7: number;
   activeAlpha: number;
-  activeRadiusFn: (lv: number) => number;
+  activeRadiusFn: (levelIndex: number) => number;
   activeDots: LinkedVisualizationDot[];
   projectionDots: LinkedVisualizationDot[];
   hoveredDot: LinkedVisualizationHover | null;
   dotHandlers: DotHandlers;
-  lvColor: (lv: number) => string;
+  lvColor: (levelIndex: number) => string;
   paths: ProjectionPaths;
   dotHitR: number;
   dotTransition: string;
@@ -93,8 +93,8 @@ export function RightProjectionGraph({
   axisLabel,
   onHuePointerDown,
 }: RightProjectionGraphProps) {
-  const yellowDot = activeDots.find((d) => d.lv === 6);
-  const blueDot = activeDots.find((d) => d.lv === 1);
+  const yellowDot = activeDots.find((d) => d.levelIndex === 6);
+  const blueDot = activeDots.find((d) => d.levelIndex === 1);
 
   return (
     <g>
@@ -108,8 +108,16 @@ export function RightProjectionGraph({
         strokeWidth={0.5}
         rx={4}
       />
-      {HUE_LABELS.map((a) => (
-        <line key={`rg${a}`} x1={rPx(a)} y1={RYtop} x2={rPx(a)} y2={RYbot} stroke="rgba(255,255,255,0.07)" strokeWidth={0.4} />
+      {HUE_LABELS.map((angleDeg) => (
+        <line
+          key={`rg${angleDeg}`}
+          x1={rPx(angleDeg)}
+          y1={RYtop}
+          x2={rPx(angleDeg)}
+          y2={RYbot}
+          stroke="rgba(255,255,255,0.07)"
+          strokeWidth={0.4}
+        />
       ))}
       <line x1={RX} y1={CY} x2={RX + RW} y2={CY} stroke="rgba(255,255,255,0.10)" strokeWidth={0.5} />
       <line
@@ -118,8 +126,8 @@ export function RightProjectionGraph({
         x2={RX + RW}
         y2={CY}
         stroke="rgba(255,255,255,0.6)"
-        strokeWidth={hoveredDot?.lv === 0 && mode === 0 ? 1.4 : mode === 0 && !hoveredDot ? 1.4 : 0.6}
-        opacity={hoveredDot?.lv === 0 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.4 : 0.12}
+        strokeWidth={hoveredDot?.levelIndex === 0 && mode === 0 ? 1.4 : mode === 0 && !hoveredDot ? 1.4 : 0.6}
+        opacity={hoveredDot?.levelIndex === 0 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.4 : 0.12}
       />
       <line
         x1={RX}
@@ -127,30 +135,30 @@ export function RightProjectionGraph({
         x2={RX + RW}
         y2={CY}
         stroke="#fff"
-        strokeWidth={hoveredDot?.lv === 7 && mode === 7 ? 1.4 : mode === 7 && !hoveredDot ? 1.4 : 0.6}
-        opacity={hoveredDot?.lv === 7 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.4 : 0.12}
+        strokeWidth={hoveredDot?.levelIndex === 7 && mode === 7 ? 1.4 : mode === 7 && !hoveredDot ? 1.4 : 0.6}
+        opacity={hoveredDot?.levelIndex === 7 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.4 : 0.12}
       />
       <path
         d={paths.r0[7]}
         fill="none"
         stroke="#fff"
         strokeWidth={mode === 0 ? 1.4 : 0.6}
-        opacity={hoveredDot?.lv === 7 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.5 : 0.12}
+        opacity={hoveredDot?.levelIndex === 7 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.5 : 0.12}
       />
       <path
         d={paths.r7[0]}
         fill="none"
         stroke="rgba(255,255,255,0.6)"
         strokeWidth={mode === 7 ? 1.4 : 0.6}
-        opacity={hoveredDot?.lv === 0 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.5 : 0.12}
+        opacity={hoveredDot?.levelIndex === 0 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.5 : 0.12}
       />
       {yellowDot &&
         (() => {
-          const hovL7m0 = hoveredDot?.lv === 7 && mode === 0;
-          const rad = ((yellowDot.a - alpha0 - 90) * Math.PI) / 180;
+          const hovL7m0 = hoveredDot?.levelIndex === 7 && mode === 0;
+          const rad = ((yellowDot.angleDeg - alpha0 - 90) * Math.PI) / 180;
           return (
             <circle
-              cx={rPx(yellowDot.a)}
+              cx={rPx(yellowDot.angleDeg)}
               cy={CY + WR * Math.sin(rad)}
               r={hovL7m0 ? 5.5 : 4}
               fill="#fff"
@@ -163,10 +171,10 @@ export function RightProjectionGraph({
         })()}
       {blueDot &&
         (() => {
-          const hovL0m0 = hoveredDot?.lv === 0 && mode === 0;
+          const hovL0m0 = hoveredDot?.levelIndex === 0 && mode === 0;
           return (
             <circle
-              cx={rPx(blueDot.a)}
+              cx={rPx(blueDot.angleDeg)}
               cy={CY}
               r={hovL0m0 ? 5.5 : 4}
               fill="#222"
@@ -179,11 +187,11 @@ export function RightProjectionGraph({
         })()}
       {blueDot &&
         (() => {
-          const hovL0m7 = hoveredDot?.lv === 0 && mode === 7;
-          const rad = ((blueDot.a - alpha7 - 90) * Math.PI) / 180;
+          const hovL0m7 = hoveredDot?.levelIndex === 0 && mode === 7;
+          const rad = ((blueDot.angleDeg - alpha7 - 90) * Math.PI) / 180;
           return (
             <circle
-              cx={rPx(blueDot.a)}
+              cx={rPx(blueDot.angleDeg)}
               cy={CY + WR * Math.sin(rad)}
               r={hovL0m7 ? 5.5 : 4}
               fill="#222"
@@ -196,10 +204,10 @@ export function RightProjectionGraph({
         })()}
       {yellowDot &&
         (() => {
-          const hovL7m7 = hoveredDot?.lv === 7 && mode === 7;
+          const hovL7m7 = hoveredDot?.levelIndex === 7 && mode === 7;
           return (
             <circle
-              cx={rPx(yellowDot.a)}
+              cx={rPx(yellowDot.angleDeg)}
               cy={CY}
               r={hovL7m7 ? 5.5 : 4}
               fill="#fff"
@@ -213,43 +221,43 @@ export function RightProjectionGraph({
       <text x={RX + RW / 2} y={RYtop - 4} fontSize={9} fill={C.textMuted} textAnchor="middle" fontStyle="italic">
         {axisLabel}
       </text>
-      {HUE_LABELS.map((a) => (
-        <text key={`ra${a}`} x={rPx(a)} y={RYbot + 12} fontSize={8} fill={C.textMuted} textAnchor="middle">
-          {a}°
+      {HUE_LABELS.map((angleDeg) => (
+        <text key={`ra${angleDeg}`} x={rPx(angleDeg)} y={RYbot + 12} fontSize={8} fill={C.textMuted} textAnchor="middle">
+          {angleDeg}°
         </text>
       ))}
-      {ACTIVE_LEVELS.map((lv) => (
+      {ACTIVE_LEVELS.map((levelIndex) => (
         <path
-          key={`rs0-${lv}`}
-          d={paths.r0[lv]}
+          key={`rs0-${levelIndex}`}
+          d={paths.r0[levelIndex]}
           fill="none"
-          stroke={lvColor(lv)}
+          stroke={lvColor(levelIndex)}
           strokeWidth={mode === 0 ? 1.8 : 0.8}
-          opacity={hoveredDot && mode === 0 ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
+          opacity={hoveredDot && mode === 0 ? (hoveredDot.levelIndex === levelIndex ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
         />
       ))}
-      {ACTIVE_LEVELS.map((lv) => (
+      {ACTIVE_LEVELS.map((levelIndex) => (
         <path
-          key={`rs7-${lv}`}
-          d={paths.r7[lv]}
+          key={`rs7-${levelIndex}`}
+          d={paths.r7[levelIndex]}
           fill="none"
-          stroke={lvColor(lv)}
+          stroke={lvColor(levelIndex)}
           strokeWidth={mode === 7 ? 1.8 : 0.8}
-          opacity={hoveredDot && mode === 7 ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
+          opacity={hoveredDot && mode === 7 ? (hoveredDot.levelIndex === levelIndex ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
         />
       ))}
-      {C2_PAIRS.map(([a, b]) => {
-        const rA = lumR0(a);
+      {C2_PAIRS.map(([levelIndex, pairLevel]) => {
+        const rA = lumR0(levelIndex);
         if (rA < 1) return null;
-        const colA = activeDots.find((d) => d.lv === a);
-        const colB = activeDots.find((d) => d.lv === b);
+        const colA = activeDots.find((d) => d.levelIndex === levelIndex);
+        const colB = activeDots.find((d) => d.levelIndex === pairLevel);
         const col =
           colA && colB
             ? `rgb(${Math.round((colA.rgb[0] + colB.rgb[0]) / 2)},${Math.round((colA.rgb[1] + colB.rgb[1]) / 2)},${Math.round((colA.rgb[2] + colB.rgb[2]) / 2)})`
             : "rgba(255,255,255,0.5)";
         return (
           <path
-            key={`comp-s-${a}-${b}`}
+            key={`comp-s-${levelIndex}-${pairLevel}`}
             d={compositeSinePath(rA, alpha0, alpha7)}
             fill="none"
             stroke={col}
@@ -270,21 +278,21 @@ export function RightProjectionGraph({
         onPointerDown={onHuePointerDown}
       />
       {projectionDots.map((d) => {
-        const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
-        const y = CY + activeRadiusFn(d.lv) * Math.sin(rad);
-        const hov = hoveredDot !== null && hoveredDot.lv === d.lv && hoveredDot.ci === d.ci;
-        const dimmed = d.act && hoveredDot !== null && !hov;
+        const rad = ((d.angleDeg - activeAlpha - 90) * Math.PI) / 180;
+        const y = CY + activeRadiusFn(d.levelIndex) * Math.sin(rad);
+        const hov = hoveredDot !== null && hoveredDot.levelIndex === d.levelIndex && hoveredDot.candidateIndex === d.candidateIndex;
+        const dimmed = d.isActive && hoveredDot !== null && !hov;
         return (
-          <g key={`rproj-${d.lv}-${d.ci}`} {...(d.act ? dotHandlers(d) : {})}>
-            {d.act && <circle cx={rPx(d.a)} cy={y} r={dotHitR} fill="transparent" pointerEvents="all" />}
+          <g key={`rproj-${d.levelIndex}-${d.candidateIndex}`} {...(d.isActive ? dotHandlers(d) : {})}>
+            {d.isActive && <circle cx={rPx(d.angleDeg)} cy={y} r={dotHitR} fill="transparent" pointerEvents="all" />}
             <circle
-              cx={rPx(d.a)}
+              cx={rPx(d.angleDeg)}
               cy={y}
-              r={d.act ? (hov ? 5.5 : 4) : hov ? 4 : 1.8}
+              r={d.isActive ? (hov ? 5.5 : 4) : hov ? 4 : 1.8}
               fill={`rgb(${d.rgb.join(",")})`}
-              stroke={d.act ? "#fff" : hov ? "#fff" : "rgba(255,255,255,0.15)"}
-              strokeWidth={d.act ? (hov ? 1.4 : 1.0) : hov ? 1.0 : 0.5}
-              opacity={d.act ? (dimmed ? 0.25 : 1) : hov ? 0.9 : 0.3}
+              stroke={d.isActive ? "#fff" : hov ? "#fff" : "rgba(255,255,255,0.15)"}
+              strokeWidth={d.isActive ? (hov ? 1.4 : 1.0) : hov ? 1.0 : 0.5}
+              opacity={d.isActive ? (dimmed ? 0.25 : 1) : hov ? 0.9 : 0.3}
               filter={hov ? "url(#dot-glow)" : undefined}
               style={{ transition: dotTransition }}
             />
@@ -313,8 +321,8 @@ export function BottomProjectionGraph({
   axisLabel,
   onHuePointerDown,
 }: BottomProjectionGraphProps) {
-  const yellowDot = activeDots.find((d) => d.lv === 6);
-  const blueDot = activeDots.find((d) => d.lv === 1);
+  const yellowDot = activeDots.find((d) => d.levelIndex === 6);
+  const blueDot = activeDots.find((d) => d.levelIndex === 1);
 
   return (
     <g>
@@ -328,8 +336,16 @@ export function BottomProjectionGraph({
         strokeWidth={0.5}
         rx={4}
       />
-      {HUE_LABELS.map((a) => (
-        <line key={`bg${a}`} x1={BXleft} y1={bPy(a)} x2={BXright} y2={bPy(a)} stroke="rgba(255,255,255,0.07)" strokeWidth={0.4} />
+      {HUE_LABELS.map((angleDeg) => (
+        <line
+          key={`bg${angleDeg}`}
+          x1={BXleft}
+          y1={bPy(angleDeg)}
+          x2={BXright}
+          y2={bPy(angleDeg)}
+          stroke="rgba(255,255,255,0.07)"
+          strokeWidth={0.4}
+        />
       ))}
       <line x1={CX} y1={BY} x2={CX} y2={BY + BH} stroke="rgba(255,255,255,0.10)" strokeWidth={0.5} />
       <line
@@ -338,8 +354,8 @@ export function BottomProjectionGraph({
         x2={CX}
         y2={BY + BH}
         stroke="rgba(255,255,255,0.6)"
-        strokeWidth={hoveredDot?.lv === 0 && mode === 0 ? 1.4 : mode === 0 && !hoveredDot ? 1.4 : 0.6}
-        opacity={hoveredDot?.lv === 0 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.4 : 0.12}
+        strokeWidth={hoveredDot?.levelIndex === 0 && mode === 0 ? 1.4 : mode === 0 && !hoveredDot ? 1.4 : 0.6}
+        opacity={hoveredDot?.levelIndex === 0 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.4 : 0.12}
       />
       <line
         x1={CX}
@@ -347,31 +363,31 @@ export function BottomProjectionGraph({
         x2={CX}
         y2={BY + BH}
         stroke="#fff"
-        strokeWidth={hoveredDot?.lv === 7 && mode === 7 ? 1.4 : mode === 7 && !hoveredDot ? 1.4 : 0.6}
-        opacity={hoveredDot?.lv === 7 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.4 : 0.12}
+        strokeWidth={hoveredDot?.levelIndex === 7 && mode === 7 ? 1.4 : mode === 7 && !hoveredDot ? 1.4 : 0.6}
+        opacity={hoveredDot?.levelIndex === 7 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.4 : 0.12}
       />
       <path
         d={paths.r0[7]}
         fill="none"
         stroke="#fff"
         strokeWidth={mode === 0 ? 1.4 : 0.6}
-        opacity={hoveredDot?.lv === 7 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.5 : 0.12}
+        opacity={hoveredDot?.levelIndex === 7 && mode === 0 ? 0.9 : hoveredDot ? 0 : mode === 0 ? 0.5 : 0.12}
       />
       <path
         d={paths.r7[0]}
         fill="none"
         stroke="rgba(255,255,255,0.6)"
         strokeWidth={mode === 7 ? 1.4 : 0.6}
-        opacity={hoveredDot?.lv === 0 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.5 : 0.12}
+        opacity={hoveredDot?.levelIndex === 0 && mode === 7 ? 0.9 : hoveredDot ? 0 : mode === 7 ? 0.5 : 0.12}
       />
       {yellowDot &&
         (() => {
-          const hovL7m0 = hoveredDot?.lv === 7 && mode === 0;
-          const rad = ((yellowDot.a - alpha0 - 90) * Math.PI) / 180;
+          const hovL7m0 = hoveredDot?.levelIndex === 7 && mode === 0;
+          const rad = ((yellowDot.angleDeg - alpha0 - 90) * Math.PI) / 180;
           return (
             <circle
               cx={CX + WR * Math.cos(rad)}
-              cy={bPy(yellowDot.a)}
+              cy={bPy(yellowDot.angleDeg)}
               r={hovL7m0 ? 5.5 : 4}
               fill="#fff"
               stroke={hovL7m0 ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.5)"}
@@ -383,11 +399,11 @@ export function BottomProjectionGraph({
         })()}
       {blueDot &&
         (() => {
-          const hovL0m0 = hoveredDot?.lv === 0 && mode === 0;
+          const hovL0m0 = hoveredDot?.levelIndex === 0 && mode === 0;
           return (
             <circle
               cx={CX}
-              cy={bPy(blueDot.a)}
+              cy={bPy(blueDot.angleDeg)}
               r={hovL0m0 ? 5.5 : 4}
               fill="#222"
               stroke={hovL0m0 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)"}
@@ -399,12 +415,12 @@ export function BottomProjectionGraph({
         })()}
       {blueDot &&
         (() => {
-          const hovL0m7 = hoveredDot?.lv === 0 && mode === 7;
-          const rad = ((blueDot.a - alpha7 - 90) * Math.PI) / 180;
+          const hovL0m7 = hoveredDot?.levelIndex === 0 && mode === 7;
+          const rad = ((blueDot.angleDeg - alpha7 - 90) * Math.PI) / 180;
           return (
             <circle
               cx={CX + WR * Math.cos(rad)}
-              cy={bPy(blueDot.a)}
+              cy={bPy(blueDot.angleDeg)}
               r={hovL0m7 ? 5.5 : 4}
               fill="#222"
               stroke={hovL0m7 ? "rgba(255,255,255,0.9)" : "rgba(255,255,255,0.6)"}
@@ -416,11 +432,11 @@ export function BottomProjectionGraph({
         })()}
       {yellowDot &&
         (() => {
-          const hovL7m7 = hoveredDot?.lv === 7 && mode === 7;
+          const hovL7m7 = hoveredDot?.levelIndex === 7 && mode === 7;
           return (
             <circle
               cx={CX}
-              cy={bPy(yellowDot.a)}
+              cy={bPy(yellowDot.angleDeg)}
               r={hovL7m7 ? 5.5 : 4}
               fill="#fff"
               stroke={hovL7m7 ? "rgba(0,0,0,0.8)" : "rgba(0,0,0,0.5)"}
@@ -433,9 +449,17 @@ export function BottomProjectionGraph({
       <text x={CX} y={BY + BH + 12} fontSize={9} fill={C.textMuted} textAnchor="middle" fontStyle="italic">
         {axisLabel}
       </text>
-      {HUE_LABELS.map((a) => (
-        <text key={`ba${a}`} x={BXleft - 4} y={bPy(a)} fontSize={8} fill={C.textMuted} textAnchor="end" dominantBaseline="middle">
-          {a}°
+      {HUE_LABELS.map((angleDeg) => (
+        <text
+          key={`ba${angleDeg}`}
+          x={BXleft - 4}
+          y={bPy(angleDeg)}
+          fontSize={8}
+          fill={C.textMuted}
+          textAnchor="end"
+          dominantBaseline="middle"
+        >
+          {angleDeg}°
         </text>
       ))}
       <line x1={BXleft} y1={bPy(hueAngle)} x2={BXright} y2={bPy(hueAngle)} stroke={C.accent} strokeWidth={1} opacity={0.5} />
@@ -448,38 +472,38 @@ export function BottomProjectionGraph({
         style={{ cursor: "ns-resize" }}
         onPointerDown={onHuePointerDown}
       />
-      {ACTIVE_LEVELS.map((lv) => (
+      {ACTIVE_LEVELS.map((levelIndex) => (
         <path
-          key={`bc0-${lv}`}
-          d={paths.r0[lv]}
+          key={`bc0-${levelIndex}`}
+          d={paths.r0[levelIndex]}
           fill="none"
-          stroke={lvColor(lv)}
+          stroke={lvColor(levelIndex)}
           strokeWidth={mode === 0 ? 1.8 : 0.8}
-          opacity={hoveredDot && mode === 0 ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
+          opacity={hoveredDot && mode === 0 ? (hoveredDot.levelIndex === levelIndex ? 0.9 : 0.15) : mode === 0 ? 0.65 : 0.2}
         />
       ))}
-      {ACTIVE_LEVELS.map((lv) => (
+      {ACTIVE_LEVELS.map((levelIndex) => (
         <path
-          key={`bc7-${lv}`}
-          d={paths.r7[lv]}
+          key={`bc7-${levelIndex}`}
+          d={paths.r7[levelIndex]}
           fill="none"
-          stroke={lvColor(lv)}
+          stroke={lvColor(levelIndex)}
           strokeWidth={mode === 7 ? 1.8 : 0.8}
-          opacity={hoveredDot && mode === 7 ? (hoveredDot.lv === lv ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
+          opacity={hoveredDot && mode === 7 ? (hoveredDot.levelIndex === levelIndex ? 0.9 : 0.15) : mode === 7 ? 0.65 : 0.2}
         />
       ))}
-      {C2_PAIRS.map(([a, b]) => {
-        const rA = lumR0(a);
+      {C2_PAIRS.map(([levelIndex, pairLevel]) => {
+        const rA = lumR0(levelIndex);
         if (rA < 1) return null;
-        const colA = activeDots.find((d) => d.lv === a);
-        const colB = activeDots.find((d) => d.lv === b);
+        const colA = activeDots.find((d) => d.levelIndex === levelIndex);
+        const colB = activeDots.find((d) => d.levelIndex === pairLevel);
         const col =
           colA && colB
             ? `rgb(${Math.round((colA.rgb[0] + colB.rgb[0]) / 2)},${Math.round((colA.rgb[1] + colB.rgb[1]) / 2)},${Math.round((colA.rgb[2] + colB.rgb[2]) / 2)})`
             : "rgba(255,255,255,0.5)";
         return (
           <path
-            key={`comp-c-${a}-${b}`}
+            key={`comp-c-${levelIndex}-${pairLevel}`}
             d={compositeCosinePath(rA, alpha0, alpha7)}
             fill="none"
             stroke={col}
@@ -490,21 +514,21 @@ export function BottomProjectionGraph({
         );
       })}
       {projectionDots.map((d) => {
-        const rad = ((d.a - activeAlpha - 90) * Math.PI) / 180;
-        const x = CX + activeRadiusFn(d.lv) * Math.cos(rad);
-        const hov = hoveredDot !== null && hoveredDot.lv === d.lv && hoveredDot.ci === d.ci;
-        const dimmed = d.act && hoveredDot !== null && !hov;
+        const rad = ((d.angleDeg - activeAlpha - 90) * Math.PI) / 180;
+        const x = CX + activeRadiusFn(d.levelIndex) * Math.cos(rad);
+        const hov = hoveredDot !== null && hoveredDot.levelIndex === d.levelIndex && hoveredDot.candidateIndex === d.candidateIndex;
+        const dimmed = d.isActive && hoveredDot !== null && !hov;
         return (
-          <g key={`bproj-${d.lv}-${d.ci}`} {...(d.act ? dotHandlers(d) : {})}>
-            {d.act && <circle cx={x} cy={bPy(d.a)} r={dotHitR} fill="transparent" pointerEvents="all" />}
+          <g key={`bproj-${d.levelIndex}-${d.candidateIndex}`} {...(d.isActive ? dotHandlers(d) : {})}>
+            {d.isActive && <circle cx={x} cy={bPy(d.angleDeg)} r={dotHitR} fill="transparent" pointerEvents="all" />}
             <circle
               cx={x}
-              cy={bPy(d.a)}
-              r={d.act ? (hov ? 5.5 : 4) : hov ? 4 : 1.8}
+              cy={bPy(d.angleDeg)}
+              r={d.isActive ? (hov ? 5.5 : 4) : hov ? 4 : 1.8}
               fill={`rgb(${d.rgb.join(",")})`}
-              stroke={d.act ? "#fff" : hov ? "#fff" : "rgba(255,255,255,0.15)"}
-              strokeWidth={d.act ? (hov ? 1.4 : 1.0) : hov ? 1.0 : 0.5}
-              opacity={d.act ? (dimmed ? 0.25 : 1) : hov ? 0.9 : 0.3}
+              stroke={d.isActive ? "#fff" : hov ? "#fff" : "rgba(255,255,255,0.15)"}
+              strokeWidth={d.isActive ? (hov ? 1.4 : 1.0) : hov ? 1.0 : 0.5}
+              opacity={d.isActive ? (dimmed ? 0.25 : 1) : hov ? 0.9 : 0.3}
               filter={hov ? "url(#dot-glow)" : undefined}
               style={{ transition: dotTransition }}
             />

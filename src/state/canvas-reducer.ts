@@ -14,33 +14,33 @@ import { W0, H0 } from "../constants";
 function buildMergedClearDiff(
   data: Uint8Array,
   colorMap: Uint8Array,
-  dataDiff: { idx: Uint32Array; ov: Uint8Array; nv: Uint8Array },
+  dataDiff: { indices: Uint32Array; oldValues: Uint8Array; newValues: Uint8Array },
 ): import("../types").Diff {
   const n = data.length;
   const dataChanged = new Set<number>();
-  for (let i = 0; i < dataDiff.idx.length; i++) dataChanged.add(dataDiff.idx[i]);
+  for (let i = 0; i < dataDiff.indices.length; i++) dataChanged.add(dataDiff.indices[i]);
   // Count total changed pixels (data or colorMap)
   let count = 0;
   for (let i = 0; i < n; i++) {
     if (dataChanged.has(i) || colorMap[i] !== 0) count++;
   }
-  const idx = new Uint32Array(count);
-  const ov = new Uint8Array(count),
-    nv = new Uint8Array(count);
-  const cmOv = new Uint8Array(count),
-    cmNv = new Uint8Array(count);
+  const indices = new Uint32Array(count);
+  const oldValues = new Uint8Array(count),
+    newValues = new Uint8Array(count);
+  const oldColorMapValues = new Uint8Array(count),
+    newColorMapValues = new Uint8Array(count);
   let j = 0;
   for (let i = 0; i < n; i++) {
     if (dataChanged.has(i) || colorMap[i] !== 0) {
-      idx[j] = i;
-      ov[j] = data[i];
-      nv[j] = 0;
-      cmOv[j] = colorMap[i];
-      cmNv[j] = 0;
+      indices[j] = i;
+      oldValues[j] = data[i];
+      newValues[j] = 0;
+      oldColorMapValues[j] = colorMap[i];
+      newColorMapValues[j] = 0;
       j++;
     }
   }
-  return { idx, ov, nv, cmOv, cmNv };
+  return { indices, oldValues, newValues, oldColorMapValues, newColorMapValues };
 }
 
 function computeHist(data: Uint8Array): number[] {
@@ -49,12 +49,16 @@ function computeHist(data: Uint8Array): number[] {
   return h;
 }
 
-/** Apply diff delta to histogram. Set reverse=true for undo (swap ov/nv). */
-function applyHistDelta(hist: number[], diff: { idx: Uint32Array; ov: Uint8Array; nv: Uint8Array }, reverse: boolean): number[] {
+/** Apply diff delta to histogram. Set reverse=true for undo (swap oldValues/newValues). */
+function applyHistDelta(
+  hist: number[],
+  diff: { indices: Uint32Array; oldValues: Uint8Array; newValues: Uint8Array },
+  reverse: boolean,
+): number[] {
   const h = hist.slice();
-  const src = reverse ? diff.nv : diff.ov;
-  const dst = reverse ? diff.ov : diff.nv;
-  for (let i = 0; i < diff.idx.length; i++) {
+  const src = reverse ? diff.newValues : diff.oldValues;
+  const dst = reverse ? diff.oldValues : diff.newValues;
+  for (let i = 0; i < diff.indices.length; i++) {
     h[src[i] & LEVEL_MASK]--;
     h[dst[i] & LEVEL_MASK]++;
   }
@@ -63,9 +67,9 @@ function applyHistDelta(hist: number[], diff: { idx: Uint32Array; ov: Uint8Array
 
 function clearColorMapForDataChanges(colorMap: Uint8Array, diff: Diff): { colorMap: Uint8Array; diff: Diff } {
   let hasColorMapClear = false;
-  for (let i = 0; i < diff.idx.length; i++) {
-    const ix = diff.idx[i];
-    if (ix < colorMap.length && diff.ov[i] !== diff.nv[i] && colorMap[ix] !== 0) {
+  for (let i = 0; i < diff.indices.length; i++) {
+    const ix = diff.indices[i];
+    if (ix < colorMap.length && diff.oldValues[i] !== diff.newValues[i] && colorMap[ix] !== 0) {
       hasColorMapClear = true;
       break;
     }
@@ -74,21 +78,21 @@ function clearColorMapForDataChanges(colorMap: Uint8Array, diff: Diff): { colorM
   if (!hasColorMapClear) return { colorMap, diff };
 
   const nextColorMap = new Uint8Array(colorMap);
-  const cmOv = new Uint8Array(diff.idx.length);
-  const cmNv = new Uint8Array(diff.idx.length);
-  if (diff.cmOv && diff.cmOv.length === diff.idx.length) cmOv.set(diff.cmOv);
-  if (diff.cmNv && diff.cmNv.length === diff.idx.length) cmNv.set(diff.cmNv);
+  const oldColorMapValues = new Uint8Array(diff.indices.length);
+  const newColorMapValues = new Uint8Array(diff.indices.length);
+  if (diff.oldColorMapValues && diff.oldColorMapValues.length === diff.indices.length) oldColorMapValues.set(diff.oldColorMapValues);
+  if (diff.newColorMapValues && diff.newColorMapValues.length === diff.indices.length) newColorMapValues.set(diff.newColorMapValues);
 
-  for (let i = 0; i < diff.idx.length; i++) {
-    const ix = diff.idx[i];
-    if (ix < colorMap.length && diff.ov[i] !== diff.nv[i] && colorMap[ix] !== 0) {
-      cmOv[i] = colorMap[ix];
-      cmNv[i] = 0;
+  for (let i = 0; i < diff.indices.length; i++) {
+    const ix = diff.indices[i];
+    if (ix < colorMap.length && diff.oldValues[i] !== diff.newValues[i] && colorMap[ix] !== 0) {
+      oldColorMapValues[i] = colorMap[ix];
+      newColorMapValues[i] = 0;
       nextColorMap[ix] = 0;
     }
   }
 
-  return { colorMap: nextColorMap, diff: { ...diff, cmOv, cmNv } };
+  return { colorMap: nextColorMap, diff: { ...diff, oldColorMapValues, newColorMapValues } };
 }
 
 export function createInitialState(): AppState {
@@ -105,7 +109,7 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
   switch (action.type) {
     case "stroke_end": {
       const { finalData, finalColorMap, diff } = action;
-      if (!diff || diff.idx.length === 0) return state;
+      if (!diff || diff.indices.length === 0) return state;
       const colorMapUpdate = finalColorMap ? { colorMap: finalColorMap, diff } : clearColorMapForDataChanges(state.cvs.colorMap, diff);
       const newCvs = { ...state.cvs, data: finalData };
       if (colorMapUpdate.colorMap !== state.cvs.colorMap) newCvs.colorMap = colorMapUpdate.colorMap;
@@ -168,11 +172,11 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
       const n = state.cvs.w * state.cvs.h;
       const blank = new Uint8Array(n);
       const dataDiff = computeDiff(state.cvs.data, blank);
-      if (dataDiff.idx.length === 0 && state.cvs.colorMap.every((v) => v === 0)) return state;
+      if (dataDiff.indices.length === 0 && state.cvs.colorMap.every((v) => v === 0)) return state;
       const clearHist = new Array(8).fill(0);
       clearHist[0] = n;
       const mergedDiff = buildMergedClearDiff(state.cvs.data, state.cvs.colorMap, dataDiff);
-      if (mergedDiff.idx.length === 0) return state;
+      if (mergedDiff.indices.length === 0) return state;
       const newUndo = state.undoStack.clone();
       newUndo.push(compressDiff(mergedDiff));
       return {
@@ -202,24 +206,24 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
       let count = 0;
       for (let i = 0; i < n; i++) if (oldCm[i] !== 0) count++;
       if (count === 0) return state;
-      const idx = new Uint32Array(count);
-      const ov = new Uint8Array(count),
-        nv = new Uint8Array(count);
-      const cmOv = new Uint8Array(count),
-        cmNv = new Uint8Array(count);
+      const indices = new Uint32Array(count);
+      const oldValues = new Uint8Array(count),
+        newValues = new Uint8Array(count);
+      const oldColorMapValues = new Uint8Array(count),
+        newColorMapValues = new Uint8Array(count);
       let j = 0;
       for (let i = 0; i < n; i++) {
         if (oldCm[i] !== 0) {
-          idx[j] = i;
-          ov[j] = state.cvs.data[i];
-          nv[j] = state.cvs.data[i];
-          cmOv[j] = oldCm[i];
-          cmNv[j] = 0;
+          indices[j] = i;
+          oldValues[j] = state.cvs.data[i];
+          newValues[j] = state.cvs.data[i];
+          oldColorMapValues[j] = oldCm[i];
+          newColorMapValues[j] = 0;
           j++;
         }
       }
       const newUndo = state.undoStack.clone();
-      newUndo.push(compressDiff({ idx, ov, nv, cmOv, cmNv }));
+      newUndo.push(compressDiff({ indices, oldValues, newValues, oldColorMapValues, newColorMapValues }));
       return {
         ...state,
         cvs: { ...state.cvs, colorMap: new Uint8Array(n) },

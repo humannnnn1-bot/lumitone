@@ -4,9 +4,9 @@ import { S_CURSOR_POINTER } from "../../styles/shared";
 import type { LinkedVisualizationDot, LinkedVisualizationOverlayContext } from "../LinkedVisualization";
 
 interface RatioMember {
-  lv: number;
+  levelIndex: number;
   rgb: readonly [number, number, number];
-  ci: number;
+  candidateIndex: number;
 }
 
 interface RatioEntry {
@@ -14,8 +14,8 @@ interface RatioEntry {
   value: string;
   dim?: boolean | undefined;
   color?: string | undefined;
-  lv?: number | undefined;
-  ci?: number | undefined;
+  levelIndex?: number | undefined;
+  candidateIndex?: number | undefined;
   members?: RatioMember[] | undefined;
 }
 
@@ -44,12 +44,12 @@ function buildRatioRows(
   scaleMode: ScaleMode,
 ): { title: string; rows: RatioEntry[] } {
   const rows: RatioEntry[] = [];
-  const levelFreq = (d: LinkedVisualizationDot) => angleToFreq(d.a + activeAlpha, scaleMode);
+  const levelFreq = (d: LinkedVisualizationDot) => angleToFreq(d.angleDeg + activeAlpha, scaleMode);
 
   if (scaleMode === "ji") {
-    const chromatic = activeDots.filter((d) => d.lv !== 0 && d.lv !== 7).sort((a, b) => a.lv - b.lv);
+    const chromatic = activeDots.filter((d) => d.levelIndex !== 0 && d.levelIndex !== 7).sort((a, b) => a.levelIndex - b.levelIndex);
     for (const d of chromatic) {
-      const live = (((d.a + activeAlpha) % 360) + 360) % 360;
+      const live = (((d.angleDeg + activeAlpha) % 360) + 360) % 360;
       let snapIdx = 0;
       let minDist = 360;
       for (let j = 0; j < JI_ANGLES.length; j++) {
@@ -61,11 +61,11 @@ function buildRatioRows(
       }
       const hz = 220 * JI_RATIOS[snapIdx];
       rows.push({
-        label: `L${d.lv}`,
+        label: `L${d.levelIndex}`,
         value: `${notePad3(hz)} ${String(Math.round(hz)).padStart(3, " ")}Hz ${JI_RATIO_LABELS[snapIdx]}`,
         color: `rgb(${d.rgb.join(",")})`,
-        lv: d.lv,
-        ci: d.ci,
+        levelIndex: d.levelIndex,
+        candidateIndex: d.candidateIndex,
       });
     }
     rows.push({ label: "", value: "" });
@@ -76,7 +76,7 @@ function buildRatioRows(
   }
 
   if (scaleMode === "12tet") {
-    const sorted = [...activeDots].sort((a, b) => a.lv - b.lv);
+    const sorted = [...activeDots].sort((a, b) => a.levelIndex - b.levelIndex);
     for (const d of sorted) {
       const f = levelFreq(d);
       const hz = Math.round(f);
@@ -85,11 +85,11 @@ function buildRatioRows(
       const octave = Math.floor(midi / 12) - 1;
       const noteStr = (name.length === 1 ? name + " " : name) + octave;
       rows.push({
-        label: `L${d.lv}`,
+        label: `L${d.levelIndex}`,
         value: `${noteStr}  ${hz}Hz`,
         color: `rgb(${d.rgb.join(",")})`,
-        lv: d.lv,
-        ci: d.ci,
+        levelIndex: d.levelIndex,
+        candidateIndex: d.candidateIndex,
       });
     }
     return { title: "12-TET (Equal)", rows };
@@ -100,10 +100,10 @@ function buildRatioRows(
   const n = steps.length;
   const perDegree: RatioMember[][] = steps.map(() => []);
   for (const d of activeDots) {
-    if (d.lv === 0 || d.lv === 7) continue;
-    const norm = (((d.a + activeAlpha) % 360) + 360) % 360;
+    if (d.levelIndex === 0 || d.levelIndex === 7) continue;
+    const norm = (((d.angleDeg + activeAlpha) % 360) + 360) % 360;
     const idx = Math.round((norm / 360) * n) % n;
-    perDegree[idx].push({ lv: d.lv, rgb: d.rgb, ci: d.ci });
+    perDegree[idx].push({ levelIndex: d.levelIndex, rgb: d.rgb, candidateIndex: d.candidateIndex });
   }
   for (let i = 0; i < n; i++) {
     const hz = 261.63 * Math.pow(2, steps[i] / 12);
@@ -141,20 +141,24 @@ export function IntervalRatios({
         {title}
       </text>
       {rows.map((r, i) => {
-        const isHovered = hoveredDot !== null && r.lv != null && hoveredDot.lv === r.lv;
-        const isDimmed = hoveredDot !== null && r.lv != null && !isHovered;
+        const isHovered = hoveredDot !== null && r.levelIndex != null && hoveredDot.levelIndex === r.levelIndex;
+        const isDimmed = hoveredDot !== null && r.levelIndex != null && !isHovered;
         const textFill = r.dim ? C.textDimmer : isHovered ? "#fff" : C.textDim;
         const textX = r.color ? x + swatchSize + 4 : x;
         const rowY = y + (i + 1) * rowHeight;
         return (
           <g
             key={i}
-            style={{ cursor: r.lv != null ? "pointer" : undefined }}
+            style={{ cursor: r.levelIndex != null ? "pointer" : undefined }}
             opacity={isDimmed ? 0.3 : 1}
-            onPointerEnter={r.lv != null && r.ci != null ? () => setHoveredDot({ lv: r.lv!, ci: r.ci! }) : undefined}
-            onPointerLeave={r.lv != null ? () => setHoveredDot(null) : undefined}
+            onPointerEnter={
+              r.levelIndex != null && r.candidateIndex != null
+                ? () => setHoveredDot({ levelIndex: r.levelIndex!, candidateIndex: r.candidateIndex! })
+                : undefined
+            }
+            onPointerLeave={r.levelIndex != null ? () => setHoveredDot(null) : undefined}
           >
-            {r.lv != null && <rect x={x - 2} y={rowY - ROW_FONT_SIZE} width={width - x} height={rowHeight} fill="transparent" />}
+            {r.levelIndex != null && <rect x={x - 2} y={rowY - ROW_FONT_SIZE} width={width - x} height={rowHeight} fill="transparent" />}
             {r.color && <rect x={x} y={rowY - swatchSize} width={swatchSize} height={swatchSize} rx={2} fill={r.color} />}
             <text
               x={textX}
@@ -179,12 +183,12 @@ export function IntervalRatios({
             {r.members?.map((m, mi) => {
               const mx = width - 4 - (r.members!.length - mi) * (memberSq + memberGap);
               const my = rowY - memberSq;
-              const isMHovered = hoveredDot !== null && hoveredDot.lv === m.lv;
+              const isMHovered = hoveredDot !== null && hoveredDot.levelIndex === m.levelIndex;
               return (
                 <g
                   key={`m${mi}`}
                   style={S_CURSOR_POINTER}
-                  onPointerEnter={() => setHoveredDot({ lv: m.lv, ci: m.ci })}
+                  onPointerEnter={() => setHoveredDot({ levelIndex: m.levelIndex, candidateIndex: m.candidateIndex })}
                   onPointerLeave={() => setHoveredDot(null)}
                 >
                   <rect
@@ -198,7 +202,7 @@ export function IntervalRatios({
                     strokeWidth={isMHovered ? 1.5 : 0.5}
                   />
                   <text x={mx + memberSq / 2} y={my - 1} fontSize={8} fill={C.textDim} textAnchor="middle" fontFamily="var(--font-sans)">
-                    {m.lv}
+                    {m.levelIndex}
                   </text>
                 </g>
               );

@@ -16,12 +16,12 @@ export const MusicPanel = React.memo(function MusicPanel() {
   const {
     engine,
     hueAngle,
-    directCandidates,
+    candidateOverridesByLevel,
     hoveredCandidate,
     setHoveredCandidate,
     selectedLevels,
     setSelectedLevels,
-    setDirectCandidates,
+    setCandidateOverridesByLevel,
     volume,
     muted,
     scaleMode,
@@ -150,11 +150,11 @@ export const MusicPanel = React.memo(function MusicPanel() {
           <MusicLevelCandidateGrid
             levelPreview={levelPreview}
             hueAngle={hueAngle}
-            directCandidates={directCandidates}
+            candidateOverridesByLevel={candidateOverridesByLevel}
             selectedLevels={selectedLevels}
             burstHighlight={burstHighlight}
             hoveredCandidate={hoveredCandidate}
-            onDirectCandidatesChange={setDirectCandidates}
+            onCandidateOverridesByLevelChange={setCandidateOverridesByLevel}
             onSelectedLevelsChange={setSelectedLevels}
             onHoveredCandidateChange={setHoveredCandidate}
             onBlockClick={handleBlockClick}
@@ -166,7 +166,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
             onHueAngleChange={handleLinkedHueAngleChange}
             hoveredCandidate={hoveredCandidate}
             onHoverCandidate={setHoveredCandidate}
-            directCandidates={directCandidates}
+            candidateOverridesByLevel={candidateOverridesByLevel}
             scaleMode={scaleMode}
             alpha0={alpha0}
             onAlpha0Change={handleAlpha0Change}

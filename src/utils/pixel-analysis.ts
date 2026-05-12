@@ -52,7 +52,14 @@ export function computeDiversity(data: Uint8Array, w: number, h: number, localDi
   }
 }
 
-export function computeEdgeDepth(data: Uint8Array, w: number, h: number, isEdge: Uint8Array, depth: Float32Array, colorMap?: Uint8Array) {
+export function computeBoundaryDistance(
+  data: Uint8Array,
+  w: number,
+  h: number,
+  isEdge: Uint8Array,
+  boundaryDistance: Float32Array,
+  colorMap?: Uint8Array,
+) {
   const n = w * h;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
@@ -72,28 +79,28 @@ export function computeEdgeDepth(data: Uint8Array, w: number, h: number, isEdge:
     tail = 0;
   for (let i = 0; i < n; i++) {
     if (isEdge[i]) {
-      depth[i] = 0;
+      boundaryDistance[i] = 0;
       queue[tail++] = i;
-    } else depth[i] = -1;
+    } else boundaryDistance[i] = -1;
   }
   while (head < tail) {
     const idx = queue[head++],
       x = idx % w,
       y = (idx / w) | 0,
-      nd = depth[idx] + 1;
+      nd = boundaryDistance[idx] + 1;
     const neighbors = [y > 0 ? idx - w : -1, y + 1 < h ? idx + w : -1, x > 0 ? idx - 1 : -1, x + 1 < w ? idx + 1 : -1];
     for (const ni of neighbors) {
-      if (ni >= 0 && depth[ni] < 0) {
-        depth[ni] = nd;
+      if (ni >= 0 && boundaryDistance[ni] < 0) {
+        boundaryDistance[ni] = nd;
         queue[tail++] = ni;
       }
     }
   }
   let maxD = 1;
   for (let i = 0; i < n; i++) {
-    if (depth[i] > maxD) maxD = depth[i];
+    if (boundaryDistance[i] > maxD) maxD = boundaryDistance[i];
   }
-  for (let i = 0; i < n; i++) depth[i] = Math.max(0, depth[i]) / maxD;
+  for (let i = 0; i < n; i++) boundaryDistance[i] = Math.max(0, boundaryDistance[i]) / maxD;
 }
 
 export function computeGradient(
@@ -101,8 +108,8 @@ export function computeGradient(
   w: number,
   h: number,
   levelNorm: Float32Array,
-  gradAngle: Float32Array,
-  gradMag: Float32Array,
+  gradientAngle: Float32Array,
+  gradientMagnitude: Float32Array,
 ) {
   const n = w * h;
   for (let y = 0; y < h; y++) {
@@ -115,15 +122,15 @@ export function computeGradient(
       const d2 = y + 1 < h ? data[i + w] & LEVEL_MASK : data[i] & LEVEL_MASK;
       const gx = r2 - l,
         gy = d2 - u;
-      gradMag[i] = Math.sqrt(gx * gx + gy * gy);
-      gradAngle[i] = Math.atan2(gy, gx);
+      gradientMagnitude[i] = Math.sqrt(gx * gx + gy * gy);
+      gradientAngle[i] = Math.atan2(gy, gx);
     }
   }
   let maxGM = 1;
   for (let i = 0; i < n; i++) {
-    if (gradMag[i] > maxGM) maxGM = gradMag[i];
+    if (gradientMagnitude[i] > maxGM) maxGM = gradientMagnitude[i];
   }
-  for (let i = 0; i < n; i++) gradMag[i] /= maxGM;
+  for (let i = 0; i < n; i++) gradientMagnitude[i] /= maxGM;
 }
 
 export function computeRegion(data: Uint8Array, w: number, h: number, regionId: Int32Array, isEdge: Uint8Array, colorMap?: Uint8Array) {

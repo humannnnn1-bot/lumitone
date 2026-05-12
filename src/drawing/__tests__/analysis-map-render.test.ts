@@ -1,13 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_CC } from "../../color-engine";
+import { DEFAULT_COLOR_CHOICE_INDICES } from "../../color-engine";
 import type { CanvasData, MapMode } from "../../types";
-import {
-  buildRegionSizeMap,
-  getAnalysisMapHoverInfo,
-  type AnalysisColorLUT,
-  type AnalysisPixelMaps,
-  rasterizeAnalysisMap,
-} from "../analysis-map-render";
+import type { AnalysisPixelMaps } from "../../types";
+import { buildRegionSizeMap, getAnalysisMapHoverInfo, type AnalysisColorLUT, rasterizeAnalysisMap } from "../analysis-map-render";
 
 const colorLUT: AnalysisColorLUT = [
   [0, 0, 0],
@@ -33,9 +28,9 @@ function makePixelMaps(w = 2, h = 2): AnalysisPixelMaps {
   const n = w * h;
   const maps: AnalysisPixelMaps = {
     noise: new Float32Array(n),
-    depth: new Float32Array(n),
-    gradAngle: new Float32Array(n),
-    gradMag: new Float32Array(n),
+    boundaryDistance: new Float32Array(n),
+    gradientAngle: new Float32Array(n),
+    gradientMagnitude: new Float32Array(n),
     regionId: new Int32Array(n),
     isEdge: new Uint8Array(n),
     levelNorm: new Float32Array(n),
@@ -44,9 +39,9 @@ function makePixelMaps(w = 2, h = 2): AnalysisPixelMaps {
     h,
   };
   maps.noise.set([0, 0.25, 0.5, 0.75].slice(0, n));
-  maps.depth.set([0, 0.25, 0.5, 1].slice(0, n));
-  maps.gradAngle.set([0, Math.PI / 2, Math.PI, -Math.PI / 2].slice(0, n));
-  maps.gradMag.set([0, 0.2, 0.5, 1].slice(0, n));
+  maps.boundaryDistance.set([0, 0.25, 0.5, 1].slice(0, n));
+  maps.gradientAngle.set([0, Math.PI / 2, Math.PI, -Math.PI / 2].slice(0, n));
+  maps.gradientMagnitude.set([0, 0.2, 0.5, 1].slice(0, n));
   maps.regionId.set([1, 1, 2, 2].slice(0, n));
   maps.isEdge.set([0, 1, 0, 0].slice(0, n));
   maps.levelNorm.set([0, 2 / 7, 5 / 7, 1].slice(0, n));
@@ -59,7 +54,7 @@ describe("analysis-map-render", () => {
     const cvs = makeCanvasData();
     const pixelMaps = makePixelMaps();
 
-    for (const mode of ["entropy", "noise", "depth", "gradient", "region", "luminance", "colorlum"] satisfies MapMode[]) {
+    for (const mode of ["entropy", "noise", "boundaryDistance", "gradient", "region", "luminance", "colorLuma"] satisfies MapMode[]) {
       const target = new Uint32Array(4);
       const status = rasterizeAnalysisMap({ mode, pixelMaps, colorLUT, cvs, target });
       expect(status).toBe("rendered");
@@ -112,10 +107,10 @@ describe("analysis-map-render", () => {
     expect(regionSizeById.get(1)).toBe(2);
     const cases: Array<[MapMode, string]> = [
       ["luminance", "(0,0) MapTone L0 Black gray=0 level=0/7 t=0%"],
-      ["colorlum", "(0,0) MapColorLuma L0 c1/1 #000000 Y=0/255 0% dGray=0"],
+      ["colorLuma", "(0,0) MapColorLuma L0 c1/1 #000000 Y=0/255 0% dGray=0"],
       ["region", "(0,0) MapRegion L0 base c1/1 #000000 region#1 size=2px interior small"],
       ["gradient", "(0,0) MapToneGrad L0 g=(+2,+5) dir=180° mag=0% flat"],
-      ["depth", "(0,0) MapBoundaryDist L0 base c1/1 #000000 depth=0% near"],
+      ["boundaryDistance", "(0,0) MapBoundaryDist L0 base c1/1 #000000 distance=0% near"],
       ["noise", "(0,0) MapIsolation L0 base c1/1 #000000 unlike=0/4 same=4/4 score=0%"],
       ["entropy", "(0,0) MapDiversity L0 base c1/1 #000000 win=2x2 keys=4 score=0%"],
     ];
@@ -127,7 +122,7 @@ describe("analysis-map-render", () => {
         mode,
         pixelMaps,
         colorLUT,
-        cc: DEFAULT_CC,
+        colorChoiceIndices: DEFAULT_COLOR_CHOICE_INDICES,
         cvs,
         regionSizeById,
       });

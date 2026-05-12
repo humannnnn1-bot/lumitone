@@ -4,8 +4,8 @@ import { S_CURSOR_POINTER } from "../styles/shared";
 import { BXright, BY, C2_PAIR, LV_COLORS, TW, type LinkedVisualizationDot } from "./linked-visualization-geometry";
 
 interface LinkedVisualizationHover {
-  lv: number;
-  ci: number;
+  levelIndex: number;
+  candidateIndex: number;
 }
 
 type DotHandlers = (d: LinkedVisualizationDot) => {
@@ -31,7 +31,9 @@ export function LinkedVisualizationLegend({
   legendL0,
   legendL7,
 }: LinkedVisualizationLegendProps) {
-  const hovIdx = hoveredDot ? activeDots.findIndex((d) => d.lv === hoveredDot.lv && d.ci === hoveredDot.ci) : -1;
+  const hovIdx = hoveredDot
+    ? activeDots.findIndex((d) => d.levelIndex === hoveredDot.levelIndex && d.candidateIndex === hoveredDot.candidateIndex)
+    : -1;
   const ix = BXright + 12;
   const ixRgb = ix + 60;
   const ixC2 = ixRgb + 70;
@@ -47,18 +49,19 @@ export function LinkedVisualizationLegend({
     const hov = hovIdx === i;
     yOffset += ROW_H;
     return (
-      <g key={`info-${d.lv}-${d.ci}`} opacity={hov ? 1 : hoveredDot !== null ? 0.3 : 0.8} {...dotHandlers(d)}>
+      <g key={`info-${d.levelIndex}-${d.candidateIndex}`} opacity={hov ? 1 : hoveredDot !== null ? 0.3 : 0.8} {...dotHandlers(d)}>
         <rect x={ix - 2} y={y - 4} width={TW - ix} height={ROW_H} fill="transparent" pointerEvents="all" />
         <rect x={ix} y={y} width={11} height={11} rx={2} fill={col} stroke={hov ? C.accent : "none"} strokeWidth={hov ? 0.5 : 0} />
         <text x={ix + 15} y={y + 9} fontSize={10} fill={hov ? C.textPrimary : C.textDimmer}>
-          L{d.lv} <tspan style={{ fontVariantNumeric: "tabular-nums" }}>{String(Math.round(d.a)).padStart(3, "\u2007")}°</tspan>
+          L{d.levelIndex}{" "}
+          <tspan style={{ fontVariantNumeric: "tabular-nums" }}>{String(Math.round(d.angleDeg)).padStart(3, "\u2007")}°</tspan>
         </text>
         <text x={ixRgb} y={y + 9} fontSize={10} fill={C.textDimmer}>
           ({d.rgb.join(",")})
         </text>
         {(() => {
-          const pairLv = C2_PAIR[d.lv];
-          const pairDot = activeDots.find((ad) => ad.lv === pairLv);
+          const pairLv = C2_PAIR[d.levelIndex];
+          const pairDot = activeDots.find((ad) => ad.levelIndex === pairLv);
           const pairCol = pairDot ? `rgb(${pairDot.rgb.join(",")})` : LV_COLORS[pairLv];
           return (
             <>
@@ -77,15 +80,15 @@ export function LinkedVisualizationLegend({
   });
 
   const l7y = yOffset;
-  const hovL0 = hoveredDot !== null && hoveredDot.lv === 0;
-  const hovL7 = hoveredDot !== null && hoveredDot.lv === 7;
+  const hovL0 = hoveredDot !== null && hoveredDot.levelIndex === 0;
+  const hovL7 = hoveredDot !== null && hoveredDot.levelIndex === 7;
 
   return (
     <g>
       <g
         key="legend-l0"
         opacity={hovL0 ? 1 : hoveredDot !== null ? 0.3 : 0.8}
-        onPointerEnter={() => setHoveredDot({ lv: 0, ci: -1 })}
+        onPointerEnter={() => setHoveredDot({ levelIndex: 0, candidateIndex: -1 })}
         onPointerLeave={() => setHoveredDot(null)}
         style={S_CURSOR_POINTER}
       >
@@ -118,7 +121,7 @@ export function LinkedVisualizationLegend({
       <g
         key="legend-l7"
         opacity={hovL7 ? 1 : hoveredDot !== null ? 0.3 : 0.8}
-        onPointerEnter={() => setHoveredDot({ lv: 7, ci: -1 })}
+        onPointerEnter={() => setHoveredDot({ levelIndex: 7, candidateIndex: -1 })}
         onPointerLeave={() => setHoveredDot(null)}
         style={S_CURSOR_POINTER}
       >

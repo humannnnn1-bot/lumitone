@@ -13,7 +13,7 @@ vi.mock("../../i18n", () => ({
 
 function makeProps(overrides?: Partial<Parameters<typeof ColorMappingList>[0]>) {
   return {
-    cc: [0, 0, 0, 0, 0, 0, 0, 0],
+    colorChoiceIndices: [0, 0, 0, 0, 0, 0, 0, 0],
     dispatch: vi.fn(),
     brushLevel: 0,
     onSelectLevel: vi.fn(),
@@ -50,7 +50,7 @@ describe("ColorMappingList", () => {
     const nextButtons = screen.queryAllByLabelText(/aria_next_color/);
     if (nextButtons.length > 0) {
       fireEvent.click(nextButtons[0]);
-      expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "cycle_color", dir: 1 }));
+      expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "cycle_color", direction: 1 }));
     }
   });
 
@@ -58,8 +58,8 @@ describe("ColorMappingList", () => {
     const edgeCandidateIndex = HEX_CANDIDATE_ANGLES[3].findIndex((angle) => angle === 210);
     expect(edgeCandidateIndex).toBeGreaterThanOrEqual(0);
 
-    const cc = [0, 0, 0, edgeCandidateIndex, 0, 0, 0, 0];
-    render(<ColorMappingList {...makeProps({ cc })} />);
+    const colorChoiceIndices = [0, 0, 0, edgeCandidateIndex, 0, 0, 0, 0];
+    render(<ColorMappingList {...makeProps({ colorChoiceIndices })} />);
 
     const outputRgb = LEVEL_CANDIDATES[3][edgeCandidateIndex].rgb;
     expect(screen.getByText("⬡300°").style.color).toBe("rgb(255, 0, 255)");

@@ -104,7 +104,7 @@ export function useUIState(_t: TranslationFn) {
   const [showNewCanvas, setShowNewCanvas] = useState(false);
   const [mapMode, setMapMode] = useState<MapMode>("luminance");
   const [hueAngle, setHueAngle] = useState(0);
-  const [directCandidates, setDirectCandidates] = useState<Map<number, number>>(new Map());
+  const [candidateOverridesByLevel, setCandidateOverridesByLevel] = useState<Map<number, number>>(new Map());
 
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const initialActiveTabIdRef = useRef(activeTabId);
@@ -182,8 +182,8 @@ export function useUIState(_t: TranslationFn) {
     setMapMode,
     hueAngle,
     setHueAngle,
-    directCandidates,
-    setDirectCandidates,
+    candidateOverridesByLevel,
+    setCandidateOverridesByLevel,
     toastTimerRef,
   };
 }

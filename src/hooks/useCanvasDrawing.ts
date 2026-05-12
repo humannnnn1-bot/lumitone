@@ -62,7 +62,7 @@ interface CanvasDrawingOptions {
   cvs: CanvasData;
   dispatch: React.Dispatch<CanvasAction>;
   colorLUT: [number, number, number][];
-  cc: readonly number[];
+  colorChoiceIndices: readonly number[];
   brushLevel: number;
   brushSize: number;
   tool: ToolId;
@@ -73,7 +73,7 @@ interface CanvasDrawingOptions {
 type CanvasStatusMode = "source" | "color";
 
 export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResult {
-  const { cvs, dispatch, colorLUT, cc, brushLevel, brushSize, tool, prvRef, setBrushLevel } = opts;
+  const { cvs, dispatch, colorLUT, colorChoiceIndices, brushLevel, brushSize, tool, prvRef, setBrushLevel } = opts;
   const ctx = useDrawingContext();
   const { displayW, displayH, panningRef, spaceRef, zoomRef, panRef, startPan, movePan, endPan, announce, t } = ctx;
   const srcRef = useRef<HTMLCanvasElement | null>(null);
@@ -116,7 +116,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
   const displayHRef = useSyncRef(displayH);
 
   // Batch-sync remaining values used in imperative callbacks
-  const s = useSyncRefs({ cc, brushLevel, colorLUT, startPan, movePan, endPan, setBrushLevel, announce, t });
+  const s = useSyncRefs({ colorChoiceIndices, brushLevel, colorLUT, startPan, movePan, endPan, setBrushLevel, announce, t });
 
   // Cursor overlay sub-hook
   const cursor = useCursorOverlay({ zoomRef, panRef, cvsRef, displayWRef, displayHRef, panningRef, brushSizeRef, toolRef }, statusRef);
@@ -146,7 +146,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     updateStatusBase(e, statusRef.current, statusCanvas, drawRefs, d, (pos, lv) =>
       mode === "source"
         ? formatSourcePixelStatus({ x: pos.x, y: pos.y, lv })
-        : formatColorPixelStatus({ x: pos.x, y: pos.y, lv, cc: s.current.cc }),
+        : formatColorPixelStatus({ x: pos.x, y: pos.y, lv, colorChoiceIndices: s.current.colorChoiceIndices }),
     );
   }
 

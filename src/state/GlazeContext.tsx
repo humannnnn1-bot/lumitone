@@ -8,8 +8,8 @@ export interface GlazeContextValue {
   setGlazeTool: React.Dispatch<React.SetStateAction<GlazeToolId>>;
   brushSize: number;
   setBrushSize: React.Dispatch<React.SetStateAction<number>>;
-  directCandidates: Map<number, number>;
-  setDirectCandidates: React.Dispatch<React.SetStateAction<Map<number, number>>>;
+  candidateOverridesByLevel: Map<number, number>;
+  setCandidateOverridesByLevel: React.Dispatch<React.SetStateAction<Map<number, number>>>;
 }
 
 const GlazeContext = createContext<GlazeContextValue | null>(null);

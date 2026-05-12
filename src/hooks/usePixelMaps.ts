@@ -1,45 +1,32 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { LEVEL_MASK } from "../constants";
-import type { CanvasData, MapMode } from "../types";
-import { computeNoiseLevelNorm, computeDiversity, computeEdgeDepth, computeGradient, computeRegion } from "../utils/pixel-analysis";
+import type { AnalysisPixelMaps, CanvasData, MapMode } from "../types";
+import { computeNoiseLevelNorm, computeDiversity, computeBoundaryDistance, computeGradient, computeRegion } from "../utils/pixel-analysis";
 import type { WorkerRequest, WorkerResponse } from "../workers/pixel-analysis.worker";
 import { recordDebugPerf, startDebugPerf } from "../utils/perf-debug";
 
 // Lazy worker constructor — Vite ?worker import
 import PixelAnalysisWorker from "../workers/pixel-analysis.worker?worker";
 
-const WORKER_MODES = new Set<MapMode>(["noise", "entropy", "depth", "gradient", "region"]);
-const PRELOAD_ORDER: readonly MapMode[] = ["luminance", "noise", "gradient", "region", "depth", "entropy"];
-
-export interface PixelMaps {
-  noise: Float32Array;
-  depth: Float32Array;
-  gradAngle: Float32Array;
-  gradMag: Float32Array;
-  regionId: Int32Array;
-  isEdge: Uint8Array;
-  levelNorm: Float32Array;
-  localDiversity: Float32Array;
-  w: number;
-  h: number;
-}
+const WORKER_MODES = new Set<MapMode>(["noise", "entropy", "boundaryDistance", "gradient", "region"]);
+const PRELOAD_ORDER: readonly MapMode[] = ["luminance", "noise", "gradient", "region", "boundaryDistance", "entropy"];
 
 type PixelMapsCache = {
   data: Uint8Array;
   colorMap: Uint8Array;
   w: number;
   h: number;
-  byMode: Partial<Record<MapMode, PixelMaps>>;
+  byMode: Partial<Record<MapMode, AnalysisPixelMaps>>;
 };
 
-function emptyPixelMaps(w: number, h: number): PixelMaps {
+function emptyPixelMaps(w: number, h: number): AnalysisPixelMaps {
   const n = w * h;
   return {
     noise: new Float32Array(n),
-    depth: new Float32Array(n),
-    gradAngle: new Float32Array(n),
-    gradMag: new Float32Array(n),
+    boundaryDistance: new Float32Array(n),
+    gradientAngle: new Float32Array(n),
+    gradientMagnitude: new Float32Array(n),
     regionId: new Int32Array(n),
     isEdge: new Uint8Array(n),
     levelNorm: new Float32Array(n),
@@ -50,7 +37,7 @@ function emptyPixelMaps(w: number, h: number): PixelMaps {
 }
 
 /** Synchronous fallback for pixel maps (used when Worker is unavailable). */
-function computePixelMapsSync(cvs: CanvasData, mode: MapMode): PixelMaps {
+function computePixelMapsSync(cvs: CanvasData, mode: MapMode): AnalysisPixelMaps {
   const { data, w, h } = cvs;
   const n = w * h;
   const maps = emptyPixelMaps(w, h);
@@ -62,11 +49,11 @@ function computePixelMapsSync(cvs: CanvasData, mode: MapMode): PixelMaps {
     case "entropy":
       computeDiversity(data, w, h, maps.localDiversity, cvs.colorMap);
       break;
-    case "depth":
-      computeEdgeDepth(data, w, h, maps.isEdge, maps.depth, cvs.colorMap);
+    case "boundaryDistance":
+      computeBoundaryDistance(data, w, h, maps.isEdge, maps.boundaryDistance, cvs.colorMap);
       break;
     case "gradient":
-      computeGradient(data, w, h, maps.levelNorm, maps.gradAngle, maps.gradMag);
+      computeGradient(data, w, h, maps.levelNorm, maps.gradientAngle, maps.gradientMagnitude);
       break;
     case "region":
       computeRegion(data, w, h, maps.regionId, maps.isEdge, cvs.colorMap);
@@ -74,18 +61,18 @@ function computePixelMapsSync(cvs: CanvasData, mode: MapMode): PixelMaps {
     case "luminance":
       for (let i = 0; i < n; i++) maps.levelNorm[i] = (data[i] & LEVEL_MASK) / 7;
       break;
-    case "colorlum":
+    case "colorLuma":
       break;
   }
   return maps;
 }
 
-function toPixelMaps(result: WorkerResponse): PixelMaps {
+function toPixelMaps(result: WorkerResponse): AnalysisPixelMaps {
   return {
     noise: result.noise,
-    depth: result.depth,
-    gradAngle: result.gradAngle,
-    gradMag: result.gradMag,
+    boundaryDistance: result.boundaryDistance,
+    gradientAngle: result.gradientAngle,
+    gradientMagnitude: result.gradientMagnitude,
     regionId: result.regionId,
     isEdge: result.isEdge,
     levelNorm: result.levelNorm,
@@ -99,8 +86,8 @@ function isSameCanvas(cache: PixelMapsCache | null, cvs: CanvasData): cache is P
   return cache !== null && cache.w === cvs.w && cache.h === cvs.h && cache.data === cvs.data && cache.colorMap === cvs.colorMap;
 }
 
-export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): PixelMaps {
-  const [maps, setMaps] = useState<PixelMaps>(() => emptyPixelMaps(cvs.w, cvs.h));
+export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): AnalysisPixelMaps {
+  const [maps, setMaps] = useState<AnalysisPixelMaps>(() => emptyPixelMaps(cvs.w, cvs.h));
   const workerRef = useRef<Worker | null>(null);
   const preloadWorkerRef = useRef<Worker | null>(null);
   const workerFailedRef = useRef(false);

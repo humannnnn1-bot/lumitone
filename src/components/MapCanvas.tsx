@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
-import type { CanvasData } from "../types";
+import type { AnalysisPixelMaps, CanvasData } from "../types";
 import type { MapMode } from "../types";
-import type { PixelMaps } from "../hooks/usePixelMaps";
 import { buildRegionSizeMap, getAnalysisMapHoverInfo, rasterizeAnalysisMap } from "../drawing/analysis-map-render";
 import { C, SP, FS, R, FONT } from "../styles/tokens";
 import { openBlobUrlInNewTab, timestamp } from "../utils";
@@ -18,16 +17,16 @@ export function MapCanvas({
   mode,
   pixelMaps,
   colorLUT,
-  cc,
+  colorChoiceIndices,
   cvs,
   displayW,
   displayH,
   showToast,
 }: {
   mode: MapMode;
-  pixelMaps: PixelMaps;
+  pixelMaps: AnalysisPixelMaps;
   colorLUT: [number, number, number][];
-  cc: readonly number[];
+  colorChoiceIndices: readonly number[];
   cvs: CanvasData;
   displayW: number;
   displayH: number;
@@ -81,13 +80,13 @@ export function MapCanvas({
         mode,
         pixelMaps,
         colorLUT,
-        cc,
+        colorChoiceIndices,
         cvs,
         regionSizeById: regionSizeCache,
       });
       setHoverInfo(info);
     },
-    [mode, pixelMaps, colorLUT, cc, cvs, cw, ch, regionSizeCache],
+    [mode, pixelMaps, colorLUT, colorChoiceIndices, cvs, cw, ch, regionSizeCache],
   );
 
   const onMouseLeave = useCallback(() => setHoverInfo(null), []);

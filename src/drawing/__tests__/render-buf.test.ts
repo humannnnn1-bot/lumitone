@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GRAY_VALUES, renderBuf } from "../render-buf";
-import { LEVEL_INFO, buildColorLUT, DEFAULT_CC } from "../../color-engine";
+import { LEVEL_INFO, buildColorLUT, DEFAULT_COLOR_CHOICE_INDICES } from "../../color-engine";
 import type { ImgCache } from "../../types";
 
 describe("GRAY_VALUES", () => {
@@ -62,7 +62,7 @@ describe("renderBuf", () => {
   let lut: [number, number, number][];
 
   beforeEach(() => {
-    lut = buildColorLUT(DEFAULT_CC);
+    lut = buildColorLUT(DEFAULT_COLOR_CHOICE_INDICES);
   });
 
   it("returns early when both canvases are null", () => {

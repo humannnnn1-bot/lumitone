@@ -58,10 +58,10 @@ function connectedComponent(data: Uint8Array, w: number, h: number, sx: number, 
   const stack = [seed];
 
   while (stack.length > 0) {
-    const idx = stack.pop()!;
-    const x = idx % w;
-    const y = (idx / w) | 0;
-    const neighbors = [y > 0 ? idx - w : -1, y + 1 < h ? idx + w : -1, x > 0 ? idx - 1 : -1, x + 1 < w ? idx + 1 : -1];
+    const indices = stack.pop()!;
+    const x = indices % w;
+    const y = (indices / w) | 0;
+    const neighbors = [y > 0 ? indices - w : -1, y + 1 < h ? indices + w : -1, x > 0 ? indices - 1 : -1, x + 1 < w ? indices + 1 : -1];
 
     for (const next of neighbors) {
       if (next < 0 || seen.has(next) || data[next] !== target) continue;

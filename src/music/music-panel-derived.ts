@@ -3,8 +3,10 @@ import { FANO_LINES } from "../data/theory-data";
 import type { SonificationLevel } from "./music-audio-graph";
 import { MUSIC_ACTIVE_LEVELS, type ActiveMusicLevel, type MusicHueTick, type MusicLevelPreview } from "./types";
 
-function getCandidateIndex(directCandidates: ReadonlyMap<number, number>, lv: number, hueAngle: number): number {
-  return directCandidates.has(lv) ? directCandidates.get(lv)! : findClosestCandidate(lv, hueAngle);
+function getCandidateIndex(candidateOverridesByLevel: ReadonlyMap<number, number>, levelIndex: number, hueAngle: number): number {
+  return candidateOverridesByLevel.has(levelIndex)
+    ? candidateOverridesByLevel.get(levelIndex)!
+    : findClosestCandidate(levelIndex, hueAngle);
 }
 
 export function findMusicFanoLine(a: number, b: number): number {
@@ -16,33 +18,36 @@ export function findMusicFanoLine(a: number, b: number): number {
   });
 }
 
-export function buildMusicSonificationLevels(directCandidates: ReadonlyMap<number, number>, hueAngle: number): SonificationLevel[] {
-  return MUSIC_ACTIVE_LEVELS.map((lv) => {
-    const ci = getCandidateIndex(directCandidates, lv, hueAngle);
-    const cand = LEVEL_CANDIDATES[lv][ci];
-    return cand ? { lv, angle: cand.angle, gray: LEVEL_INFO[lv].gray } : { lv, angle: 0, gray: 0 };
+export function buildMusicSonificationLevels(
+  candidateOverridesByLevel: ReadonlyMap<number, number>,
+  hueAngle: number,
+): SonificationLevel[] {
+  return MUSIC_ACTIVE_LEVELS.map((levelIndex) => {
+    const candidateIndex = getCandidateIndex(candidateOverridesByLevel, levelIndex, hueAngle);
+    const cand = LEVEL_CANDIDATES[levelIndex][candidateIndex];
+    return cand ? { lv: levelIndex, angle: cand.angle, gray: LEVEL_INFO[levelIndex].gray } : { lv: levelIndex, angle: 0, gray: 0 };
   });
 }
 
-export function buildMusicLevelPreview(directCandidates: ReadonlyMap<number, number>, hueAngle: number): MusicLevelPreview[] {
-  return LEVEL_INFO.map((info, lv) => {
-    const candidates = LEVEL_CANDIDATES[lv];
-    const ci = getCandidateIndex(directCandidates, lv, hueAngle);
-    const rgb = candidates[ci]?.rgb ?? [128, 128, 128];
-    return { lv, name: info.name, rgb, hex: `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` };
+export function buildMusicLevelPreview(candidateOverridesByLevel: ReadonlyMap<number, number>, hueAngle: number): MusicLevelPreview[] {
+  return LEVEL_INFO.map((info, levelIndex) => {
+    const candidates = LEVEL_CANDIDATES[levelIndex];
+    const candidateIndex = getCandidateIndex(candidateOverridesByLevel, levelIndex, hueAngle);
+    const rgb = candidates[candidateIndex]?.rgb ?? [128, 128, 128];
+    return { levelIndex, name: info.name, rgb, hex: `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` };
   });
 }
 
 export function buildActiveMusicLevels(levelPreview: readonly MusicLevelPreview[]): ActiveMusicLevel[] {
   return levelPreview
-    .filter((lp) => lp.lv >= 1 && lp.lv <= 6)
-    .map((lp) => ({ lv: lp.lv, rgb: lp.rgb as readonly [number, number, number] }));
+    .filter((lp) => lp.levelIndex >= 1 && lp.levelIndex <= 6)
+    .map((lp) => ({ lv: lp.levelIndex, rgb: lp.rgb as readonly [number, number, number] }));
 }
 
 export function buildMusicHueTicks(): MusicHueTick[] {
   const ticks: MusicHueTick[] = [];
-  for (let lv = 2; lv <= 5; lv++) {
-    const cands = LEVEL_CANDIDATES[lv];
+  for (let levelIndex = 2; levelIndex <= 5; levelIndex++) {
+    const cands = LEVEL_CANDIDATES[levelIndex];
     if (cands.length <= 1 || cands[0].angle < 0) continue;
     const angles = cands.map((c) => c.angle).sort((a, b) => a - b);
     for (let i = 0; i < angles.length; i++) {

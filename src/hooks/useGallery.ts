@@ -4,20 +4,24 @@ import { LEVEL_MASK } from "../constants";
 import type { CanvasData } from "../types";
 
 export interface GalleryItem {
-  cc: number[];
+  colorChoiceIndices: number[];
   imageData: ImageData | null;
 }
 
 const THUMB_MAX = 260;
 const CHUNK_SIZE = 8;
 
-/** Generate all cc[] variants as a Cartesian product of unlocked candidate indices. */
-export function generateAllVariants(cc: readonly number[], locked: readonly boolean[], hist: readonly number[]): number[][] {
+/** Generate all colorChoiceIndices[] variants as a Cartesian product of unlocked candidate indices. */
+export function generateAllVariants(
+  colorChoiceIndices: readonly number[],
+  locked: readonly boolean[],
+  hist: readonly number[],
+): number[][] {
   const options: number[][] = [];
   for (let lv = 0; lv < 8; lv++) {
     const n = LEVEL_CANDIDATES[lv].length;
     if (locked[lv] || hist[lv] === 0 || n <= 1) {
-      options.push([cc[lv] % n]);
+      options.push([colorChoiceIndices[lv] % n]);
     } else {
       options.push(Array.from({ length: n }, (_, i) => i));
     }
@@ -89,10 +93,10 @@ const _generationCache = {
   hist: "",
 };
 
-function galleryVariantKey(cc: readonly number[], locked: readonly boolean[], hist: readonly number[]): string {
+function galleryVariantKey(colorChoiceIndices: readonly number[], locked: readonly boolean[], hist: readonly number[]): string {
   return LEVEL_CANDIDATES.map((cands, lv) => {
     const n = cands.length;
-    if (locked[lv] || hist[lv] === 0 || n <= 1) return String(cc[lv] % n);
+    if (locked[lv] || hist[lv] === 0 || n <= 1) return String(colorChoiceIndices[lv] % n);
     return "*";
   }).join(",");
 }
@@ -106,8 +110,13 @@ function clearGenerationCache() {
   _generationCache.hist = "";
 }
 
-function shouldGenerate(cvs: CanvasData, cc: readonly number[], locked: readonly boolean[], hist: readonly number[]): boolean {
-  const variantKey = galleryVariantKey(cc, locked, hist);
+function shouldGenerate(
+  cvs: CanvasData,
+  colorChoiceIndices: readonly number[],
+  locked: readonly boolean[],
+  hist: readonly number[],
+): boolean {
+  const variantKey = galleryVariantKey(colorChoiceIndices, locked, hist);
   const lockedStr = locked.join(",");
   const histStr = hist.join(",");
   return (
@@ -120,16 +129,22 @@ function shouldGenerate(cvs: CanvasData, cc: readonly number[], locked: readonly
   );
 }
 
-function rememberGeneration(cvs: CanvasData, cc: readonly number[], locked: readonly boolean[], hist: readonly number[]) {
+function rememberGeneration(cvs: CanvasData, colorChoiceIndices: readonly number[], locked: readonly boolean[], hist: readonly number[]) {
   _generationCache.data = cvs.data;
   _generationCache.w = cvs.w;
   _generationCache.h = cvs.h;
-  _generationCache.variantKey = galleryVariantKey(cc, locked, hist);
+  _generationCache.variantKey = galleryVariantKey(colorChoiceIndices, locked, hist);
   _generationCache.locked = locked.join(",");
   _generationCache.hist = hist.join(",");
 }
 
-export function useGallery(cvs: CanvasData, cc: readonly number[], locked: readonly boolean[], hist: readonly number[], active = true) {
+export function useGallery(
+  cvs: CanvasData,
+  colorChoiceIndices: readonly number[],
+  locked: readonly boolean[],
+  hist: readonly number[],
+  active = true,
+) {
   const [items, setItems] = useState<GalleryItem[]>(_cache.items);
   const [generating, setGenerating] = useState(false);
   const [progress, setProgress] = useState({ current: 0, total: 0 });
@@ -138,10 +153,10 @@ export function useGallery(cvs: CanvasData, cc: readonly number[], locked: reado
   const generate = useCallback(() => {
     cancelRef.current = false;
     setGenerating(true);
-    const variants = generateAllVariants(cc, locked, hist);
+    const variants = generateAllVariants(colorChoiceIndices, locked, hist);
     const { tw, th } = calcThumbSize(cvs.w, cvs.h);
     // Initialize items without thumbnails
-    const newItems: GalleryItem[] = variants.map((v) => ({ cc: v, imageData: null }));
+    const newItems: GalleryItem[] = variants.map((v) => ({ colorChoiceIndices: v, imageData: null }));
     _cache.items = newItems;
     setItems(newItems);
     setProgress({ current: 0, total: newItems.length });
@@ -155,7 +170,7 @@ export function useGallery(cvs: CanvasData, cc: readonly number[], locked: reado
       }
       const end = Math.min(idx + CHUNK_SIZE, newItems.length);
       for (let i = idx; i < end; i++) {
-        const lut = buildColorLUT(newItems[i].cc);
+        const lut = buildColorLUT(newItems[i].colorChoiceIndices);
         newItems[i].imageData = renderThumbnail(cvs.data, cvs.w, cvs.h, lut, tw, th);
       }
       idx = end;
@@ -169,7 +184,7 @@ export function useGallery(cvs: CanvasData, cc: readonly number[], locked: reado
       }
     };
     processChunk();
-  }, [cvs, cc, locked, hist]);
+  }, [cvs, colorChoiceIndices, locked, hist]);
 
   const cancel = useCallback(() => {
     cancelRef.current = true;
@@ -184,14 +199,14 @@ export function useGallery(cvs: CanvasData, cc: readonly number[], locked: reado
       return;
     }
 
-    if (shouldGenerate(cvs, cc, locked, hist)) {
+    if (shouldGenerate(cvs, colorChoiceIndices, locked, hist)) {
       const timeout = setTimeout(() => {
-        rememberGeneration(cvs, cc, locked, hist);
+        rememberGeneration(cvs, colorChoiceIndices, locked, hist);
         generate();
       }, 0);
       return () => clearTimeout(timeout);
     }
-  }, [active, cancel, cvs, cc, locked, hist, generate, generating]);
+  }, [active, cancel, cvs, colorChoiceIndices, locked, hist, generate, generating]);
 
   // Clear module-level cache on unmount to free memory
   useEffect(

@@ -45,14 +45,14 @@ export interface LinkedVisualizationProps {
   onHueAngleChange?: (angle: number) => void;
   hoveredCandidate?: LinkedVisualizationHover | null;
   onHoverCandidate?: (d: LinkedVisualizationHover | null) => void;
-  directCandidates?: Map<number, number>;
+  candidateOverridesByLevel?: Map<number, number>;
   showLegend?: boolean;
   bottomRightOverlay?: (ctx: LinkedVisualizationOverlayContext) => React.ReactNode;
   /** Controlled alpha state (for Music tab integration) */
   alpha0?: number;
-  onAlpha0Change?: (a: number) => void;
+  onAlpha0Change?: (angleDeg: number) => void;
   alpha7?: number;
-  onAlpha7Change?: (a: number) => void;
+  onAlpha7Change?: (angleDeg: number) => void;
   /** Callback when L0/L7 origin mode changes */
   onOriginModeChange?: (mode: 0 | 7) => void;
 }
@@ -92,7 +92,7 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
   onHueAngleChange,
   hoveredCandidate,
   onHoverCandidate,
-  directCandidates,
+  candidateOverridesByLevel,
   showLegend = true,
   bottomRightOverlay,
   alpha0: alpha0Prop,
@@ -143,12 +143,12 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
 
   // Compute dots
   const dots = useMemo(() => {
-    return buildLinkedVisualizationDots(hueAngle, directCandidates);
+    return buildLinkedVisualizationDots(hueAngle, candidateOverridesByLevel);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- brushLevel triggers re-render for active dot updates
-  }, [hueAngle, brushLevel, directCandidates]);
+  }, [hueAngle, brushLevel, candidateOverridesByLevel]);
 
-  const activeDots = useMemo(() => dots.filter((d) => d.act), [dots]);
-  const projectionDots = useMemo(() => [...dots].sort((a, b) => Number(a.act) - Number(b.act)), [dots]);
+  const activeDots = useMemo(() => dots.filter((d) => d.isActive), [dots]);
+  const projectionDots = useMemo(() => [...dots].sort((a, b) => Number(a.isActive) - Number(b.isActive)), [dots]);
 
   // SVG coordinate conversion
   const svgCoord = useCallback((clientX: number, clientY: number) => {
@@ -226,9 +226,9 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
   const sinePaths = useMemo(() => {
     const r0: Record<number, string> = {};
     const r7: Record<number, string> = {};
-    for (let lv = 0; lv <= 7; lv++) {
-      r0[lv] = sinePath(lv, lumR0, alpha0);
-      r7[lv] = sinePath(lv, lumR7, alpha7);
+    for (let levelIndex = 0; levelIndex <= 7; levelIndex++) {
+      r0[levelIndex] = sinePath(levelIndex, lumR0, alpha0);
+      r7[levelIndex] = sinePath(levelIndex, lumR7, alpha7);
     }
     return { r0, r7 };
   }, [alpha0, alpha7]);
@@ -236,16 +236,16 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
   const cosinePaths = useMemo(() => {
     const r0: Record<number, string> = {};
     const r7: Record<number, string> = {};
-    for (let lv = 0; lv <= 7; lv++) {
-      r0[lv] = cosinePath(lv, lumR0, alpha0);
-      r7[lv] = cosinePath(lv, lumR7, alpha7);
+    for (let levelIndex = 0; levelIndex <= 7; levelIndex++) {
+      r0[levelIndex] = cosinePath(levelIndex, lumR0, alpha0);
+      r7[levelIndex] = cosinePath(levelIndex, lumR7, alpha7);
     }
     return { r0, r7 };
   }, [alpha0, alpha7]);
 
   // Hover helpers
   const dotHandlers = (d: LinkedVisualizationDot) => ({
-    onPointerEnter: () => setHoveredDot({ lv: d.lv, ci: d.ci }),
+    onPointerEnter: () => setHoveredDot({ levelIndex: d.levelIndex, candidateIndex: d.candidateIndex }),
     onPointerLeave: () => setHoveredDot(null),
     style: S_CURSOR_POINTER,
   });
@@ -254,14 +254,14 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
 
   // Main visualization content
   const vizContent = useMemo(() => {
-    const lvColor = (lv: number) => {
+    const lvColor = (levelIndex: number) => {
       // Use hovered dot's color if hovering a specific candidate for this level
-      if (hoveredDot && hoveredDot.lv === lv) {
-        const hd = dots.find((dd) => dd.lv === lv && dd.ci === hoveredDot.ci);
+      if (hoveredDot && hoveredDot.levelIndex === levelIndex) {
+        const hd = dots.find((dd) => dd.levelIndex === levelIndex && dd.candidateIndex === hoveredDot.candidateIndex);
         if (hd) return `rgb(${hd.rgb.join(",")})`;
       }
-      const d = activeDots.find((ad) => ad.lv === lv);
-      return d ? `rgb(${d.rgb.join(",")})` : LV_COLORS[lv];
+      const d = activeDots.find((ad) => ad.levelIndex === levelIndex);
+      return d ? `rgb(${d.rgb.join(",")})` : LV_COLORS[levelIndex];
     };
 
     return (

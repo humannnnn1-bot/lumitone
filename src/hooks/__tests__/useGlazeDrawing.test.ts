@@ -71,13 +71,13 @@ function makeOpts(overrides?: Partial<Parameters<typeof useGlazeDrawing>[0]>) {
     cvs: makeCvs(),
     dispatch: vi.fn(),
     colorLUT: Array.from({ length: 8 }, () => [128, 128, 128] as [number, number, number]),
-    cc: [0, 0, 0, 0, 0, 0, 0, 0],
+    colorChoiceIndices: [0, 0, 0, 0, 0, 0, 0, 0],
     hueAngle: 180,
     setHueAngle: mockSetHueAngle,
     glazeTool: "glaze_brush" as const,
     brushSize: 1,
     prvRef: { current: null as HTMLCanvasElement | null },
-    directCandidates: new Map<number, number>(),
+    candidateOverridesByLevel: new Map<number, number>(),
     ...overrides,
   };
 }
@@ -159,14 +159,14 @@ describe("useGlazeDrawing", () => {
         type: "stroke_end",
         finalColorMap: expect.any(Uint8Array),
         diff: expect.objectContaining({
-          idx: expect.any(Uint32Array),
-          cmNv: expect.any(Uint8Array),
+          indices: expect.any(Uint32Array),
+          newColorMapValues: expect.any(Uint8Array),
         }),
       }),
     );
     const action = dispatch.mock.calls[0][0];
     expect(action.finalColorMap[centerIndex]).toBeGreaterThan(0);
-    expect(Array.from(action.diff.idx)).toContain(centerIndex);
+    expect(Array.from(action.diff.indices)).toContain(centerIndex);
   });
 
   it("uses pen pressure for glaze brush size", () => {

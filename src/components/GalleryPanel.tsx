@@ -5,7 +5,7 @@ import { rgbStr, timestamp } from "../utils";
 import { useGallery, renderThumbnail } from "../hooks/useGallery";
 import type { GalleryItem } from "../hooks/useGallery";
 import { useGalleryBookmarks, GALLERY_BOOKMARKS_MAX } from "../hooks/useGalleryBookmarks";
-import { ccEqual, getDisplayGalleryItems, getGalleryPatternCount } from "../hooks/galleryView";
+import { colorChoiceIndicesEqual, getDisplayGalleryItems, getGalleryPatternCount } from "../hooks/galleryView";
 import type { GalleryFilter, GallerySortMode } from "../hooks/galleryView";
 import type { CanvasData } from "../types";
 import type { ColorAction } from "../state/color-reducer";
@@ -14,8 +14,8 @@ import { C, SP, FS, R, DUR, Z, HUE_GRADIENT, FONT } from "../styles/tokens";
 
 interface GalleryPanelProps {
   cvs: CanvasData;
-  cc: readonly number[];
-  ccDispatch: React.Dispatch<ColorAction>;
+  colorChoiceIndices: readonly number[];
+  colorChoiceDispatch: React.Dispatch<ColorAction>;
   locked: boolean[];
   hist: number[];
   showToast: (message: string, type: "error" | "success" | "info") => void;
@@ -96,8 +96,8 @@ const S_GALLERY_SIZE_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_SM_ACTIVE, 
 
 export const GalleryPanel = React.memo(function GalleryPanel({
   cvs,
-  cc,
-  ccDispatch,
+  colorChoiceIndices,
+  colorChoiceDispatch,
   locked,
   hist,
   showToast,
@@ -107,7 +107,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
   onScrollDone,
 }: GalleryPanelProps) {
   const { t } = useTranslation();
-  const { items, generating, progress } = useGallery(cvs, cc, locked, hist, active === true);
+  const { items, generating, progress } = useGallery(cvs, colorChoiceIndices, locked, hist, active === true);
   const handleBookmarkLimit = useCallback(() => showToast(t("toast_bookmark_limit", GALLERY_BOOKMARKS_MAX), "error"), [showToast, t]);
   const handleBookmarkSaveFailed = useCallback(
     (action: "add" | "remove") => {
@@ -145,11 +145,11 @@ export const GalleryPanel = React.memo(function GalleryPanel({
   const patternCount = useMemo(() => getGalleryPatternCount(locked, hist), [locked, hist]);
 
   const applyScheme = useCallback(
-    (itemCc: number[]) => {
-      ccDispatch({ type: "load_all", values: itemCc });
+    (itemColorChoiceIndices: number[]) => {
+      colorChoiceDispatch({ type: "load_all", values: itemColorChoiceIndices });
       showToast(t("gallery_apply"), "success");
     },
-    [ccDispatch, showToast, t],
+    [colorChoiceDispatch, showToast, t],
   );
 
   // Bookmark thumbnails
@@ -160,13 +160,21 @@ export const GalleryPanel = React.memo(function GalleryPanel({
     return bookmarks.map((bcc) => {
       const lut = buildColorLUT(bcc);
       const imageData = renderThumbnail(cvs.data, cvs.w, cvs.h, lut, tw, th);
-      return { cc: bcc, imageData } as GalleryItem;
+      return { colorChoiceIndices: bcc, imageData } as GalleryItem;
     });
   }, [bookmarks, cvs]);
 
   const displayItems = useMemo(() => {
-    return getDisplayGalleryItems({ filter, items, bookmarkItems, sortMode, filterHue, filterRange, currentCc: cc });
-  }, [filter, items, bookmarkItems, sortMode, filterHue, filterRange, cc]);
+    return getDisplayGalleryItems({
+      filter,
+      items,
+      bookmarkItems,
+      sortMode,
+      filterHue,
+      filterRange,
+      currentColorChoiceIndices: colorChoiceIndices,
+    });
+  }, [filter, items, bookmarkItems, sortMode, filterHue, filterRange, colorChoiceIndices]);
 
   type ThumbSize = "S" | "M" | "L";
   const THUMB_SIZES: Record<ThumbSize, number> = { S: 120, M: 180, L: 260 };
@@ -187,7 +195,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
   const expandedImageData = useMemo(() => {
     if (expandedIndex === null || expandedIndex >= displayItems.length) return null;
     const item = displayItems[expandedIndex];
-    const lut = buildColorLUT(item.cc);
+    const lut = buildColorLUT(item.colorChoiceIndices);
     return renderThumbnail(cvs.data, cvs.w, cvs.h, lut, expandedRenderW, expandedRenderH);
   }, [expandedIndex, displayItems, cvs, expandedRenderW, expandedRenderH]);
 
@@ -405,7 +413,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
             <div style={{ display: "flex", gap: SP.xl }}>
               <button
                 onClick={() => {
-                  applyScheme(displayItems[expandedIndex].cc);
+                  applyScheme(displayItems[expandedIndex].colorChoiceIndices);
                   setExpandedIndex(null);
                 }}
                 style={{
@@ -420,7 +428,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                 {t("gallery_apply_btn")}
               </button>
               <button
-                onClick={() => toggleBookmark(displayItems[expandedIndex].cc)}
+                onClick={() => toggleBookmark(displayItems[expandedIndex].colorChoiceIndices)}
                 style={{
                   ...S_BTN,
                   padding: `${SP.md}px ${SP.lg}px`,
@@ -430,11 +438,11 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                   border: `1px solid ${C.borderHover}`,
                 }}
               >
-                {isBookmarked(displayItems[expandedIndex].cc) ? t("gallery_unbookmark") : t("gallery_bookmark")}
+                {isBookmarked(displayItems[expandedIndex].colorChoiceIndices) ? t("gallery_unbookmark") : t("gallery_bookmark")}
               </button>
               <button
                 onClick={() => {
-                  const lut = buildColorLUT(displayItems[expandedIndex].cc);
+                  const lut = buildColorLUT(displayItems[expandedIndex].colorChoiceIndices);
                   saveColorWithLUT(lut, `chromalum_color_${timestamp()}.png`);
                 }}
                 style={{
@@ -467,8 +475,8 @@ export const GalleryPanel = React.memo(function GalleryPanel({
       {/* Thumbnail grid */}
       <div className="gallery-grid" style={{ "--gallery-thumb-track": `${thumbDisplaySize + 14}px` } as React.CSSProperties}>
         {displayItems.map((item, i) => {
-          const isCurrent = ccEqual(item.cc, cc);
-          const starred = isBookmarked(item.cc);
+          const isCurrent = colorChoiceIndicesEqual(item.colorChoiceIndices, colorChoiceIndices);
+          const starred = isBookmarked(item.colorChoiceIndices);
           return (
             <div
               key={i}
@@ -482,7 +490,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                     ? undefined
                     : (e) => {
                         e.preventDefault();
-                        toggleBookmark(item.cc);
+                        toggleBookmark(item.colorChoiceIndices);
                       }
                 }
                 onKeyDown={(e) => {
@@ -491,7 +499,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                     setExpandedIndex(expandedIndex === i ? null : i);
                   } else if (e.key === "b" || e.key === "B") {
                     e.preventDefault();
-                    toggleBookmark(item.cc);
+                    toggleBookmark(item.colorChoiceIndices);
                   } else if (e.key === "Escape") setExpandedIndex(null);
                 }}
                 tabIndex={0}
@@ -503,7 +511,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                 <ThumbCanvas imageData={item.imageData} w={thumbDisplaySize} h={Math.round((thumbDisplaySize * cvs.h) / cvs.w)} />
               </div>
               <div className="gallery-swatches">
-                {item.cc.map((ci, lv) => {
+                {item.colorChoiceIndices.map((ci, lv) => {
                   const alts = LEVEL_CANDIDATES[lv];
                   if (hist[lv] === 0) return null; // skip unused levels
                   const rgb = alts[ci % alts.length]?.rgb ?? [128, 128, 128];
@@ -513,7 +521,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  toggleBookmark(item.cc);
+                  toggleBookmark(item.colorChoiceIndices);
                 }}
                 className={starred ? "gallery-bookmark-button gallery-bookmark-button--starred" : "gallery-bookmark-button"}
                 aria-label={starred ? `${t("gallery_unbookmark")} (${i + 1})` : `${t("gallery_bookmark")} (${i + 1})`}

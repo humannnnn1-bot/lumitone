@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 
-import { DEFAULT_CC } from "../color-engine";
+import { DEFAULT_COLOR_CHOICE_INDICES } from "../color-engine";
 import type { DecoderPhase, MusicCandidateHover } from "../music/types";
 import type { ScaleMode } from "./useMusicEngine";
 
@@ -18,13 +18,13 @@ type MusicTetraPhase = "t0" | "t1" | null;
 
 export function createDefaultMusicDirectCandidates() {
   const candidates = new Map<number, number>();
-  for (let lv = 1; lv <= 6; lv++) candidates.set(lv, DEFAULT_CC[lv]);
+  for (let levelIndex = 1; levelIndex <= 6; levelIndex++) candidates.set(levelIndex, DEFAULT_COLOR_CHOICE_INDICES[levelIndex]);
   return candidates;
 }
 
 export function useMusicPaletteState() {
   const [hueAngle, setHueAngle] = useState(0);
-  const [directCandidates, setDirectCandidates] = useState<Map<number, number>>(createDefaultMusicDirectCandidates);
+  const [candidateOverridesByLevel, setCandidateOverridesByLevel] = useState<Map<number, number>>(createDefaultMusicDirectCandidates);
   const [hoveredCandidate, setHoveredCandidate] = useState<MusicCandidateHover>(null);
   const [selectedLevels, setSelectedLevels] = useState<Set<number>>(new Set());
   const prevCandidatesRef = useRef<Map<number, number>>(new Map());
@@ -32,8 +32,8 @@ export function useMusicPaletteState() {
   return {
     hueAngle,
     setHueAngle,
-    directCandidates,
-    setDirectCandidates,
+    candidateOverridesByLevel,
+    setCandidateOverridesByLevel,
     hoveredCandidate,
     setHoveredCandidate,
     selectedLevels,

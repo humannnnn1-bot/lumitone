@@ -187,7 +187,7 @@ export function paintGlazeCircle(
   }
 }
 
-/** Erase glaze circle: reset colorMap to 0 (default cc[]). */
+/** Erase glaze circle: reset colorMap to 0 (default colorChoiceIndices[]). */
 export function eraseGlazeCircle(colorMap: Uint8Array, cx: number, cy: number, r: number, w: number, h: number): void {
   if (r <= 0) {
     if (cx >= 0 && cx < w && cy >= 0 && cy < h) colorMap[cy * w + cx] = 0;

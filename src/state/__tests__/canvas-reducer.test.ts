@@ -186,7 +186,7 @@ describe("edge cases", () => {
     const next = canvasReducer(state, {
       type: "stroke_end",
       finalData: state.cvs.data,
-      diff: { idx: new Uint32Array(0), ov: new Uint8Array(0), nv: new Uint8Array(0) },
+      diff: { indices: new Uint32Array(0), oldValues: new Uint8Array(0), newValues: new Uint8Array(0) },
     });
     expect(next).toBe(state);
   });

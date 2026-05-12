@@ -2,10 +2,9 @@
  * Web Worker for pixel analysis computations.
  * Offloads heavy O(w*h) calculations from the main thread.
  */
-import { computeNoiseLevelNorm, computeDiversity, computeEdgeDepth, computeGradient, computeRegion } from "../utils/pixel-analysis";
+import { computeNoiseLevelNorm, computeDiversity, computeBoundaryDistance, computeGradient, computeRegion } from "../utils/pixel-analysis";
 import { LEVEL_MASK } from "../constants";
-
-export type MapMode = "region" | "entropy" | "noise" | "depth" | "gradient" | "luminance" | "colorlum";
+import type { AnalysisPixelMaps, MapMode } from "../types";
 
 export interface WorkerRequest {
   id: number;
@@ -16,18 +15,8 @@ export interface WorkerRequest {
   h: number;
 }
 
-export interface WorkerResponse {
+export interface WorkerResponse extends AnalysisPixelMaps {
   id: number;
-  noise: Float32Array;
-  depth: Float32Array;
-  gradAngle: Float32Array;
-  gradMag: Float32Array;
-  regionId: Int32Array;
-  isEdge: Uint8Array;
-  levelNorm: Float32Array;
-  localDiversity: Float32Array;
-  w: number;
-  h: number;
 }
 
 self.onmessage = (e: MessageEvent<WorkerRequest>) => {
@@ -35,19 +24,19 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
   const n = w * h;
 
   const needsNoise = mode === "noise";
-  const needsDepth = mode === "depth";
+  const needsDepth = mode === "boundaryDistance";
   const needsGrad = mode === "gradient";
   const needsRegion = mode === "region";
-  const needsEdge = mode === "depth" || mode === "region";
+  const needsEdge = mode === "boundaryDistance" || mode === "region";
   const needsLevelNorm = mode === "luminance" || mode === "noise" || mode === "gradient";
   const needsDiversity = mode === "entropy";
 
   const result: WorkerResponse = {
     id,
     noise: new Float32Array(needsNoise ? n : 0),
-    depth: new Float32Array(needsDepth ? n : 0),
-    gradAngle: new Float32Array(needsGrad ? n : 0),
-    gradMag: new Float32Array(needsGrad ? n : 0),
+    boundaryDistance: new Float32Array(needsDepth ? n : 0),
+    gradientAngle: new Float32Array(needsGrad ? n : 0),
+    gradientMagnitude: new Float32Array(needsGrad ? n : 0),
     regionId: new Int32Array(needsRegion ? n : 0),
     isEdge: new Uint8Array(needsEdge ? n : 0),
     levelNorm: new Float32Array(needsLevelNorm ? n : 0),
@@ -68,11 +57,11 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
     case "entropy":
       computeDiversity(data, w, h, result.localDiversity, colorMap);
       break;
-    case "depth":
-      computeEdgeDepth(data, w, h, result.isEdge, result.depth, colorMap);
+    case "boundaryDistance":
+      computeBoundaryDistance(data, w, h, result.isEdge, result.boundaryDistance, colorMap);
       break;
     case "gradient":
-      computeGradient(data, w, h, result.levelNorm, result.gradAngle, result.gradMag);
+      computeGradient(data, w, h, result.levelNorm, result.gradientAngle, result.gradientMagnitude);
       break;
     case "region":
       computeRegion(data, w, h, result.regionId, result.isEdge, colorMap);
@@ -80,8 +69,8 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
     case "luminance":
       for (let i = 0; i < n; i++) result.levelNorm[i] = (data[i] & LEVEL_MASK) / 7;
       break;
-    case "colorlum":
-      // No pre-computation needed for colorlum
+    case "colorLuma":
+      // No pre-computation needed for colorLuma
       break;
   }
 
@@ -89,9 +78,9 @@ self.onmessage = (e: MessageEvent<WorkerRequest>) => {
   const transfer: Transferable[] = [];
   const arrays = [
     result.noise,
-    result.depth,
-    result.gradAngle,
-    result.gradMag,
+    result.boundaryDistance,
+    result.gradientAngle,
+    result.gradientMagnitude,
     result.regionId,
     result.isEdge,
     result.levelNorm,

@@ -21,8 +21,8 @@ function makeState(overrides?: Partial<SavedState>): SavedState {
     w: 4,
     h: 4,
     data: new Uint8Array(16),
-    cc: [0, 0, 0, 0, 0, 0, 0, 0],
-    version: 1,
+    colorChoiceIndices: [0, 0, 0, 0, 0, 0, 0, 0],
+    version: SAVED_STATE_VERSION,
     ...overrides,
   };
 }
@@ -73,8 +73,8 @@ describe("saveState / loadState roundtrip", () => {
     expect(loaded!.w).toBe(4);
     expect(loaded!.h).toBe(4);
     expect(Array.from(loaded!.data)).toEqual(Array.from(state.data));
-    expect(loaded!.cc).toEqual(state.cc);
-    expect(loaded!.version).toBe(1);
+    expect(loaded!.colorChoiceIndices).toEqual(state.colorChoiceIndices);
+    expect(loaded!.version).toBe(SAVED_STATE_VERSION);
   });
 
   it("save with colorMap then load preserves colorMap", async () => {
@@ -123,14 +123,30 @@ describe("loadState validation", () => {
     expect(loaded!.data[2]).toBe(7);
   });
 
-  it("clamps negative cc values to 0", async () => {
-    const state = makeState({ cc: [-1, 0, -5, 3, 0, 0, 0, 0] });
+  it("clamps negative colorChoiceIndices values to 0", async () => {
+    const state = makeState({ colorChoiceIndices: [-1, 0, -5, 3, 0, 0, 0, 0] });
     await saveState(state);
     const loaded = await loadState();
     expect(loaded).not.toBeNull();
-    expect(loaded!.cc[0]).toBe(0);
-    expect(loaded!.cc[2]).toBe(0);
-    expect(loaded!.cc[3]).toBe(3);
+    expect(loaded!.colorChoiceIndices[0]).toBe(0);
+    expect(loaded!.colorChoiceIndices[2]).toBe(0);
+    expect(loaded!.colorChoiceIndices[3]).toBe(3);
+  });
+
+  it("loads legacy v1 cc as colorChoiceIndices", async () => {
+    await saveState({
+      w: 4,
+      h: 4,
+      data: new Uint8Array(16),
+      cc: [0, 1, 2, 3, 0, 1, 2, 0],
+      version: 1,
+    } as unknown as SavedState);
+
+    const loaded = await loadState();
+
+    expect(loaded).not.toBeNull();
+    expect(loaded!.colorChoiceIndices).toEqual([0, 1, 2, 3, 0, 1, 2, 0]);
+    expect("cc" in loaded!).toBe(false);
   });
 
   it("strips locked array of wrong length", async () => {
@@ -178,7 +194,7 @@ describe("loadState validation", () => {
   });
 
   it("reports invalid status for corrupted persisted shapes", async () => {
-    const state = makeState({ cc: [0, 0, 0] as unknown as number[] });
+    const state = makeState({ colorChoiceIndices: [0, 0, 0] as unknown as number[] });
     await saveState(state);
 
     const result = await loadStateWithStatus();

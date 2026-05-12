@@ -6,7 +6,7 @@ import { CX, CY, WR, wheelPoint, type LinkedVisualizationDot, type LinkedVisuali
 
 interface LinkedVisualizationWheelProps {
   alpha: number;
-  radiusFn: (lv: number) => number;
+  radiusFn: (levelIndex: number) => number;
   dots: LinkedVisualizationDot[];
   hueAngle: number;
   hoveredDot: LinkedVisualizationHover | null;
@@ -62,15 +62,16 @@ export function LinkedVisualizationWheel({
       <line x1={CX} y1={CY - WR - 2} x2={CX} y2={CY + WR + 2} stroke="rgba(255,255,255,0.12)" strokeWidth={0.5} />
 
       {dots
-        .filter((dot) => dot.act)
+        .filter((dot) => dot.isActive)
         .map((dot) => {
-          const position = wheelPosition(dot.a, dot.lv);
+          const position = wheelPosition(dot.angleDeg, dot.levelIndex);
           const color = `rgb(${dot.rgb.join(",")})`;
-          const hovered = hoveredDot !== null && hoveredDot.lv === dot.lv && hoveredDot.ci === dot.ci;
+          const hovered =
+            hoveredDot !== null && hoveredDot.levelIndex === dot.levelIndex && hoveredDot.candidateIndex === dot.candidateIndex;
           const tickLen = hovered ? 5 : 3;
 
           return (
-            <g key={`axt-${dot.lv}-${dot.ci}`}>
+            <g key={`axt-${dot.levelIndex}-${dot.candidateIndex}`}>
               <line
                 x1={CX - tickLen}
                 y1={position.y}
@@ -138,7 +139,7 @@ export function LinkedVisualizationWheel({
       )}
 
       {(() => {
-        const points = dots.filter((dot) => dot.act).map((dot) => wheelPosition(dot.a, dot.lv));
+        const points = dots.filter((dot) => dot.isActive).map((dot) => wheelPosition(dot.angleDeg, dot.levelIndex));
         if (points.length < 2) return null;
 
         const tension = 0.5;
@@ -159,30 +160,38 @@ export function LinkedVisualizationWheel({
       })()}
 
       {dots.map((dot) => {
-        const position = wheelPosition(dot.a, dot.lv);
-        const hovered = dot.act && hoveredDot !== null && hoveredDot.lv === dot.lv && hoveredDot.ci === dot.ci;
-        const dimmed = dot.act && hoveredDot !== null && !hovered;
-        const hoverHandlers = dot.act
+        const position = wheelPosition(dot.angleDeg, dot.levelIndex);
+        const hovered =
+          dot.isActive &&
+          hoveredDot !== null &&
+          hoveredDot.levelIndex === dot.levelIndex &&
+          hoveredDot.candidateIndex === dot.candidateIndex;
+        const dimmed = dot.isActive && hoveredDot !== null && !hovered;
+        const hoverHandlers = dot.isActive
           ? {
               onPointerEnter: (event: ReactPointerEvent<SVGGElement>) => {
                 event.stopPropagation();
-                onHoverDot({ lv: dot.lv, ci: dot.ci });
+                onHoverDot({ levelIndex: dot.levelIndex, candidateIndex: dot.candidateIndex });
               },
               onPointerLeave: () => onHoverDot(null),
             }
           : undefined;
 
         return (
-          <g key={`w${dot.lv}${dot.ci}`} style={dot.act || hovered ? S_CURSOR_POINTER : undefined} {...hoverHandlers}>
-            {dot.act && <circle cx={position.x} cy={position.y} r={DOT_HIT_R} fill="transparent" pointerEvents="all" />}
+          <g
+            key={`w${dot.levelIndex}${dot.candidateIndex}`}
+            style={dot.isActive || hovered ? S_CURSOR_POINTER : undefined}
+            {...hoverHandlers}
+          >
+            {dot.isActive && <circle cx={position.x} cy={position.y} r={DOT_HIT_R} fill="transparent" pointerEvents="all" />}
             <circle
               cx={position.x}
               cy={position.y}
-              r={dot.act ? (hovered ? 5.5 : 4) : hovered ? 4 : 1.8}
+              r={dot.isActive ? (hovered ? 5.5 : 4) : hovered ? 4 : 1.8}
               fill={`rgb(${dot.rgb.join(",")})`}
-              stroke={dot.act ? "#fff" : hovered ? "#fff" : "rgba(255,255,255,0.15)"}
-              strokeWidth={dot.act ? (hovered ? 1.4 : 1.0) : hovered ? 1.0 : 0.5}
-              opacity={dot.act ? (dimmed ? 0.25 : 1) : hovered ? 0.9 : 0.3}
+              stroke={dot.isActive ? "#fff" : hovered ? "#fff" : "rgba(255,255,255,0.15)"}
+              strokeWidth={dot.isActive ? (hovered ? 1.4 : 1.0) : hovered ? 1.0 : 0.5}
+              opacity={dot.isActive ? (dimmed ? 0.25 : 1) : hovered ? 0.9 : 0.3}
               filter={hovered ? "url(#dot-glow)" : undefined}
               style={{ transition: DOT_TRANSITION }}
             />

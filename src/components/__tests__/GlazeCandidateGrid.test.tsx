@@ -14,11 +14,11 @@ function renderWithLanguage(node: ReactNode) {
   return render(<LanguageProvider>{node}</LanguageProvider>);
 }
 
-function makeLevelPreview(lv: number): GlazeLevelPreview {
-  const candidate = LEVEL_CANDIDATES[lv][0];
+function makeLevelPreview(levelIndex: number): GlazeLevelPreview {
+  const candidate = LEVEL_CANDIDATES[levelIndex][0];
   return {
-    lv,
-    name: `L${lv}`,
+    levelIndex,
+    name: `L${levelIndex}`,
     rgb: candidate.rgb,
     hex: `rgb(${candidate.rgb.join(",")})`,
   };
@@ -28,10 +28,10 @@ function makeProps(overrides: Partial<GridProps> = {}): GridProps {
   return {
     levelPreview: [makeLevelPreview(2)],
     hueAngle: 0,
-    directCandidates: new Map(),
+    candidateOverridesByLevel: new Map(),
     selectedLevels: new Set(),
     hoveredCandidate: null,
-    onDirectCandidatesChange: vi.fn(),
+    onCandidateOverridesByLevelChange: vi.fn(),
     onSelectedLevelsChange: vi.fn(),
     onHoveredCandidateChange: vi.fn(),
     ...overrides,
@@ -45,18 +45,18 @@ describe("GlazeCandidateGrid", () => {
 
     const swatches = screen.getAllByRole("button", { name: /Level 2/ });
     fireEvent.click(swatches[0]);
-    expect(props.onDirectCandidatesChange).toHaveBeenCalledTimes(1);
+    expect(props.onCandidateOverridesByLevelChange).toHaveBeenCalledTimes(1);
     expect(props.onSelectedLevelsChange).toHaveBeenCalledTimes(1);
     expect(props.onHoveredCandidateChange).toHaveBeenCalledWith(null);
 
     fireEvent.keyDown(swatches[2], { key: "Enter" });
-    expect(props.onDirectCandidatesChange).toHaveBeenCalledTimes(2);
+    expect(props.onCandidateOverridesByLevelChange).toHaveBeenCalledTimes(2);
     expect(props.onSelectedLevelsChange).toHaveBeenCalledTimes(2);
   });
 
   it("toggles the main swatch selected state", () => {
     const props = makeProps({
-      directCandidates: new Map([[2, 0]]),
+      candidateOverridesByLevel: new Map([[2, 0]]),
       selectedLevels: new Set([2]),
     });
     renderWithLanguage(<GlazeCandidateGrid {...props} />);
@@ -65,7 +65,7 @@ describe("GlazeCandidateGrid", () => {
     fireEvent.click(selected);
 
     expect(props.onSelectedLevelsChange).toHaveBeenCalledTimes(1);
-    expect(props.onDirectCandidatesChange).toHaveBeenCalledTimes(1);
+    expect(props.onCandidateOverridesByLevelChange).toHaveBeenCalledTimes(1);
   });
 
   it("cycles candidates with wheel input", () => {
@@ -75,7 +75,7 @@ describe("GlazeCandidateGrid", () => {
     const mainSwatch = screen.getAllByRole("button", { name: /Level 2/ })[1];
     fireEvent.wheel(mainSwatch.parentElement!, { deltaY: 1 });
 
-    expect(props.onDirectCandidatesChange).toHaveBeenCalledTimes(1);
-    expect(props.onHoveredCandidateChange).toHaveBeenCalledWith({ lv: 2, ci: expect.any(Number) });
+    expect(props.onCandidateOverridesByLevelChange).toHaveBeenCalledTimes(1);
+    expect(props.onHoveredCandidateChange).toHaveBeenCalledWith({ levelIndex: 2, candidateIndex: expect.any(Number) });
   });
 });

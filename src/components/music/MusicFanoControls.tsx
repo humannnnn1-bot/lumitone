@@ -10,7 +10,7 @@ import { S_LABEL, S_SELECT, S_SECTION } from "./music-panel-styles";
 interface MusicFanoControlsProps {
   hoveredFanoLine: number | null;
   onHoveredFanoLineChange: (line: number | null) => void;
-  onFanoNodeClick: (lv: number) => void;
+  onFanoNodeClick: (levelIndex: number) => void;
   onFanoLineClick: (lineIndex: number) => void;
   activeLevels: ActiveMusicLevel[];
   grayStep: number | null;
@@ -106,9 +106,9 @@ export const MusicFanoControls = React.memo(function MusicFanoControls({
           style={S_SELECT}
         >
           <option value="">--</option>
-          {FANO_LEVELS.map((lv) => (
-            <option key={lv} value={lv}>
-              {lv}
+          {FANO_LEVELS.map((levelIndex) => (
+            <option key={levelIndex} value={levelIndex}>
+              {levelIndex}
             </option>
           ))}
         </select>
@@ -119,9 +119,9 @@ export const MusicFanoControls = React.memo(function MusicFanoControls({
           style={S_SELECT}
         >
           <option value="">--</option>
-          {FANO_LEVELS.map((lv) => (
-            <option key={lv} value={lv}>
-              {lv}
+          {FANO_LEVELS.map((levelIndex) => (
+            <option key={levelIndex} value={levelIndex}>
+              {levelIndex}
             </option>
           ))}
         </select>
@@ -154,9 +154,9 @@ export const MusicFanoControls = React.memo(function MusicFanoControls({
           aria-label={t("music_fano_point_select")}
           style={S_SELECT}
         >
-          {FANO_LEVELS.map((lv) => (
-            <option key={lv} value={lv}>
-              {lv}
+          {FANO_LEVELS.map((levelIndex) => (
+            <option key={levelIndex} value={levelIndex}>
+              {levelIndex}
             </option>
           ))}
         </select>

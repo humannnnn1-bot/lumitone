@@ -6,26 +6,26 @@ describe("computeDiff", () => {
     const a = new Uint8Array([1, 2, 3, 4]);
     const b = new Uint8Array([1, 2, 3, 4]);
     const diff = computeDiff(a, b);
-    expect(diff.idx.length).toBe(0);
-    expect(diff.ov.length).toBe(0);
-    expect(diff.nv.length).toBe(0);
+    expect(diff.indices.length).toBe(0);
+    expect(diff.oldValues.length).toBe(0);
+    expect(diff.newValues.length).toBe(0);
   });
 
   it("detects changed pixels", () => {
     const a = new Uint8Array([0, 1, 2, 3]);
     const b = new Uint8Array([0, 5, 2, 7]);
     const diff = computeDiff(a, b);
-    expect(diff.idx.length).toBe(2);
-    expect(Array.from(diff.idx)).toEqual([1, 3]);
-    expect(Array.from(diff.ov)).toEqual([1, 3]);
-    expect(Array.from(diff.nv)).toEqual([5, 7]);
+    expect(diff.indices.length).toBe(2);
+    expect(Array.from(diff.indices)).toEqual([1, 3]);
+    expect(Array.from(diff.oldValues)).toEqual([1, 3]);
+    expect(Array.from(diff.newValues)).toEqual([5, 7]);
   });
 
   it("detects all changed when fully different", () => {
     const a = new Uint8Array([0, 0, 0]);
     const b = new Uint8Array([1, 1, 1]);
     const diff = computeDiff(a, b);
-    expect(diff.idx.length).toBe(3);
+    expect(diff.indices.length).toBe(3);
   });
 });
 
@@ -69,10 +69,10 @@ describe("buildDiffFromFill", () => {
     const buf = new Uint8Array([0, 3, 0, 3, 0]);
     const changed = new Uint32Array([1, 3]);
     const diff = buildDiffFromFill(pre, buf, changed);
-    expect(diff.idx.length).toBe(2);
-    expect(Array.from(diff.idx)).toEqual([1, 3]);
-    expect(Array.from(diff.ov)).toEqual([0, 0]);
-    expect(Array.from(diff.nv)).toEqual([3, 3]);
+    expect(diff.indices.length).toBe(2);
+    expect(Array.from(diff.indices)).toEqual([1, 3]);
+    expect(Array.from(diff.oldValues)).toEqual([0, 0]);
+    expect(Array.from(diff.newValues)).toEqual([3, 3]);
   });
 
   it("produces equivalent result to computeDiff for same changes", () => {
@@ -81,9 +81,9 @@ describe("buildDiffFromFill", () => {
     const changed = new Uint32Array([1, 3]);
     const fillDiff = buildDiffFromFill(pre, buf, changed);
     const fullDiff = computeDiff(pre, buf);
-    expect(Array.from(fillDiff.idx)).toEqual(Array.from(fullDiff.idx));
-    expect(Array.from(fillDiff.ov)).toEqual(Array.from(fullDiff.ov));
-    expect(Array.from(fillDiff.nv)).toEqual(Array.from(fullDiff.nv));
+    expect(Array.from(fillDiff.indices)).toEqual(Array.from(fullDiff.indices));
+    expect(Array.from(fillDiff.oldValues)).toEqual(Array.from(fullDiff.oldValues));
+    expect(Array.from(fillDiff.newValues)).toEqual(Array.from(fullDiff.newValues));
   });
 
   it("empty changed array produces empty diff", () => {
@@ -91,6 +91,6 @@ describe("buildDiffFromFill", () => {
     const buf = new Uint8Array([1, 2, 3]);
     const changed = new Uint32Array(0);
     const diff = buildDiffFromFill(pre, buf, changed);
-    expect(diff.idx.length).toBe(0);
+    expect(diff.indices.length).toBe(0);
   });
 });

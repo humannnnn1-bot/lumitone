@@ -22,14 +22,14 @@ function hueDelta(current: number, canonical: number): number {
 
 /** Compute XOR decompositions: find all pairs (a, b) where a XOR b = lv, a < b, both non-zero */
 interface Props {
-  cc: readonly number[];
+  colorChoiceIndices: readonly number[];
   dispatch: React.Dispatch<ColorAction>;
   brushLevel: number;
-  onSelectLevel?: (lv: number) => void;
+  onSelectLevel?: (levelIndex: number) => void;
 }
 
 export const ColorMappingList = memo(
-  function ColorMappingList({ cc, dispatch, brushLevel, onSelectLevel }: Props) {
+  function ColorMappingList({ colorChoiceIndices, dispatch, brushLevel, onSelectLevel }: Props) {
     const { t } = useTranslation();
     const [mobile, setMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < MOBILE_BP);
     useEffect(() => {
@@ -41,7 +41,7 @@ export const ColorMappingList = memo(
       <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, width: "100%" }}>
         {LEVEL_INFO.map((info, i) => {
           const alts = LEVEL_CANDIDATES[i],
-            ci = cc[i] % alts.length,
+            ci = colorChoiceIndices[i] % alts.length,
             cur = alts[ci],
             has = alts.length > 1;
           const isActive = brushLevel === i;
@@ -78,7 +78,7 @@ export const ColorMappingList = memo(
               <div style={{ display: "flex", alignItems: "center", gap: 0, flexShrink: 0 }}>
                 {has && (
                   <button
-                    onClick={() => dispatch({ type: "cycle_color", lv: i, dir: -1 })}
+                    onClick={() => dispatch({ type: "cycle_color", levelIndex: i, direction: -1 })}
                     aria-label={t("aria_prev_color", i, info.name)}
                     style={S_NAV_ARROW}
                   >
@@ -99,7 +99,7 @@ export const ColorMappingList = memo(
                 />
                 {has && (
                   <button
-                    onClick={() => dispatch({ type: "cycle_color", lv: i, dir: 1 })}
+                    onClick={() => dispatch({ type: "cycle_color", levelIndex: i, direction: 1 })}
                     aria-label={t("aria_next_color", i, info.name)}
                     style={S_NAV_ARROW}
                   >
@@ -147,7 +147,7 @@ export const ColorMappingList = memo(
                   {alts.map((a, j) => (
                     <button
                       key={j}
-                      onClick={() => dispatch({ type: "set_color", lv: i, idx: j })}
+                      onClick={() => dispatch({ type: "set_color", levelIndex: i, candidateIndex: j })}
                       title={`${hexStr(a.rgb)} ${a.hueLabel}`}
                       aria-label={t("aria_color_candidate", i, hexStr(a.rgb), a.hueLabel)}
                       style={{
@@ -173,6 +173,6 @@ export const ColorMappingList = memo(
     prev.brushLevel === next.brushLevel &&
     prev.dispatch === next.dispatch &&
     prev.onSelectLevel === next.onSelectLevel &&
-    prev.cc.length === next.cc.length &&
-    prev.cc.every((v, i) => v === next.cc[i]),
+    prev.colorChoiceIndices.length === next.colorChoiceIndices.length &&
+    prev.colorChoiceIndices.every((v, i) => v === next.colorChoiceIndices[i]),
 );

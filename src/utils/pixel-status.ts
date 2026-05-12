@@ -36,8 +36,8 @@ function resolveCandidate(lv: number, idx: number): CandidateResolution {
   };
 }
 
-function resolveGlobalCandidate(cc: readonly number[], lv: number): CandidateResolution {
-  return resolveCandidate(lv, cc[lv] ?? 0);
+function resolveGlobalCandidate(colorChoiceIndices: readonly number[], lv: number): CandidateResolution {
+  return resolveCandidate(lv, colorChoiceIndices[lv] ?? 0);
 }
 
 function candidateLabel(candidate: CandidateResolution): string {
@@ -85,17 +85,17 @@ function glazeActionLabel(glazeTool: GlazeToolId): string {
 function glazeTargetLabel({
   lv,
   hueAngle,
-  directCandidates,
+  candidateOverridesByLevel,
   glazeTool,
 }: {
   lv: number;
   hueAngle: number;
-  directCandidates: Map<number, number>;
+  candidateOverridesByLevel: Map<number, number>;
   glazeTool: GlazeToolId;
 }): string {
   if (glazeTool === "glaze_eraser") return "default";
-  if (directCandidates.size > 0 && !directCandidates.has(lv)) return "skip";
-  const targetIdx = directCandidates.size > 0 ? directCandidates.get(lv)! : findClosestCandidate(lv, hueAngle);
+  if (candidateOverridesByLevel.size > 0 && !candidateOverridesByLevel.has(lv)) return "skip";
+  const targetIdx = candidateOverridesByLevel.size > 0 ? candidateOverridesByLevel.get(lv)! : findClosestCandidate(lv, hueAngle);
   const target = resolveCandidate(lv, targetIdx);
   return `${candidateLabel(target)} ${hexStr(target.rgb)}`;
 }
@@ -108,8 +108,13 @@ export function formatSourcePixelStatus({ x, y, lv }: PixelStatusBase): StatusTe
   };
 }
 
-export function formatColorPixelStatus({ x, y, lv, cc }: PixelStatusBase & { cc: readonly number[] }): StatusText {
-  const candidate = resolveGlobalCandidate(cc, lv);
+export function formatColorPixelStatus({
+  x,
+  y,
+  lv,
+  colorChoiceIndices,
+}: PixelStatusBase & { colorChoiceIndices: readonly number[] }): StatusText {
+  const candidate = resolveGlobalCandidate(colorChoiceIndices, lv);
   const rgb = candidate.rgb;
   return {
     full: `(${x},${y}) Color L${lv} ${candidateLabel(candidate)} ${hexStr(rgb)} rgb(${rgb[0]},${rgb[1]},${rgb[2]}) hue=${angleLabel(
@@ -123,17 +128,17 @@ export function formatHexPixelStatus({
   x,
   y,
   lv,
-  cc,
+  colorChoiceIndices,
   hist,
   patternFactor,
   locked,
 }: PixelStatusBase & {
-  cc: readonly number[];
+  colorChoiceIndices: readonly number[];
   hist: readonly number[];
   patternFactor: number;
   locked: boolean;
 }): StatusText {
-  const candidate = resolveGlobalCandidate(cc, lv);
+  const candidate = resolveGlobalCandidate(colorChoiceIndices, lv);
   const hexAngle = HEX_CANDIDATE_ANGLES[lv]?.[candidate.ci] ?? candidate.angle;
   return {
     full: `(${x},${y}) Hex L${lv} ${candidateLabel(candidate)} @${angleLabel(hexAngle)} used=${formatCount(
@@ -149,24 +154,24 @@ export function formatGlazePixelStatus({
   x,
   y,
   lv,
-  cc,
+  colorChoiceIndices,
   colorMapValue,
   hueAngle,
-  directCandidates,
+  candidateOverridesByLevel,
   glazeTool,
 }: PixelStatusBase & {
-  cc: readonly number[];
+  colorChoiceIndices: readonly number[];
   colorMapValue: number;
   hueAngle: number;
-  directCandidates: Map<number, number>;
+  candidateOverridesByLevel: Map<number, number>;
   glazeTool: GlazeToolId;
 }): StatusText {
-  const base = resolveGlobalCandidate(cc, lv);
+  const base = resolveGlobalCandidate(colorChoiceIndices, lv);
   const actual = colorMapValue > 0 ? resolveCandidate(lv, colorMapValue - 1) : base;
   const override = colorMapValue > 0 ? "override" : "no override";
   const compactOverride = colorMapValue > 0 ? "ovr" : "no-ovr";
   const action = glazeActionLabel(glazeTool);
-  const target = glazeTargetLabel({ lv, hueAngle, directCandidates, glazeTool });
+  const target = glazeTargetLabel({ lv, hueAngle, candidateOverridesByLevel, glazeTool });
   return {
     full: `(${x},${y}) Glaze L${lv} base ${candidateLabel(base)} ${hexStr(base.rgb)} \u2192 actual ${candidateLabel(actual)} ${hexStr(
       actual.rgb,

@@ -31,13 +31,13 @@ interface GlazeDrawingOptions {
   cvs: CanvasData;
   dispatch: React.Dispatch<CanvasAction>;
   colorLUT: [number, number, number][];
-  cc: readonly number[];
+  colorChoiceIndices: readonly number[];
   hueAngle: number;
   setHueAngle: React.Dispatch<React.SetStateAction<number>>;
   glazeTool: GlazeToolId;
   brushSize: number;
   prvRef: React.MutableRefObject<HTMLCanvasElement | null>;
-  directCandidates: Map<number, number>;
+  candidateOverridesByLevel: Map<number, number>;
 }
 
 export interface GlazeDrawingResult {
@@ -68,7 +68,8 @@ interface GlazeStroke {
 }
 
 export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
-  const { cvs, dispatch, colorLUT, cc, hueAngle, setHueAngle, glazeTool, brushSize, prvRef, directCandidates } = opts;
+  const { cvs, dispatch, colorLUT, colorChoiceIndices, hueAngle, setHueAngle, glazeTool, brushSize, prvRef, candidateOverridesByLevel } =
+    opts;
   const ctx = useDrawingContext();
   const { displayW, displayH, panningRef, spaceRef, zoomRef, panRef, startPan, movePan, endPan, announce, t } = ctx;
 
@@ -109,7 +110,19 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   );
 
   // Batch-sync remaining values used in imperative callbacks
-  const s = useSyncRefs({ colorLUT, cc, hueAngle, setHueAngle, glazeTool, startPan, movePan, endPan, announce, t, directCandidates });
+  const s = useSyncRefs({
+    colorLUT,
+    colorChoiceIndices,
+    hueAngle,
+    setHueAngle,
+    glazeTool,
+    startPan,
+    movePan,
+    endPan,
+    announce,
+    t,
+    candidateOverridesByLevel,
+  });
 
   const cursor = useCursorOverlay({ zoomRef, panRef, cvsRef, displayWRef, displayHRef, panningRef, brushSizeRef, toolRef }, statusRef);
 
@@ -139,10 +152,10 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
         x: pos.x,
         y: pos.y,
         lv,
-        cc: s.current.cc,
+        colorChoiceIndices: s.current.colorChoiceIndices,
         colorMapValue: cm,
         hueAngle: s.current.hueAngle,
-        directCandidates: s.current.directCandidates,
+        candidateOverridesByLevel: s.current.candidateOverridesByLevel,
         glazeTool: s.current.glazeTool,
       });
     });
@@ -207,10 +220,10 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     pool.cmBuf.set(cv.colorMap);
     const cmPre: Uint8Array = pool.cmPre;
     const cmBuf: Uint8Array = pool.cmBuf;
-    const dc = new Map(s.current.directCandidates);
-    const isDirect = dc.size > 0;
+    const nextCandidateOverrides = new Map(s.current.candidateOverridesByLevel);
+    const isDirect = nextCandidateOverrides.size > 0;
     const curHue = s.current.hueAngle;
-    const glazeLUT = isDirect ? buildMultiDirectLUT(dc) : buildGlazeLUT(curHue);
+    const glazeLUT = isDirect ? buildMultiDirectLUT(nextCandidateOverrides) : buildGlazeLUT(curHue);
     strokeRef.current = { cmBuf, cmPre, fillChanged: null, glazeLUT };
     const curTool = s.current.glazeTool;
     strokeSmootherRef.current = curTool === "glaze_fill" ? null : createStrokeSmoother(pos);
@@ -223,12 +236,12 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
       const seedIdx = pos.y * W + pos.x;
       const seedLv = cv.data[seedIdx] & LEVEL_MASK;
       // In direct mode, only fill if seed pixel's level is in the direct map
-      if (isDirect && !dc.has(seedLv)) {
+      if (isDirect && !nextCandidateOverrides.has(seedLv)) {
         drawingRef.current = false;
         strokeRef.current = null;
         return;
       }
-      const newCmVal = isDirect ? dc.get(seedLv)! + 1 : findClosestCandidate(seedLv, curHue) + 1;
+      const newCmVal = isDirect ? nextCandidateOverrides.get(seedLv)! + 1 : findClosestCandidate(seedLv, curHue) + 1;
       fillPendingRef.current = true;
       floodFillWorker
         .requestGlazeFill(cv.data, cmBuf, pos.x, pos.y, newCmVal, W, H)

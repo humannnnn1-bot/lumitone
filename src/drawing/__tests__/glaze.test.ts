@@ -17,9 +17,9 @@ describe("findClosestCandidate", () => {
 
   it("returns a valid index for colored levels", () => {
     for (let lv = 1; lv <= 6; lv++) {
-      const idx = findClosestCandidate(lv, 120);
-      expect(idx).toBeGreaterThanOrEqual(0);
-      expect(idx).toBeLessThan(LEVEL_CANDIDATES[lv].length);
+      const indices = findClosestCandidate(lv, 120);
+      expect(indices).toBeGreaterThanOrEqual(0);
+      expect(indices).toBeLessThan(LEVEL_CANDIDATES[lv].length);
     }
   });
 
@@ -30,8 +30,8 @@ describe("findClosestCandidate", () => {
       // Find if there's a candidate near 0° (or near 360°)
       const nearZero = candidates.findIndex((c) => c.angle < 30 || c.angle > 330);
       if (nearZero >= 0) {
-        const idx = findClosestCandidate(lv, 355);
-        const selected = candidates[idx];
+        const indices = findClosestCandidate(lv, 355);
+        const selected = candidates[indices];
         // Should pick a candidate close to 355° (i.e., near 0° with wraparound)
         const dist = Math.min(Math.abs(selected.angle - 355), 360 - Math.abs(selected.angle - 355));
         expect(dist).toBeLessThan(180);
@@ -59,11 +59,11 @@ describe("computeGlazeDiff / applyDiffToColorMap", () => {
     const oldCm = new Uint8Array([0, 0, 0, 0]);
     const newCm = new Uint8Array([0, 2, 3, 0]);
     const diff = computeGlazeDiff(oldCm, newCm, data);
-    expect(diff.idx.length).toBe(2);
-    expect(diff.cmOv).toBeDefined();
-    expect(diff.cmNv).toBeDefined();
+    expect(diff.indices.length).toBe(2);
+    expect(diff.oldColorMapValues).toBeDefined();
+    expect(diff.newColorMapValues).toBeDefined();
     // data unchanged
-    expect(diff.ov[0]).toBe(diff.nv[0]);
+    expect(diff.oldValues[0]).toBe(diff.newValues[0]);
   });
 
   it("round-trips: apply forward then reverse", () => {
@@ -81,7 +81,7 @@ describe("computeGlazeDiff / applyDiffToColorMap", () => {
 
   it("returns original if diff has no cm fields", () => {
     const cm = new Uint8Array([1, 2, 3]);
-    const diff = { idx: new Uint32Array([0]), ov: new Uint8Array([1]), nv: new Uint8Array([2]) };
+    const diff = { indices: new Uint32Array([0]), oldValues: new Uint8Array([1]), newValues: new Uint8Array([2]) };
     const result = applyDiffToColorMap(cm, diff, false);
     expect(result).toBe(cm); // same reference
   });
@@ -226,10 +226,10 @@ describe("buildDiffFromGlazeFill", () => {
     const cmBuf = new Uint8Array([0, 5, 5, 0]);
     const changed = new Uint32Array([1, 2]);
     const diff = buildDiffFromGlazeFill(cmPre, cmBuf, data, changed);
-    expect(diff.idx.length).toBe(2);
-    expect(diff.cmOv![0]).toBe(0);
-    expect(diff.cmNv![0]).toBe(5);
+    expect(diff.indices.length).toBe(2);
+    expect(diff.oldColorMapValues![0]).toBe(0);
+    expect(diff.newColorMapValues![0]).toBe(5);
     // data unchanged
-    expect(diff.ov[0]).toBe(diff.nv[0]);
+    expect(diff.oldValues[0]).toBe(diff.newValues[0]);
   });
 });

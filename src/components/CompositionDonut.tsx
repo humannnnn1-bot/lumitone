@@ -137,10 +137,16 @@ interface CompositionDonutProps {
   hist: number[];
   total: number;
   colorLUT: [number, number, number][];
-  cc: readonly number[];
+  colorChoiceIndices: readonly number[];
 }
 
-export const CompositionDonut = React.memo(function CompositionDonut({ cvs, hist, total, colorLUT, cc }: CompositionDonutProps) {
+export const CompositionDonut = React.memo(function CompositionDonut({
+  cvs,
+  hist,
+  total,
+  colorLUT,
+  colorChoiceIndices,
+}: CompositionDonutProps) {
   const { t } = useTranslation();
   const [preview, setPreview] = useState<{ info: string[]; color: string } | null>(null);
   const [selected, setSelected] = useState<{ id: string; info: string[]; color: string } | null>(null);
@@ -173,7 +179,7 @@ export const CompositionDonut = React.memo(function CompositionDonut({ cvs, hist
     for (let lv = 0; lv < 8; lv++) {
       const rgb = colorLUT[lv];
       const alts = LEVEL_CANDIDATES[lv];
-      const ci = lv < cc.length ? ((cc[lv] % alts.length) + alts.length) % alts.length : 0;
+      const ci = lv < colorChoiceIndices.length ? ((colorChoiceIndices[lv] % alts.length) + alts.length) % alts.length : 0;
       const candidate = alts[ci];
       const hueLabel = candidate?.hueLabel ?? "—";
       colorEntries.push({
@@ -278,7 +284,7 @@ export const CompositionDonut = React.memo(function CompositionDonut({ cvs, hist
       glazeSlices: computeSlices(glazeEntries, total),
       hasGlaze: hasGlazeOverride,
     };
-  }, [cvs.data, cvs.colorMap, hist, total, colorLUT, cc, t]);
+  }, [cvs.data, cvs.colorMap, hist, total, colorLUT, colorChoiceIndices, t]);
 
   const size = 260;
   const cx = size / 2,

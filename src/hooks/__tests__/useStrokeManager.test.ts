@@ -216,7 +216,7 @@ describe("computeStrokeResult", () => {
     const data = mkBuf(10, 10, 3);
     const diff = computeStrokeResult(data, new Uint8Array(data), null);
     expect(diff).not.toBeNull();
-    expect(diff!.idx.length).toBe(0);
+    expect(diff!.indices.length).toBe(0);
   });
 
   it("computes diff for brush changes", () => {
@@ -227,9 +227,9 @@ describe("computeStrokeResult", () => {
     buf[2] = 3;
     const diff = computeStrokeResult(pre, buf, null);
     expect(diff).not.toBeNull();
-    expect(diff!.idx.length).toBe(3);
-    expect(diff!.nv[0]).toBe(3);
-    expect(diff!.ov[0]).toBe(0);
+    expect(diff!.indices.length).toBe(3);
+    expect(diff!.newValues[0]).toBe(3);
+    expect(diff!.oldValues[0]).toBe(0);
   });
 
   it("uses buildDiffFromFill when fillChanged provided", () => {
@@ -241,10 +241,10 @@ describe("computeStrokeResult", () => {
     const changed = new Uint32Array([5, 15, 25]);
     const diff = computeStrokeResult(pre, buf, changed);
     expect(diff).not.toBeNull();
-    expect(diff!.idx.length).toBe(3);
+    expect(diff!.indices.length).toBe(3);
     // fillChanged indices should match
-    expect(diff!.idx[0]).toBe(5);
-    expect(diff!.idx[1]).toBe(15);
-    expect(diff!.idx[2]).toBe(25);
+    expect(diff!.indices[0]).toBe(5);
+    expect(diff!.indices[1]).toBe(15);
+    expect(diff!.indices[2]).toBe(25);
   });
 });

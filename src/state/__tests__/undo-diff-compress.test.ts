@@ -4,9 +4,9 @@ import type { Diff } from "../../types";
 
 function makeDiff(indices: number[], oldVals: number[], newVals: number[]): Diff {
   return {
-    idx: new Uint32Array(indices),
-    ov: new Uint8Array(oldVals),
-    nv: new Uint8Array(newVals),
+    indices: new Uint32Array(indices),
+    oldValues: new Uint8Array(oldVals),
+    newValues: new Uint8Array(newVals),
   };
 }
 
@@ -17,9 +17,9 @@ describe("compressDiff / decompressDiff", () => {
     expect(compressed.runs.length).toBe(0);
 
     const decompressed = decompressDiff(compressed);
-    expect(decompressed.idx.length).toBe(0);
-    expect(decompressed.ov.length).toBe(0);
-    expect(decompressed.nv.length).toBe(0);
+    expect(decompressed.indices.length).toBe(0);
+    expect(decompressed.oldValues.length).toBe(0);
+    expect(decompressed.newValues.length).toBe(0);
   });
 
   it("single pixel diff", () => {
@@ -31,7 +31,7 @@ describe("compressDiff / decompressDiff", () => {
     expect(compressed.runs[1]).toBe(1);
 
     const decompressed = decompressDiff(compressed);
-    expect(Array.from(decompressed.idx)).toEqual([42]);
+    expect(Array.from(decompressed.indices)).toEqual([42]);
   });
 
   it("consecutive indices compress to a single run", () => {
@@ -63,27 +63,27 @@ describe("compressDiff / decompressDiff", () => {
       [11, 21, 31, 41, 51, 61, 71, 81, 91, 101],
     );
     const roundtripped = decompressDiff(compressDiff(diff));
-    expect(Array.from(roundtripped.idx)).toEqual(Array.from(diff.idx));
-    expect(Array.from(roundtripped.ov)).toEqual(Array.from(diff.ov));
-    expect(Array.from(roundtripped.nv)).toEqual(Array.from(diff.nv));
+    expect(Array.from(roundtripped.indices)).toEqual(Array.from(diff.indices));
+    expect(Array.from(roundtripped.oldValues)).toEqual(Array.from(diff.oldValues));
+    expect(Array.from(roundtripped.newValues)).toEqual(Array.from(diff.newValues));
   });
 
-  it("diff with cmOv/cmNv fields preserved through compress/decompress", () => {
+  it("diff with oldColorMapValues/newColorMapValues fields preserved through compress/decompress", () => {
     const oldCm = new Uint8Array([0, 0, 1, 0, 2]);
     const newCm = new Uint8Array([0, 3, 1, 4, 2]);
     const data = new Uint8Array([5, 5, 5, 5, 5]);
     const diff = computeGlazeDiff(oldCm, newCm, data);
     // Indices 1 and 3 changed
-    expect(diff.cmOv).toBeDefined();
-    expect(diff.cmNv).toBeDefined();
+    expect(diff.oldColorMapValues).toBeDefined();
+    expect(diff.newColorMapValues).toBeDefined();
 
     const compressed = compressDiff(diff);
-    expect(compressed.cmOv).toBeDefined();
-    expect(compressed.cmNv).toBeDefined();
+    expect(compressed.oldColorMapValues).toBeDefined();
+    expect(compressed.newColorMapValues).toBeDefined();
 
     const decompressed = decompressDiff(compressed);
-    expect(Array.from(decompressed.idx)).toEqual(Array.from(diff.idx));
-    expect(Array.from(decompressed.cmOv!)).toEqual(Array.from(diff.cmOv!));
-    expect(Array.from(decompressed.cmNv!)).toEqual(Array.from(diff.cmNv!));
+    expect(Array.from(decompressed.indices)).toEqual(Array.from(diff.indices));
+    expect(Array.from(decompressed.oldColorMapValues!)).toEqual(Array.from(diff.oldColorMapValues!));
+    expect(Array.from(decompressed.newColorMapValues!)).toEqual(Array.from(diff.newColorMapValues!));
   });
 });

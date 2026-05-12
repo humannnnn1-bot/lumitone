@@ -5,21 +5,21 @@ import { useTranslation } from "../i18n";
 import { C, R, SHADOW, SP } from "../styles/tokens";
 
 export interface GlazeLevelPreview {
-  lv: number;
+  levelIndex: number;
   name: string;
   rgb: readonly [number, number, number];
   hex: string;
 }
 
-type GlazeCandidateHover = { lv: number; ci: number } | null;
+type GlazeCandidateHover = { levelIndex: number; candidateIndex: number } | null;
 
 interface GlazeCandidateGridProps {
   levelPreview: GlazeLevelPreview[];
   hueAngle: number;
-  directCandidates: Map<number, number>;
+  candidateOverridesByLevel: Map<number, number>;
   selectedLevels: Set<number>;
   hoveredCandidate: GlazeCandidateHover;
-  onDirectCandidatesChange: React.Dispatch<React.SetStateAction<Map<number, number>>>;
+  onCandidateOverridesByLevelChange: React.Dispatch<React.SetStateAction<Map<number, number>>>;
   onSelectedLevelsChange: React.Dispatch<React.SetStateAction<Set<number>>>;
   onHoveredCandidateChange: React.Dispatch<React.SetStateAction<GlazeCandidateHover>>;
 }
@@ -35,72 +35,73 @@ function candidateHex(rgb: readonly number[]) {
 const GlazeCandidateColumn = React.memo(function GlazeCandidateColumn({
   level,
   hueAngle,
-  directCandidates,
+  candidateOverridesByLevel,
   selectedLevels,
   hoveredCandidate,
-  onDirectCandidatesChange,
+  onCandidateOverridesByLevelChange,
   onSelectedLevelsChange,
   onHoveredCandidateChange,
 }: GlazeCandidateColumnProps) {
   const { t } = useTranslation();
   const swipeStartRef = useRef(0);
-  const cands = LEVEL_CANDIDATES[level.lv];
+  const cands = LEVEL_CANDIDATES[level.levelIndex];
   const hasCands = cands.length > 1;
-  const isDirect = directCandidates.has(level.lv);
-  const directIdx = directCandidates.get(level.lv);
-  const autoIdx = hasCands ? findClosestCandidate(level.lv, hueAngle) : 0;
-  const currentIdx = isDirect ? directIdx! : autoIdx;
-  const prevIdx = hasCands ? (currentIdx - 1 + cands.length) % cands.length : -1;
-  const nextIdx = hasCands ? (currentIdx + 1) % cands.length : -1;
+  const isDirect = candidateOverridesByLevel.has(level.levelIndex);
+  const overrideCandidateIndex = candidateOverridesByLevel.get(level.levelIndex);
+  const autoCandidateIndex = hasCands ? findClosestCandidate(level.levelIndex, hueAngle) : 0;
+  const currentCandidateIndex = isDirect ? overrideCandidateIndex! : autoCandidateIndex;
+  const previousCandidateIndex = hasCands ? (currentCandidateIndex - 1 + cands.length) % cands.length : -1;
+  const nextCandidateIndex = hasCands ? (currentCandidateIndex + 1) % cands.length : -1;
 
-  const toggleSwatch = (ci: number) => {
-    const deselecting = directCandidates.get(level.lv) === ci;
-    onDirectCandidatesChange((prev) => {
+  const toggleSwatch = (candidateIndex: number) => {
+    const deselecting = candidateOverridesByLevel.get(level.levelIndex) === candidateIndex;
+    onCandidateOverridesByLevelChange((prev) => {
       const next = new Map(prev);
-      if (deselecting) next.delete(level.lv);
-      else next.set(level.lv, ci);
+      if (deselecting) next.delete(level.levelIndex);
+      else next.set(level.levelIndex, candidateIndex);
       return next;
     });
     onSelectedLevelsChange((prev) => {
       const next = new Set(prev);
-      next.delete(level.lv);
+      next.delete(level.levelIndex);
       return next;
     });
     onHoveredCandidateChange(null);
   };
 
   const cycleCandidate = (dir: number) => {
-    const cur = directCandidates.has(level.lv) ? directCandidates.get(level.lv)! : autoIdx;
+    const cur = candidateOverridesByLevel.has(level.levelIndex) ? candidateOverridesByLevel.get(level.levelIndex)! : autoCandidateIndex;
     const newIdx = (((cur + dir) % cands.length) + cands.length) % cands.length;
-    onDirectCandidatesChange((prev) => {
+    onCandidateOverridesByLevelChange((prev) => {
       const next = new Map(prev);
-      next.set(level.lv, newIdx);
+      next.set(level.levelIndex, newIdx);
       return next;
     });
-    onHoveredCandidateChange({ lv: level.lv, ci: newIdx });
+    onHoveredCandidateChange({ levelIndex: level.levelIndex, candidateIndex: newIdx });
   };
 
-  const makeSwatch = (ci: number, size: number) => {
-    const cand = cands[ci];
+  const makeSwatch = (candidateIndex: number, size: number) => {
+    const cand = cands[candidateIndex];
     const hex = candidateHex(cand.rgb);
-    const isSelected = directCandidates.get(level.lv) === ci;
-    const isHovered = hoveredCandidate !== null && hoveredCandidate.lv === level.lv && hoveredCandidate.ci === ci;
+    const isSelected = candidateOverridesByLevel.get(level.levelIndex) === candidateIndex;
+    const isHovered =
+      hoveredCandidate !== null && hoveredCandidate.levelIndex === level.levelIndex && hoveredCandidate.candidateIndex === candidateIndex;
     const angleLabel = `${Math.round(cand.angle)}\u00b0`;
     return (
       <div
-        key={ci}
+        key={candidateIndex}
         role="button"
         tabIndex={0}
-        aria-label={t("glaze_level_swatch_aria", level.lv, hex, angleLabel)}
+        aria-label={t("glaze_level_swatch_aria", level.levelIndex, hex, angleLabel)}
         aria-pressed={isSelected}
-        onClick={() => toggleSwatch(ci)}
+        onClick={() => toggleSwatch(candidateIndex)}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            toggleSwatch(ci);
+            toggleSwatch(candidateIndex);
           }
         }}
-        onPointerEnter={() => onHoveredCandidateChange({ lv: level.lv, ci })}
+        onPointerEnter={() => onHoveredCandidateChange({ levelIndex: level.levelIndex, candidateIndex })}
         onPointerLeave={() => onHoveredCandidateChange(null)}
         title={`${hex} ${angleLabel}`}
         style={{
@@ -120,16 +121,16 @@ const GlazeCandidateColumn = React.memo(function GlazeCandidateColumn({
 
   const handleMainToggle = () => {
     if (!hasCands) return;
-    const isSelected = selectedLevels.has(level.lv);
+    const isSelected = selectedLevels.has(level.levelIndex);
     if (isSelected) {
       onSelectedLevelsChange((prev) => {
         const next = new Set(prev);
-        next.delete(level.lv);
+        next.delete(level.levelIndex);
         return next;
       });
-      onDirectCandidatesChange((prev) => {
+      onCandidateOverridesByLevelChange((prev) => {
         const next = new Map(prev);
-        next.delete(level.lv);
+        next.delete(level.levelIndex);
         return next;
       });
       return;
@@ -137,13 +138,13 @@ const GlazeCandidateColumn = React.memo(function GlazeCandidateColumn({
 
     onSelectedLevelsChange((prev) => {
       const next = new Set(prev);
-      next.add(level.lv);
+      next.add(level.levelIndex);
       return next;
     });
     if (!isDirect) {
-      onDirectCandidatesChange((prev) => {
+      onCandidateOverridesByLevelChange((prev) => {
         const next = new Map(prev);
-        next.set(level.lv, autoIdx);
+        next.set(level.levelIndex, autoCandidateIndex);
         return next;
       });
     }
@@ -169,12 +170,13 @@ const GlazeCandidateColumn = React.memo(function GlazeCandidateColumn({
       }
     : undefined;
 
-  const mainCi = currentIdx;
-  const mainCand = cands[mainCi];
+  const mainCandidateIndex = currentCandidateIndex;
+  const mainCand = cands[mainCandidateIndex];
   const mainHex = mainCand ? candidateHex(mainCand.rgb) : "";
   const mainAngleLabel = mainCand ? `${Math.round(mainCand.angle)}\u00b0` : "";
-  const isMainHovered = hoveredCandidate !== null && hoveredCandidate.lv === level.lv && hoveredCandidate.ci === mainCi;
-  const mainSelected = selectedLevels.has(level.lv);
+  const isMainHovered =
+    hoveredCandidate !== null && hoveredCandidate.levelIndex === level.levelIndex && hoveredCandidate.candidateIndex === mainCandidateIndex;
+  const mainSelected = selectedLevels.has(level.levelIndex);
 
   return (
     <div
@@ -190,11 +192,11 @@ const GlazeCandidateColumn = React.memo(function GlazeCandidateColumn({
         touchAction: hasCands ? "none" : "auto",
       }}
     >
-      {hasCands ? makeSwatch(prevIdx, 20) : <div style={{ height: 20 }} />}
+      {hasCands ? makeSwatch(previousCandidateIndex, 20) : <div style={{ height: 20 }} />}
       <div
         role={hasCands ? "button" : undefined}
         tabIndex={hasCands ? 0 : undefined}
-        aria-label={hasCands && mainCand ? t("glaze_level_swatch_aria", level.lv, mainHex, mainAngleLabel) : undefined}
+        aria-label={hasCands && mainCand ? t("glaze_level_swatch_aria", level.levelIndex, mainHex, mainAngleLabel) : undefined}
         aria-pressed={hasCands ? mainSelected : undefined}
         onClick={hasCands ? handleMainToggle : undefined}
         onKeyDown={
@@ -207,14 +209,14 @@ const GlazeCandidateColumn = React.memo(function GlazeCandidateColumn({
               }
             : undefined
         }
-        onPointerEnter={() => onHoveredCandidateChange({ lv: level.lv, ci: mainCi })}
+        onPointerEnter={() => onHoveredCandidateChange({ levelIndex: level.levelIndex, candidateIndex: mainCandidateIndex })}
         onPointerLeave={() => onHoveredCandidateChange(null)}
         title={mainSelected ? t("title_reset_auto") : mainCand ? `${mainHex} ${mainAngleLabel}` : undefined}
         style={{
           width: 28,
           height: 28,
           borderRadius: R.md,
-          background: isDirect ? `rgb(${cands[directIdx!]?.rgb.join(",")})` : level.hex,
+          background: isDirect ? `rgb(${cands[overrideCandidateIndex!]?.rgb.join(",")})` : level.hex,
           border: `2px solid ${isMainHovered || mainSelected ? C.accent : C.border}`,
           boxSizing: "border-box" as const,
           cursor: hasCands ? "pointer" : "default",
@@ -222,7 +224,7 @@ const GlazeCandidateColumn = React.memo(function GlazeCandidateColumn({
           transition: "box-shadow 0.15s, border-color 0.15s",
         }}
       />
-      {hasCands ? makeSwatch(nextIdx, 20) : <div style={{ height: 20 }} />}
+      {hasCands ? makeSwatch(nextCandidateIndex, 20) : <div style={{ height: 20 }} />}
     </div>
   );
 });
@@ -231,7 +233,7 @@ export const GlazeCandidateGrid = React.memo(function GlazeCandidateGrid({ level
   return (
     <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center" }}>
       {levelPreview.map((level) => (
-        <GlazeCandidateColumn key={level.lv} {...columnProps} level={level} />
+        <GlazeCandidateColumn key={level.levelIndex} {...columnProps} level={level} />
       ))}
     </div>
   );
