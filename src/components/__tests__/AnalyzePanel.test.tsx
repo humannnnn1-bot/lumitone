@@ -7,7 +7,7 @@ import { AnalyzePanel } from "../AnalyzePanel";
 
 const analyzeMocks = vi.hoisted(() => ({
   mapCanvasProps: [] as Array<Record<string, unknown>>,
-  pixelMaps: { w: 2, h: 2 },
+  pixelMaps: { width: 2, height: 2 },
   usePixelMaps: vi.fn(),
 }));
 
@@ -37,7 +37,7 @@ function makeProps(overrides?: Partial<Parameters<typeof AnalyzePanel>[0]>) {
   const w = 10,
     h = 10;
   return {
-    hist: [20, 15, 10, 10, 15, 10, 10, 10],
+    levelHistogram: [20, 15, 10, 10, 15, 10, 10, 10],
     total: 100,
     colorLUT: [
       [0, 0, 0],
@@ -49,10 +49,10 @@ function makeProps(overrides?: Partial<Parameters<typeof AnalyzePanel>[0]>) {
       [255, 255, 0],
       [255, 255, 255],
     ] as [number, number, number][],
-    colorChoiceIndices: [0, 0, 0, 0, 0, 0, 0, 0],
+    candidateIndexByLevel: [0, 0, 0, 0, 0, 0, 0, 0],
     brushLevel: 0,
     setBrushLevel: vi.fn(),
-    cvs: { w, h, data: new Uint8Array(w * h), colorMap: new Uint8Array(w * h) },
+    canvasData: { width: w, height: h, levelData: new Uint8Array(w * h), pixelCandidateOverrideMap: new Uint8Array(w * h) },
     displayW: 320,
     displayH: 320,
     active: true,
@@ -90,8 +90,8 @@ describe("AnalyzePanel", () => {
       "stats_map_gradient",
       "stats_map_region",
       "stats_map_boundaryDistance",
-      "stats_map_noise",
-      "stats_map_entropy",
+      "stats_map_isolation",
+      "stats_map_diversity",
     ]);
   });
 
@@ -105,7 +105,7 @@ describe("AnalyzePanel", () => {
     const setMapMode = vi.fn<(mode: MapMode) => void>();
     render(<AnalyzePanel {...makeProps({ setMapMode })} />);
 
-    for (const mode of ["luminance", "colorLuma", "gradient", "region", "boundaryDistance", "noise", "entropy"] satisfies MapMode[]) {
+    for (const mode of ["luminance", "colorLuma", "gradient", "region", "boundaryDistance", "isolation", "diversity"] satisfies MapMode[]) {
       fireEvent.click(screen.getByRole("button", { name: `stats_map_${mode}` }));
       expect(setMapMode).toHaveBeenLastCalledWith(mode);
     }
@@ -114,19 +114,19 @@ describe("AnalyzePanel", () => {
 
   it("passes map state into usePixelMaps and MapCanvas", () => {
     const showToast = vi.fn();
-    const props = makeProps({ active: false, mapMode: "noise", showToast });
+    const props = makeProps({ active: false, mapMode: "isolation", showToast });
 
     render(<AnalyzePanel {...props} />);
 
-    expect(analyzeMocks.usePixelMaps).toHaveBeenCalledWith(props.cvs, "noise", false);
+    expect(analyzeMocks.usePixelMaps).toHaveBeenCalledWith(props.canvasData, "isolation", false);
     expect(analyzeMocks.mapCanvasProps).toHaveLength(1);
     expect(analyzeMocks.mapCanvasProps[0]).toEqual(
       expect.objectContaining({
-        mode: "noise",
+        mode: "isolation",
         pixelMaps: analyzeMocks.pixelMaps,
         colorLUT: props.colorLUT,
-        colorChoiceIndices: props.colorChoiceIndices,
-        cvs: props.cvs,
+        candidateIndexByLevel: props.candidateIndexByLevel,
+        canvasData: props.canvasData,
         displayW: props.displayW,
         displayH: props.displayH,
         showToast,
@@ -142,7 +142,7 @@ describe("AnalyzePanel", () => {
     rerender(
       <AnalyzePanel
         {...first}
-        hist={[...first.hist]}
+        levelHistogram={[...first.levelHistogram]}
         colorLUT={first.colorLUT.map((rgb) => [...rgb] as [number, number, number])}
         setMapMode={vi.fn()}
         setBrushLevel={vi.fn()}

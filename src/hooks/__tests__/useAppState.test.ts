@@ -13,7 +13,7 @@ vi.mock("../../utils/idb-persistence", () => ({
 
 import { useAppState } from "../useAppState";
 import { loadStateWithStatus, requestPersistentStorage, saveState } from "../../utils/idb-persistence";
-import { W0, H0 } from "../../constants";
+import { DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT } from "../../constants";
 
 // Minimal translation stub
 const t = ((key: string) => key) as import("../../i18n").TranslationFn;
@@ -33,17 +33,17 @@ describe("useAppState", () => {
     const { result } = renderHook(() => useAppState(t));
     const s = result.current;
 
-    expect(s.cvs.w).toBe(W0);
-    expect(s.cvs.h).toBe(H0);
-    expect(s.cvs.data).toBeInstanceOf(Uint8Array);
-    expect(s.cvs.data.length).toBe(W0 * H0);
+    expect(s.canvasData.width).toBe(DEFAULT_CANVAS_WIDTH);
+    expect(s.canvasData.height).toBe(DEFAULT_CANVAS_HEIGHT);
+    expect(s.canvasData.levelData).toBeInstanceOf(Uint8Array);
+    expect(s.canvasData.levelData.length).toBe(DEFAULT_CANVAS_WIDTH * DEFAULT_CANVAS_HEIGHT);
     expect(s.state.undoStack).toBeDefined();
     expect(s.state.redoStack).toBeDefined();
-    expect(s.state.hist.length).toBe(8);
+    expect(s.state.levelHistogram.length).toBe(8);
     expect(s.tool).toBe("brush");
     expect(s.brushLevel).toBe(7);
     expect(s.brushSize).toBe(12);
-    expect(Array.isArray(s.locked)).toBe(true);
+    expect(Array.isArray(s.lockedLevels)).toBe(true);
     expect(result.current.colorLUT).toHaveLength(8);
     for (const rgb of result.current.colorLUT) expect(rgb).toHaveLength(3);
   });
@@ -55,21 +55,21 @@ describe("useAppState", () => {
       result.current.setTool("fill");
       result.current.setBrushLevel(3);
       result.current.setBrushSize(24);
-      result.current.toggleLock(2);
+      result.current.toggleLevelLock(2);
     });
 
     expect(result.current.tool).toBe("fill");
     expect(result.current.brushLevel).toBe(3);
     expect(result.current.brushSize).toBe(24);
-    expect(result.current.locked[2]).toBe(true);
-    expect(result.current.locked[0]).toBe(false);
+    expect(result.current.lockedLevels[2]).toBe(true);
+    expect(result.current.lockedLevels[0]).toBe(false);
   });
 
   it("updates the untouched brush size when canvas dimensions change", () => {
     const { result } = renderHook(() => useAppState(t));
 
     act(() => {
-      result.current.dispatch({ type: "new_canvas", w: 64, h: 64 });
+      result.current.dispatch({ type: "new_canvas", width: 64, height: 64 });
     });
 
     expect(result.current.brushSize).toBe(2);
@@ -80,7 +80,7 @@ describe("useAppState", () => {
 
     act(() => {
       result.current.setBrushSize(24);
-      result.current.dispatch({ type: "new_canvas", w: 1024, h: 1024 });
+      result.current.dispatch({ type: "new_canvas", width: 1024, height: 1024 });
     });
 
     expect(result.current.brushSize).toBe(24);
@@ -155,7 +155,7 @@ describe("useAppState", () => {
     expect(warnSpy).toHaveBeenCalledWith("CHROMALUM: saved state was ignored:", "saved state has an unsupported shape");
 
     act(() => {
-      result.current.dispatch({ type: "new_canvas", w: 16, h: 16 });
+      result.current.dispatch({ type: "new_canvas", width: 16, height: 16 });
     });
     await act(async () => {
       vi.advanceTimersByTime(1000);
@@ -188,7 +188,7 @@ describe("useAppState", () => {
     expect(requestPersistentStorageMock).not.toHaveBeenCalled();
 
     act(() => {
-      result.current.dispatch({ type: "new_canvas", w: 16, h: 16 });
+      result.current.dispatch({ type: "new_canvas", width: 16, height: 16 });
     });
     await act(async () => {
       vi.advanceTimersByTime(1000);
@@ -201,7 +201,7 @@ describe("useAppState", () => {
     expect(localStorage.getItem("chromalum-storage-persist-requested-v1")).toBe("1");
 
     act(() => {
-      result.current.dispatch({ type: "new_canvas", w: 32, h: 32 });
+      result.current.dispatch({ type: "new_canvas", width: 32, height: 32 });
     });
     await act(async () => {
       vi.advanceTimersByTime(1000);

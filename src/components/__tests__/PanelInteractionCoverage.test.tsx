@@ -7,7 +7,7 @@ import type { AnalysisPixelMaps, AppState, CanvasData, CompressedDiff, MapMode, 
 import { RingBuffer } from "../../utils/ring-buffer";
 import { GlazeContextProvider, type GlazeContextValue } from "../../state/GlazeContext";
 import type { GlazeDrawingResult } from "../../hooks/useGlazeDrawing";
-import { DEFAULT_COLOR_CHOICE_INDICES } from "../../color-engine";
+import { DEFAULT_CANDIDATE_INDEX_BY_LEVEL } from "../../color-engine";
 import { SourcePanel } from "../SourcePanel";
 import { ColorPanel } from "../ColorPanel";
 import { GlazePanel } from "../GlazePanel";
@@ -53,7 +53,7 @@ function mockPointerFine(matches: boolean) {
 function makeCanvasData(w = 4, h = 4): CanvasData {
   const data = new Uint8Array(w * h);
   for (let i = 0; i < data.length; i++) data[i] = i % 8;
-  return { w, h, data, colorMap: new Uint8Array(w * h) };
+  return { width: w, height: h, levelData: data, pixelCandidateOverrideMap: new Uint8Array(w * h) };
 }
 
 function makeState(withUndo = false): AppState {
@@ -62,10 +62,10 @@ function makeState(withUndo = false): AppState {
     undoStack.push({ runs: new Uint32Array([0, 1]), oldValues: new Uint8Array([0]), newValues: new Uint8Array([1]) });
   }
   return {
-    cvs: makeCanvasData(),
+    canvasData: makeCanvasData(),
     undoStack,
     redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
-    hist: [2, 2, 2, 2, 2, 2, 2, 2],
+    levelHistogram: [2, 2, 2, 2, 2, 2, 2, 2],
   };
 }
 
@@ -89,7 +89,7 @@ function makeGlazeDrawing(overrides?: Partial<GlazeDrawingResult>): GlazeDrawing
     srcRef: { current: null },
     curRef: { current: null },
     statusRef: { current: null },
-    imgCacheRef: { current: { src: null, prv: null, s32: null, p32: null } },
+    imgCacheRef: { current: { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null } },
     drawingRef: { current: false },
     cursorRafRef: { current: null },
     schedCursorRef: { current: null },
@@ -109,15 +109,15 @@ function makeGlazeDrawing(overrides?: Partial<GlazeDrawingResult>): GlazeDrawing
 
 function makePixelMaps(w = 2, h = 2): PixelMaps {
   return {
-    w,
-    h,
-    noise: new Float32Array([0, 0.25, 0.5, 1]),
+    width: w,
+    height: h,
+    neighborIsolation: new Float32Array([0, 0.25, 0.5, 1]),
     boundaryDistance: new Float32Array([0, 0.2, 0.8, 1]),
     gradientAngle: new Float32Array([0, Math.PI / 2, Math.PI, -Math.PI / 2]),
     gradientMagnitude: new Float32Array([0, 0.2, 0.5, 1]),
     regionId: new Int32Array([1, 1, 2, 3]),
     isEdge: new Uint8Array([0, 1, 0, 0]),
-    levelNorm: new Float32Array([0, 0.25, 0.5, 1]),
+    levelTone: new Float32Array([0, 0.25, 0.5, 1]),
     localDiversity: new Float32Array([0, 0.25, 0.75, 1]),
   } satisfies AnalysisPixelMaps;
 }
@@ -284,7 +284,7 @@ describe("SourcePanel interactions", () => {
     const setBrushSize = vi.fn();
     const setPan = vi.fn();
     const setZoom = vi.fn();
-    const state = { ...makeState(true), cvs: makeCanvasData(128, 64) };
+    const state = { ...makeState(true), canvasData: makeCanvasData(128, 64) };
     const { props } = renderSource({
       state,
       toolState: {
@@ -357,8 +357,8 @@ describe("ColorPanel interactions", () => {
         displayH={64}
         canvasTransform={{}}
         canvasCursor="crosshair"
-        colorChoiceIndices={[0, 0, 0, 0, 0, 0, 0, 0]}
-        colorChoiceDispatch={vi.fn()}
+        candidateIndexByLevel={[0, 0, 0, 0, 0, 0, 0, 0]}
+        candidateIndexDispatch={vi.fn()}
         brushLevel={2}
         setBrushLevel={vi.fn()}
         tool="brush"
@@ -417,7 +417,7 @@ describe("GlazePanel interactions", () => {
       displayH: 64,
       canvasTransform: {},
       canvasCursor: "crosshair",
-      cvs: { ...makeCanvasData(), colorMap: new Uint8Array([0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) },
+      canvasData: { ...makeCanvasData(), pixelCandidateOverrideMap: new Uint8Array([0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) },
       dispatch: vi.fn(),
       panZoom,
       glazeDrawing,
@@ -567,33 +567,33 @@ describe("MapCanvas rendering and inspection", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- HTMLCanvasElement#getContext has incompatible overloads in tests
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(function (_contextId: string): any {
       return {
-        createImageData: (w: number, h: number) => new ImageData(w, h),
+        createImageData: (width: number, height: number) => new ImageData(width, height),
         putImageData,
       };
     });
 
-    const cvs = { ...makeCanvasData(2, 2), data: new Uint8Array([0, 2, 5, 7]) };
+    const canvasData = { ...makeCanvasData(2, 2), levelData: new Uint8Array([0, 2, 5, 7]) };
     const pixelMaps = makePixelMaps(2, 2);
     const { container, rerender } = render(
       <MapCanvas
         mode="luminance"
         pixelMaps={pixelMaps}
         colorLUT={colorLUT}
-        colorChoiceIndices={DEFAULT_COLOR_CHOICE_INDICES}
-        cvs={cvs}
+        candidateIndexByLevel={DEFAULT_CANDIDATE_INDEX_BY_LEVEL}
+        canvasData={canvasData}
         displayW={20}
         displayH={20}
       />,
     );
 
-    for (const mode of ["entropy", "noise", "boundaryDistance", "luminance", "colorLuma", "gradient", "region"] satisfies MapMode[]) {
+    for (const mode of ["diversity", "isolation", "boundaryDistance", "luminance", "colorLuma", "gradient", "region"] satisfies MapMode[]) {
       rerender(
         <MapCanvas
           mode={mode}
           pixelMaps={pixelMaps}
           colorLUT={colorLUT}
-          colorChoiceIndices={DEFAULT_COLOR_CHOICE_INDICES}
-          cvs={cvs}
+          candidateIndexByLevel={DEFAULT_CANDIDATE_INDEX_BY_LEVEL}
+          canvasData={canvasData}
           displayW={20}
           displayH={20}
         />,
@@ -626,18 +626,18 @@ describe("MapCanvas rendering and inspection", () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any -- HTMLCanvasElement#getContext has incompatible overloads in tests
     vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(function (_contextId: string): any {
       return {
-        createImageData: (w: number, h: number) => new ImageData(w, h),
+        createImageData: (width: number, height: number) => new ImageData(width, height),
         putImageData,
       };
     });
 
     render(
       <MapCanvas
-        mode="noise"
+        mode="isolation"
         pixelMaps={makePixelMaps(1, 1)}
         colorLUT={colorLUT}
-        colorChoiceIndices={DEFAULT_COLOR_CHOICE_INDICES}
-        cvs={makeCanvasData(2, 2)}
+        candidateIndexByLevel={DEFAULT_CANDIDATE_INDEX_BY_LEVEL}
+        canvasData={makeCanvasData(2, 2)}
         displayW={20}
         displayH={20}
       />,

@@ -13,8 +13,8 @@ export function useSyncRef<T>(value: T): React.MutableRefObject<T> {
  * Reduces hook overhead when many values need to be bridged to imperative code.
  *
  * Usage:
- *   const refs = useSyncRefs({ cvs, colorLUT, brushSize, tool });
- *   // In event handler: refs.current.cvs, refs.current.tool, etc.
+ *   const refs = useSyncRefs({ canvasData, colorLUT, brushSize, tool });
+ *   // In event handler: refs.current.canvasData, refs.current.tool, etc.
  */
 export function useSyncRefs<T extends Record<string, unknown>>(values: T): React.MutableRefObject<T> {
   const ref = useRef(values);

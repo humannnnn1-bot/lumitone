@@ -17,8 +17,8 @@ export function MapCanvas({
   mode,
   pixelMaps,
   colorLUT,
-  colorChoiceIndices,
-  cvs,
+  candidateIndexByLevel,
+  canvasData,
   displayW,
   displayH,
   showToast,
@@ -26,16 +26,16 @@ export function MapCanvas({
   mode: MapMode;
   pixelMaps: AnalysisPixelMaps;
   colorLUT: [number, number, number][];
-  colorChoiceIndices: readonly number[];
-  cvs: CanvasData;
+  candidateIndexByLevel: readonly number[];
+  canvasData: CanvasData;
   displayW: number;
   displayH: number;
   showToast?: (message: string, type: "error" | "success" | "info") => void;
 }) {
   const { t } = useTranslation();
   const ref = useRef<HTMLCanvasElement>(null);
-  const cw = cvs.w;
-  const ch = cvs.h;
+  const cw = canvasData.width;
+  const ch = canvasData.height;
   const regionSizeCache = useMemo(() => (mode === "region" ? buildRegionSizeMap(pixelMaps) : EMPTY_REGION_SIZE_BY_ID), [mode, pixelMaps]);
   const compactStatus = useCompactStatus();
 
@@ -52,7 +52,7 @@ export function MapCanvas({
     const img = ctx.createImageData(cw, ch);
     const d32 = new Uint32Array(img.data.buffer);
     const n = cw * ch;
-    const status = rasterizeAnalysisMap({ mode, pixelMaps, colorLUT, cvs, target: d32, regionSizeById: regionSizeCache });
+    const status = rasterizeAnalysisMap({ mode, pixelMaps, colorLUT, canvasData, target: d32, regionSizeById: regionSizeCache });
     ctx.putImageData(img, 0, 0);
     recordDebugPerf(`MapCanvas:${mode}`, perfStart, {
       status,
@@ -60,7 +60,7 @@ export function MapCanvas({
       h: ch,
       pixels: n,
     });
-  }, [mode, pixelMaps, colorLUT, cvs, cw, ch, regionSizeCache]);
+  }, [mode, pixelMaps, colorLUT, canvasData, cw, ch, regionSizeCache]);
 
   // Hover info
   const [hoverInfo, setHoverInfo] = useState<StatusText | null>(null);
@@ -80,13 +80,13 @@ export function MapCanvas({
         mode,
         pixelMaps,
         colorLUT,
-        colorChoiceIndices,
-        cvs,
+        candidateIndexByLevel,
+        canvasData,
         regionSizeById: regionSizeCache,
       });
       setHoverInfo(info);
     },
-    [mode, pixelMaps, colorLUT, colorChoiceIndices, cvs, cw, ch, regionSizeCache],
+    [mode, pixelMaps, colorLUT, candidateIndexByLevel, canvasData, cw, ch, regionSizeCache],
   );
 
   const onMouseLeave = useCallback(() => setHoverInfo(null), []);

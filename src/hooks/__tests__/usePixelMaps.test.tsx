@@ -29,29 +29,29 @@ const { MockPixelAnalysisWorker } = vi.hoisted(() => {
       if (type === "error") this.errorHandlers.delete(handler as (event: ErrorEvent) => void);
     }
 
-    postMessage(req: { id: number; w: number; h: number; mode: string }) {
+    postMessage(req: { id: number; width: number; height: number; mode: string }) {
       MockPixelAnalysisWorker.postedIds.push(req.id);
       MockPixelAnalysisWorker.postedModes.push(req.mode);
-      const n = req.w * req.h;
+      const n = req.width * req.height;
       const delay = MockPixelAnalysisWorker.delays.shift() ?? 0;
       setTimeout(() => {
         if (this.terminated) return;
-        const noise = new Float32Array(n);
-        noise[0] = req.id;
+        const neighborIsolation = new Float32Array(n);
+        neighborIsolation[0] = req.id;
         for (const handler of this.messageHandlers) {
           handler({
             data: {
               id: req.id,
-              noise,
+              neighborIsolation,
               boundaryDistance: new Float32Array(0),
               gradientAngle: new Float32Array(0),
               gradientMagnitude: new Float32Array(0),
               regionId: new Int32Array(0),
               isEdge: new Uint8Array(0),
-              levelNorm: new Float32Array(0),
+              levelTone: new Float32Array(0),
               localDiversity: new Float32Array(0),
-              w: req.w,
-              h: req.h,
+              width: req.width,
+              height: req.height,
             },
           } as MessageEvent);
         }
@@ -86,119 +86,138 @@ describe("usePixelMaps", () => {
   });
 
   it("computes lightweight modes synchronously without creating a worker", async () => {
-    const cvs = {
-      w: 2,
-      h: 2,
-      data: new Uint8Array([0, 7, 3, 4]),
-      colorMap: new Uint8Array(4),
+    const canvasData = {
+      width: 2,
+      height: 2,
+      levelData: new Uint8Array([0, 7, 3, 4]),
+      pixelCandidateOverrideMap: new Uint8Array(4),
     };
-    const { result } = renderHook(() => usePixelMaps(cvs, "luminance"));
+    const { result } = renderHook(() => usePixelMaps(canvasData, "luminance"));
 
-    await waitFor(() => expect(result.current.levelNorm[1]).toBeCloseTo(1));
-    expect(result.current.w).toBe(2);
+    await waitFor(() => expect(result.current.levelTone[1]).toBeCloseTo(1));
+    expect(result.current.width).toBe(2);
     expect(MockPixelAnalysisWorker.instances).toHaveLength(0);
   });
 
   it("ignores stale worker responses after inputs change", async () => {
     vi.useFakeTimers();
     MockPixelAnalysisWorker.delays = [50, 0];
-    const first = { w: 4, h: 4, data: new Uint8Array(16), colorMap: new Uint8Array(16) };
-    const second = { w: 6, h: 6, data: new Uint8Array(36), colorMap: new Uint8Array(36) };
-    const { result, rerender } = renderHook(({ cvs }) => usePixelMaps(cvs, "noise"), { initialProps: { cvs: first } });
+    const first = { width: 4, height: 4, levelData: new Uint8Array(16), pixelCandidateOverrideMap: new Uint8Array(16) };
+    const second = { width: 6, height: 6, levelData: new Uint8Array(36), pixelCandidateOverrideMap: new Uint8Array(36) };
+    const { result, rerender } = renderHook(({ canvasData }) => usePixelMaps(canvasData, "isolation"), {
+      initialProps: { canvasData: first },
+    });
 
     await act(async () => {
-      rerender({ cvs: second });
+      rerender({ canvasData: second });
     });
     await act(async () => {
       await vi.advanceTimersByTimeAsync(0);
     });
-    expect(result.current.w).toBe(6);
-    expect(result.current.h).toBe(6);
-    expect(result.current.noise[0]).toBe(2);
+    expect(result.current.width).toBe(6);
+    expect(result.current.height).toBe(6);
+    expect(result.current.neighborIsolation[0]).toBe(2);
 
     await act(async () => {
       await vi.advanceTimersByTimeAsync(50);
     });
-    expect(result.current.w).toBe(6);
-    expect(result.current.h).toBe(6);
-    expect(result.current.noise[0]).toBe(2);
+    expect(result.current.width).toBe(6);
+    expect(result.current.height).toBe(6);
+    expect(result.current.neighborIsolation[0]).toBe(2);
     expect(MockPixelAnalysisWorker.instances).toHaveLength(1);
   });
 
   it("reuses cached maps when switching back to the same mode on the same canvas", async () => {
-    const cvs = { w: 4, h: 4, data: new Uint8Array(16), colorMap: new Uint8Array(16) };
-    const initialProps: { mode: "noise" | "boundaryDistance" } = { mode: "noise" };
-    const { result, rerender } = renderHook(({ mode }: { mode: "noise" | "boundaryDistance" }) => usePixelMaps(cvs, mode), {
+    const canvasData = { width: 4, height: 4, levelData: new Uint8Array(16), pixelCandidateOverrideMap: new Uint8Array(16) };
+    const initialProps: { mode: "isolation" | "boundaryDistance" } = { mode: "isolation" };
+    const { result, rerender } = renderHook(({ mode }: { mode: "isolation" | "boundaryDistance" }) => usePixelMaps(canvasData, mode), {
       initialProps,
     });
 
-    await waitFor(() => expect(result.current.noise[0]).toBe(1));
+    await waitFor(() => expect(result.current.neighborIsolation[0]).toBe(1));
 
     await act(async () => {
       rerender({ mode: "boundaryDistance" as const });
     });
-    await waitFor(() => expect(result.current.noise[0]).toBe(2));
+    await waitFor(() => expect(result.current.neighborIsolation[0]).toBe(2));
 
     await act(async () => {
-      rerender({ mode: "noise" as const });
+      rerender({ mode: "isolation" as const });
     });
-    await waitFor(() => expect(result.current.noise[0]).toBe(1));
+    await waitFor(() => expect(result.current.neighborIsolation[0]).toBe(1));
     expect(MockPixelAnalysisWorker.postedIds).toEqual([1, 2]);
     expect(MockPixelAnalysisWorker.instances).toHaveLength(1);
   });
 
   it("drops cached maps when the canvas data changes", async () => {
-    const first = { w: 4, h: 4, data: new Uint8Array(16), colorMap: new Uint8Array(16) };
-    const second = { w: 4, h: 4, data: new Uint8Array(16), colorMap: new Uint8Array(16) };
-    const initialProps: { cvs: typeof first; mode: "noise" | "boundaryDistance" } = { cvs: first, mode: "noise" };
+    const first = { width: 4, height: 4, levelData: new Uint8Array(16), pixelCandidateOverrideMap: new Uint8Array(16) };
+    const second = { width: 4, height: 4, levelData: new Uint8Array(16), pixelCandidateOverrideMap: new Uint8Array(16) };
+    const initialProps: { canvasData: typeof first; mode: "isolation" | "boundaryDistance" } = { canvasData: first, mode: "isolation" };
     const { result, rerender } = renderHook(
-      ({ cvs, mode }: { cvs: typeof first; mode: "noise" | "boundaryDistance" }) => usePixelMaps(cvs, mode),
+      ({ canvasData, mode }: { canvasData: typeof first; mode: "isolation" | "boundaryDistance" }) => usePixelMaps(canvasData, mode),
       {
         initialProps,
       },
     );
 
-    await waitFor(() => expect(result.current.noise[0]).toBe(1));
+    await waitFor(() => expect(result.current.neighborIsolation[0]).toBe(1));
 
     await act(async () => {
-      rerender({ cvs: first, mode: "boundaryDistance" as const });
+      rerender({ canvasData: first, mode: "boundaryDistance" as const });
     });
-    await waitFor(() => expect(result.current.noise[0]).toBe(2));
+    await waitFor(() => expect(result.current.neighborIsolation[0]).toBe(2));
 
     await act(async () => {
-      rerender({ cvs: second, mode: "noise" as const });
+      rerender({ canvasData: second, mode: "isolation" as const });
     });
-    await waitFor(() => expect(result.current.noise[0]).toBe(3));
+    await waitFor(() => expect(result.current.neighborIsolation[0]).toBe(3));
     expect(MockPixelAnalysisWorker.postedIds).toEqual([1, 2, 3]);
   });
 
   it("preloads remaining maps in the background when enabled", async () => {
-    const cvs = { w: 4, h: 4, data: new Uint8Array(16), colorMap: new Uint8Array(16) };
-    const { result } = renderHook(() => usePixelMaps(cvs, "noise", true));
+    const canvasData = { width: 4, height: 4, levelData: new Uint8Array(16), pixelCandidateOverrideMap: new Uint8Array(16) };
+    const { result } = renderHook(() => usePixelMaps(canvasData, "isolation", true));
 
-    await waitFor(() => expect(result.current.noise[0]).toBe(1));
+    await waitFor(() => expect(result.current.neighborIsolation[0]).toBe(1));
     await waitFor(() =>
-      expect(MockPixelAnalysisWorker.postedModes).toEqual(["noise", "luminance", "gradient", "region", "boundaryDistance", "entropy"]),
+      expect(MockPixelAnalysisWorker.postedModes).toEqual([
+        "isolation",
+        "luminance",
+        "gradient",
+        "region",
+        "boundaryDistance",
+        "diversity",
+      ]),
     );
     expect(MockPixelAnalysisWorker.instances).toHaveLength(2);
   });
 
   it("uses preloaded maps without sending another worker request when switching modes", async () => {
-    const cvs = { w: 4, h: 4, data: new Uint8Array(16), colorMap: new Uint8Array(16) };
-    const initialProps: { mode: "noise" | "boundaryDistance" } = { mode: "noise" };
-    const { result, rerender } = renderHook(({ mode }: { mode: "noise" | "boundaryDistance" }) => usePixelMaps(cvs, mode, true), {
-      initialProps,
-    });
+    const canvasData = { width: 4, height: 4, levelData: new Uint8Array(16), pixelCandidateOverrideMap: new Uint8Array(16) };
+    const initialProps: { mode: "isolation" | "boundaryDistance" } = { mode: "isolation" };
+    const { result, rerender } = renderHook(
+      ({ mode }: { mode: "isolation" | "boundaryDistance" }) => usePixelMaps(canvasData, mode, true),
+      {
+        initialProps,
+      },
+    );
 
     await waitFor(() =>
-      expect(MockPixelAnalysisWorker.postedModes).toEqual(["noise", "luminance", "gradient", "region", "boundaryDistance", "entropy"]),
+      expect(MockPixelAnalysisWorker.postedModes).toEqual([
+        "isolation",
+        "luminance",
+        "gradient",
+        "region",
+        "boundaryDistance",
+        "diversity",
+      ]),
     );
     const postedBeforeSwitch = MockPixelAnalysisWorker.postedModes.slice();
 
     await act(async () => {
       rerender({ mode: "boundaryDistance" as const });
     });
-    await waitFor(() => expect(result.current.noise[0]).toBe(4));
+    await waitFor(() => expect(result.current.neighborIsolation[0]).toBe(4));
     expect(MockPixelAnalysisWorker.postedModes).toEqual(postedBeforeSwitch);
   });
 });

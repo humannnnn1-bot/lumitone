@@ -6,21 +6,31 @@ const KEY = "current";
 /** Increment when schema changes; add migration logic in onupgradeneeded. */
 const DB_VERSION = 2;
 /** Increment when the serialized SavedState shape changes. */
-export const SAVED_STATE_VERSION = 2;
+export const SAVED_STATE_VERSION = 3;
 
 export interface SavedState {
-  w: number;
-  h: number;
-  data: Uint8Array;
-  colorMap?: Uint8Array;
-  colorChoiceIndices: number[];
+  width: number;
+  height: number;
+  levelData: Uint8Array;
+  pixelCandidateOverrideMap?: Uint8Array;
+  candidateIndexByLevel: number[];
   version: number;
-  locked?: boolean[];
+  lockedLevels?: boolean[];
 }
 
 type RawSavedState = Partial<SavedState> & {
-  /** Legacy v1 name for colorChoiceIndices. */
+  /** Legacy v1/v2 dimensions and level data names. */
+  w?: number;
+  h?: number;
+  data?: Uint8Array;
+  /** Legacy v2 name for pixelCandidateOverrideMap. */
+  colorMap?: Uint8Array;
+  /** Legacy v2 name for candidateIndexByLevel. */
+  colorChoiceIndices?: number[];
+  /** Legacy v1 name for candidateIndexByLevel. */
   cc?: number[];
+  /** Legacy v2 name for lockedLevels. */
+  locked?: boolean[];
 };
 
 type LoadStateStatus = "loaded" | "empty" | "invalid";
@@ -143,14 +153,24 @@ function normalizeLoadedState(val: unknown): LoadStateResult {
   if (typeof val !== "object") return invalidResult("saved state is not an object");
 
   const saved = val as RawSavedState;
-  const colorChoiceIndices = Array.isArray(saved.colorChoiceIndices) ? saved.colorChoiceIndices : saved.cc;
+  const width = typeof saved.width === "number" ? saved.width : saved.w;
+  const height = typeof saved.height === "number" ? saved.height : saved.h;
+  const levelData = saved.levelData instanceof Uint8Array ? saved.levelData : saved.data;
+  const pixelCandidateOverrideMap =
+    saved.pixelCandidateOverrideMap instanceof Uint8Array ? saved.pixelCandidateOverrideMap : saved.colorMap;
+  const candidateIndexByLevel = Array.isArray(saved.candidateIndexByLevel)
+    ? saved.candidateIndexByLevel
+    : Array.isArray(saved.colorChoiceIndices)
+      ? saved.colorChoiceIndices
+      : saved.cc;
+  const lockedLevels = Array.isArray(saved.lockedLevels) ? saved.lockedLevels : saved.locked;
   if (
-    typeof saved.w !== "number" ||
-    typeof saved.h !== "number" ||
+    typeof width !== "number" ||
+    typeof height !== "number" ||
     typeof saved.version !== "number" ||
-    !(saved.data instanceof Uint8Array) ||
-    !Array.isArray(colorChoiceIndices) ||
-    colorChoiceIndices.length !== 8
+    !(levelData instanceof Uint8Array) ||
+    !Array.isArray(candidateIndexByLevel) ||
+    candidateIndexByLevel.length !== 8
   ) {
     return invalidResult("saved state has an unsupported shape");
   }
@@ -164,32 +184,48 @@ function normalizeLoadedState(val: unknown): LoadStateResult {
   }
 
   if (
-    !Number.isInteger(saved.w) ||
-    !Number.isInteger(saved.h) ||
-    saved.data.length !== saved.w * saved.h ||
-    saved.w <= 0 ||
-    saved.h <= 0 ||
-    saved.w > MAX_IMAGE_SIZE ||
-    saved.h > MAX_IMAGE_SIZE
+    !Number.isInteger(width) ||
+    !Number.isInteger(height) ||
+    levelData.length !== width * height ||
+    width <= 0 ||
+    height <= 0 ||
+    width > MAX_IMAGE_SIZE ||
+    height > MAX_IMAGE_SIZE
   ) {
     return invalidResult("saved state canvas dimensions are invalid");
   }
 
-  saved.colorChoiceIndices = colorChoiceIndices;
+  saved.width = width;
+  saved.height = height;
+  saved.levelData = levelData;
+  if (pixelCandidateOverrideMap) saved.pixelCandidateOverrideMap = pixelCandidateOverrideMap;
+  else delete saved.pixelCandidateOverrideMap;
+  saved.candidateIndexByLevel = candidateIndexByLevel;
+  if (lockedLevels) saved.lockedLevels = lockedLevels;
+  else delete saved.lockedLevels;
+  delete saved.w;
+  delete saved.h;
+  delete saved.data;
+  delete saved.colorMap;
+  delete saved.colorChoiceIndices;
   delete saved.cc;
+  delete saved.locked;
 
-  // Clamp pixel data to valid range [0, 7] and colorChoiceIndices indices to valid bounds.
-  for (let i = 0; i < saved.data.length; i++) {
-    if (saved.data[i] > 7) saved.data[i] = saved.data[i] & 7;
+  // Clamp pixel data to valid range [0, 7] and candidateIndexByLevel indices to valid bounds.
+  for (let i = 0; i < saved.levelData.length; i++) {
+    if (saved.levelData[i] > 7) saved.levelData[i] = saved.levelData[i] & 7;
   }
-  for (let i = 0; i < saved.colorChoiceIndices.length; i++) {
-    if (typeof saved.colorChoiceIndices[i] !== "number" || saved.colorChoiceIndices[i] < 0) saved.colorChoiceIndices[i] = 0;
+  for (let i = 0; i < saved.candidateIndexByLevel.length; i++) {
+    if (typeof saved.candidateIndexByLevel[i] !== "number" || saved.candidateIndexByLevel[i] < 0) saved.candidateIndexByLevel[i] = 0;
   }
-  if (saved.locked && (!Array.isArray(saved.locked) || saved.locked.length !== 8)) {
-    delete saved.locked;
+  if (saved.lockedLevels && (!Array.isArray(saved.lockedLevels) || saved.lockedLevels.length !== 8)) {
+    delete saved.lockedLevels;
   }
-  if (saved.colorMap && (!(saved.colorMap instanceof Uint8Array) || saved.colorMap.length !== saved.w * saved.h)) {
-    delete saved.colorMap;
+  if (
+    saved.pixelCandidateOverrideMap &&
+    (!(saved.pixelCandidateOverrideMap instanceof Uint8Array) || saved.pixelCandidateOverrideMap.length !== saved.width * saved.height)
+  ) {
+    delete saved.pixelCandidateOverrideMap;
   }
 
   return loadedResult(saved as SavedState);

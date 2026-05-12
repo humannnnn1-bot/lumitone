@@ -22,14 +22,14 @@ function hueDelta(current: number, canonical: number): number {
 
 /** Compute XOR decompositions: find all pairs (a, b) where a XOR b = lv, a < b, both non-zero */
 interface Props {
-  colorChoiceIndices: readonly number[];
+  candidateIndexByLevel: readonly number[];
   dispatch: React.Dispatch<ColorAction>;
   brushLevel: number;
   onSelectLevel?: (levelIndex: number) => void;
 }
 
 export const ColorMappingList = memo(
-  function ColorMappingList({ colorChoiceIndices, dispatch, brushLevel, onSelectLevel }: Props) {
+  function ColorMappingList({ candidateIndexByLevel, dispatch, brushLevel, onSelectLevel }: Props) {
     const { t } = useTranslation();
     const [mobile, setMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < MOBILE_BP);
     useEffect(() => {
@@ -41,7 +41,7 @@ export const ColorMappingList = memo(
       <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, width: "100%" }}>
         {LEVEL_INFO.map((info, i) => {
           const alts = LEVEL_CANDIDATES[i],
-            ci = colorChoiceIndices[i] % alts.length,
+            ci = candidateIndexByLevel[i] % alts.length,
             cur = alts[ci],
             has = alts.length > 1;
           const isActive = brushLevel === i;
@@ -173,6 +173,6 @@ export const ColorMappingList = memo(
     prev.brushLevel === next.brushLevel &&
     prev.dispatch === next.dispatch &&
     prev.onSelectLevel === next.onSelectLevel &&
-    prev.colorChoiceIndices.length === next.colorChoiceIndices.length &&
-    prev.colorChoiceIndices.every((v, i) => v === next.colorChoiceIndices[i]),
+    prev.candidateIndexByLevel.length === next.candidateIndexByLevel.length &&
+    prev.candidateIndexByLevel.every((v, i) => v === next.candidateIndexByLevel[i]),
 );

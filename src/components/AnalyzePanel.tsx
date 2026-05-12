@@ -8,13 +8,13 @@ import { CompositionDonut } from "./CompositionDonut";
 import { C, SP, FS, FW } from "../styles/tokens";
 
 interface AnalyzePanelProps {
-  hist: number[];
+  levelHistogram: number[];
   total: number;
   colorLUT: [number, number, number][];
-  colorChoiceIndices: readonly number[];
+  candidateIndexByLevel: readonly number[];
   brushLevel: number;
   setBrushLevel: (lv: number) => void;
-  cvs: CanvasData;
+  canvasData: CanvasData;
   displayW: number;
   displayH: number;
   active: boolean;
@@ -45,13 +45,13 @@ const S_MAP_MODE_BTN: React.CSSProperties = {
 /* ── Main AnalyzePanel ── */
 export const AnalyzePanel = React.memo(
   function AnalyzePanel({
-    hist,
+    levelHistogram,
     total,
     colorLUT,
-    colorChoiceIndices,
+    candidateIndexByLevel,
     brushLevel: _brushLevel,
     setBrushLevel: _setBrushLevel,
-    cvs,
+    canvasData,
     displayW,
     displayH,
     active,
@@ -60,7 +60,7 @@ export const AnalyzePanel = React.memo(
     showToast,
   }: AnalyzePanelProps) {
     const { t } = useTranslation();
-    const pixelMaps = usePixelMaps(cvs, mapMode, active);
+    const pixelMaps = usePixelMaps(canvasData, mapMode, active);
 
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: SP.lg, alignItems: "center" }}>
@@ -71,8 +71,8 @@ export const AnalyzePanel = React.memo(
               mode={mapMode}
               pixelMaps={pixelMaps}
               colorLUT={colorLUT}
-              colorChoiceIndices={colorChoiceIndices}
-              cvs={cvs}
+              candidateIndexByLevel={candidateIndexByLevel}
+              canvasData={canvasData}
               displayW={displayW}
               displayH={displayH}
               {...(showToast ? { showToast } : {})}
@@ -94,7 +94,7 @@ export const AnalyzePanel = React.memo(
                 </button>
               ))}
               <span className="map-mode-break" />
-              {(["region", "boundaryDistance", "noise", "entropy"] as const).map((m) => (
+              {(["region", "boundaryDistance", "isolation", "diversity"] as const).map((m) => (
                 <button
                   key={m}
                   onClick={() => setMapMode(m)}
@@ -111,7 +111,13 @@ export const AnalyzePanel = React.memo(
           <div className="panel-sidebar">
             <ST title={t("stats_composition")} />
             <div style={{ marginTop: -4 }}>
-              <CompositionDonut cvs={cvs} hist={hist} total={total} colorLUT={colorLUT} colorChoiceIndices={colorChoiceIndices} />
+              <CompositionDonut
+                canvasData={canvasData}
+                levelHistogram={levelHistogram}
+                total={total}
+                colorLUT={colorLUT}
+                candidateIndexByLevel={candidateIndexByLevel}
+              />
             </div>
           </div>
         </div>
@@ -121,15 +127,15 @@ export const AnalyzePanel = React.memo(
   (prev, next) => {
     if (prev.mapMode !== next.mapMode) return false;
     if (prev.total !== next.total || prev.brushLevel !== next.brushLevel) return false;
-    if (prev.cvs !== next.cvs) return false;
-    if (prev.colorChoiceIndices !== next.colorChoiceIndices) return false;
+    if (prev.canvasData !== next.canvasData) return false;
+    if (prev.candidateIndexByLevel !== next.candidateIndexByLevel) return false;
     if (prev.active !== next.active) return false;
     if (prev.displayW !== next.displayW || prev.displayH !== next.displayH) return false;
     for (let i = 0; i < 8; i++) {
-      if (prev.hist[i] !== next.hist[i]) return false;
-      const pc = prev.colorLUT[i],
-        nc = next.colorLUT[i];
-      if (pc[0] !== nc[0] || pc[1] !== nc[1] || pc[2] !== nc[2]) return false;
+      if (prev.levelHistogram[i] !== next.levelHistogram[i]) return false;
+      const prevColor = prev.colorLUT[i],
+        nextColor = next.colorLUT[i];
+      if (prevColor[0] !== nextColor[0] || prevColor[1] !== nextColor[1] || prevColor[2] !== nextColor[2]) return false;
     }
     return true;
   },

@@ -3,7 +3,7 @@ import { LEVEL_CANDIDATES } from "../color-engine";
 export type ColorAction =
   | { type: "set_color"; levelIndex: number; candidateIndex: number }
   | { type: "cycle_color"; levelIndex: number; direction: number }
-  | { type: "randomize"; locked?: boolean[]; hist?: number[] }
+  | { type: "randomize"; lockedLevels?: boolean[]; levelHistogram?: number[] }
   | { type: "load_all"; values: number[] };
 
 export function colorReducer(state: number[], action: ColorAction): number[] {
@@ -25,11 +25,11 @@ export function colorReducer(state: number[], action: ColorAction): number[] {
       return n;
     }
     case "randomize": {
-      const locked = action.locked;
-      const hist = action.hist;
+      const lockedLevels = action.lockedLevels;
+      const levelHistogram = action.levelHistogram;
       return LEVEL_CANDIDATES.map((alts, lv) => {
-        if (locked?.[lv]) return state[lv];
-        if (hist && hist[lv] === 0) return state[lv];
+        if (lockedLevels?.[lv]) return state[lv];
+        if (levelHistogram && levelHistogram[lv] === 0) return state[lv];
         return alts.length <= 1 ? 0 : ((Math.random() * alts.length) | 0) % alts.length;
       });
     }

@@ -68,22 +68,22 @@ describe("compressDiff / decompressDiff", () => {
     expect(Array.from(roundtripped.newValues)).toEqual(Array.from(diff.newValues));
   });
 
-  it("diff with oldColorMapValues/newColorMapValues fields preserved through compress/decompress", () => {
-    const oldCm = new Uint8Array([0, 0, 1, 0, 2]);
-    const newCm = new Uint8Array([0, 3, 1, 4, 2]);
-    const data = new Uint8Array([5, 5, 5, 5, 5]);
-    const diff = computeGlazeDiff(oldCm, newCm, data);
+  it("diff with pixel candidate override fields preserved through compress/decompress", () => {
+    const oldOverrideMap = new Uint8Array([0, 0, 1, 0, 2]);
+    const newOverrideMap = new Uint8Array([0, 3, 1, 4, 2]);
+    const levelData = new Uint8Array([5, 5, 5, 5, 5]);
+    const diff = computeGlazeDiff(oldOverrideMap, newOverrideMap, levelData);
     // Indices 1 and 3 changed
-    expect(diff.oldColorMapValues).toBeDefined();
-    expect(diff.newColorMapValues).toBeDefined();
+    expect(diff.oldPixelCandidateOverrideValues).toBeDefined();
+    expect(diff.newPixelCandidateOverrideValues).toBeDefined();
 
     const compressed = compressDiff(diff);
-    expect(compressed.oldColorMapValues).toBeDefined();
-    expect(compressed.newColorMapValues).toBeDefined();
+    expect(compressed.oldPixelCandidateOverrideValues).toBeDefined();
+    expect(compressed.newPixelCandidateOverrideValues).toBeDefined();
 
     const decompressed = decompressDiff(compressed);
     expect(Array.from(decompressed.indices)).toEqual(Array.from(diff.indices));
-    expect(Array.from(decompressed.oldColorMapValues!)).toEqual(Array.from(diff.oldColorMapValues!));
-    expect(Array.from(decompressed.newColorMapValues!)).toEqual(Array.from(diff.newColorMapValues!));
+    expect(Array.from(decompressed.oldPixelCandidateOverrideValues!)).toEqual(Array.from(diff.oldPixelCandidateOverrideValues!));
+    expect(Array.from(decompressed.newPixelCandidateOverrideValues!)).toEqual(Array.from(diff.newPixelCandidateOverrideValues!));
   });
 });

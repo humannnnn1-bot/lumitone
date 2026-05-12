@@ -1,10 +1,10 @@
 import { useCallback, useRef, useState, type SetStateAction } from "react";
-import { defaultBrushSizeForCanvas, H0, W0, type ToolId, type GlazeToolId } from "../constants";
+import { defaultBrushSizeForCanvas, DEFAULT_CANVAS_HEIGHT, DEFAULT_CANVAS_WIDTH, type ToolId, type GlazeToolId } from "../constants";
 
 export function useToolState() {
   const [tool, setTool] = useState<ToolId>("brush");
   const [brushLevel, setBrushLevel] = useState(7);
-  const [brushSize, setBrushSizeState] = useState(() => defaultBrushSizeForCanvas(W0, H0));
+  const [brushSize, setBrushSizeState] = useState(() => defaultBrushSizeForCanvas(DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT));
   const [glazeTool, setGlazeTool] = useState<GlazeToolId>("glaze_brush");
   const brushSizeManuallyChangedRef = useRef(false);
 

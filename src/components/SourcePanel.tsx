@@ -267,7 +267,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
   const handleZoomPixelPerfect = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      const exact = state.cvs.w / displayW;
+      const exact = state.canvasData.width / displayW;
       // If exact 1:1 ratio fits within limits, use it; otherwise pick the
       // largest integer multiple that stays within ZOOM_MAX.
       const z = exact <= ZOOM_MAX ? Math.max(ZOOM_MIN, exact) : Math.max(ZOOM_MIN, Math.floor(ZOOM_MAX));
@@ -275,7 +275,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
       setPan({ x: 0, y: 0 });
       schedCursor();
     },
-    [state.cvs.w, displayW, setZoom, setPan, schedCursor],
+    [state.canvasData.width, displayW, setZoom, setPan, schedCursor],
   );
 
   return (

@@ -14,7 +14,7 @@ import { dirtyFromChanged, unionBBox } from "../drawing/dirty-rect";
 import { brushMaskBBox, getBrushMask } from "../drawing/brush-mask";
 import { computeGlazeDiff, buildDiffFromGlazeFill } from "../state/undo-diff";
 import { useFloodFillWorker } from "./useFloodFillWorker";
-import { renderBuf } from "../drawing/render-buf";
+import { renderCanvasBuffers } from "../drawing/render-buf";
 import { formatGlazePixelStatus } from "../utils/pixel-status";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
@@ -28,10 +28,10 @@ import type { CanvasData, ImgCache, CanvasAction, DirtyRect, Point } from "../ty
 import { useDrawingContext } from "../state/DrawingContext";
 
 interface GlazeDrawingOptions {
-  cvs: CanvasData;
+  canvasData: CanvasData;
   dispatch: React.Dispatch<CanvasAction>;
   colorLUT: [number, number, number][];
-  colorChoiceIndices: readonly number[];
+  candidateIndexByLevel: readonly number[];
   hueAngle: number;
   setHueAngle: React.Dispatch<React.SetStateAction<number>>;
   glazeTool: GlazeToolId;
@@ -61,38 +61,52 @@ export interface GlazeDrawingResult {
 }
 
 interface GlazeStroke {
-  cmBuf: Uint8Array;
-  cmPre: Uint8Array;
+  workingOverrideMap: Uint8Array;
+  beforeOverrideMap: Uint8Array;
   fillChanged: Uint32Array | null;
   glazeLUT: Uint8Array;
 }
 
 export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
-  const { cvs, dispatch, colorLUT, colorChoiceIndices, hueAngle, setHueAngle, glazeTool, brushSize, prvRef, candidateOverridesByLevel } =
-    opts;
+  const {
+    canvasData,
+    dispatch,
+    colorLUT,
+    candidateIndexByLevel,
+    hueAngle,
+    setHueAngle,
+    glazeTool,
+    brushSize,
+    prvRef,
+    candidateOverridesByLevel,
+  } = opts;
   const ctx = useDrawingContext();
   const { displayW, displayH, panningRef, spaceRef, zoomRef, panRef, startPan, movePan, endPan, announce, t } = ctx;
 
   const srcRef = useRef<HTMLCanvasElement | null>(null);
   const statusRef = useRef<HTMLDivElement | null>(null);
-  const imgCacheRef = useRef<ImgCache>({ src: null, prv: null, s32: null, p32: null });
+  const imgCacheRef = useRef<ImgCache>({ sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null });
   const drawingRef = useRef(false);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
   const strokeSmootherRef = useRef<StrokeSmoother | null>(null);
   const forceRawNextMoveRef = useRef(false);
   const strokeRef = useRef<GlazeStroke | null>(null);
-  // Buffer pool: reuse cmPre/cmBuf allocations across strokes
-  const cmPoolRef = useRef<{ cmPre: Uint8Array | null; cmBuf: Uint8Array | null; size: number }>({ cmPre: null, cmBuf: null, size: 0 });
+  // Buffer pool: reuse override map allocations across strokes.
+  const overrideMapPoolRef = useRef<{ beforeOverrideMap: Uint8Array | null; workingOverrideMap: Uint8Array | null; size: number }>({
+    beforeOverrideMap: null,
+    workingOverrideMap: null,
+    size: 0,
+  });
   const paintRafRef = useRef<number | null>(null);
   const pendingPaintDirtyRef = useRef<DirtyRect | null>(null);
   const paintFrameRef = useRef<{
-    data: Uint8Array;
-    colorMap: Uint8Array;
+    levelData: Uint8Array;
+    pixelCandidateOverrideMap: Uint8Array;
     w: number;
     h: number;
     lut: [number, number, number][];
-    srcCanvas: HTMLCanvasElement | null;
-    prvCanvas: HTMLCanvasElement | null;
+    sourceCanvas: HTMLCanvasElement | null;
+    previewCanvas: HTMLCanvasElement | null;
     imgCache: ImgCache;
   } | null>(null);
   const fillPendingRef = useRef(false);
@@ -102,7 +116,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
 
   // Refs needed by useCursorOverlay (individual for interface compatibility)
   const brushSizeRef = useSyncRef(brushSize);
-  const cvsRef = useSyncRef(cvs);
+  const cvsRef = useSyncRef(canvasData);
   const displayWRef = useSyncRef(displayW);
   const displayHRef = useSyncRef(displayH);
   const toolRef = useSyncRef(
@@ -112,7 +126,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   // Batch-sync remaining values used in imperative callbacks
   const s = useSyncRefs({
     colorLUT,
-    colorChoiceIndices,
+    candidateIndexByLevel,
     hueAngle,
     setHueAngle,
     glazeTool,
@@ -146,14 +160,15 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   }
 
   function updateStatus(e: React.PointerEvent) {
-    updateStatusBase(e, statusRef.current, cursor.curRef.current, drawRefs, cvsRef.current.data, (pos, lv, _info, idx) => {
-      const cm = drawingRef.current && strokeRef.current ? strokeRef.current.cmBuf[idx] : cvsRef.current.colorMap[idx];
+    updateStatusBase(e, statusRef.current, cursor.curRef.current, drawRefs, cvsRef.current.levelData, (pos, lv, _info, idx) => {
+      const pixelCandidateOverrideValue =
+        drawingRef.current && strokeRef.current ? strokeRef.current.workingOverrideMap[idx] : cvsRef.current.pixelCandidateOverrideMap[idx];
       return formatGlazePixelStatus({
         x: pos.x,
         y: pos.y,
         lv,
-        colorChoiceIndices: s.current.colorChoiceIndices,
-        colorMapValue: cm,
+        candidateIndexByLevel: s.current.candidateIndexByLevel,
+        pixelCandidateOverrideValue,
         hueAngle: s.current.hueAngle,
         candidateOverridesByLevel: s.current.candidateOverridesByLevel,
         glazeTool: s.current.glazeTool,
@@ -161,16 +176,16 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     });
   }
 
-  function queueGlazeRender(data: Uint8Array, colorMap: Uint8Array, W: number, H: number, dirtyBB: DirtyRect) {
+  function queueGlazeRender(levelData: Uint8Array, pixelCandidateOverrideMap: Uint8Array, W: number, H: number, dirtyBB: DirtyRect) {
     pendingPaintDirtyRef.current = unionBBox(pendingPaintDirtyRef.current, dirtyBB);
     paintFrameRef.current = {
-      data,
-      colorMap,
+      levelData,
+      pixelCandidateOverrideMap,
       w: W,
       h: H,
       lut: s.current.colorLUT,
-      srcCanvas: srcRef.current,
-      prvCanvas: prvRef.current,
+      sourceCanvas: srcRef.current,
+      previewCanvas: prvRef.current,
       imgCache: imgCacheRef.current,
     };
 
@@ -183,7 +198,17 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
       pendingPaintDirtyRef.current = null;
       paintFrameRef.current = null;
       if (dirtySnap && frame) {
-        renderBuf(frame.data, frame.w, frame.h, frame.lut, frame.srcCanvas, frame.prvCanvas, frame.imgCache, dirtySnap, frame.colorMap);
+        renderCanvasBuffers(
+          frame.levelData,
+          frame.w,
+          frame.h,
+          frame.lut,
+          frame.sourceCanvas,
+          frame.previewCanvas,
+          frame.imgCache,
+          dirtySnap,
+          frame.pixelCandidateOverrideMap,
+        );
       }
     });
   }
@@ -203,61 +228,71 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     lastRef.current = pos;
     const cv = cvsRef.current;
     // Ensure preview canvas dimensions match
-    const pc = prvRef.current;
-    if (pc && (pc.width !== cv.w || pc.height !== cv.h)) {
-      pc.width = cv.w;
-      pc.height = cv.h;
-      imgCacheRef.current = { src: null, prv: null, s32: null, p32: null };
+    const previewCanvas = prvRef.current;
+    if (previewCanvas && (previewCanvas.width !== cv.width || previewCanvas.height !== cv.height)) {
+      previewCanvas.width = cv.width;
+      previewCanvas.height = cv.height;
+      imgCacheRef.current = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
     }
-    const n = cv.colorMap.length;
-    const pool = cmPoolRef.current;
-    if (!pool.cmPre || !pool.cmBuf || pool.size !== n) {
-      pool.cmPre = new Uint8Array(n);
-      pool.cmBuf = new Uint8Array(n);
+    const n = cv.pixelCandidateOverrideMap.length;
+    const pool = overrideMapPoolRef.current;
+    if (!pool.beforeOverrideMap || !pool.workingOverrideMap || pool.size !== n) {
+      pool.beforeOverrideMap = new Uint8Array(n);
+      pool.workingOverrideMap = new Uint8Array(n);
       pool.size = n;
     }
-    pool.cmPre.set(cv.colorMap);
-    pool.cmBuf.set(cv.colorMap);
-    const cmPre: Uint8Array = pool.cmPre;
-    const cmBuf: Uint8Array = pool.cmBuf;
+    pool.beforeOverrideMap.set(cv.pixelCandidateOverrideMap);
+    pool.workingOverrideMap.set(cv.pixelCandidateOverrideMap);
+    const beforeOverrideMap: Uint8Array = pool.beforeOverrideMap;
+    const workingOverrideMap: Uint8Array = pool.workingOverrideMap;
     const nextCandidateOverrides = new Map(s.current.candidateOverridesByLevel);
     const isDirect = nextCandidateOverrides.size > 0;
     const curHue = s.current.hueAngle;
     const glazeLUT = isDirect ? buildMultiDirectLUT(nextCandidateOverrides) : buildGlazeLUT(curHue);
-    strokeRef.current = { cmBuf, cmPre, fillChanged: null, glazeLUT };
+    strokeRef.current = { workingOverrideMap, beforeOverrideMap, fillChanged: null, glazeLUT };
     const curTool = s.current.glazeTool;
     strokeSmootherRef.current = curTool === "glaze_fill" ? null : createStrokeSmoother(pos);
     forceRawNextMoveRef.current = startPos !== undefined && !isCanvasPointInBounds(startPos, cvsRef.current);
     const mask = getBrushMask(pressureAdjustedBrushSize(brushSizeRef.current, e.nativeEvent));
-    const W = cv.w,
-      H = cv.h;
+    const W = cv.width,
+      H = cv.height;
 
     if (curTool === "glaze_fill") {
       const seedIdx = pos.y * W + pos.x;
-      const seedLv = cv.data[seedIdx] & LEVEL_MASK;
+      const seedLv = cv.levelData[seedIdx] & LEVEL_MASK;
       // In direct mode, only fill if seed pixel's level is in the direct map
       if (isDirect && !nextCandidateOverrides.has(seedLv)) {
         drawingRef.current = false;
         strokeRef.current = null;
         return;
       }
-      const newCmVal = isDirect ? nextCandidateOverrides.get(seedLv)! + 1 : findClosestCandidate(seedLv, curHue) + 1;
+      const targetColorOverrideValue = isDirect ? nextCandidateOverrides.get(seedLv)! + 1 : findClosestCandidate(seedLv, curHue) + 1;
       fillPendingRef.current = true;
       floodFillWorker
-        .requestGlazeFill(cv.data, cmBuf, pos.x, pos.y, newCmVal, W, H)
+        .requestGlazeFill(cv.levelData, workingOverrideMap, pos.x, pos.y, targetColorOverrideValue, W, H)
         .then((res) => {
           const st = strokeRef.current;
           if (!st) {
             fillPendingRef.current = false;
             return;
           }
-          st.cmBuf.set(res.colorMap);
+          st.workingOverrideMap.set(res.pixelCandidateOverrideMap);
           if (res.changed.length > 0) {
             st.fillChanged = res.changed;
             if (res.truncated) s.current.announce(s.current.t("toast_fill_truncated"));
           }
           const dirtyBB = st.fillChanged ? dirtyFromChanged(st.fillChanged, W, H) : undefined;
-          renderBuf(cv.data, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB, st.cmBuf);
+          renderCanvasBuffers(
+            cv.levelData,
+            W,
+            H,
+            s.current.colorLUT,
+            srcRef.current,
+            prvRef.current,
+            imgCacheRef.current,
+            dirtyBB,
+            st.workingOverrideMap,
+          );
           fillPendingRef.current = false;
           if (pendingUpRef.current) {
             pendingUpRef.current = false;
@@ -274,12 +309,23 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
         });
       return;
     } else if (curTool === "glaze_eraser") {
-      eraseGlazeBrush(cmBuf, pos.x, pos.y, mask, W, H);
+      eraseGlazeBrush(workingOverrideMap, pos.x, pos.y, mask, W, H);
     } else {
-      paintGlazeBrush(cmBuf, cv.data, pos.x, pos.y, mask, W, H, glazeLUT);
+      paintGlazeBrush(workingOverrideMap, cv.levelData, pos.x, pos.y, mask, W, H, glazeLUT);
     }
     const dirtyBB = brushMaskBBox([[pos.x, pos.y]], mask, W, H);
-    if (dirtyBB) renderBuf(cv.data, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB, cmBuf);
+    if (dirtyBB)
+      renderCanvasBuffers(
+        cv.levelData,
+        W,
+        H,
+        s.current.colorLUT,
+        srcRef.current,
+        prvRef.current,
+        imgCacheRef.current,
+        dirtyBB,
+        workingOverrideMap,
+      );
   }
 
   function canArmWorkspaceStart(e: React.PointerEvent) {
@@ -354,10 +400,10 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     const st = strokeRef.current;
     if (!st || s.current.glazeTool === "glaze_fill") return;
     e.preventDefault();
-    const cmBuf = st.cmBuf;
+    const workingOverrideMap = st.workingOverrideMap;
     const cv = cvsRef.current;
-    const W = cv.w,
-      H = cv.h;
+    const W = cv.width,
+      H = cv.height;
     const curTool = s.current.glazeTool;
 
     // Brush / eraser: keep true canvas-space positions, including samples
@@ -383,11 +429,11 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
       }
       const mask = getBrushMask(pressureAdjustedBrushSize(brushSizeRef.current, ev));
       if (curTool === "glaze_eraser") {
-        if (last) eraseGlazeBrushLine(cmBuf, last.x, last.y, p.x, p.y, mask, W, H);
-        else eraseGlazeBrush(cmBuf, p.x, p.y, mask, W, H);
+        if (last) eraseGlazeBrushLine(workingOverrideMap, last.x, last.y, p.x, p.y, mask, W, H);
+        else eraseGlazeBrush(workingOverrideMap, p.x, p.y, mask, W, H);
       } else {
-        if (last) paintGlazeBrushLine(cmBuf, cv.data, last.x, last.y, p.x, p.y, mask, W, H, st.glazeLUT);
-        else paintGlazeBrush(cmBuf, cv.data, p.x, p.y, mask, W, H, st.glazeLUT);
+        if (last) paintGlazeBrushLine(workingOverrideMap, cv.levelData, last.x, last.y, p.x, p.y, mask, W, H, st.glazeLUT);
+        else paintGlazeBrush(workingOverrideMap, cv.levelData, p.x, p.y, mask, W, H, st.glazeLUT);
       }
       const bb = last
         ? brushMaskBBox(
@@ -407,7 +453,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
 
     if (!dirtyBB) return;
 
-    queueGlazeRender(cv.data, cmBuf, W, H, dirtyBB);
+    queueGlazeRender(cv.levelData, workingOverrideMap, W, H, dirtyBB);
   }
 
   const onDown = useCallback((e: React.PointerEvent) => {
@@ -433,15 +479,30 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
       const cv = cvsRef.current;
       const st2 = strokeRef.current;
       if (st2)
-        renderBuf(cv.data, cv.w, cv.h, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, undefined, st2.cmBuf);
+        renderCanvasBuffers(
+          cv.levelData,
+          cv.width,
+          cv.height,
+          s.current.colorLUT,
+          srcRef.current,
+          prvRef.current,
+          imgCacheRef.current,
+          undefined,
+          st2.workingOverrideMap,
+        );
     }
     const st = strokeRef.current;
     if (drawingRef.current && st) {
       const cv = cvsRef.current;
       const diff = st.fillChanged
-        ? buildDiffFromGlazeFill(st.cmPre, st.cmBuf, cv.data, st.fillChanged)
-        : computeGlazeDiff(st.cmPre, st.cmBuf, cv.data);
-      dispatch({ type: "stroke_end", finalData: cv.data, finalColorMap: new Uint8Array(st.cmBuf), diff });
+        ? buildDiffFromGlazeFill(st.beforeOverrideMap, st.workingOverrideMap, cv.levelData, st.fillChanged)
+        : computeGlazeDiff(st.beforeOverrideMap, st.workingOverrideMap, cv.levelData);
+      dispatch({
+        type: "stroke_end",
+        finalLevelData: cv.levelData,
+        finalPixelCandidateOverrideMap: new Uint8Array(st.workingOverrideMap),
+        diff,
+      });
     }
     drawingRef.current = false;
     lastRef.current = null;
@@ -510,14 +571,14 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     const cv = cvsRef.current;
     const pos = canvasPosUnclamped(e, cursor.curRef.current, zoomRef.current, panRef.current, cv);
     if (!isCanvasPointInBounds(pos, cv)) return;
-    const idx = pos.y * cv.w + pos.x;
-    const lv = cv.data[idx] & LEVEL_MASK;
+    const idx = pos.y * cv.width + pos.x;
+    const lv = cv.levelData[idx] & LEVEL_MASK;
     // L0 (black) and L7 (white) are achromatic — no hue to pick
     if (lv === 0 || lv === 7) {
       s.current.announce(s.current.t("announce_hue_achromatic"));
       return;
     }
-    const cm = cv.colorMap[idx];
+    const cm = cv.pixelCandidateOverrideMap[idx];
     let angle: number;
     if (cm > 0) {
       // Glazed pixel: pick from candidate's stored angle

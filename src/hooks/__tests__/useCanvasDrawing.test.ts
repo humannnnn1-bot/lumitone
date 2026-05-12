@@ -2,7 +2,7 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useCanvasDrawing } from "../useCanvasDrawing";
-import { renderBuf } from "../../drawing/render-buf";
+import { renderCanvasBuffers } from "../../drawing/render-buf";
 import type { CanvasData } from "../../types";
 import type { ToolId } from "../../constants";
 
@@ -41,7 +41,7 @@ vi.mock("../../state/DrawingContext", () => ({
 
 vi.mock("../useFloodFillWorker", () => ({
   useFloodFillWorker: () => ({
-    requestCanvasFill: vi.fn(() => Promise.resolve({ data: new Uint8Array(100), changed: new Uint32Array(0), truncated: false })),
+    requestCanvasFill: vi.fn(() => Promise.resolve({ levelData: new Uint8Array(100), changed: new Uint32Array(0), truncated: false })),
   }),
 }));
 
@@ -60,24 +60,24 @@ vi.mock("../useCursorOverlay", () => ({
 }));
 
 vi.mock("../../drawing/render-buf", () => ({
-  renderBuf: vi.fn(),
+  renderCanvasBuffers: vi.fn(),
 }));
 
 function makeCvs(w = 10, h = 10): CanvasData {
   return {
-    w,
-    h,
-    data: new Uint8Array(w * h),
-    colorMap: new Uint8Array(w * h),
+    width: w,
+    height: h,
+    levelData: new Uint8Array(w * h),
+    pixelCandidateOverrideMap: new Uint8Array(w * h),
   };
 }
 
 function makeOpts(overrides?: Partial<Parameters<typeof useCanvasDrawing>[0]>) {
   return {
-    cvs: makeCvs(),
+    canvasData: makeCvs(),
     dispatch: vi.fn(),
     colorLUT: Array.from({ length: 8 }, () => [128, 128, 128] as [number, number, number]),
-    colorChoiceIndices: [0, 0, 0, 0, 0, 0, 0, 0],
+    candidateIndexByLevel: [0, 0, 0, 0, 0, 0, 0, 0],
     brushLevel: 3,
     brushSize: 1,
     tool: "brush" as ToolId,
@@ -154,7 +154,7 @@ describe("useCanvasDrawing", () => {
     const centerIndex = 5 * 10 + 5;
     expect(down.preventDefault).toHaveBeenCalled();
     expect(result.current.drawingRef.current).toBe(true);
-    expect(result.current.strokeRef.current?.buf[centerIndex]).toBe(3);
+    expect(result.current.strokeRef.current?.workingData[centerIndex]).toBe(3);
 
     act(() => {
       result.current.onUp();
@@ -165,7 +165,7 @@ describe("useCanvasDrawing", () => {
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "stroke_end",
-        finalData: expect.any(Uint8Array),
+        finalLevelData: expect.any(Uint8Array),
         diff: expect.objectContaining({
           indices: expect.any(Uint32Array),
           newValues: expect.any(Uint8Array),
@@ -173,12 +173,12 @@ describe("useCanvasDrawing", () => {
       }),
     );
     const action = dispatch.mock.calls[0][0];
-    expect(action.finalData[centerIndex]).toBe(3);
+    expect(action.finalLevelData[centerIndex]).toBe(3);
     expect(Array.from(action.diff.indices)).toContain(centerIndex);
   });
 
   it("uses pen pressure for brush size while keeping mouse input fixed", () => {
-    const mouse = renderHook(() => useCanvasDrawing(makeOpts({ cvs: makeCvs(20, 20), brushLevel: 3, brushSize: 10 })));
+    const mouse = renderHook(() => useCanvasDrawing(makeOpts({ canvasData: makeCvs(20, 20), brushLevel: 3, brushSize: 10 })));
     const mouseCanvas = mouse.result.current.curRef.current!;
     mockCanvasRect(mouseCanvas);
 
@@ -191,9 +191,9 @@ describe("useCanvasDrawing", () => {
       );
     });
 
-    expect(mouse.result.current.strokeRef.current?.buf[10 * 20 + 16]).toBe(0);
+    expect(mouse.result.current.strokeRef.current?.workingData[10 * 20 + 16]).toBe(0);
 
-    const pen = renderHook(() => useCanvasDrawing(makeOpts({ cvs: makeCvs(20, 20), brushLevel: 3, brushSize: 10 })));
+    const pen = renderHook(() => useCanvasDrawing(makeOpts({ canvasData: makeCvs(20, 20), brushLevel: 3, brushSize: 10 })));
     const penCanvas = pen.result.current.curRef.current!;
     mockCanvasRect(penCanvas);
 
@@ -206,7 +206,7 @@ describe("useCanvasDrawing", () => {
       );
     });
 
-    expect(pen.result.current.strokeRef.current?.buf[10 * 20 + 16]).toBe(3);
+    expect(pen.result.current.strokeRef.current?.workingData[10 * 20 + 16]).toBe(3);
   });
 
   it.each([
@@ -215,9 +215,9 @@ describe("useCanvasDrawing", () => {
   ])(
     "clips a crossing $tool stroke at the canvas edge when the pointer moves outside",
     ({ tool, initialLevel, expectedCenter, expectedEdge }) => {
-      const cvs = makeCvs(10, 10);
-      cvs.data.fill(initialLevel);
-      const { result } = renderHook(() => useCanvasDrawing(makeOpts({ cvs, tool, brushLevel: 3, brushSize: 1 })));
+      const canvasData = makeCvs(10, 10);
+      canvasData.levelData.fill(initialLevel);
+      const { result } = renderHook(() => useCanvasDrawing(makeOpts({ canvasData, tool, brushLevel: 3, brushSize: 1 })));
       const canvas = result.current.curRef.current!;
       mockCanvasRect(canvas);
 
@@ -228,7 +228,7 @@ describe("useCanvasDrawing", () => {
         result.current.onMove(pointerEvent({ clientX: 400, clientY: 160, target: canvas }));
       });
 
-      const buf = result.current.strokeRef.current?.buf;
+      const buf = result.current.strokeRef.current?.workingData;
       expect(buf?.[5 * 10 + 5]).toBe(expectedCenter);
       expect(buf?.[5 * 10 + 9]).toBe(expectedEdge);
     },
@@ -249,7 +249,7 @@ describe("useCanvasDrawing", () => {
       result.current.onMove(pointerEvent({ clientX: 256, clientY: -160, target: canvas }));
     });
 
-    let buf = result.current.strokeRef.current?.buf;
+    let buf = result.current.strokeRef.current?.workingData;
     expect(buf?.[0 * 10 + 5]).toBe(3);
     expect(buf?.[0 * 10 + 6]).toBe(0);
 
@@ -257,7 +257,7 @@ describe("useCanvasDrawing", () => {
       result.current.onMove(pointerEvent({ clientX: 256, clientY: 160, target: canvas }));
     });
 
-    buf = result.current.strokeRef.current?.buf;
+    buf = result.current.strokeRef.current?.workingData;
     expect(buf?.[1 * 10 + 8]).toBe(3);
 
     act(() => {
@@ -277,7 +277,7 @@ describe("useCanvasDrawing", () => {
       result.current.onMove(pointerEvent({ clientX: 256, clientY: -160, target: canvas }));
     });
 
-    const buf = result.current.strokeRef.current?.buf;
+    const buf = result.current.strokeRef.current?.workingData;
     expect(buf?.[0 * 10 + 6]).toBe(3);
     expect(buf?.[0 * 10 + 8]).toBe(0);
 
@@ -298,7 +298,7 @@ describe("useCanvasDrawing", () => {
       result.current.onMove(pointerEvent({ clientX: 256, clientY: -160, target: canvas }));
     });
 
-    const buf = result.current.strokeRef.current?.buf;
+    const buf = result.current.strokeRef.current?.workingData;
     expect(buf?.[0 * 10 + 5]).toBe(3);
     expect(buf?.[0 * 10 + 6]).toBe(0);
     expect(buf?.[0 * 10 + 8]).toBe(3);
@@ -320,7 +320,7 @@ describe("useCanvasDrawing", () => {
       result.current.onMove(pointerEvent({ clientX: 160, clientY: -160, target: canvas }));
     });
 
-    const buf = result.current.strokeRef.current?.buf;
+    const buf = result.current.strokeRef.current?.workingData;
     expect(buf?.[0 * 10 + 5]).toBe(3);
 
     act(() => {
@@ -344,7 +344,7 @@ describe("useCanvasDrawing", () => {
       act(() => {
         result.current.onDown(pointerEvent({ target: canvas }));
       });
-      vi.mocked(renderBuf).mockClear();
+      vi.mocked(renderCanvasBuffers).mockClear();
 
       act(() => {
         result.current.onMove(pointerEvent({ clientX: 192, clientY: 160, target: canvas }));
@@ -360,8 +360,8 @@ describe("useCanvasDrawing", () => {
         rafCallbacks[0](0);
       });
 
-      expect(renderBuf).toHaveBeenCalledTimes(1);
-      expect(vi.mocked(renderBuf).mock.calls[0][7]).toEqual({ x: 5, y: 5, w: 3, h: 1 });
+      expect(renderCanvasBuffers).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(renderCanvasBuffers).mock.calls[0][7]).toEqual({ x: 5, y: 5, w: 3, h: 1 });
     } finally {
       rafSpy.mockRestore();
       cancelSpy.mockRestore();
@@ -369,10 +369,10 @@ describe("useCanvasDrawing", () => {
   });
 
   it("right-click samples the source level instead of drawing", () => {
-    const cvs = makeCvs();
-    cvs.data[55] = 5;
+    const canvasData = makeCvs();
+    canvasData.levelData[55] = 5;
     const setBrushLevel = vi.fn();
-    const { result } = renderHook(() => useCanvasDrawing(makeOpts({ cvs, setBrushLevel })));
+    const { result } = renderHook(() => useCanvasDrawing(makeOpts({ canvasData, setBrushLevel })));
     const canvas = result.current.curRef.current!;
     mockCanvasRect(canvas);
 
@@ -402,7 +402,7 @@ describe("useCanvasDrawing", () => {
       result.current.onWorkspaceMove(pointerEvent({ clientX: 160, clientY: 160, target: canvas }));
     });
 
-    const buf = result.current.strokeRef.current?.buf;
+    const buf = result.current.strokeRef.current?.workingData;
     expect(result.current.drawingRef.current).toBe(true);
     expect(buf?.[5 * 10 + 5]).toBe(3);
     expect(buf?.[5 * 10 + 0]).toBe(3);
@@ -470,7 +470,7 @@ describe("useCanvasDrawing", () => {
       result.current.onWorkspaceMove(pointerEvent({ clientX: 256, clientY: 160, target: canvas }));
     });
 
-    const buf = result.current.strokeRef.current?.buf;
+    const buf = result.current.strokeRef.current?.workingData;
     expect(buf?.[5 * 10 + 0]).toBe(3);
     expect(buf?.[5 * 10 + 5]).toBe(3);
     expect(buf?.[5 * 10 + 8]).toBe(3);

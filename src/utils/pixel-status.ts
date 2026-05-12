@@ -36,8 +36,8 @@ function resolveCandidate(lv: number, idx: number): CandidateResolution {
   };
 }
 
-function resolveGlobalCandidate(colorChoiceIndices: readonly number[], lv: number): CandidateResolution {
-  return resolveCandidate(lv, colorChoiceIndices[lv] ?? 0);
+function resolveGlobalCandidate(candidateIndexByLevel: readonly number[], lv: number): CandidateResolution {
+  return resolveCandidate(lv, candidateIndexByLevel[lv] ?? 0);
 }
 
 function candidateLabel(candidate: CandidateResolution): string {
@@ -112,9 +112,9 @@ export function formatColorPixelStatus({
   x,
   y,
   lv,
-  colorChoiceIndices,
-}: PixelStatusBase & { colorChoiceIndices: readonly number[] }): StatusText {
-  const candidate = resolveGlobalCandidate(colorChoiceIndices, lv);
+  candidateIndexByLevel,
+}: PixelStatusBase & { candidateIndexByLevel: readonly number[] }): StatusText {
+  const candidate = resolveGlobalCandidate(candidateIndexByLevel, lv);
   const rgb = candidate.rgb;
   return {
     full: `(${x},${y}) Color L${lv} ${candidateLabel(candidate)} ${hexStr(rgb)} rgb(${rgb[0]},${rgb[1]},${rgb[2]}) hue=${angleLabel(
@@ -128,24 +128,24 @@ export function formatHexPixelStatus({
   x,
   y,
   lv,
-  colorChoiceIndices,
-  hist,
+  candidateIndexByLevel,
+  levelHistogram,
   patternFactor,
-  locked,
+  isLocked,
 }: PixelStatusBase & {
-  colorChoiceIndices: readonly number[];
-  hist: readonly number[];
+  candidateIndexByLevel: readonly number[];
+  levelHistogram: readonly number[];
   patternFactor: number;
-  locked: boolean;
+  isLocked: boolean;
 }): StatusText {
-  const candidate = resolveGlobalCandidate(colorChoiceIndices, lv);
+  const candidate = resolveGlobalCandidate(candidateIndexByLevel, lv);
   const hexAngle = HEX_CANDIDATE_ANGLES[lv]?.[candidate.ci] ?? candidate.angle;
   return {
     full: `(${x},${y}) Hex L${lv} ${candidateLabel(candidate)} @${angleLabel(hexAngle)} used=${formatCount(
-      hist[lv] ?? 0,
-    )}px factor\u00D7${patternFactor} ${locked ? "locked" : "unlocked"}`,
-    compact: `(${x},${y}) Hex L${lv} ${candidateLabel(candidate)} used=${formatShortCount(hist[lv] ?? 0)}px f\u00D7${patternFactor} ${
-      locked ? "lock" : "open"
+      levelHistogram[lv] ?? 0,
+    )}px factor\u00D7${patternFactor} ${isLocked ? "locked" : "unlocked"}`,
+    compact: `(${x},${y}) Hex L${lv} ${candidateLabel(candidate)} used=${formatShortCount(levelHistogram[lv] ?? 0)}px f\u00D7${patternFactor} ${
+      isLocked ? "lock" : "open"
     }`,
   };
 }
@@ -154,22 +154,22 @@ export function formatGlazePixelStatus({
   x,
   y,
   lv,
-  colorChoiceIndices,
-  colorMapValue,
+  candidateIndexByLevel,
+  pixelCandidateOverrideValue,
   hueAngle,
   candidateOverridesByLevel,
   glazeTool,
 }: PixelStatusBase & {
-  colorChoiceIndices: readonly number[];
-  colorMapValue: number;
+  candidateIndexByLevel: readonly number[];
+  pixelCandidateOverrideValue: number;
   hueAngle: number;
   candidateOverridesByLevel: Map<number, number>;
   glazeTool: GlazeToolId;
 }): StatusText {
-  const base = resolveGlobalCandidate(colorChoiceIndices, lv);
-  const actual = colorMapValue > 0 ? resolveCandidate(lv, colorMapValue - 1) : base;
-  const override = colorMapValue > 0 ? "override" : "no override";
-  const compactOverride = colorMapValue > 0 ? "ovr" : "no-ovr";
+  const base = resolveGlobalCandidate(candidateIndexByLevel, lv);
+  const actual = pixelCandidateOverrideValue > 0 ? resolveCandidate(lv, pixelCandidateOverrideValue - 1) : base;
+  const override = pixelCandidateOverrideValue > 0 ? "override" : "no override";
+  const compactOverride = pixelCandidateOverrideValue > 0 ? "ovr" : "no-ovr";
   const action = glazeActionLabel(glazeTool);
   const target = glazeTargetLabel({ lv, hueAngle, candidateOverridesByLevel, glazeTool });
   return {

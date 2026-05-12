@@ -111,9 +111,9 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
   const {
     state,
     dispatch,
-    cvs,
-    colorChoiceIndices,
-    colorChoiceDispatch,
+    canvasData,
+    candidateIndexByLevel,
+    candidateIndexDispatch,
     brushLevel,
     setBrushLevel,
     brushSize,
@@ -129,7 +129,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     showToast,
     showNewCanvas,
     setShowNewCanvas,
-    locked,
+    lockedLevels,
     mapMode,
     setMapMode,
     hueAngle,
@@ -141,14 +141,14 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     colorLUT,
     displayW,
     displayH,
-    toggleLock,
+    toggleLevelLock,
     handleRandomize,
     handleUnlockAll,
     canRandomize,
     patternInfo,
   } = app;
 
-  const hist = state.hist;
+  const levelHistogram = state.levelHistogram;
   const [scrollToGallery, setScrollToGallery] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
   const pwaUpdate = usePwaUpdate();
@@ -166,10 +166,10 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
   const helpRef = useRef<HTMLDivElement | null>(null);
 
   const drawing = useCanvasDrawing({
-    cvs,
+    canvasData,
     dispatch,
     colorLUT,
-    colorChoiceIndices,
+    candidateIndexByLevel,
     brushLevel,
     brushSize,
     tool,
@@ -178,10 +178,10 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
   });
 
   const glazeDrawing = useGlazeDrawing({
-    cvs,
+    canvasData,
     dispatch,
     colorLUT,
-    colorChoiceIndices,
+    candidateIndexByLevel,
     hueAngle,
     setHueAngle,
     glazeTool,
@@ -191,7 +191,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
   });
 
   useCanvasCoordination({
-    cvs,
+    canvasData,
     colorLUT,
     activeTabId,
     drawing,
@@ -219,7 +219,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
   const undo = useCallback(() => dispatch({ type: "undo" }), [dispatch]);
   const redo = useCallback(() => dispatch({ type: "redo" }), [dispatch]);
 
-  const { saveColor, saveColorWithLUT, saveGlaze, shareColor, shareGlaze } = useExport(cvs, colorLUT, showToast, t);
+  const { saveColor, saveColorWithLUT, saveGlaze, shareColor, shareGlaze } = useExport(canvasData, colorLUT, showToast, t);
 
   useKeyboardShortcuts({
     setTool,
@@ -240,18 +240,18 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
   });
 
   const handleClear = useCallback(() => {
-    if (hist[0] !== cvs.w * cvs.h) {
+    if (levelHistogram[0] !== canvasData.width * canvasData.height) {
       dispatch({ type: "clear" });
     }
-  }, [hist, cvs.w, cvs.h, dispatch]);
+  }, [levelHistogram, canvasData.width, canvasData.height, dispatch]);
 
   const canvasTransform = useMemo(
     () => ({
       imageRendering: "pixelated" as const,
-      transform: `scale(${panZoom.zoom}) translate(${(panZoom.pan.x * displayW) / cvs.w}px,${(panZoom.pan.y * displayH) / cvs.h}px)`,
+      transform: `scale(${panZoom.zoom}) translate(${(panZoom.pan.x * displayW) / canvasData.width}px,${(panZoom.pan.y * displayH) / canvasData.height}px)`,
       transformOrigin: "center center",
     }),
-    [panZoom.zoom, panZoom.pan.x, panZoom.pan.y, displayW, displayH, cvs.w, cvs.h],
+    [panZoom.zoom, panZoom.pan.x, panZoom.pan.y, displayW, displayH, canvasData.width, canvasData.height],
   );
 
   const canvasCursor =
@@ -310,7 +310,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
   const handleNewCanvas = useCallback(() => setShowNewCanvas(true), [setShowNewCanvas]);
   const handleNewCanvasConfirm = useCallback(
     (w: number, h: number) => {
-      dispatch({ type: "new_canvas", w, h });
+      dispatch({ type: "new_canvas", width: w, height: h });
       setZoom(1);
       setPan({ x: 0, y: 0 });
       setShowNewCanvas(false);
@@ -432,8 +432,8 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
               displayH={displayH}
               canvasTransform={canvasTransform}
               canvasCursor={canvasCursor}
-              colorChoiceIndices={colorChoiceIndices}
-              colorChoiceDispatch={colorChoiceDispatch}
+              candidateIndexByLevel={candidateIndexByLevel}
+              candidateIndexDispatch={candidateIndexDispatch}
               brushLevel={brushLevel}
               setBrushLevel={setBrushLevel}
               tool={tool}
@@ -446,15 +446,15 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
           <div id={getTabPanelId("hex")} role="tabpanel" aria-labelledby={getTabButtonId("hex")}>
             <HexPanel
               hexPrvRef={hexPrvRef}
-              cvs={cvs}
+              canvasData={canvasData}
               displayW={displayW}
               displayH={displayH}
-              colorChoiceIndices={colorChoiceIndices}
-              colorChoiceDispatch={colorChoiceDispatch}
-              hist={hist}
-              total={cvs.w * cvs.h}
-              locked={locked}
-              toggleLock={toggleLock}
+              candidateIndexByLevel={candidateIndexByLevel}
+              candidateIndexDispatch={candidateIndexDispatch}
+              levelHistogram={levelHistogram}
+              total={canvasData.width * canvasData.height}
+              lockedLevels={lockedLevels}
+              toggleLevelLock={toggleLevelLock}
               handleRandomize={handleRandomize}
               handleUnlockAll={handleUnlockAll}
               canRandomize={canRandomize}
@@ -494,7 +494,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
                         ? "crosshair"
                         : "none"
                 }
-                cvs={cvs}
+                canvasData={canvasData}
                 dispatch={dispatch}
                 panZoom={panZoomHandlers}
                 glazeDrawing={glazeDrawing}
@@ -520,13 +520,13 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
             style={{ display: activeTabId === "stats" ? undefined : "none" }}
           >
             <AnalyzePanel
-              hist={hist}
-              total={cvs.w * cvs.h}
+              levelHistogram={levelHistogram}
+              total={canvasData.width * canvasData.height}
               colorLUT={colorLUT}
-              colorChoiceIndices={colorChoiceIndices}
+              candidateIndexByLevel={candidateIndexByLevel}
               brushLevel={brushLevel}
               setBrushLevel={setBrushLevel}
-              cvs={cvs}
+              canvasData={canvasData}
               displayW={displayW}
               displayH={displayH}
               active={activeTabId === "stats"}
@@ -543,11 +543,11 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
           style={{ width: "100%", display: activeTabId === "gallery" ? undefined : "none" }}
         >
           <GalleryPanel
-            cvs={cvs}
-            colorChoiceIndices={colorChoiceIndices}
-            colorChoiceDispatch={colorChoiceDispatch}
-            locked={locked}
-            hist={hist}
+            canvasData={canvasData}
+            candidateIndexByLevel={candidateIndexByLevel}
+            candidateIndexDispatch={candidateIndexDispatch}
+            lockedLevels={lockedLevels}
+            levelHistogram={levelHistogram}
             showToast={showToast}
             saveColorWithLUT={saveColorWithLUT}
             active={activeTabId === "gallery"}
@@ -578,7 +578,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
 export default function App() {
   const { t } = useTranslation();
   const app = useAppState(t);
-  const { cvs, displayW, displayH } = app;
+  const { canvasData, displayW, displayH } = app;
 
   const ariaLiveRef = useRef<HTMLDivElement | null>(null);
 
@@ -588,7 +588,7 @@ export default function App() {
 
   const sharedSchedCursorRef = useRef<(() => void) | null>(null);
 
-  const panZoom = usePanZoom(cvs, displayW, sharedSchedCursorRef);
+  const panZoom = usePanZoom(canvasData, displayW, sharedSchedCursorRef);
 
   return (
     <DrawingContextProvider

@@ -5,28 +5,28 @@
 import type React from "react";
 import type { RingBuffer } from "./utils/ring-buffer";
 
-export type MapMode = "entropy" | "noise" | "boundaryDistance" | "gradient" | "region" | "luminance" | "colorLuma";
+export type MapMode = "diversity" | "isolation" | "boundaryDistance" | "gradient" | "region" | "luminance" | "colorLuma";
 
 export interface AnalysisPixelMaps {
-  noise: Float32Array;
+  neighborIsolation: Float32Array;
   boundaryDistance: Float32Array;
   gradientAngle: Float32Array;
   gradientMagnitude: Float32Array;
   regionId: Int32Array;
   isEdge: Uint8Array;
-  levelNorm: Float32Array;
+  levelTone: Float32Array;
   localDiversity: Float32Array;
-  w: number;
-  h: number;
+  width: number;
+  height: number;
 }
 
 export interface Diff {
   indices: Uint32Array;
   oldValues: Uint8Array;
   newValues: Uint8Array;
-  /** Optional colorMap diff (same indices array). Undefined for Canvas-tab-only strokes. */
-  oldColorMapValues?: Uint8Array;
-  newColorMapValues?: Uint8Array;
+  /** Optional pixel candidate override diff (same indices array). Undefined for Canvas-tab-only strokes. */
+  oldPixelCandidateOverrideValues?: Uint8Array;
+  newPixelCandidateOverrideValues?: Uint8Array;
 }
 
 export interface CompressedDiff {
@@ -34,32 +34,32 @@ export interface CompressedDiff {
   runs: Uint32Array;
   oldValues: Uint8Array;
   newValues: Uint8Array;
-  oldColorMapValues?: Uint8Array;
-  newColorMapValues?: Uint8Array;
+  oldPixelCandidateOverrideValues?: Uint8Array;
+  newPixelCandidateOverrideValues?: Uint8Array;
 }
 
 export interface CanvasData {
-  w: number;
-  h: number;
-  data: Uint8Array;
-  /** Per-pixel color variant override. 0=default(colorChoiceIndices[]), 1+=specific variant (1-indexed). */
-  colorMap: Uint8Array;
+  width: number;
+  height: number;
+  levelData: Uint8Array;
+  /** Per-pixel color variant override. 0=default(candidateIndexByLevel[]), 1+=specific variant (1-indexed). */
+  pixelCandidateOverrideMap: Uint8Array;
 }
 
 export interface AppState {
-  cvs: CanvasData;
+  canvasData: CanvasData;
   undoStack: RingBuffer<CompressedDiff>;
   redoStack: RingBuffer<CompressedDiff>;
-  hist: number[];
+  levelHistogram: number[];
 }
 
 export type CanvasAction =
-  | { type: "stroke_end"; finalData: Uint8Array; finalColorMap?: Uint8Array; diff: Diff | null }
+  | { type: "stroke_end"; finalLevelData: Uint8Array; finalPixelCandidateOverrideMap?: Uint8Array; diff: Diff | null }
   | { type: "undo" }
   | { type: "redo" }
-  | { type: "load_image"; w: number; h: number; data: Uint8Array; colorMap?: Uint8Array }
+  | { type: "load_image"; width: number; height: number; levelData: Uint8Array; pixelCandidateOverrideMap?: Uint8Array }
   | { type: "clear" }
-  | { type: "new_canvas"; w: number; h: number }
+  | { type: "new_canvas"; width: number; height: number }
   | { type: "glaze_clear" };
 
 export interface DirtyRect {
@@ -81,8 +81,8 @@ interface StrokeParams {
 }
 
 export interface StrokeState {
-  buf: Uint8Array;
-  pre: Uint8Array;
+  workingData: Uint8Array;
+  beforeData: Uint8Array;
   params: StrokeParams;
   shapeStart: Point;
   prevShapeBBox: DirtyRect | null;
@@ -90,11 +90,11 @@ export interface StrokeState {
 }
 
 export interface ImgCache {
-  src: ImageData | null;
-  prv: ImageData | null;
-  /** Cached Uint32Array views of src/prv data buffers. Recreated when ImageData changes. */
-  s32: Uint32Array | null;
-  p32: Uint32Array | null;
+  sourceImageData: ImageData | null;
+  previewImageData: ImageData | null;
+  /** Cached Uint32Array views of source/preview data buffers. Recreated when ImageData changes. */
+  sourcePixels32: Uint32Array | null;
+  previewPixels32: Uint32Array | null;
 }
 
 export interface ToolState {

@@ -4,24 +4,24 @@ import { LEVEL_MASK } from "../constants";
 import type { CanvasData } from "../types";
 
 export interface GalleryItem {
-  colorChoiceIndices: number[];
+  candidateIndexByLevel: number[];
   imageData: ImageData | null;
 }
 
 const THUMB_MAX = 260;
 const CHUNK_SIZE = 8;
 
-/** Generate all colorChoiceIndices[] variants as a Cartesian product of unlocked candidate indices. */
+/** Generate all candidateIndexByLevel[] variants as a Cartesian product of unlocked candidate indices. */
 export function generateAllVariants(
-  colorChoiceIndices: readonly number[],
-  locked: readonly boolean[],
-  hist: readonly number[],
+  candidateIndexByLevel: readonly number[],
+  lockedLevels: readonly boolean[],
+  levelHistogram: readonly number[],
 ): number[][] {
   const options: number[][] = [];
   for (let lv = 0; lv < 8; lv++) {
     const n = LEVEL_CANDIDATES[lv].length;
-    if (locked[lv] || hist[lv] === 0 || n <= 1) {
-      options.push([colorChoiceIndices[lv] % n]);
+    if (lockedLevels[lv] || levelHistogram[lv] === 0 || n <= 1) {
+      options.push([candidateIndexByLevel[lv] % n]);
     } else {
       options.push(Array.from({ length: n }, (_, i) => i));
     }
@@ -43,7 +43,7 @@ export function generateAllVariants(
   return results;
 }
 
-/** Render a source-only thumbnail ImageData for the given data + colorLUT. Glaze colorMap overrides are intentionally ignored. */
+/** Render a source-only thumbnail ImageData for the given level data + colorLUT. Glaze overrides are intentionally ignored. */
 export function renderThumbnail(
   data: Uint8Array,
   w: number,
@@ -81,7 +81,7 @@ function calcThumbSize(w: number, h: number): { tw: number; th: number } {
 // across tab switches while the Gallery panel is hidden.
 const _cache = { items: [] as GalleryItem[] };
 
-// Single-app-instance gallery-regeneration cache. Tracks cvs.data by reference
+// Single-app-instance gallery-regeneration cache. Tracks canvasData.data by reference
 // identity rather than sampled pixels: canvas-reducer returns a fresh Uint8Array
 // on every mutation, so identity equality is a reliable invalidation signal.
 const _generationCache = {
@@ -89,14 +89,18 @@ const _generationCache = {
   w: 0,
   h: 0,
   variantKey: "",
-  locked: "",
-  hist: "",
+  lockedLevels: "",
+  levelHistogram: "",
 };
 
-function galleryVariantKey(colorChoiceIndices: readonly number[], locked: readonly boolean[], hist: readonly number[]): string {
+function galleryVariantKey(
+  candidateIndexByLevel: readonly number[],
+  lockedLevels: readonly boolean[],
+  levelHistogram: readonly number[],
+): string {
   return LEVEL_CANDIDATES.map((cands, lv) => {
     const n = cands.length;
-    if (locked[lv] || hist[lv] === 0 || n <= 1) return String(colorChoiceIndices[lv] % n);
+    if (lockedLevels[lv] || levelHistogram[lv] === 0 || n <= 1) return String(candidateIndexByLevel[lv] % n);
     return "*";
   }).join(",");
 }
@@ -106,43 +110,48 @@ function clearGenerationCache() {
   _generationCache.w = 0;
   _generationCache.h = 0;
   _generationCache.variantKey = "";
-  _generationCache.locked = "";
-  _generationCache.hist = "";
+  _generationCache.lockedLevels = "";
+  _generationCache.levelHistogram = "";
 }
 
 function shouldGenerate(
-  cvs: CanvasData,
-  colorChoiceIndices: readonly number[],
-  locked: readonly boolean[],
-  hist: readonly number[],
+  canvasData: CanvasData,
+  candidateIndexByLevel: readonly number[],
+  lockedLevels: readonly boolean[],
+  levelHistogram: readonly number[],
 ): boolean {
-  const variantKey = galleryVariantKey(colorChoiceIndices, locked, hist);
-  const lockedStr = locked.join(",");
-  const histStr = hist.join(",");
+  const variantKey = galleryVariantKey(candidateIndexByLevel, lockedLevels, levelHistogram);
+  const lockedStr = lockedLevels.join(",");
+  const histStr = levelHistogram.join(",");
   return (
-    _generationCache.data !== cvs.data ||
-    _generationCache.w !== cvs.w ||
-    _generationCache.h !== cvs.h ||
+    _generationCache.data !== canvasData.levelData ||
+    _generationCache.w !== canvasData.width ||
+    _generationCache.h !== canvasData.height ||
     _generationCache.variantKey !== variantKey ||
-    _generationCache.locked !== lockedStr ||
-    _generationCache.hist !== histStr
+    _generationCache.lockedLevels !== lockedStr ||
+    _generationCache.levelHistogram !== histStr
   );
 }
 
-function rememberGeneration(cvs: CanvasData, colorChoiceIndices: readonly number[], locked: readonly boolean[], hist: readonly number[]) {
-  _generationCache.data = cvs.data;
-  _generationCache.w = cvs.w;
-  _generationCache.h = cvs.h;
-  _generationCache.variantKey = galleryVariantKey(colorChoiceIndices, locked, hist);
-  _generationCache.locked = locked.join(",");
-  _generationCache.hist = hist.join(",");
+function rememberGeneration(
+  canvasData: CanvasData,
+  candidateIndexByLevel: readonly number[],
+  lockedLevels: readonly boolean[],
+  levelHistogram: readonly number[],
+) {
+  _generationCache.data = canvasData.levelData;
+  _generationCache.w = canvasData.width;
+  _generationCache.h = canvasData.height;
+  _generationCache.variantKey = galleryVariantKey(candidateIndexByLevel, lockedLevels, levelHistogram);
+  _generationCache.lockedLevels = lockedLevels.join(",");
+  _generationCache.levelHistogram = levelHistogram.join(",");
 }
 
 export function useGallery(
-  cvs: CanvasData,
-  colorChoiceIndices: readonly number[],
-  locked: readonly boolean[],
-  hist: readonly number[],
+  canvasData: CanvasData,
+  candidateIndexByLevel: readonly number[],
+  lockedLevels: readonly boolean[],
+  levelHistogram: readonly number[],
   active = true,
 ) {
   const [items, setItems] = useState<GalleryItem[]>(_cache.items);
@@ -153,10 +162,10 @@ export function useGallery(
   const generate = useCallback(() => {
     cancelRef.current = false;
     setGenerating(true);
-    const variants = generateAllVariants(colorChoiceIndices, locked, hist);
-    const { tw, th } = calcThumbSize(cvs.w, cvs.h);
+    const variants = generateAllVariants(candidateIndexByLevel, lockedLevels, levelHistogram);
+    const { tw, th } = calcThumbSize(canvasData.width, canvasData.height);
     // Initialize items without thumbnails
-    const newItems: GalleryItem[] = variants.map((v) => ({ colorChoiceIndices: v, imageData: null }));
+    const newItems: GalleryItem[] = variants.map((v) => ({ candidateIndexByLevel: v, imageData: null }));
     _cache.items = newItems;
     setItems(newItems);
     setProgress({ current: 0, total: newItems.length });
@@ -170,8 +179,8 @@ export function useGallery(
       }
       const end = Math.min(idx + CHUNK_SIZE, newItems.length);
       for (let i = idx; i < end; i++) {
-        const lut = buildColorLUT(newItems[i].colorChoiceIndices);
-        newItems[i].imageData = renderThumbnail(cvs.data, cvs.w, cvs.h, lut, tw, th);
+        const lut = buildColorLUT(newItems[i].candidateIndexByLevel);
+        newItems[i].imageData = renderThumbnail(canvasData.levelData, canvasData.width, canvasData.height, lut, tw, th);
       }
       idx = end;
       _cache.items = [...newItems];
@@ -184,7 +193,7 @@ export function useGallery(
       }
     };
     processChunk();
-  }, [cvs, colorChoiceIndices, locked, hist]);
+  }, [canvasData, candidateIndexByLevel, lockedLevels, levelHistogram]);
 
   const cancel = useCallback(() => {
     cancelRef.current = true;
@@ -199,14 +208,14 @@ export function useGallery(
       return;
     }
 
-    if (shouldGenerate(cvs, colorChoiceIndices, locked, hist)) {
+    if (shouldGenerate(canvasData, candidateIndexByLevel, lockedLevels, levelHistogram)) {
       const timeout = setTimeout(() => {
-        rememberGeneration(cvs, colorChoiceIndices, locked, hist);
+        rememberGeneration(canvasData, candidateIndexByLevel, lockedLevels, levelHistogram);
         generate();
       }, 0);
       return () => clearTimeout(timeout);
     }
-  }, [active, cancel, cvs, colorChoiceIndices, locked, hist, generate, generating]);
+  }, [active, cancel, canvasData, candidateIndexByLevel, lockedLevels, levelHistogram, generate, generating]);
 
   // Clear module-level cache on unmount to free memory
   useEffect(

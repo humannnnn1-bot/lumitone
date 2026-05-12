@@ -12,15 +12,15 @@ function ref<T>(current: T): React.MutableRefObject<T> {
 }
 
 function makeImgCache(): ImgCache {
-  return { src: null, prv: null, s32: null, p32: null };
+  return { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 }
 
 function makeCanvasData(): CanvasData {
   return {
-    w: 2,
-    h: 2,
-    data: new Uint8Array(4),
-    colorMap: new Uint8Array(4),
+    width: 2,
+    height: 2,
+    levelData: new Uint8Array(4),
+    pixelCandidateOverrideMap: new Uint8Array(4),
   };
 }
 
@@ -101,7 +101,7 @@ describe("useCanvasCoordination", () => {
     const glazeDrawing = makeGlazeDrawingResult(firstGlazeScheduler);
     const sharedSchedCursorRef = ref<(() => void) | null>(null);
     const baseOptions = {
-      cvs: makeCanvasData(),
+      canvasData: makeCanvasData(),
       colorLUT: Array.from({ length: 8 }, () => [0, 0, 0] as [number, number, number]),
       activeTabId: "source" as const,
       drawing,
@@ -139,7 +139,7 @@ describe("useCanvasCoordination", () => {
 
     renderHook(() =>
       useCanvasCoordination({
-        cvs: makeCanvasData(),
+        canvasData: makeCanvasData(),
         colorLUT: Array.from({ length: 8 }, () => [0, 0, 0] as [number, number, number]),
         activeTabId: "source",
         drawing,

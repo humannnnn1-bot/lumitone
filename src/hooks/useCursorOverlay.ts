@@ -3,11 +3,12 @@ import { GRID_ZOOM_THRESHOLD, isShapeTool } from "../constants";
 import type { ToolId } from "../constants";
 import { brushMaskHas, getBrushMask } from "../drawing/brush-mask";
 import { useRectCache } from "./useRectCache";
+import type { CanvasData } from "../types";
 
 interface CursorOverlayRefs {
   zoomRef: React.MutableRefObject<number>;
   panRef: React.MutableRefObject<{ x: number; y: number }>;
-  cvsRef: React.MutableRefObject<{ w: number; h: number }>;
+  cvsRef: React.MutableRefObject<CanvasData>;
   displayWRef: React.MutableRefObject<number>;
   displayHRef: React.MutableRefObject<number>;
   panningRef: React.MutableRefObject<boolean>;
@@ -62,17 +63,17 @@ export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.Mutab
       p = panRef.current;
     const dW = displayWRef.current,
       dH = displayHRef.current;
-    const pxPerCell = (dW / cv.w) * z;
+    const pxPerCell = (dW / cv.width) * z;
 
     if (z >= GRID_ZOOM_THRESHOLD && pxPerCell >= 4) {
-      const offsetX = dW * (0.5 - z / 2 + (z * p.x) / cv.w);
-      const offsetY = dH * (0.5 - z / 2 + (z * p.y) / cv.h);
-      const endY = Math.min(dH, offsetY + cv.h * pxPerCell);
-      const endX = Math.min(dW, offsetX + cv.w * pxPerCell);
+      const offsetX = dW * (0.5 - z / 2 + (z * p.x) / cv.width);
+      const offsetY = dH * (0.5 - z / 2 + (z * p.y) / cv.height);
+      const endY = Math.min(dH, offsetY + cv.height * pxPerCell);
+      const endX = Math.min(dW, offsetX + cv.width * pxPerCell);
       const xStart = Math.max(0, Math.ceil(-offsetX / pxPerCell));
-      const xEnd = Math.min(cv.w, Math.floor((dW - offsetX) / pxPerCell));
+      const xEnd = Math.min(cv.width, Math.floor((dW - offsetX) / pxPerCell));
       const yStart = Math.max(0, Math.ceil(-offsetY / pxPerCell));
-      const yEnd = Math.min(cv.h, Math.floor((dH - offsetY) / pxPerCell));
+      const yEnd = Math.min(cv.height, Math.floor((dH - offsetY) / pxPerCell));
       ctx.strokeStyle = "rgba(255,255,255,.08)";
       ctx.lineWidth = 0.5;
       ctx.beginPath();
@@ -99,12 +100,12 @@ export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.Mutab
     // snap cursor to canvas pixel center
     const rx = pos.dx / dW,
       ry = pos.dy / dH;
-    const vx = (rx - 0.5) / z + 0.5 - p.x / cv.w;
-    const vy = (ry - 0.5) / z + 0.5 - p.y / cv.h;
-    const cx = Math.floor(vx * cv.w),
-      cy = Math.floor(vy * cv.h);
-    const sdx = dW * (((cx + 0.5) / cv.w - 0.5 + p.x / cv.w) * z + 0.5);
-    const sdy = dH * (((cy + 0.5) / cv.h - 0.5 + p.y / cv.h) * z + 0.5);
+    const vx = (rx - 0.5) / z + 0.5 - p.x / cv.width;
+    const vy = (ry - 0.5) / z + 0.5 - p.y / cv.height;
+    const cx = Math.floor(vx * cv.width),
+      cy = Math.floor(vy * cv.height);
+    const sdx = dW * (((cx + 0.5) / cv.width - 0.5 + p.x / cv.width) * z + 0.5);
+    const sdy = dH * (((cy + 0.5) / cv.height - 0.5 + p.y / cv.height) * z + 0.5);
     const brushColor = curTool === "eraser" ? "rgba(255,100,100,.8)" : "rgba(255,255,255,.8)";
     if (curTool !== "fill") {
       const mask = getBrushMask(curBS);
@@ -168,7 +169,7 @@ export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.Mutab
     const z = zoomRef.current,
       p = panRef.current,
       cv = cvsRef.current;
-    const gridKey = `${z}_${p.x}_${p.y}_${cv.w}_${cv.h}_${brushSizeRef.current}_${toolRef.current}_${panningRef.current}`;
+    const gridKey = `${z}_${p.x}_${p.y}_${cv.width}_${cv.height}_${brushSizeRef.current}_${toolRef.current}_${panningRef.current}`;
     const gridChanged = gridKey !== prevGridStateRef.current;
     if (gridChanged) prevGridStateRef.current = gridKey;
     const forceSrc = forceSrcRedrawRef.current;

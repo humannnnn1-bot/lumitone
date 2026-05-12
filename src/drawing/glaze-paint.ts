@@ -5,11 +5,11 @@ import type { BrushMask } from "./brush-mask";
 
 /* ═══════════════════════════════════════════
    GLAZE PAINT FUNCTIONS
-   Paint to colorMap[] using hue-based auto-matching.
+   Paint per-pixel candidate override values using hue-based auto-matching.
    Geometry matches paint.ts but writes per-pixel variant.
    ═══════════════════════════════════════════ */
 
-/** Pre-compute level→cmVal lookup for a given hue. Call once per stroke. */
+/** Pre-compute level→override value lookup for a given hue. Call once per stroke. */
 export function buildGlazeLUT(hueAngle: number): Uint8Array {
   const lut = new Uint8Array(8);
   for (let lv = 0; lv < 8; lv++) lut[lv] = findClosestCandidate(lv, hueAngle) + 1;
@@ -26,8 +26,8 @@ export function buildMultiDirectLUT(candidates: Map<number, number>): Uint8Array
 }
 
 export function paintGlazeBrush(
-  colorMap: Uint8Array,
-  data: Uint8Array,
+  pixelCandidateOverrideMap: Uint8Array,
+  levelData: Uint8Array,
   cx: number,
   cy: number,
   mask: BrushMask,
@@ -37,16 +37,16 @@ export function paintGlazeBrush(
 ): void {
   forEachBrushPixel(mask, cx, cy, w, h, (x, y) => {
     const idx = y * w + x;
-    const lv = data[idx] & LEVEL_MASK;
-    const cmVal = glazeLUT[lv];
-    if (cmVal === 0) return;
-    colorMap[idx] = cmVal;
+    const lv = levelData[idx] & LEVEL_MASK;
+    const overrideValue = glazeLUT[lv];
+    if (overrideValue === 0) return;
+    pixelCandidateOverrideMap[idx] = overrideValue;
   });
 }
 
 export function paintGlazeBrushLine(
-  colorMap: Uint8Array,
-  data: Uint8Array,
+  pixelCandidateOverrideMap: Uint8Array,
+  levelData: Uint8Array,
   x0: number,
   y0: number,
   x1: number,
@@ -66,7 +66,7 @@ export function paintGlazeBrushLine(
   const skipDist2 = skipDist * skipDist;
   let lastPX = x0,
     lastPY = y0;
-  paintGlazeBrush(colorMap, data, x0, y0, mask, w, h, glazeLUT);
+  paintGlazeBrush(pixelCandidateOverrideMap, levelData, x0, y0, mask, w, h, glazeLUT);
   for (;;) {
     if (x0 === x1 && y0 === y1) break;
     const e2 = 2 * e;
@@ -81,22 +81,29 @@ export function paintGlazeBrushLine(
     const dx = x0 - lastPX,
       dy = y0 - lastPY;
     if (dx * dx + dy * dy >= skipDist2) {
-      paintGlazeBrush(colorMap, data, x0, y0, mask, w, h, glazeLUT);
+      paintGlazeBrush(pixelCandidateOverrideMap, levelData, x0, y0, mask, w, h, glazeLUT);
       lastPX = x0;
       lastPY = y0;
     }
   }
-  paintGlazeBrush(colorMap, data, x1, y1, mask, w, h, glazeLUT);
+  paintGlazeBrush(pixelCandidateOverrideMap, levelData, x1, y1, mask, w, h, glazeLUT);
 }
 
-export function eraseGlazeBrush(colorMap: Uint8Array, cx: number, cy: number, mask: BrushMask, w: number, h: number): void {
+export function eraseGlazeBrush(
+  pixelCandidateOverrideMap: Uint8Array,
+  cx: number,
+  cy: number,
+  mask: BrushMask,
+  w: number,
+  h: number,
+): void {
   forEachBrushPixel(mask, cx, cy, w, h, (x, y) => {
-    colorMap[y * w + x] = 0;
+    pixelCandidateOverrideMap[y * w + x] = 0;
   });
 }
 
 export function eraseGlazeBrushLine(
-  colorMap: Uint8Array,
+  pixelCandidateOverrideMap: Uint8Array,
   x0: number,
   y0: number,
   x1: number,
@@ -115,7 +122,7 @@ export function eraseGlazeBrushLine(
   const skipDist2 = skipDist * skipDist;
   let lastPX = x0,
     lastPY = y0;
-  eraseGlazeBrush(colorMap, x0, y0, mask, w, h);
+  eraseGlazeBrush(pixelCandidateOverrideMap, x0, y0, mask, w, h);
   for (;;) {
     if (x0 === x1 && y0 === y1) break;
     const e2 = 2 * e;
@@ -130,18 +137,18 @@ export function eraseGlazeBrushLine(
     const dx = x0 - lastPX,
       dy = y0 - lastPY;
     if (dx * dx + dy * dy >= skipDist2) {
-      eraseGlazeBrush(colorMap, x0, y0, mask, w, h);
+      eraseGlazeBrush(pixelCandidateOverrideMap, x0, y0, mask, w, h);
       lastPX = x0;
       lastPY = y0;
     }
   }
-  eraseGlazeBrush(colorMap, x1, y1, mask, w, h);
+  eraseGlazeBrush(pixelCandidateOverrideMap, x1, y1, mask, w, h);
 }
 
 /** Paint a glaze circle: for each pixel, use pre-computed LUT to assign variant. */
 export function paintGlazeCircle(
-  colorMap: Uint8Array,
-  data: Uint8Array,
+  pixelCandidateOverrideMap: Uint8Array,
+  levelData: Uint8Array,
   cx: number,
   cy: number,
   r: number,
@@ -152,10 +159,10 @@ export function paintGlazeCircle(
   const write = (x: number, y: number) => {
     if (x >= 0 && x < w && y >= 0 && y < h) {
       const idx = y * w + x;
-      const lv = data[idx] & LEVEL_MASK;
-      const cmVal = glazeLUT[lv];
-      if (cmVal === 0) return; // direct mode: skip non-target levels
-      colorMap[idx] = cmVal;
+      const lv = levelData[idx] & LEVEL_MASK;
+      const overrideValue = glazeLUT[lv];
+      if (overrideValue === 0) return; // direct mode: skip non-target levels
+      pixelCandidateOverrideMap[idx] = overrideValue;
     }
   };
   if (r <= 0) {
@@ -187,17 +194,17 @@ export function paintGlazeCircle(
   }
 }
 
-/** Erase glaze circle: reset colorMap to 0 (default colorChoiceIndices[]). */
-export function eraseGlazeCircle(colorMap: Uint8Array, cx: number, cy: number, r: number, w: number, h: number): void {
+/** Erase glaze circle: reset per-pixel overrides to 0 (default candidateIndexByLevel[]). */
+export function eraseGlazeCircle(pixelCandidateOverrideMap: Uint8Array, cx: number, cy: number, r: number, w: number, h: number): void {
   if (r <= 0) {
-    if (cx >= 0 && cx < w && cy >= 0 && cy < h) colorMap[cy * w + cx] = 0;
+    if (cx >= 0 && cx < w && cy >= 0 && cy < h) pixelCandidateOverrideMap[cy * w + cx] = 0;
     return;
   }
   const fillRow = (y: number, x0: number, x1: number) => {
     if (y < 0 || y >= h) return;
     const lo = Math.max(0, x0),
       hi = Math.min(w - 1, x1);
-    for (let x = lo; x <= hi; x++) colorMap[y * w + x] = 0;
+    for (let x = lo; x <= hi; x++) pixelCandidateOverrideMap[y * w + x] = 0;
   };
   let x = 0,
     y = r,

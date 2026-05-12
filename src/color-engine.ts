@@ -127,7 +127,7 @@ export const LEVEL_CANDIDATES: readonly (readonly ColorCandidate[])[] = LEVEL_IN
   return a.sort((x, y) => x.angle - y.angle);
 });
 
-export const DEFAULT_COLOR_CHOICE_INDICES: readonly number[] = LEVEL_CANDIDATES.map((alts, i) => {
+export const DEFAULT_CANDIDATE_INDEX_BY_LEVEL: readonly number[] = LEVEL_CANDIDATES.map((alts, i) => {
   let best = 0,
     bestDist = Infinity;
   alts.forEach((x, j) => {
@@ -162,9 +162,9 @@ function buildGrayLut(): Uint8Array {
 
 export const GRAY_LUT = buildGrayLut();
 
-export function buildColorLUT(colorChoiceIndices: readonly number[]): [number, number, number][] {
+export function buildColorLUT(candidateIndexByLevel: readonly number[]): [number, number, number][] {
   return LEVEL_CANDIDATES.map((alts, lv) => {
-    const raw = lv < colorChoiceIndices.length ? colorChoiceIndices[lv] : 0;
+    const raw = lv < candidateIndexByLevel.length ? candidateIndexByLevel[lv] : 0;
     const ci = alts.length > 0 ? ((raw % alts.length) + alts.length) % alts.length : 0;
     const rgb = alts[ci]?.rgb ?? ([128, 128, 128] as [number, number, number]);
     return [rgb[0], rgb[1], rgb[2]];

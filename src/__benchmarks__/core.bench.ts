@@ -1,8 +1,14 @@
 import { bench, describe } from "vitest";
-import { DEFAULT_COLOR_CHOICE_INDICES, buildColorLUT } from "../color-engine";
+import { DEFAULT_CANDIDATE_INDEX_BY_LEVEL, buildColorLUT } from "../color-engine";
 import { floodFill } from "../drawing/flood-fill";
-import { renderBuf } from "../drawing/render-buf";
-import { computeDiversity, computeBoundaryDistance, computeGradient, computeNoiseLevelNorm, computeRegion } from "../utils/pixel-analysis";
+import { renderCanvasBuffers } from "../drawing/render-buf";
+import {
+  computeLocalDiversity,
+  computeBoundaryDistance,
+  computeGradient,
+  computeNeighborIsolationAndLevelTone,
+  computeRegion,
+} from "../utils/pixel-analysis";
 import { applyDiff, compressDiff, computeDiff, decompressDiff } from "../state/undo-diff";
 import type { ImgCache } from "../types";
 
@@ -29,13 +35,13 @@ function makeChangedPattern(source: Uint8Array, stride: number): Uint8Array {
   return next;
 }
 
-function makeColorMap(data: Uint8Array): Uint8Array {
-  const colorMap = new Uint8Array(data.length);
-  for (let i = 0; i < data.length; i++) {
-    const level = data[i] & 7;
-    colorMap[i] = level >= 2 && level <= 5 && i % 5 === 0 ? 2 : 0;
+function makePixelCandidateOverrideMap(levelData: Uint8Array): Uint8Array {
+  const pixelCandidateOverrideMap = new Uint8Array(levelData.length);
+  for (let i = 0; i < levelData.length; i++) {
+    const level = levelData[i] & 7;
+    pixelCandidateOverrideMap[i] = level >= 2 && level <= 5 && i % 5 === 0 ? 2 : 0;
   }
-  return colorMap;
+  return pixelCandidateOverrideMap;
 }
 
 function makeImageData(width: number, height: number): ImageData {
@@ -59,27 +65,37 @@ function makeCanvas(width: number, height: number): HTMLCanvasElement {
   } as unknown as HTMLCanvasElement;
 }
 
-describe("renderBuf", () => {
+describe("renderCanvasBuffers", () => {
   const w = 320;
   const h = 320;
   const data = makePattern(w, h);
-  const colorMap = makeColorMap(data);
-  const lut = buildColorLUT(DEFAULT_COLOR_CHOICE_INDICES);
+  const pixelCandidateOverrideMap = makePixelCandidateOverrideMap(data);
+  const lut = buildColorLUT(DEFAULT_CANDIDATE_INDEX_BY_LEVEL);
 
   bench(
     "full render, source and preview",
     () => {
-      const cache: ImgCache = { src: null, prv: null, s32: null, p32: null };
-      renderBuf(data, w, h, lut, makeCanvas(w, h), makeCanvas(w, h), cache);
+      const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+      renderCanvasBuffers(data, w, h, lut, makeCanvas(w, h), makeCanvas(w, h), cache);
     },
     BENCH_OPTIONS,
   );
 
   bench(
-    "dirty rect render with colorMap",
+    "dirty rect render with pixel candidate overrides",
     () => {
-      const cache: ImgCache = { src: null, prv: null, s32: null, p32: null };
-      renderBuf(data, w, h, lut, makeCanvas(w, h), makeCanvas(w, h), cache, { x: 96, y: 96, w: 96, h: 96 }, colorMap);
+      const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+      renderCanvasBuffers(
+        data,
+        w,
+        h,
+        lut,
+        makeCanvas(w, h),
+        makeCanvas(w, h),
+        cache,
+        { x: 96, y: 96, w: 96, h: 96 },
+        pixelCandidateOverrideMap,
+      );
     },
     BENCH_OPTIONS,
   );
@@ -110,12 +126,12 @@ describe("pixel analysis", () => {
   const h = 128;
   const n = w * h;
   const data = makePattern(w, h);
-  const colorMap = makeColorMap(data);
+  const pixelCandidateOverrideMap = makePixelCandidateOverrideMap(data);
 
   bench(
-    "noise + level normalization",
+    "neighbor isolation + level tone",
     () => {
-      computeNoiseLevelNorm(data, w, h, new Float32Array(n), new Float32Array(n), colorMap);
+      computeNeighborIsolationAndLevelTone(data, w, h, new Float32Array(n), new Float32Array(n), pixelCandidateOverrideMap);
     },
     BENCH_OPTIONS,
   );
@@ -123,7 +139,7 @@ describe("pixel analysis", () => {
   bench(
     "local diversity",
     () => {
-      computeDiversity(data, w, h, new Float32Array(n), colorMap);
+      computeLocalDiversity(data, w, h, new Float32Array(n), pixelCandidateOverrideMap);
     },
     BENCH_OPTIONS,
   );
@@ -131,7 +147,7 @@ describe("pixel analysis", () => {
   bench(
     "edge depth",
     () => {
-      computeBoundaryDistance(data, w, h, new Uint8Array(n), new Float32Array(n), colorMap);
+      computeBoundaryDistance(data, w, h, new Uint8Array(n), new Float32Array(n), pixelCandidateOverrideMap);
     },
     BENCH_OPTIONS,
   );
@@ -147,7 +163,7 @@ describe("pixel analysis", () => {
   bench(
     "regions",
     () => {
-      computeRegion(data, w, h, new Int32Array(n), new Uint8Array(n), colorMap);
+      computeRegion(data, w, h, new Int32Array(n), new Uint8Array(n), pixelCandidateOverrideMap);
     },
     BENCH_OPTIONS,
   );

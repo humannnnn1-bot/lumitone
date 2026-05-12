@@ -53,21 +53,25 @@ function getViewportPoint(point: PointerPoint, target: EventTarget | null): View
   return { x: (point.x - rect.left) / rect.width, y: (point.y - rect.top) / rect.height };
 }
 
-function canvasFocusFromViewportPoint(point: ViewportPoint, zoom: number, pan: { x: number; y: number }, cv: { w: number; h: number }) {
+function canvasFocusFromViewportPoint(point: ViewportPoint, zoom: number, pan: { x: number; y: number }, canvasData: CanvasData) {
   return {
-    x: (point.x - 0.5) / zoom + 0.5 - pan.x / cv.w,
-    y: (point.y - 0.5) / zoom + 0.5 - pan.y / cv.h,
+    x: (point.x - 0.5) / zoom + 0.5 - pan.x / canvasData.width,
+    y: (point.y - 0.5) / zoom + 0.5 - pan.y / canvasData.height,
   };
 }
 
-function panForCanvasFocus(point: ViewportPoint, zoom: number, focus: ViewportPoint, cv: { w: number; h: number }) {
+function panForCanvasFocus(point: ViewportPoint, zoom: number, focus: ViewportPoint, canvasData: CanvasData) {
   return {
-    x: ((point.x - 0.5) / zoom + 0.5 - focus.x) * cv.w,
-    y: ((point.y - 0.5) / zoom + 0.5 - focus.y) * cv.h,
+    x: ((point.x - 0.5) / zoom + 0.5 - focus.x) * canvasData.width,
+    y: ((point.y - 0.5) / zoom + 0.5 - focus.y) * canvasData.height,
   };
 }
 
-export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: React.MutableRefObject<(() => void) | null>): PanZoomResult {
+export function usePanZoom(
+  canvasData: CanvasData,
+  displayW: number,
+  schedCursorRef: React.MutableRefObject<(() => void) | null>,
+): PanZoomResult {
   const [zoom, _setZoomRaw] = useState(1);
   const [pan, _setPanRaw] = useState({ x: 0, y: 0 });
   const [cursorMode, setCursorMode] = useState<null | "grab" | "grabbing">(null);
@@ -82,7 +86,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
   const zoomRef = useSyncRef(zoom);
   const panRef = useSyncRef(pan);
   const panZoomModeRef = useSyncRef(panZoomMode);
-  const cvsRef = useSyncRef(cvs);
+  const cvsRef = useSyncRef(canvasData);
 
   const setZoom = useCallback(
     (v: React.SetStateAction<number>) => {
@@ -132,9 +136,9 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
 
   /** Clamp pan so canvas never drifts fully off-screen (max ±w or ±h). */
   const clampPan = useCallback(
-    (p: { x: number; y: number }, cv: { w: number; h: number }) => ({
-      x: Math.max(-cv.w, Math.min(cv.w, p.x)),
-      y: Math.max(-cv.h, Math.min(cv.h, p.y)),
+    (p: { x: number; y: number }, canvasData: CanvasData) => ({
+      x: Math.max(-canvasData.width, Math.min(canvasData.width, p.x)),
+      y: Math.max(-canvasData.height, Math.min(canvasData.height, p.y)),
     }),
     [],
   );
@@ -183,7 +187,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
       const dx = e.clientX - panStartRef.current.x,
         dy = e.clientY - panStartRef.current.y;
       const cv = cvsRef.current;
-      const scale = (displayW * zoomRef.current) / cv.w;
+      const scale = (displayW * zoomRef.current) / cv.width;
       const raw = { x: panOriginRef.current.x + dx / scale, y: panOriginRef.current.y + dy / scale };
       setPan(clampPan(raw, cv));
       schedCursorRef.current?.();
@@ -236,7 +240,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
         const startViewportCenter = getViewportPoint(pinchStartCenterRef.current, e.currentTarget);
         pinchStartFocusRef.current = startViewportCenter
           ? canvasFocusFromViewportPoint(startViewportCenter, zoomRef.current, panRef.current, cv)
-          : { x: 0.5 - panRef.current.x / cv.w, y: 0.5 - panRef.current.y / cv.h };
+          : { x: 0.5 - panRef.current.x / cv.width, y: 0.5 - panRef.current.y / cv.height };
       }
     },
     [cvsRef, panRef, zoomRef],
@@ -261,8 +265,8 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
           ? panForCanvasFocus(viewportCenter, newZoom, pinchStartFocusRef.current, cv)
           : {
               // Fallback for synthetic or unusual pointer events without an element rect.
-              x: pinchStartPanRef.current.x * (newZoom / pinchStartZoomRef.current) + centerDx / ((displayW * newZoom) / cv.w),
-              y: pinchStartPanRef.current.y * (newZoom / pinchStartZoomRef.current) + centerDy / ((displayW * newZoom) / cv.w),
+              x: pinchStartPanRef.current.x * (newZoom / pinchStartZoomRef.current) + centerDx / ((displayW * newZoom) / cv.width),
+              y: pinchStartPanRef.current.y * (newZoom / pinchStartZoomRef.current) + centerDy / ((displayW * newZoom) / cv.width),
             };
         setZoom(newZoom);
         setPan(clampPan(rawPan, cv));
@@ -272,7 +276,7 @@ export function usePanZoom(cvs: CanvasData, displayW: number, schedCursorRef: Re
         const dx = e.clientX - panStartRef.current.x,
           dy = e.clientY - panStartRef.current.y;
         const cv = cvsRef.current;
-        const scale = (displayW * zoomRef.current) / cv.w;
+        const scale = (displayW * zoomRef.current) / cv.width;
         const raw = { x: panOriginRef.current.x + dx / scale, y: panOriginRef.current.y + dy / scale };
         setPan(clampPan(raw, cv));
         schedCursorRef.current?.();

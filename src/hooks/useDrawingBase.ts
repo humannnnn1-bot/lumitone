@@ -16,15 +16,15 @@ function canvasPosFromRect(
   r: CanvasRect,
   zoom: number,
   pan: { x: number; y: number },
-  cvs: CanvasData,
+  canvasData: CanvasData,
 ): Point {
   const rx = (e.clientX - r.left) / r.width,
     ry = (e.clientY - r.top) / r.height;
-  const vx = (rx - 0.5) / zoom + 0.5 - pan.x / cvs.w;
-  const vy = (ry - 0.5) / zoom + 0.5 - pan.y / cvs.h;
+  const vx = (rx - 0.5) / zoom + 0.5 - pan.x / canvasData.width;
+  const vy = (ry - 0.5) / zoom + 0.5 - pan.y / canvasData.height;
   return {
-    x: Math.floor(vx * cvs.w),
-    y: Math.floor(vy * cvs.h),
+    x: Math.floor(vx * canvasData.width),
+    y: Math.floor(vy * canvasData.height),
   };
 }
 
@@ -37,15 +37,15 @@ export function canvasPos(
   refEl: HTMLCanvasElement | null,
   zoom: number,
   pan: { x: number; y: number },
-  cvs: CanvasData,
+  canvasData: CanvasData,
 ): Point {
   if (!refEl) return { x: 0, y: 0 };
   const r = refEl.getBoundingClientRect();
   if (r.width === 0 || r.height === 0) return { x: -1, y: -1 };
-  const pos = canvasPosFromRect(e, r, zoom, pan, cvs);
+  const pos = canvasPosFromRect(e, r, zoom, pan, canvasData);
   return {
-    x: Math.max(0, Math.min(cvs.w - 1, pos.x)),
-    y: Math.max(0, Math.min(cvs.h - 1, pos.y)),
+    x: Math.max(0, Math.min(canvasData.width - 1, pos.x)),
+    y: Math.max(0, Math.min(canvasData.height - 1, pos.y)),
   };
 }
 
@@ -59,16 +59,16 @@ export function canvasPosUnclamped(
   refEl: HTMLCanvasElement | null,
   zoom: number,
   pan: { x: number; y: number },
-  cvs: CanvasData,
+  canvasData: CanvasData,
 ): Point {
   if (!refEl) return { x: 0, y: 0 };
   const r = refEl.getBoundingClientRect();
   if (r.width === 0 || r.height === 0) return { x: -1, y: -1 };
-  return canvasPosFromRect(e, r, zoom, pan, cvs);
+  return canvasPosFromRect(e, r, zoom, pan, canvasData);
 }
 
-export function isCanvasPointInBounds(pos: Point, cvs: CanvasData): boolean {
-  return pos.x >= 0 && pos.x < cvs.w && pos.y >= 0 && pos.y < cvs.h;
+export function isCanvasPointInBounds(pos: Point, canvasData: CanvasData): boolean {
+  return pos.x >= 0 && pos.x < canvasData.width && pos.y >= 0 && pos.y < canvasData.height;
 }
 
 /**
@@ -139,12 +139,12 @@ export function updateStatusBase(
   if (!statusEl) return;
   const cv = refs.cvsRef.current;
   const pos = canvasPosUnclamped(e, refEl, refs.zoomRef.current, refs.panRef.current, cv);
-  if (pos.x < 0 || pos.x >= cv.w || pos.y < 0 || pos.y >= cv.h) {
+  if (pos.x < 0 || pos.x >= cv.width || pos.y < 0 || pos.y >= cv.height) {
     statusEl.textContent = "\u2014";
     statusEl.title = "";
     return;
   }
-  const idx = pos.y * cv.w + pos.x;
+  const idx = pos.y * cv.width + pos.x;
   const lv = dataSource[idx] & LEVEL_MASK;
   const info = LEVEL_INFO[lv];
   applyStatusText(statusEl, formatText(pos, lv, info, idx));

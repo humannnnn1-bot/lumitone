@@ -16,7 +16,14 @@ function makeRefs(overrides?: Partial<CursorRefs>): CursorRefs {
   return {
     zoomRef: { current: 1 },
     panRef: { current: { x: 0, y: 0 } },
-    cvsRef: { current: { w: 8, h: 8 } },
+    cvsRef: {
+      current: {
+        width: 8,
+        height: 8,
+        levelData: new Uint8Array(64),
+        pixelCandidateOverrideMap: new Uint8Array(64),
+      },
+    },
     displayWRef: { current: 80 },
     displayHRef: { current: 80 },
     panningRef: { current: false },

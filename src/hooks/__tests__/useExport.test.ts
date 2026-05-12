@@ -4,28 +4,30 @@ import { renderHook } from "@testing-library/react";
 import { useExport } from "../useExport";
 import type { CanvasData } from "../../types";
 
-/* ── Mock renderBuf ─────────────────────────────────────────── */
+/* ── Mock renderCanvasBuffers ─────────────────────────────────────────── */
 vi.mock("../../drawing/render-buf", () => ({
-  renderBuf: vi.fn(),
+  renderCanvasBuffers: vi.fn(),
 }));
-import { renderBuf } from "../../drawing/render-buf";
-const mockRenderBuf = vi.mocked(renderBuf);
+import { renderCanvasBuffers } from "../../drawing/render-buf";
+const mockRenderBuf = vi.mocked(renderCanvasBuffers);
 
 /* ── Helpers ────────────────────────────────────────────────── */
 function makeCvs(w = 4, h = 4): CanvasData {
   return {
-    w,
-    h,
-    data: new Uint8Array(w * h),
-    colorMap: new Uint8Array(w * h),
+    width: w,
+    height: h,
+    levelData: new Uint8Array(w * h),
+    pixelCandidateOverrideMap: new Uint8Array(w * h),
   };
 }
 
 const noopT = (key: string) => key;
 const mockShowToast = vi.fn();
 
-function setup(cvs?: CanvasData, colorLUT?: [number, number, number][]) {
-  return renderHook(() => useExport(cvs ?? makeCvs(), colorLUT ?? [[0, 0, 0]], mockShowToast, noopT as import("../../i18n").TranslationFn));
+function setup(canvasData?: CanvasData, colorLUT?: [number, number, number][]) {
+  return renderHook(() =>
+    useExport(canvasData ?? makeCvs(), colorLUT ?? [[0, 0, 0]], mockShowToast, noopT as import("../../i18n").TranslationFn),
+  );
 }
 
 /** Create a fake canvas whose toBlob calls back synchronously. */
@@ -70,7 +72,7 @@ describe("useExport", () => {
   /* ---------- saveColor ---------- */
 
   describe("saveColor", () => {
-    it("falls back to renderBuf when canvas ref is null", () => {
+    it("falls back to renderCanvasBuffers when canvas ref is null", () => {
       const { result } = setup();
       const ref = { current: null } as React.RefObject<HTMLCanvasElement | null>;
       vi.spyOn(document.body, "appendChild").mockReturnValue(null as unknown as Node);
@@ -279,8 +281,8 @@ describe("useExport", () => {
 
   describe("saveGlaze", () => {
     it("creates a temp canvas with correct dimensions", () => {
-      const cvs = makeCvs(16, 12);
-      const { result } = setup(cvs);
+      const canvasData = makeCvs(16, 12);
+      const { result } = setup(canvasData);
 
       vi.spyOn(document.body, "appendChild").mockReturnValue(null as unknown as Node);
       vi.spyOn(document.body, "removeChild").mockReturnValue(null as unknown as Node);
@@ -293,10 +295,10 @@ describe("useExport", () => {
       expect(args[2]).toBe(12); // h
     });
 
-    it("calls renderBuf then downloadCanvas", () => {
-      const cvs = makeCvs(8, 8);
+    it("calls renderCanvasBuffers then downloadCanvas", () => {
+      const canvasData = makeCvs(8, 8);
       const colorLUT: [number, number, number][] = [[255, 0, 0]];
-      const { result } = setup(cvs, colorLUT);
+      const { result } = setup(canvasData, colorLUT);
 
       vi.spyOn(document.body, "appendChild").mockReturnValue(null as unknown as Node);
       vi.spyOn(document.body, "removeChild").mockReturnValue(null as unknown as Node);
@@ -305,13 +307,13 @@ describe("useExport", () => {
 
       expect(mockRenderBuf).toHaveBeenCalledTimes(1);
       const args = mockRenderBuf.mock.calls[0];
-      expect(args[0]).toBe(cvs.data); // data
+      expect(args[0]).toBe(canvasData.levelData); // data
       expect(args[1]).toBe(8); // w
       expect(args[2]).toBe(8); // h
       expect(args[3]).toBe(colorLUT); // lut
       expect(args[4]).toBeNull(); // srcCanvas
       expect(args[5]).toBeInstanceOf(HTMLCanvasElement); // prvCanvas
-      expect(args[6]).toEqual({ src: null, prv: null, s32: null, p32: null }); // imgCache
+      expect(args[6]).toEqual({ sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null }); // imgCache
     });
   });
 });

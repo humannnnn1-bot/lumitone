@@ -133,19 +133,19 @@ function drawRing(
 }
 
 interface CompositionDonutProps {
-  cvs: CanvasData;
-  hist: number[];
+  canvasData: CanvasData;
+  levelHistogram: number[];
   total: number;
   colorLUT: [number, number, number][];
-  colorChoiceIndices: readonly number[];
+  candidateIndexByLevel: readonly number[];
 }
 
 export const CompositionDonut = React.memo(function CompositionDonut({
-  cvs,
-  hist,
+  canvasData,
+  levelHistogram,
   total,
   colorLUT,
-  colorChoiceIndices,
+  candidateIndexByLevel,
 }: CompositionDonutProps) {
   const { t } = useTranslation();
   const [preview, setPreview] = useState<{ info: string[]; color: string } | null>(null);
@@ -168,9 +168,13 @@ export const CompositionDonut = React.memo(function CompositionDonut({
     for (let lv = 0; lv < 8; lv++) {
       const g = LEVEL_INFO[lv].gray;
       grayEntries.push({
-        count: hist[lv],
+        count: levelHistogram[lv],
         color: `rgb(${g},${g},${g})`,
-        info: [`L${lv} ${LEVEL_INFO[lv].name}`, t("donut_tone_value", g), t("donut_count_pct", pct(hist[lv]), hist[lv].toLocaleString())],
+        info: [
+          `L${lv} ${LEVEL_INFO[lv].name}`,
+          t("donut_tone_value", g),
+          t("donut_count_pct", pct(levelHistogram[lv]), levelHistogram[lv].toLocaleString()),
+        ],
       });
     }
 
@@ -179,26 +183,26 @@ export const CompositionDonut = React.memo(function CompositionDonut({
     for (let lv = 0; lv < 8; lv++) {
       const rgb = colorLUT[lv];
       const alts = LEVEL_CANDIDATES[lv];
-      const ci = lv < colorChoiceIndices.length ? ((colorChoiceIndices[lv] % alts.length) + alts.length) % alts.length : 0;
+      const ci = lv < candidateIndexByLevel.length ? ((candidateIndexByLevel[lv] % alts.length) + alts.length) % alts.length : 0;
       const candidate = alts[ci];
       const hueLabel = candidate?.hueLabel ?? "—";
       colorEntries.push({
-        count: hist[lv],
+        count: levelHistogram[lv],
         color: rgbStr(rgb),
         info: [
           `L${lv} ${LEVEL_INFO[lv].name}`,
           `${hexStr(rgb)} (${t("donut_hue", hueLabel)})`,
           t("donut_candidate", ci + 1, alts.length),
-          t("donut_count_pct", pct(hist[lv]), hist[lv].toLocaleString()),
+          t("donut_count_pct", pct(levelHistogram[lv]), levelHistogram[lv].toLocaleString()),
         ],
       });
     }
 
     // === Layer 3: Glaze ===
     let hasGlazeOverride = false;
-    const data = cvs.data;
-    const colorMap = cvs.colorMap;
-    const n = data.length;
+    const levelData = canvasData.levelData;
+    const pixelCandidateOverrideMap = canvasData.pixelCandidateOverrideMap;
+    const n = levelData.length;
 
     // Count per (level, actual color) group — merge default and glazed if same color
     interface GlazeGroup {
@@ -211,16 +215,16 @@ export const CompositionDonut = React.memo(function CompositionDonut({
     for (let lv = 0; lv < 8; lv++) glazePerLevel.push(new Map());
 
     for (let i = 0; i < n; i++) {
-      const lv = data[i] & LEVEL_MASK;
-      const cm = colorMap[i];
+      const lv = levelData[i] & LEVEL_MASK;
+      const pixelCandidateOverrideValue = pixelCandidateOverrideMap[i];
       let rgb: readonly [number, number, number];
       let isGlazed = false;
-      if (cm === 0) {
+      if (pixelCandidateOverrideValue === 0) {
         rgb = colorLUT[lv];
       } else {
         hasGlazeOverride = true;
         const alts = LEVEL_CANDIDATES[lv];
-        const ci = (((cm - 1) % alts.length) + alts.length) % alts.length;
+        const ci = (((pixelCandidateOverrideValue - 1) % alts.length) + alts.length) % alts.length;
         rgb = alts[ci]?.rgb ?? colorLUT[lv];
         // Only mark as glazed if actual color differs from default
         const defRgb = colorLUT[lv];
@@ -240,7 +244,7 @@ export const CompositionDonut = React.memo(function CompositionDonut({
     for (let lv = 0; lv < 8; lv++) {
       // Check if this level has any glaze changes at all
       const levelHasGlaze = [...glazePerLevel[lv].values()].some((g) => g.isGlazed);
-      const levelTotal = hist[lv];
+      const levelTotal = levelHistogram[lv];
       const levelPct = (n: number) => (levelTotal > 0 ? ((n / levelTotal) * 100).toFixed(1) : "0.0");
       for (const [, g] of glazePerLevel[lv]) {
         // Find candidate index of actual color (for L1-L6; L0/L7 have single candidate)
@@ -284,7 +288,7 @@ export const CompositionDonut = React.memo(function CompositionDonut({
       glazeSlices: computeSlices(glazeEntries, total),
       hasGlaze: hasGlazeOverride,
     };
-  }, [cvs.data, cvs.colorMap, hist, total, colorLUT, colorChoiceIndices, t]);
+  }, [canvasData.levelData, canvasData.pixelCandidateOverrideMap, levelHistogram, total, colorLUT, candidateIndexByLevel, t]);
 
   const size = 260;
   const cx = size / 2,

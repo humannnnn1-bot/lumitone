@@ -25,15 +25,15 @@ function markPersistentStorageRequested(): void {
 
 export function useAppState(t: import("../i18n").TranslationFn) {
   const [state, dispatch] = useReducer(canvasReducer, undefined, createInitialState);
-  const { cvs } = state;
+  const { canvasData } = state;
 
   const toolState = useToolState();
   const uiState = useUIState(t);
-  const colorState = useColorState(state.hist);
+  const colorState = useColorState(state.levelHistogram);
 
   const { resetBrushSizeForCanvas } = toolState;
   const { showToast, toastTimerRef } = uiState;
-  const { colorChoiceIndices, colorChoiceDispatch, locked, setLocked } = colorState;
+  const { candidateIndexByLevel, candidateIndexDispatch, lockedLevels, setLockedLevels } = colorState;
 
   const [loaded, setLoaded] = useState(false);
 
@@ -43,15 +43,15 @@ export function useAppState(t: import("../i18n").TranslationFn) {
   const baselineSaveCompleteRef = useRef(false);
   const persistentStorageRequestInFlightRef = useRef(false);
   const lastSavedRef = useRef<{
-    data: Uint8Array | null;
-    colorMap: Uint8Array | null;
-    colorChoiceIndices: number[] | null;
-    locked: boolean[] | null;
+    levelData: Uint8Array | null;
+    pixelCandidateOverrideMap: Uint8Array | null;
+    candidateIndexByLevel: number[] | null;
+    lockedLevels: boolean[] | null;
   }>({
-    data: null,
-    colorMap: null,
-    colorChoiceIndices: null,
-    locked: null,
+    levelData: null,
+    pixelCandidateOverrideMap: null,
+    candidateIndexByLevel: null,
+    lockedLevels: null,
   });
 
   // Restore state from IndexedDB on mount
@@ -64,60 +64,74 @@ export function useAppState(t: import("../i18n").TranslationFn) {
         if (result.state) {
           dispatch({
             type: "load_image",
-            w: result.state.w,
-            h: result.state.h,
-            data: result.state.data,
-            ...(result.state.colorMap ? { colorMap: result.state.colorMap } : {}),
+            width: result.state.width,
+            height: result.state.height,
+            levelData: result.state.levelData,
+            ...(result.state.pixelCandidateOverrideMap ? { pixelCandidateOverrideMap: result.state.pixelCandidateOverrideMap } : {}),
           });
-          colorChoiceDispatch({ type: "load_all", values: result.state.colorChoiceIndices });
-          if (result.state.locked) setLocked(result.state.locked);
+          candidateIndexDispatch({ type: "load_all", values: result.state.candidateIndexByLevel });
+          if (result.state.lockedLevels) setLockedLevels(result.state.lockedLevels);
           return;
         }
 
         if (result.status === "invalid") {
           console.warn("CHROMALUM: saved state was ignored:", result.reason ?? "unknown reason");
           showToast(t("toast_restore_invalid"), "error");
-          lastSavedRef.current = { data: cvs.data, colorMap: cvs.colorMap, colorChoiceIndices, locked };
+          lastSavedRef.current = {
+            levelData: canvasData.levelData,
+            pixelCandidateOverrideMap: canvasData.pixelCandidateOverrideMap,
+            candidateIndexByLevel,
+            lockedLevels,
+          };
           baselineSaveCompleteRef.current = true;
         }
       })
       .catch(createErrorHandler("Restore", () => showToast(t("toast_restore_failed"), "error")))
       .finally(() => setLoaded(true));
-  }, [showToast, t, colorChoiceDispatch, setLocked, cvs.data, cvs.colorMap, colorChoiceIndices, locked]);
+  }, [
+    showToast,
+    t,
+    candidateIndexDispatch,
+    setLockedLevels,
+    canvasData.levelData,
+    canvasData.pixelCandidateOverrideMap,
+    candidateIndexByLevel,
+    lockedLevels,
+  ]);
 
   // Auto-save to IndexedDB on changes (debounced, skip if unchanged)
   useEffect(() => {
     if (!loaded) return;
     const prev = lastSavedRef.current;
     if (
-      prev.data === cvs.data &&
-      prev.colorMap === cvs.colorMap &&
-      prev.colorChoiceIndices === colorChoiceIndices &&
-      prev.locked === locked
+      prev.levelData === canvasData.levelData &&
+      prev.pixelCandidateOverrideMap === canvasData.pixelCandidateOverrideMap &&
+      prev.candidateIndexByLevel === candidateIndexByLevel &&
+      prev.lockedLevels === lockedLevels
     )
       return;
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
-    const pendingCanvas = cvs,
-      pendingColorChoiceIndices = colorChoiceIndices,
-      pendingLocked = locked;
+    const pendingCanvas = canvasData,
+      pendingCandidateIndexByLevel = candidateIndexByLevel,
+      pendingLockedLevels = lockedLevels;
     const doSave = () => {
       const requestId = ++saveRequestIdRef.current;
       saveState({
-        w: pendingCanvas.w,
-        h: pendingCanvas.h,
-        data: pendingCanvas.data,
-        colorMap: new Uint8Array(pendingCanvas.colorMap),
-        colorChoiceIndices: [...pendingColorChoiceIndices],
-        locked: [...pendingLocked],
+        width: pendingCanvas.width,
+        height: pendingCanvas.height,
+        levelData: pendingCanvas.levelData,
+        pixelCandidateOverrideMap: new Uint8Array(pendingCanvas.pixelCandidateOverrideMap),
+        candidateIndexByLevel: [...pendingCandidateIndexByLevel],
+        lockedLevels: [...pendingLockedLevels],
         version: SAVED_STATE_VERSION,
       })
         .then(() => {
           if (requestId === saveRequestIdRef.current) {
             lastSavedRef.current = {
-              data: pendingCanvas.data,
-              colorMap: pendingCanvas.colorMap,
-              colorChoiceIndices: pendingColorChoiceIndices,
-              locked: pendingLocked,
+              levelData: pendingCanvas.levelData,
+              pixelCandidateOverrideMap: pendingCanvas.pixelCandidateOverrideMap,
+              candidateIndexByLevel: pendingCandidateIndexByLevel,
+              lockedLevels: pendingLockedLevels,
             };
             if (!baselineSaveCompleteRef.current) {
               baselineSaveCompleteRef.current = true;
@@ -154,7 +168,7 @@ export function useAppState(t: import("../i18n").TranslationFn) {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
     };
-  }, [cvs, colorChoiceIndices, locked, loaded, showToast, t]);
+  }, [canvasData, candidateIndexByLevel, lockedLevels, loaded, showToast, t]);
 
   // Flush pending save on tab hide / page unload to avoid data loss
   useEffect(() => {
@@ -192,19 +206,19 @@ export function useAppState(t: import("../i18n").TranslationFn) {
   }, []);
 
   useEffect(() => {
-    resetBrushSizeForCanvas(cvs.w, cvs.h);
-  }, [cvs.w, cvs.h, resetBrushSizeForCanvas]);
+    resetBrushSizeForCanvas(canvasData.width, canvasData.height);
+  }, [canvasData.width, canvasData.height, resetBrushSizeForCanvas]);
 
   const { displayW, displayH } = useMemo(() => {
-    const safeW = Math.max(1, cvs.w),
-      safeH = Math.max(1, cvs.h);
+    const safeW = Math.max(1, canvasData.width),
+      safeH = Math.max(1, canvasData.height);
     const asp = safeW / safeH,
       mx = displayMax;
     return {
       displayW: asp >= 1 ? mx : Math.round(mx * asp),
       displayH: asp >= 1 ? Math.round(mx / asp) : mx,
     };
-  }, [cvs.w, cvs.h, displayMax]);
+  }, [canvasData.width, canvasData.height, displayMax]);
 
   // Cleanup timers on unmount
   useEffect(
@@ -218,19 +232,19 @@ export function useAppState(t: import("../i18n").TranslationFn) {
   return {
     state,
     dispatch,
-    cvs,
-    colorChoiceIndices,
-    colorChoiceDispatch,
+    canvasData,
+    candidateIndexByLevel,
+    candidateIndexDispatch,
     ...toolState,
     ...uiState,
     loaded,
-    locked,
-    setLocked,
+    lockedLevels,
+    setLockedLevels,
     colorLUT: colorState.colorLUT,
     displayW,
     displayH,
     displayMax,
-    toggleLock: colorState.toggleLock,
+    toggleLevelLock: colorState.toggleLevelLock,
     handleRandomize: colorState.handleRandomize,
     handleUnlockAll: colorState.handleUnlockAll,
     canRandomize: colorState.canRandomize,

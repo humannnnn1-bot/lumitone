@@ -19,7 +19,7 @@ interface GlazePanelProps {
   displayH: number;
   canvasTransform: React.CSSProperties;
   canvasCursor: string;
-  cvs: CanvasData;
+  canvasData: CanvasData;
   dispatch: React.Dispatch<CanvasAction>;
   panZoom: PanZoomHandlers;
   glazeDrawing: GlazeDrawingResult;
@@ -79,7 +79,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
     displayH,
     canvasTransform,
     canvasCursor,
-    cvs,
+    canvasData,
     dispatch,
     panZoom,
     glazeDrawing,
@@ -297,9 +297,9 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
   // Count glazed pixels
   const glazeCount = useMemo(() => {
     let c = 0;
-    for (let i = 0; i < cvs.colorMap.length; i++) if (cvs.colorMap[i] > 0) c++;
+    for (let i = 0; i < canvasData.pixelCandidateOverrideMap.length; i++) if (canvasData.pixelCandidateOverrideMap[i] > 0) c++;
     return c;
-  }, [cvs.colorMap]);
+  }, [canvasData.pixelCandidateOverrideMap]);
 
   // Hue marker position — 360° wraps to 0° (same hue)
   const hueMarkerLeft = `${((hueAngle % 360) / 360) * 100}%`;
@@ -316,19 +316,19 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
       if (cancelled) return;
       const c = highlightCanvasRef.current;
       if (!c) return;
-      if (c.width !== cvs.w) c.width = cvs.w;
-      if (c.height !== cvs.h) c.height = cvs.h;
+      if (c.width !== canvasData.width) c.width = canvasData.width;
+      if (c.height !== canvasData.height) c.height = canvasData.height;
       const ctx = c.getContext("2d");
       if (!ctx) return;
-      const img = ctx.createImageData(cvs.w, cvs.h);
-      img.data.set(buildGlazeHighlightPixels(cvs.colorMap, cvs.w, cvs.h));
+      const img = ctx.createImageData(canvasData.width, canvasData.height);
+      img.data.set(buildGlazeHighlightPixels(canvasData.pixelCandidateOverrideMap, canvasData.width, canvasData.height));
       ctx.putImageData(img, 0, 0);
     }, 75);
     return () => {
       cancelled = true;
       if (highlightTimerRef.current) clearTimeout(highlightTimerRef.current);
     };
-  }, [showHighlight, glazeCount, cvs.colorMap, cvs.w, cvs.h]);
+  }, [showHighlight, glazeCount, canvasData.pixelCandidateOverrideMap, canvasData.width, canvasData.height]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg }}>
@@ -375,8 +375,8 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
             {showHighlight && glazeCount > 0 && (
               <canvas
                 ref={highlightCanvasRef}
-                width={cvs.w}
-                height={cvs.h}
+                width={canvasData.width}
+                height={canvasData.height}
                 aria-hidden="true"
                 style={{
                   position: "absolute",

@@ -5,35 +5,41 @@ import { LEVEL_MASK } from "../constants";
    ═══════════════════════════════════════════ */
 
 /** Visual identity key: combines level + glaze variant into a single comparison value. */
-function vizKey(data: Uint8Array, colorMap: Uint8Array | undefined, i: number): number {
-  const lv = data[i] & LEVEL_MASK;
-  return colorMap ? (lv << 8) | colorMap[i] : lv;
+function vizKey(levelData: Uint8Array, pixelCandidateOverrideMap: Uint8Array | undefined, i: number): number {
+  const lv = levelData[i] & LEVEL_MASK;
+  return pixelCandidateOverrideMap ? (lv << 8) | pixelCandidateOverrideMap[i] : lv;
 }
 
-export function computeNoiseLevelNorm(
-  data: Uint8Array,
+export function computeNeighborIsolationAndLevelTone(
+  levelData: Uint8Array,
   w: number,
   h: number,
-  noise: Float32Array,
-  levelNorm: Float32Array,
-  colorMap?: Uint8Array,
+  neighborIsolation: Float32Array,
+  levelTone: Float32Array,
+  pixelCandidateOverrideMap?: Uint8Array,
 ) {
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x,
-        pix = vizKey(data, colorMap, i);
-      levelNorm[i] = (data[i] & LEVEL_MASK) / 7;
+        pix = vizKey(levelData, pixelCandidateOverrideMap, i);
+      levelTone[i] = (levelData[i] & LEVEL_MASK) / 7;
       let diff = 0;
-      if (x > 0 && vizKey(data, colorMap, i - 1) !== pix) diff++;
-      if (x + 1 < w && vizKey(data, colorMap, i + 1) !== pix) diff++;
-      if (y > 0 && vizKey(data, colorMap, i - w) !== pix) diff++;
-      if (y + 1 < h && vizKey(data, colorMap, i + w) !== pix) diff++;
-      noise[i] = diff / 4;
+      if (x > 0 && vizKey(levelData, pixelCandidateOverrideMap, i - 1) !== pix) diff++;
+      if (x + 1 < w && vizKey(levelData, pixelCandidateOverrideMap, i + 1) !== pix) diff++;
+      if (y > 0 && vizKey(levelData, pixelCandidateOverrideMap, i - w) !== pix) diff++;
+      if (y + 1 < h && vizKey(levelData, pixelCandidateOverrideMap, i + w) !== pix) diff++;
+      neighborIsolation[i] = diff / 4;
     }
   }
 }
 
-export function computeDiversity(data: Uint8Array, w: number, h: number, localDiversity: Float32Array, colorMap?: Uint8Array) {
+export function computeLocalDiversity(
+  levelData: Uint8Array,
+  w: number,
+  h: number,
+  localDiversity: Float32Array,
+  pixelCandidateOverrideMap?: Uint8Array,
+) {
   const R = 2;
   // Reuse a single Map across all pixels to avoid per-pixel allocation
   const seen = new Map<number, true>();
@@ -44,32 +50,33 @@ export function computeDiversity(data: Uint8Array, w: number, h: number, localDi
       const x0 = Math.max(0, x - R),
         x1 = Math.min(w - 1, x + R);
       seen.clear();
-      for (let ny = y0; ny <= y1; ny++) for (let nx = x0; nx <= x1; nx++) seen.set(vizKey(data, colorMap, ny * w + nx), true);
+      for (let ny = y0; ny <= y1; ny++)
+        for (let nx = x0; nx <= x1; nx++) seen.set(vizKey(levelData, pixelCandidateOverrideMap, ny * w + nx), true);
       // Normalize: max possible is 8 levels × many variants, but cap at reasonable range
-      const maxKeys = colorMap ? Math.max(8, seen.size) : 8;
+      const maxKeys = pixelCandidateOverrideMap ? Math.max(8, seen.size) : 8;
       localDiversity[y * w + x] = Math.min(1, (seen.size - 1) / (maxKeys - 1 || 1));
     }
   }
 }
 
 export function computeBoundaryDistance(
-  data: Uint8Array,
+  levelData: Uint8Array,
   w: number,
   h: number,
   isEdge: Uint8Array,
   boundaryDistance: Float32Array,
-  colorMap?: Uint8Array,
+  pixelCandidateOverrideMap?: Uint8Array,
 ) {
   const n = w * h;
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x,
-        pix = vizKey(data, colorMap, i);
+        pix = vizKey(levelData, pixelCandidateOverrideMap, i);
       if (
-        (x + 1 < w && vizKey(data, colorMap, i + 1) !== pix) ||
-        (y + 1 < h && vizKey(data, colorMap, i + w) !== pix) ||
-        (x > 0 && vizKey(data, colorMap, i - 1) !== pix) ||
-        (y > 0 && vizKey(data, colorMap, i - w) !== pix)
+        (x + 1 < w && vizKey(levelData, pixelCandidateOverrideMap, i + 1) !== pix) ||
+        (y + 1 < h && vizKey(levelData, pixelCandidateOverrideMap, i + w) !== pix) ||
+        (x > 0 && vizKey(levelData, pixelCandidateOverrideMap, i - 1) !== pix) ||
+        (y > 0 && vizKey(levelData, pixelCandidateOverrideMap, i - w) !== pix)
       )
         isEdge[i] = 1;
     }
@@ -104,10 +111,10 @@ export function computeBoundaryDistance(
 }
 
 export function computeGradient(
-  data: Uint8Array,
+  levelData: Uint8Array,
   w: number,
   h: number,
-  levelNorm: Float32Array,
+  levelTone: Float32Array,
   gradientAngle: Float32Array,
   gradientMagnitude: Float32Array,
 ) {
@@ -115,11 +122,11 @@ export function computeGradient(
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x;
-      levelNorm[i] = (data[i] & LEVEL_MASK) / 7;
-      const l = x > 0 ? data[i - 1] & LEVEL_MASK : data[i] & LEVEL_MASK;
-      const r2 = x + 1 < w ? data[i + 1] & LEVEL_MASK : data[i] & LEVEL_MASK;
-      const u = y > 0 ? data[i - w] & LEVEL_MASK : data[i] & LEVEL_MASK;
-      const d2 = y + 1 < h ? data[i + w] & LEVEL_MASK : data[i] & LEVEL_MASK;
+      levelTone[i] = (levelData[i] & LEVEL_MASK) / 7;
+      const l = x > 0 ? levelData[i - 1] & LEVEL_MASK : levelData[i] & LEVEL_MASK;
+      const r2 = x + 1 < w ? levelData[i + 1] & LEVEL_MASK : levelData[i] & LEVEL_MASK;
+      const u = y > 0 ? levelData[i - w] & LEVEL_MASK : levelData[i] & LEVEL_MASK;
+      const d2 = y + 1 < h ? levelData[i + w] & LEVEL_MASK : levelData[i] & LEVEL_MASK;
       const gx = r2 - l,
         gy = d2 - u;
       gradientMagnitude[i] = Math.sqrt(gx * gx + gy * gy);
@@ -133,18 +140,25 @@ export function computeGradient(
   for (let i = 0; i < n; i++) gradientMagnitude[i] /= maxGM;
 }
 
-export function computeRegion(data: Uint8Array, w: number, h: number, regionId: Int32Array, isEdge: Uint8Array, colorMap?: Uint8Array) {
+export function computeRegion(
+  levelData: Uint8Array,
+  w: number,
+  h: number,
+  regionId: Int32Array,
+  isEdge: Uint8Array,
+  pixelCandidateOverrideMap?: Uint8Array,
+) {
   const n = w * h;
   // Edge detection (needed for region borders)
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x,
-        pix = vizKey(data, colorMap, i);
+        pix = vizKey(levelData, pixelCandidateOverrideMap, i);
       if (
-        (x + 1 < w && vizKey(data, colorMap, i + 1) !== pix) ||
-        (y + 1 < h && vizKey(data, colorMap, i + w) !== pix) ||
-        (x > 0 && vizKey(data, colorMap, i - 1) !== pix) ||
-        (y > 0 && vizKey(data, colorMap, i - w) !== pix)
+        (x + 1 < w && vizKey(levelData, pixelCandidateOverrideMap, i + 1) !== pix) ||
+        (y + 1 < h && vizKey(levelData, pixelCandidateOverrideMap, i + w) !== pix) ||
+        (x > 0 && vizKey(levelData, pixelCandidateOverrideMap, i - 1) !== pix) ||
+        (y > 0 && vizKey(levelData, pixelCandidateOverrideMap, i - w) !== pix)
       )
         isEdge[i] = 1;
     }
@@ -166,9 +180,9 @@ export function computeRegion(data: Uint8Array, w: number, h: number, regionId: 
   for (let y = 0; y < h; y++) {
     for (let x = 0; x < w; x++) {
       const i = y * w + x,
-        pix = vizKey(data, colorMap, i);
-      if (x + 1 < w && vizKey(data, colorMap, i + 1) === pix) unite(i, i + 1);
-      if (y + 1 < h && vizKey(data, colorMap, i + w) === pix) unite(i, i + w);
+        pix = vizKey(levelData, pixelCandidateOverrideMap, i);
+      if (x + 1 < w && vizKey(levelData, pixelCandidateOverrideMap, i + 1) === pix) unite(i, i + 1);
+      if (y + 1 < h && vizKey(levelData, pixelCandidateOverrideMap, i + w) === pix) unite(i, i + w);
     }
   }
   for (let i = 0; i < n; i++) regionId[i] = find(i);

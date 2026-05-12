@@ -2,7 +2,7 @@
 import React from "react";
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { DEFAULT_COLOR_CHOICE_INDICES, LEVEL_CANDIDATES } from "../../color-engine";
+import { DEFAULT_CANDIDATE_INDEX_BY_LEVEL, LEVEL_CANDIDATES } from "../../color-engine";
 import type { CanvasData } from "../../types";
 import type { GalleryItem } from "../../hooks/useGallery";
 import { GalleryPanel } from "../GalleryPanel";
@@ -35,21 +35,21 @@ const BM_KEY = "chromalum_bookmarks";
 function makeCvs(w = 4, h = 4): CanvasData {
   const data = new Uint8Array(w * h);
   for (let i = 0; i < data.length; i++) data[i] = i % 8;
-  return { w, h, data, colorMap: new Uint8Array(w * h) };
+  return { width: w, height: h, levelData: data, pixelCandidateOverrideMap: new Uint8Array(w * h) };
 }
 
-function makeItem(colorChoiceIndices = DEFAULT_COLOR_CHOICE_INDICES): GalleryItem {
-  return { colorChoiceIndices: [...colorChoiceIndices], imageData: new ImageData(2, 2) };
+function makeItem(candidateIndexByLevel = DEFAULT_CANDIDATE_INDEX_BY_LEVEL): GalleryItem {
+  return { candidateIndexByLevel: [...candidateIndexByLevel], imageData: new ImageData(2, 2) };
 }
 
 function withLevel(lv: number, candidate: number): number[] {
-  const colorChoiceIndices = [...DEFAULT_COLOR_CHOICE_INDICES];
-  colorChoiceIndices[lv] = Math.min(candidate, LEVEL_CANDIDATES[lv].length - 1);
-  return colorChoiceIndices;
+  const candidateIndexByLevel = [...DEFAULT_CANDIDATE_INDEX_BY_LEVEL];
+  candidateIndexByLevel[lv] = Math.min(candidate, LEVEL_CANDIDATES[lv].length - 1);
+  return candidateIndexByLevel;
 }
 
 function farFromHue(hue: number): number[] {
-  const colorChoiceIndices = [...DEFAULT_COLOR_CHOICE_INDICES];
+  const candidateIndexByLevel = [...DEFAULT_CANDIDATE_INDEX_BY_LEVEL];
   for (let lv = 1; lv <= 6; lv++) {
     let best = 0;
     let bestDistance = -1;
@@ -61,18 +61,18 @@ function farFromHue(hue: number): number[] {
         bestDistance = distance;
       }
     });
-    colorChoiceIndices[lv] = best;
+    candidateIndexByLevel[lv] = best;
   }
-  return colorChoiceIndices;
+  return candidateIndexByLevel;
 }
 
 function renderGallery(overrides?: Partial<React.ComponentProps<typeof GalleryPanel>>) {
   const props: React.ComponentProps<typeof GalleryPanel> = {
-    cvs: makeCvs(),
-    colorChoiceIndices: [...DEFAULT_COLOR_CHOICE_INDICES],
-    colorChoiceDispatch: vi.fn(),
-    locked: new Array(8).fill(false),
-    hist: new Array(8).fill(1),
+    canvasData: makeCvs(),
+    candidateIndexByLevel: [...DEFAULT_CANDIDATE_INDEX_BY_LEVEL],
+    candidateIndexDispatch: vi.fn(),
+    lockedLevels: new Array(8).fill(false),
+    levelHistogram: new Array(8).fill(1),
     showToast: vi.fn(),
     saveColorWithLUT: vi.fn(),
     active: true,
@@ -100,22 +100,22 @@ describe("GalleryPanel", () => {
   });
 
   it("passes the active state to useGallery", () => {
-    const activeView = renderGallery({ cvs: makeCvs(3, 3), active: true });
+    const activeView = renderGallery({ canvasData: makeCvs(3, 3), active: true });
     expect(galleryMock.useGallery).toHaveBeenLastCalledWith(
-      activeView.props.cvs,
-      activeView.props.colorChoiceIndices,
-      activeView.props.locked,
-      activeView.props.hist,
+      activeView.props.canvasData,
+      activeView.props.candidateIndexByLevel,
+      activeView.props.lockedLevels,
+      activeView.props.levelHistogram,
       true,
     );
 
     activeView.unmount();
-    const hiddenView = renderGallery({ cvs: makeCvs(5, 5), active: false });
+    const hiddenView = renderGallery({ canvasData: makeCvs(5, 5), active: false });
     expect(galleryMock.useGallery).toHaveBeenLastCalledWith(
-      hiddenView.props.cvs,
-      hiddenView.props.colorChoiceIndices,
-      hiddenView.props.locked,
-      hiddenView.props.hist,
+      hiddenView.props.canvasData,
+      hiddenView.props.candidateIndexByLevel,
+      hiddenView.props.lockedLevels,
+      hiddenView.props.levelHistogram,
       false,
     );
   });
@@ -124,7 +124,7 @@ describe("GalleryPanel", () => {
     galleryMock.items = [makeItem(farFromHue(180))];
     galleryMock.generating = true;
     galleryMock.progress = { current: 1, total: 4 };
-    renderGallery({ cvs: makeCvs(4, 4) });
+    renderGallery({ canvasData: makeCvs(4, 4) });
 
     expect(screen.getByText("1/4")).toBeTruthy();
 
@@ -142,7 +142,7 @@ describe("GalleryPanel", () => {
 
   it("loads bookmarks, filters them, and toggles bookmark actions from cards", () => {
     const bookmarked = withLevel(2, 1);
-    galleryMock.items = [makeItem(DEFAULT_COLOR_CHOICE_INDICES), makeItem(bookmarked)];
+    galleryMock.items = [makeItem(DEFAULT_CANDIDATE_INDEX_BY_LEVEL), makeItem(bookmarked)];
     localStorage.setItem(BM_KEY, JSON.stringify([bookmarked]));
     renderGallery();
 
@@ -161,9 +161,9 @@ describe("GalleryPanel", () => {
   });
 
   it("prevents adding bookmarks past the storage limit", () => {
-    const itemColorChoiceIndices = withLevel(2, 1);
-    galleryMock.items = [makeItem(itemColorChoiceIndices)];
-    localStorage.setItem(BM_KEY, JSON.stringify(Array.from({ length: 500 }, () => [...DEFAULT_COLOR_CHOICE_INDICES])));
+    const itemCandidateIndexByLevel = withLevel(2, 1);
+    galleryMock.items = [makeItem(itemCandidateIndexByLevel)];
+    localStorage.setItem(BM_KEY, JSON.stringify(Array.from({ length: 500 }, () => [...DEFAULT_CANDIDATE_INDEX_BY_LEVEL])));
     const { props } = renderGallery();
 
     fireEvent.click(screen.getByRole("button", { name: "gallery_bookmark (1)" }));
@@ -173,8 +173,8 @@ describe("GalleryPanel", () => {
   });
 
   it("reports bookmark storage failures without changing bookmark state", () => {
-    const itemColorChoiceIndices = withLevel(2, 1);
-    galleryMock.items = [makeItem(itemColorChoiceIndices)];
+    const itemCandidateIndexByLevel = withLevel(2, 1);
+    galleryMock.items = [makeItem(itemCandidateIndexByLevel)];
     const { props } = renderGallery();
     vi.spyOn(Storage.prototype, "setItem").mockImplementation((key) => {
       if (key === BM_KEY) throw new DOMException("Quota exceeded", "QuotaExceededError");
@@ -188,9 +188,9 @@ describe("GalleryPanel", () => {
   });
 
   it("reports unbookmark storage failures without removing the bookmark", () => {
-    const itemColorChoiceIndices = withLevel(2, 1);
-    galleryMock.items = [makeItem(itemColorChoiceIndices)];
-    localStorage.setItem(BM_KEY, JSON.stringify([itemColorChoiceIndices]));
+    const itemCandidateIndexByLevel = withLevel(2, 1);
+    galleryMock.items = [makeItem(itemCandidateIndexByLevel)];
+    localStorage.setItem(BM_KEY, JSON.stringify([itemCandidateIndexByLevel]));
     const { props } = renderGallery();
     vi.spyOn(Storage.prototype, "setItem").mockImplementation((key) => {
       if (key === BM_KEY) throw new DOMException("Quota exceeded", "QuotaExceededError");
@@ -204,8 +204,8 @@ describe("GalleryPanel", () => {
   });
 
   it("opens the preview dialog and routes apply, bookmark, save, and dismiss actions", () => {
-    const itemColorChoiceIndices = withLevel(3, 1);
-    galleryMock.items = [makeItem(itemColorChoiceIndices)];
+    const itemCandidateIndexByLevel = withLevel(3, 1);
+    galleryMock.items = [makeItem(itemCandidateIndexByLevel)];
     const { props } = renderGallery();
 
     const preview = screen.getByRole("button", { name: /gallery_preview/ });
@@ -222,7 +222,7 @@ describe("GalleryPanel", () => {
     expect(JSON.parse(localStorage.getItem(BM_KEY) ?? "[]")).toHaveLength(1);
 
     fireEvent.click(screen.getByRole("button", { name: "gallery_apply_btn" }));
-    expect(props.colorChoiceDispatch).toHaveBeenCalledWith({ type: "load_all", values: itemColorChoiceIndices });
+    expect(props.candidateIndexDispatch).toHaveBeenCalledWith({ type: "load_all", values: itemCandidateIndexByLevel });
     expect(props.showToast).toHaveBeenCalledWith("gallery_apply", "success");
     expect(screen.queryByRole("dialog", { name: "gallery_preview_dialog" })).toBeNull();
 
@@ -232,7 +232,7 @@ describe("GalleryPanel", () => {
   });
 
   it("scrolls to the current item only when requested on an active panel", () => {
-    galleryMock.items = [makeItem(DEFAULT_COLOR_CHOICE_INDICES), makeItem(withLevel(2, 1))];
+    galleryMock.items = [makeItem(DEFAULT_CANDIDATE_INDEX_BY_LEVEL), makeItem(withLevel(2, 1))];
     const rafCallbacks: FrameRequestCallback[] = [];
     vi.spyOn(globalThis, "requestAnimationFrame").mockImplementation((cb) => {
       rafCallbacks.push(cb);

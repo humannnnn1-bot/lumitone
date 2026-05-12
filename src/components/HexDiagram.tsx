@@ -19,11 +19,11 @@ import { useTranslation } from "../i18n";
 import { C, FS, FW, O } from "../styles/tokens";
 
 interface Props {
-  colorChoiceIndices: readonly number[];
+  candidateIndexByLevel: readonly number[];
   dispatch: React.Dispatch<ColorAction>;
-  hist: number[];
+  levelHistogram: number[];
   total: number;
-  locked: boolean[];
+  lockedLevels: boolean[];
   onToggleLock: (levelIndex: number) => void;
   onRandomize: () => void;
   canRandomize: boolean;
@@ -37,7 +37,16 @@ const DICE_ROLL_MS = 280;
 const DICE_ROLL_TRANSFORM = "rotate(360deg) scale(1.06)";
 
 export const HexDiagram = memo(
-  function HexDiagram({ colorChoiceIndices, dispatch, hist, total, locked, onToggleLock, onRandomize, canRandomize }: Props) {
+  function HexDiagram({
+    candidateIndexByLevel,
+    dispatch,
+    levelHistogram,
+    total,
+    lockedLevels,
+    onToggleLock,
+    onRandomize,
+    canRandomize,
+  }: Props) {
     const { t } = useTranslation();
     const [hl, setHl] = useState<number | null>(null);
     const [focusedLv, setFocusedLv] = useState<number | null>(null);
@@ -51,7 +60,7 @@ export const HexDiagram = memo(
     }, [onRandomize]);
     const vp = HEX_VP;
     const sel = (levelIndex: number, ai: number) => dispatch({ type: "set_color", levelIndex, candidateIndex: ai });
-    const isA = (levelIndex: number, ai: number) => colorChoiceIndices[levelIndex] % LEVEL_CANDIDATES[levelIndex].length === ai;
+    const isA = (levelIndex: number, ai: number) => candidateIndexByLevel[levelIndex] % LEVEL_CANDIDATES[levelIndex].length === ai;
 
     // Event delegation for mouse enter/leave on SVG groups with data-lv attribute
     const onSvgMouseOver = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
@@ -67,7 +76,7 @@ export const HexDiagram = memo(
       if (!active) return mn;
       const base = vertex ? 15 : 8,
         mx = vertex ? 50 : 30;
-      const r = total > 0 ? hist[levelIndex] / total : 0;
+      const r = total > 0 ? levelHistogram[levelIndex] / total : 0;
       return Math.min(mx, Math.max(mn, base * (0.5 + r * 10)));
     };
     const { cp } = useMemo(() => {
@@ -91,7 +100,7 @@ export const HexDiagram = memo(
       const path =
         points.length > 1 ? points.map((p, i) => (i === 0 ? "M" : "L") + p.x.toFixed(1) + "," + p.y.toFixed(1)).join(" ") + "Z" : "";
       return { actP: points, cp: path };
-    }, [colorChoiceIndices, vp, isA]); // eslint-disable-line react-hooks/exhaustive-deps -- isA depends on colorChoiceIndices
+    }, [candidateIndexByLevel, vp, isA]); // eslint-disable-line react-hooks/exhaustive-deps -- isA depends on candidateIndexByLevel
 
     return (
       <div className="hex-diag-wrap" style={{ display: "inline-flex", flexDirection: "column", alignItems: "center" }}>
@@ -230,7 +239,7 @@ export const HexDiagram = memo(
                         act
                           ? undefined
                           : () => {
-                              if (!locked[lv]) sel(lv, ai);
+                              if (!lockedLevels[lv]) sel(lv, ai);
                             }
                       }
                       onContextMenu={
@@ -306,7 +315,7 @@ export const HexDiagram = memo(
                       >
                         {v.c}
                       </text>
-                      {locked[lv] && <circle cx={x} cy={y} r={r + 5} fill="none" stroke={C.warning} strokeWidth={2.5} />}
+                      {lockedLevels[lv] && <circle cx={x} cy={y} r={r + 5} fill="none" stroke={C.warning} strokeWidth={2.5} />}
                     </g>
                   );
                 }
@@ -334,7 +343,7 @@ export const HexDiagram = memo(
                       act
                         ? undefined
                         : () => {
-                            if (!locked[lv]) sel(lv, ai);
+                            if (!lockedLevels[lv]) sel(lv, ai);
                           }
                     }
                     onContextMenu={
@@ -397,7 +406,7 @@ export const HexDiagram = memo(
                     >
                       {lv}
                     </text>
-                    {locked[lv] && <circle cx={x} cy={y} r={r + 4} fill="none" stroke={C.warning} strokeWidth={2.5} />}
+                    {lockedLevels[lv] && <circle cx={x} cy={y} r={r + 4} fill="none" stroke={C.warning} strokeWidth={2.5} />}
                   </g>
                 );
               });
@@ -458,9 +467,9 @@ export const HexDiagram = memo(
   (prev, next) => {
     if (prev.total !== next.total) return false;
     for (let i = 0; i < 8; i++) {
-      if (prev.colorChoiceIndices[i] !== next.colorChoiceIndices[i]) return false;
-      if (prev.hist[i] !== next.hist[i]) return false;
-      if (prev.locked[i] !== next.locked[i]) return false;
+      if (prev.candidateIndexByLevel[i] !== next.candidateIndexByLevel[i]) return false;
+      if (prev.levelHistogram[i] !== next.levelHistogram[i]) return false;
+      if (prev.lockedLevels[i] !== next.lockedLevels[i]) return false;
     }
     return true;
   },

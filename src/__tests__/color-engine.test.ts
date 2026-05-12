@@ -10,7 +10,7 @@ import {
   LEVEL_INFO,
   LEVEL_CANDIDATES,
   buildColorLUT,
-  DEFAULT_COLOR_CHOICE_INDICES,
+  DEFAULT_CANDIDATE_INDEX_BY_LEVEL,
 } from "../color-engine";
 
 describe("lum", () => {
@@ -143,7 +143,7 @@ describe("LEVEL_CANDIDATES", () => {
 
 describe("buildColorLUT", () => {
   it("returns 8 RGB tuples with default config", () => {
-    const lut = buildColorLUT(DEFAULT_COLOR_CHOICE_INDICES);
+    const lut = buildColorLUT(DEFAULT_CANDIDATE_INDEX_BY_LEVEL);
     expect(lut.length).toBe(8);
     lut.forEach((rgb) => {
       expect(rgb.length).toBe(3);
@@ -155,12 +155,12 @@ describe("buildColorLUT", () => {
   });
 
   it("level 0 is always black", () => {
-    const lut = buildColorLUT(DEFAULT_COLOR_CHOICE_INDICES);
+    const lut = buildColorLUT(DEFAULT_CANDIDATE_INDEX_BY_LEVEL);
     expect(lut[0]).toEqual([0, 0, 0]);
   });
 
   it("level 7 is always white", () => {
-    const lut = buildColorLUT(DEFAULT_COLOR_CHOICE_INDICES);
+    const lut = buildColorLUT(DEFAULT_CANDIDATE_INDEX_BY_LEVEL);
     expect(lut[7]).toEqual([255, 255, 255]);
   });
 });

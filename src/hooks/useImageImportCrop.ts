@@ -46,7 +46,7 @@ export function useImageImportCrop({ dispatch, setZoom, setPan }: UseImageImport
         nd[i] = GRAY_LUT[gray];
       }
 
-      dispatch({ type: "load_image", w, h, data: nd });
+      dispatch({ type: "load_image", width: w, height: h, levelData: nd });
       setZoom(1);
       setPan({ x: 0, y: 0 });
       setCropImage(null);

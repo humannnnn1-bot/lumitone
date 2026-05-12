@@ -2,7 +2,7 @@
 import { beforeEach, describe, it, expect, vi } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useGlazeDrawing } from "../useGlazeDrawing";
-import { renderBuf } from "../../drawing/render-buf";
+import { renderCanvasBuffers } from "../../drawing/render-buf";
 import type { CanvasData } from "../../types";
 import type { GlazeToolId } from "../../constants";
 
@@ -37,8 +37,10 @@ vi.mock("../../state/DrawingContext", () => ({
 
 vi.mock("../useFloodFillWorker", () => ({
   useFloodFillWorker: () => ({
-    requestCanvasFill: vi.fn(() => Promise.resolve({ data: new Uint8Array(100), changed: new Uint32Array(0), truncated: false })),
-    requestGlazeFill: vi.fn(() => Promise.resolve({ colorMap: new Uint8Array(100), changed: new Uint32Array(0), truncated: false })),
+    requestCanvasFill: vi.fn(() => Promise.resolve({ levelData: new Uint8Array(100), changed: new Uint32Array(0), truncated: false })),
+    requestGlazeFill: vi.fn(() =>
+      Promise.resolve({ pixelCandidateOverrideMap: new Uint8Array(100), changed: new Uint32Array(0), truncated: false }),
+    ),
   }),
 }));
 
@@ -54,24 +56,24 @@ vi.mock("../useCursorOverlay", () => ({
 }));
 
 vi.mock("../../drawing/render-buf", () => ({
-  renderBuf: vi.fn(),
+  renderCanvasBuffers: vi.fn(),
 }));
 
 function makeCvs(w = 10, h = 10): CanvasData {
   return {
-    w,
-    h,
-    data: new Uint8Array(w * h),
-    colorMap: new Uint8Array(w * h),
+    width: w,
+    height: h,
+    levelData: new Uint8Array(w * h),
+    pixelCandidateOverrideMap: new Uint8Array(w * h),
   };
 }
 
 function makeOpts(overrides?: Partial<Parameters<typeof useGlazeDrawing>[0]>) {
   return {
-    cvs: makeCvs(),
+    canvasData: makeCvs(),
     dispatch: vi.fn(),
     colorLUT: Array.from({ length: 8 }, () => [128, 128, 128] as [number, number, number]),
-    colorChoiceIndices: [0, 0, 0, 0, 0, 0, 0, 0],
+    candidateIndexByLevel: [0, 0, 0, 0, 0, 0, 0, 0],
     hueAngle: 180,
     setHueAngle: mockSetHueAngle,
     glazeTool: "glaze_brush" as const,
@@ -135,11 +137,11 @@ describe("useGlazeDrawing", () => {
   });
 
   it("paints a glaze override and dispatches a color-map diff", () => {
-    const cvs = makeCvs(10, 10);
+    const canvasData = makeCvs(10, 10);
     const centerIndex = 5 * 10 + 5;
-    cvs.data[centerIndex] = 2;
+    canvasData.levelData[centerIndex] = 2;
     const dispatch = vi.fn();
-    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, dispatch, brushSize: 1 })));
+    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, dispatch, brushSize: 1 })));
     const canvas = result.current.curRef.current!;
     mockCanvasRect(canvas);
 
@@ -157,23 +159,23 @@ describe("useGlazeDrawing", () => {
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "stroke_end",
-        finalColorMap: expect.any(Uint8Array),
+        finalPixelCandidateOverrideMap: expect.any(Uint8Array),
         diff: expect.objectContaining({
           indices: expect.any(Uint32Array),
-          newColorMapValues: expect.any(Uint8Array),
+          newPixelCandidateOverrideValues: expect.any(Uint8Array),
         }),
       }),
     );
     const action = dispatch.mock.calls[0][0];
-    expect(action.finalColorMap[centerIndex]).toBeGreaterThan(0);
+    expect(action.finalPixelCandidateOverrideMap[centerIndex]).toBeGreaterThan(0);
     expect(Array.from(action.diff.indices)).toContain(centerIndex);
   });
 
   it("uses pen pressure for glaze brush size", () => {
-    const cvs = makeCvs(20, 20);
-    cvs.data.fill(2);
+    const canvasData = makeCvs(20, 20);
+    canvasData.levelData.fill(2);
     const dispatch = vi.fn();
-    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, dispatch, brushSize: 10 })));
+    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, dispatch, brushSize: 10 })));
     const canvas = result.current.curRef.current!;
     mockCanvasRect(canvas);
 
@@ -189,21 +191,26 @@ describe("useGlazeDrawing", () => {
       result.current.onUp();
     });
 
-    const cmBuf = dispatch.mock.calls[0][0].finalColorMap as Uint8Array;
-    expect(cmBuf[10 * 20 + 16]).toBeGreaterThan(0);
+    const workingOverrideMap = dispatch.mock.calls[0][0].finalPixelCandidateOverrideMap as Uint8Array;
+    expect(workingOverrideMap[10 * 20 + 16]).toBeGreaterThan(0);
   });
 
   it.each([
-    { glazeTool: "glaze_brush" as GlazeToolId, initialColorMap: 0, expectCenterChanged: true, expectEdgeChanged: true },
-    { glazeTool: "glaze_eraser" as GlazeToolId, initialColorMap: 2, expectCenterChanged: false, expectEdgeChanged: false },
+    { glazeTool: "glaze_brush" as GlazeToolId, initialPixelCandidateOverrideValue: 0, expectCenterChanged: true, expectEdgeChanged: true },
+    {
+      glazeTool: "glaze_eraser" as GlazeToolId,
+      initialPixelCandidateOverrideValue: 2,
+      expectCenterChanged: false,
+      expectEdgeChanged: false,
+    },
   ])(
     "clips a crossing $glazeTool stroke at the canvas edge when the pointer moves outside",
-    ({ glazeTool, initialColorMap, expectCenterChanged, expectEdgeChanged }) => {
-      const cvs = makeCvs(10, 10);
-      cvs.data.fill(2);
-      cvs.colorMap.fill(initialColorMap);
+    ({ glazeTool, initialPixelCandidateOverrideValue, expectCenterChanged, expectEdgeChanged }) => {
+      const canvasData = makeCvs(10, 10);
+      canvasData.levelData.fill(2);
+      canvasData.pixelCandidateOverrideMap.fill(initialPixelCandidateOverrideValue);
       const dispatch = vi.fn();
-      const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, dispatch, glazeTool, brushSize: 1 })));
+      const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, dispatch, glazeTool, brushSize: 1 })));
       const canvas = result.current.curRef.current!;
       mockCanvasRect(canvas);
 
@@ -217,17 +224,17 @@ describe("useGlazeDrawing", () => {
         result.current.onUp();
       });
 
-      const cmBuf = dispatch.mock.calls[0][0].finalColorMap as Uint8Array;
-      expect(cmBuf?.[5 * 10 + 5] > 0).toBe(expectCenterChanged);
-      expect(cmBuf?.[5 * 10 + 9] > 0).toBe(expectEdgeChanged);
+      const workingOverrideMap = dispatch.mock.calls[0][0].finalPixelCandidateOverrideMap as Uint8Array;
+      expect(workingOverrideMap?.[5 * 10 + 5] > 0).toBe(expectCenterChanged);
+      expect(workingOverrideMap?.[5 * 10 + 9] > 0).toBe(expectEdgeChanged);
     },
   );
 
   it("keeps outside glaze brush movement from smearing along the nearest edge and connects on re-entry", () => {
-    const cvs = makeCvs(10, 10);
-    cvs.data.fill(2);
+    const canvasData = makeCvs(10, 10);
+    canvasData.levelData.fill(2);
     const dispatch = vi.fn();
-    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, dispatch, brushSize: 1 })));
+    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, dispatch, brushSize: 1 })));
     const canvas = result.current.curRef.current!;
     mockCanvasRect(canvas);
 
@@ -247,10 +254,10 @@ describe("useGlazeDrawing", () => {
       result.current.onUp();
     });
 
-    const cmBuf = dispatch.mock.calls[0][0].finalColorMap as Uint8Array;
-    expect(cmBuf[0 * 10 + 5]).toBeGreaterThan(0);
-    expect(cmBuf[0 * 10 + 6]).toBe(0);
-    expect(cmBuf[1 * 10 + 8]).toBeGreaterThan(0);
+    const workingOverrideMap = dispatch.mock.calls[0][0].finalPixelCandidateOverrideMap as Uint8Array;
+    expect(workingOverrideMap[0 * 10 + 5]).toBeGreaterThan(0);
+    expect(workingOverrideMap[0 * 10 + 6]).toBe(0);
+    expect(workingOverrideMap[1 * 10 + 8]).toBeGreaterThan(0);
   });
 
   it("accumulates dirty rects while a glaze brush render frame is pending", () => {
@@ -262,16 +269,16 @@ describe("useGlazeDrawing", () => {
     const cancelSpy = vi.spyOn(globalThis, "cancelAnimationFrame").mockImplementation(() => {});
 
     try {
-      const cvs = makeCvs(10, 10);
-      cvs.data.fill(2);
-      const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, brushSize: 1 })));
+      const canvasData = makeCvs(10, 10);
+      canvasData.levelData.fill(2);
+      const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, brushSize: 1 })));
       const canvas = result.current.curRef.current!;
       mockCanvasRect(canvas);
 
       act(() => {
         result.current.onDown(pointerEvent({ target: canvas }));
       });
-      vi.mocked(renderBuf).mockClear();
+      vi.mocked(renderCanvasBuffers).mockClear();
 
       act(() => {
         result.current.onMove(pointerEvent({ clientX: 192, clientY: 160, target: canvas }));
@@ -287,8 +294,8 @@ describe("useGlazeDrawing", () => {
         rafCallbacks[0](0);
       });
 
-      expect(renderBuf).toHaveBeenCalledTimes(1);
-      expect(vi.mocked(renderBuf).mock.calls[0][7]).toEqual({ x: 5, y: 5, w: 3, h: 1 });
+      expect(renderCanvasBuffers).toHaveBeenCalledTimes(1);
+      expect(vi.mocked(renderCanvasBuffers).mock.calls[0][7]).toEqual({ x: 5, y: 5, w: 3, h: 1 });
     } finally {
       rafSpy.mockRestore();
       cancelSpy.mockRestore();
@@ -296,9 +303,9 @@ describe("useGlazeDrawing", () => {
   });
 
   it.each([0, 7])("pickHue on achromatic level L%s announces an error", (level) => {
-    const cvs = makeCvs(10, 10);
-    cvs.data[0] = level;
-    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs })));
+    const canvasData = makeCvs(10, 10);
+    canvasData.levelData[0] = level;
+    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData })));
     const canvas = result.current.curRef.current!;
     mockCanvasRect(canvas);
 
@@ -311,10 +318,10 @@ describe("useGlazeDrawing", () => {
 
   it("arms a background drag and starts a glaze brush only after entering the canvas", () => {
     mockZoomRef.current = 0.5;
-    const cvs = makeCvs(10, 10);
-    cvs.data.fill(2);
+    const canvasData = makeCvs(10, 10);
+    canvasData.levelData.fill(2);
     const dispatch = vi.fn();
-    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, dispatch, brushSize: 1 })));
+    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, dispatch, brushSize: 1 })));
     const canvas = result.current.curRef.current!;
     mockCanvasRect(canvas);
 
@@ -331,16 +338,16 @@ describe("useGlazeDrawing", () => {
       result.current.onUp();
     });
 
-    const cmBuf = dispatch.mock.calls[0][0].finalColorMap as Uint8Array;
-    expect(cmBuf[5 * 10 + 0]).toBeGreaterThan(0);
-    expect(cmBuf[5 * 10 + 5]).toBeGreaterThan(0);
+    const workingOverrideMap = dispatch.mock.calls[0][0].finalPixelCandidateOverrideMap as Uint8Array;
+    expect(workingOverrideMap[5 * 10 + 0]).toBeGreaterThan(0);
+    expect(workingOverrideMap[5 * 10 + 5]).toBeGreaterThan(0);
   });
 
   it("tracks the glaze cursor over checkerboard background without starting a stroke", () => {
     mockZoomRef.current = 0.5;
-    const cvs = makeCvs(10, 10);
-    cvs.data.fill(2);
-    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, brushSize: 1 })));
+    const canvasData = makeCvs(10, 10);
+    canvasData.levelData.fill(2);
+    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, brushSize: 1 })));
     const canvas = result.current.curRef.current!;
     mockCanvasRect(canvas);
 
@@ -354,9 +361,9 @@ describe("useGlazeDrawing", () => {
   });
 
   it("clears the glaze cursor when the pointer leaves the workspace", () => {
-    const cvs = makeCvs(10, 10);
-    cvs.data.fill(2);
-    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs, brushSize: 1 })));
+    const canvasData = makeCvs(10, 10);
+    canvasData.levelData.fill(2);
+    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, brushSize: 1 })));
     const canvas = result.current.curRef.current!;
     mockCanvasRect(canvas);
 
@@ -371,9 +378,9 @@ describe("useGlazeDrawing", () => {
 
   it("ignores pickHue events that start on the checkerboard background", () => {
     mockZoomRef.current = 0.5;
-    const cvs = makeCvs(10, 10);
-    cvs.data[5 * 10 + 0] = 2;
-    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ cvs })));
+    const canvasData = makeCvs(10, 10);
+    canvasData.levelData[5 * 10 + 0] = 2;
+    const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData })));
     const canvas = result.current.curRef.current!;
     mockCanvasRect(canvas);
 

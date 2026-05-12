@@ -20,45 +20,45 @@ function mkBuf(w: number, h: number, fill = 0): Uint8Array {
 
 describe("allocateStrokeBuffers", () => {
   it("allocates new buffers when pool is empty", () => {
-    const pool: BufferPool = { pre: null, buf: null, size: 0 };
+    const pool: BufferPool = { beforeData: null, workingData: null, size: 0 };
     const data = mkBuf(10, 10, 3);
-    const { pre, buf } = allocateStrokeBuffers(pool, data);
-    expect(pre.length).toBe(100);
-    expect(buf.length).toBe(100);
-    expect(pre[0]).toBe(3);
-    expect(buf[0]).toBe(3);
+    const { beforeData, workingData } = allocateStrokeBuffers(pool, data);
+    expect(beforeData.length).toBe(100);
+    expect(workingData.length).toBe(100);
+    expect(beforeData[0]).toBe(3);
+    expect(workingData[0]).toBe(3);
     expect(pool.size).toBe(100);
   });
 
   it("reuses pool when size matches", () => {
-    const pool: BufferPool = { pre: new Uint8Array(100), buf: new Uint8Array(100), size: 100 };
-    const origPre = pool.pre;
-    const origBuf = pool.buf;
+    const pool: BufferPool = { beforeData: new Uint8Array(100), workingData: new Uint8Array(100), size: 100 };
+    const origPre = pool.beforeData;
+    const origBuf = pool.workingData;
     const data = mkBuf(10, 10, 5);
-    const { pre, buf } = allocateStrokeBuffers(pool, data);
-    expect(pre).toBe(origPre); // same reference
-    expect(buf).toBe(origBuf);
-    expect(pre[0]).toBe(5);
-    expect(buf[0]).toBe(5);
+    const { beforeData, workingData } = allocateStrokeBuffers(pool, data);
+    expect(beforeData).toBe(origPre); // same reference
+    expect(workingData).toBe(origBuf);
+    expect(beforeData[0]).toBe(5);
+    expect(workingData[0]).toBe(5);
   });
 
   it("reallocates when size differs", () => {
-    const pool: BufferPool = { pre: new Uint8Array(50), buf: new Uint8Array(50), size: 50 };
-    const origPre = pool.pre;
+    const pool: BufferPool = { beforeData: new Uint8Array(50), workingData: new Uint8Array(50), size: 50 };
+    const origPre = pool.beforeData;
     const data = mkBuf(10, 10, 2);
-    const { pre, buf } = allocateStrokeBuffers(pool, data);
-    expect(pre).not.toBe(origPre); // new allocation
-    expect(pre.length).toBe(100);
-    expect(buf.length).toBe(100);
+    const { beforeData, workingData } = allocateStrokeBuffers(pool, data);
+    expect(beforeData).not.toBe(origPre); // new allocation
+    expect(beforeData.length).toBe(100);
+    expect(workingData.length).toBe(100);
     expect(pool.size).toBe(100);
   });
 
   it("copies data correctly", () => {
-    const pool: BufferPool = { pre: null, buf: null, size: 0 };
+    const pool: BufferPool = { beforeData: null, workingData: null, size: 0 };
     const data = new Uint8Array([0, 1, 2, 3, 4, 5, 6, 7]);
-    const { pre, buf } = allocateStrokeBuffers(pool, data);
-    expect(Array.from(pre)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
-    expect(Array.from(buf)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    const { beforeData, workingData } = allocateStrokeBuffers(pool, data);
+    expect(Array.from(beforeData)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
+    expect(Array.from(workingData)).toEqual([0, 1, 2, 3, 4, 5, 6, 7]);
   });
 });
 
@@ -67,8 +67,8 @@ describe("createStrokeState", () => {
     const buf = mkBuf(4, 4);
     const pre = mkBuf(4, 4);
     const state = createStrokeState(buf, pre, "brush", 3, 5, { x: 2, y: 3 });
-    expect(state.buf).toBe(buf);
-    expect(state.pre).toBe(pre);
+    expect(state.workingData).toBe(buf);
+    expect(state.beforeData).toBe(pre);
     expect(state.params.tool).toBe("brush");
     expect(state.params.brushLevel).toBe(3);
     expect(state.params.brushSize).toBe(5);

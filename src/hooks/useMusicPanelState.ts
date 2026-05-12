@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 
-import { DEFAULT_COLOR_CHOICE_INDICES } from "../color-engine";
+import { DEFAULT_CANDIDATE_INDEX_BY_LEVEL } from "../color-engine";
 import type { DecoderPhase, MusicCandidateHover } from "../music/types";
 import type { ScaleMode } from "./useMusicEngine";
 
@@ -18,7 +18,7 @@ type MusicTetraPhase = "t0" | "t1" | null;
 
 export function createDefaultMusicDirectCandidates() {
   const candidates = new Map<number, number>();
-  for (let levelIndex = 1; levelIndex <= 6; levelIndex++) candidates.set(levelIndex, DEFAULT_COLOR_CHOICE_INDICES[levelIndex]);
+  for (let levelIndex = 1; levelIndex <= 6; levelIndex++) candidates.set(levelIndex, DEFAULT_CANDIDATE_INDEX_BY_LEVEL[levelIndex]);
   return candidates;
 }
 

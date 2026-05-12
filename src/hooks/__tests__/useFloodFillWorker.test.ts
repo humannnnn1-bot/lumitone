@@ -30,7 +30,14 @@ const { MockWorker } = vi.hoisted(() => {
       if (type === "error") this.errorHandlers.delete(handler as (event: ErrorEvent) => void);
     }
 
-    postMessage(req: { id: number; kind: "canvas" | "glaze"; data: Uint8Array; newVal: number; colorMap?: Uint8Array; newCmVal?: number }) {
+    postMessage(req: {
+      id: number;
+      kind: "canvas" | "glaze";
+      levelData: Uint8Array;
+      targetLevel: number;
+      pixelCandidateOverrideMap?: Uint8Array;
+      targetColorOverrideValue?: number;
+    }) {
       if (this.mode === "hang") return;
       if (this.mode === "error") {
         setTimeout(() => {
@@ -43,20 +50,21 @@ const { MockWorker } = vi.hoisted(() => {
       setTimeout(() => {
         if (this.terminated) return;
         if (req.kind === "glaze") {
-          const colorMap = req.colorMap ?? new Uint8Array(0);
-          if (colorMap.length > 0) colorMap[0] = req.newCmVal ?? colorMap[0];
+          const pixelCandidateOverrideMap = req.pixelCandidateOverrideMap ?? new Uint8Array(0);
+          if (pixelCandidateOverrideMap.length > 0)
+            pixelCandidateOverrideMap[0] = req.targetColorOverrideValue ?? pixelCandidateOverrideMap[0];
           for (const handler of this.messageHandlers) {
             handler({
-              data: { id: req.id, data: req.data, colorMap, changed: new Uint32Array([0]), truncated: false },
+              data: { id: req.id, levelData: req.levelData, pixelCandidateOverrideMap, changed: new Uint32Array([0]), truncated: false },
             } as MessageEvent);
           }
           return;
         }
 
-        if (req.data.length > 0) req.data[0] = req.newVal;
+        if (req.levelData.length > 0) req.levelData[0] = req.targetLevel;
         for (const handler of this.messageHandlers) {
           handler({
-            data: { id: req.id, data: req.data, changed: new Uint32Array([0]), truncated: false },
+            data: { id: req.id, levelData: req.levelData, changed: new Uint32Array([0]), truncated: false },
           } as MessageEvent);
         }
       }, 0);
@@ -94,7 +102,7 @@ describe("useFloodFillWorker", () => {
     const buf = new Uint8Array(w * h).fill(3);
     const fillResult = await result.current.requestCanvasFill(buf, 0, 0, 5, w, h);
     expect(fillResult).toBeDefined();
-    expect(fillResult.data).toBeInstanceOf(Uint8Array);
+    expect(fillResult.levelData).toBeInstanceOf(Uint8Array);
     expect(fillResult.changed).toBeInstanceOf(Uint32Array);
     expect(typeof fillResult.truncated).toBe("boolean");
     expect(MockWorker.instances).toHaveLength(0);
@@ -107,7 +115,7 @@ describe("useFloodFillWorker", () => {
     const buf = new Uint8Array(w * h).fill(2);
     const fillResult = await result.current.requestCanvasFill(buf, 0, 0, 4, w, h);
     expect(fillResult.changed.length).toBe(w * h);
-    expect(fillResult.data[0]).toBe(4);
+    expect(fillResult.levelData[0]).toBe(4);
   });
 
   it("recreates the worker after a timeout", async () => {

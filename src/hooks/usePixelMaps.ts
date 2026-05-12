@@ -2,64 +2,77 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { LEVEL_MASK } from "../constants";
 import type { AnalysisPixelMaps, CanvasData, MapMode } from "../types";
-import { computeNoiseLevelNorm, computeDiversity, computeBoundaryDistance, computeGradient, computeRegion } from "../utils/pixel-analysis";
-import type { WorkerRequest, WorkerResponse } from "../workers/pixel-analysis.worker";
+import {
+  computeNeighborIsolationAndLevelTone,
+  computeLocalDiversity,
+  computeBoundaryDistance,
+  computeGradient,
+  computeRegion,
+} from "../utils/pixel-analysis";
+import type { PixelAnalysisWorkerRequest, PixelAnalysisWorkerResponse } from "../workers/pixel-analysis.worker";
 import { recordDebugPerf, startDebugPerf } from "../utils/perf-debug";
 
 // Lazy worker constructor — Vite ?worker import
 import PixelAnalysisWorker from "../workers/pixel-analysis.worker?worker";
 
-const WORKER_MODES = new Set<MapMode>(["noise", "entropy", "boundaryDistance", "gradient", "region"]);
-const PRELOAD_ORDER: readonly MapMode[] = ["luminance", "noise", "gradient", "region", "boundaryDistance", "entropy"];
+const WORKER_MODES = new Set<MapMode>(["isolation", "diversity", "boundaryDistance", "gradient", "region"]);
+const PRELOAD_ORDER: readonly MapMode[] = ["luminance", "isolation", "gradient", "region", "boundaryDistance", "diversity"];
 
 type PixelMapsCache = {
-  data: Uint8Array;
-  colorMap: Uint8Array;
-  w: number;
-  h: number;
+  levelData: Uint8Array;
+  pixelCandidateOverrideMap: Uint8Array;
+  width: number;
+  height: number;
   byMode: Partial<Record<MapMode, AnalysisPixelMaps>>;
 };
 
-function emptyPixelMaps(w: number, h: number): AnalysisPixelMaps {
-  const n = w * h;
+function emptyPixelMaps(width: number, height: number): AnalysisPixelMaps {
+  const n = width * height;
   return {
-    noise: new Float32Array(n),
+    neighborIsolation: new Float32Array(n),
     boundaryDistance: new Float32Array(n),
     gradientAngle: new Float32Array(n),
     gradientMagnitude: new Float32Array(n),
     regionId: new Int32Array(n),
     isEdge: new Uint8Array(n),
-    levelNorm: new Float32Array(n),
+    levelTone: new Float32Array(n),
     localDiversity: new Float32Array(n),
-    w,
-    h,
+    width,
+    height,
   };
 }
 
 /** Synchronous fallback for pixel maps (used when Worker is unavailable). */
-function computePixelMapsSync(cvs: CanvasData, mode: MapMode): AnalysisPixelMaps {
-  const { data, w, h } = cvs;
-  const n = w * h;
-  const maps = emptyPixelMaps(w, h);
+function computePixelMapsSync(canvasData: CanvasData, mode: MapMode): AnalysisPixelMaps {
+  const { levelData, width, height } = canvasData;
+  const n = width * height;
+  const maps = emptyPixelMaps(width, height);
   if (n === 0) return maps;
   switch (mode) {
-    case "noise":
-      computeNoiseLevelNorm(data, w, h, maps.noise, maps.levelNorm, cvs.colorMap);
+    case "isolation":
+      computeNeighborIsolationAndLevelTone(
+        levelData,
+        width,
+        height,
+        maps.neighborIsolation,
+        maps.levelTone,
+        canvasData.pixelCandidateOverrideMap,
+      );
       break;
-    case "entropy":
-      computeDiversity(data, w, h, maps.localDiversity, cvs.colorMap);
+    case "diversity":
+      computeLocalDiversity(levelData, width, height, maps.localDiversity, canvasData.pixelCandidateOverrideMap);
       break;
     case "boundaryDistance":
-      computeBoundaryDistance(data, w, h, maps.isEdge, maps.boundaryDistance, cvs.colorMap);
+      computeBoundaryDistance(levelData, width, height, maps.isEdge, maps.boundaryDistance, canvasData.pixelCandidateOverrideMap);
       break;
     case "gradient":
-      computeGradient(data, w, h, maps.levelNorm, maps.gradientAngle, maps.gradientMagnitude);
+      computeGradient(levelData, width, height, maps.levelTone, maps.gradientAngle, maps.gradientMagnitude);
       break;
     case "region":
-      computeRegion(data, w, h, maps.regionId, maps.isEdge, cvs.colorMap);
+      computeRegion(levelData, width, height, maps.regionId, maps.isEdge, canvasData.pixelCandidateOverrideMap);
       break;
     case "luminance":
-      for (let i = 0; i < n; i++) maps.levelNorm[i] = (data[i] & LEVEL_MASK) / 7;
+      for (let i = 0; i < n; i++) maps.levelTone[i] = (levelData[i] & LEVEL_MASK) / 7;
       break;
     case "colorLuma":
       break;
@@ -67,27 +80,33 @@ function computePixelMapsSync(cvs: CanvasData, mode: MapMode): AnalysisPixelMaps
   return maps;
 }
 
-function toPixelMaps(result: WorkerResponse): AnalysisPixelMaps {
+function toPixelMaps(result: PixelAnalysisWorkerResponse): AnalysisPixelMaps {
   return {
-    noise: result.noise,
+    neighborIsolation: result.neighborIsolation,
     boundaryDistance: result.boundaryDistance,
     gradientAngle: result.gradientAngle,
     gradientMagnitude: result.gradientMagnitude,
     regionId: result.regionId,
     isEdge: result.isEdge,
-    levelNorm: result.levelNorm,
+    levelTone: result.levelTone,
     localDiversity: result.localDiversity,
-    w: result.w,
-    h: result.h,
+    width: result.width,
+    height: result.height,
   };
 }
 
-function isSameCanvas(cache: PixelMapsCache | null, cvs: CanvasData): cache is PixelMapsCache {
-  return cache !== null && cache.w === cvs.w && cache.h === cvs.h && cache.data === cvs.data && cache.colorMap === cvs.colorMap;
+function isSameCanvas(cache: PixelMapsCache | null, canvasData: CanvasData): cache is PixelMapsCache {
+  return (
+    cache !== null &&
+    cache.width === canvasData.width &&
+    cache.height === canvasData.height &&
+    cache.levelData === canvasData.levelData &&
+    cache.pixelCandidateOverrideMap === canvasData.pixelCandidateOverrideMap
+  );
 }
 
-export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): AnalysisPixelMaps {
-  const [maps, setMaps] = useState<AnalysisPixelMaps>(() => emptyPixelMaps(cvs.w, cvs.h));
+export function usePixelMaps(canvasData: CanvasData, mode: MapMode, preload = false): AnalysisPixelMaps {
+  const [maps, setMaps] = useState<AnalysisPixelMaps>(() => emptyPixelMaps(canvasData.width, canvasData.height));
   const workerRef = useRef<Worker | null>(null);
   const preloadWorkerRef = useRef<Worker | null>(null);
   const workerFailedRef = useRef(false);
@@ -96,17 +115,17 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): A
   const cacheRef = useRef<PixelMapsCache | null>(null);
 
   const ensureCache = useCallback((): PixelMapsCache => {
-    if (!isSameCanvas(cacheRef.current, cvs)) {
+    if (!isSameCanvas(cacheRef.current, canvasData)) {
       cacheRef.current = {
-        data: cvs.data,
-        colorMap: cvs.colorMap,
-        w: cvs.w,
-        h: cvs.h,
+        levelData: canvasData.levelData,
+        pixelCandidateOverrideMap: canvasData.pixelCandidateOverrideMap,
+        width: canvasData.width,
+        height: canvasData.height,
         byMode: {},
       };
     }
     return cacheRef.current;
-  }, [cvs]);
+  }, [canvasData]);
 
   useEffect(() => {
     return () => {
@@ -127,10 +146,14 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): A
 
     if (!WORKER_MODES.has(mode)) {
       const perfStart = startDebugPerf();
-      const nextMaps = computePixelMapsSync(cvs, mode);
+      const nextMaps = computePixelMapsSync(canvasData, mode);
       cache.byMode[mode] = nextMaps;
       setMaps(nextMaps);
-      recordDebugPerf(`pixel-analysis:${mode}:sync`, perfStart, { w: cvs.w, h: cvs.h, pixels: cvs.w * cvs.h });
+      recordDebugPerf(`pixel-analysis:${mode}:sync`, perfStart, {
+        w: canvasData.width,
+        h: canvasData.height,
+        pixels: canvasData.width * canvasData.height,
+      });
       return;
     }
 
@@ -146,18 +169,29 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): A
 
     if (!worker) {
       const perfStart = startDebugPerf();
-      const nextMaps = computePixelMapsSync(cvs, mode);
+      const nextMaps = computePixelMapsSync(canvasData, mode);
       cache.byMode[mode] = nextMaps;
       setMaps(nextMaps);
-      recordDebugPerf(`pixel-analysis:${mode}:sync-fallback`, perfStart, { w: cvs.w, h: cvs.h, pixels: cvs.w * cvs.h });
+      recordDebugPerf(`pixel-analysis:${mode}:sync-fallback`, perfStart, {
+        w: canvasData.width,
+        h: canvasData.height,
+        pixels: canvasData.width * canvasData.height,
+      });
       return;
     }
 
     const id = ++requestIdRef.current;
     const perfStart = startDebugPerf();
-    const dataCopy = new Uint8Array(cvs.data);
-    const colorMapCopy = new Uint8Array(cvs.colorMap);
-    const req: WorkerRequest = { id, mode, data: dataCopy, colorMap: colorMapCopy, w: cvs.w, h: cvs.h };
+    const dataCopy = new Uint8Array(canvasData.levelData);
+    const overrideMapCopy = new Uint8Array(canvasData.pixelCandidateOverrideMap);
+    const req: PixelAnalysisWorkerRequest = {
+      id,
+      mode,
+      levelData: dataCopy,
+      pixelCandidateOverrideMap: overrideMapCopy,
+      width: canvasData.width,
+      height: canvasData.height,
+    };
     let disposed = false;
 
     const resetWorker = () => {
@@ -175,25 +209,29 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): A
     const fallbackToSync = () => {
       cleanup();
       if (disposed) return;
-      const nextMaps = computePixelMapsSync(cvs, mode);
+      const nextMaps = computePixelMapsSync(canvasData, mode);
       cache.byMode[mode] = nextMaps;
       setMaps(nextMaps);
       recordDebugPerf(`pixel-analysis:${mode}:sync-fallback`, perfStart, {
         status: "worker-error",
-        w: cvs.w,
-        h: cvs.h,
-        pixels: cvs.w * cvs.h,
+        w: canvasData.width,
+        h: canvasData.height,
+        pixels: canvasData.width * canvasData.height,
       });
     };
 
-    const handleMessage = (e: MessageEvent<WorkerResponse>) => {
+    const handleMessage = (e: MessageEvent<PixelAnalysisWorkerResponse>) => {
       if (e.data.id !== id) return;
       cleanup();
       if (disposed) return;
       const nextMaps = toPixelMaps(e.data);
       cache.byMode[mode] = nextMaps;
       setMaps(nextMaps);
-      recordDebugPerf(`pixel-analysis:${mode}:worker`, perfStart, { w: cvs.w, h: cvs.h, pixels: cvs.w * cvs.h });
+      recordDebugPerf(`pixel-analysis:${mode}:worker`, perfStart, {
+        w: canvasData.width,
+        h: canvasData.height,
+        pixels: canvasData.width * canvasData.height,
+      });
     };
 
     const handleError = () => {
@@ -204,7 +242,7 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): A
     worker.addEventListener("message", handleMessage);
     worker.addEventListener("error", handleError);
     try {
-      worker.postMessage(req, [dataCopy.buffer as ArrayBuffer, colorMapCopy.buffer as ArrayBuffer]);
+      worker.postMessage(req, [dataCopy.buffer as ArrayBuffer, overrideMapCopy.buffer as ArrayBuffer]);
     } catch {
       handleError();
     }
@@ -213,7 +251,7 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): A
       disposed = true;
       cleanup();
     };
-  }, [cvs, mode, ensureCache]);
+  }, [canvasData, mode, ensureCache]);
 
   useEffect(() => {
     if (!preload) return;
@@ -254,7 +292,7 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): A
     };
 
     const runNext = () => {
-      if (disposed || !isSameCanvas(cacheRef.current, cvs)) {
+      if (disposed || !isSameCanvas(cacheRef.current, canvasData)) {
         cleanup();
         return;
       }
@@ -268,27 +306,34 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): A
       pendingMode = nextMode;
       pendingId = ++preloadRequestIdRef.current;
       pendingPerfStart = startDebugPerf();
-      const dataCopy = new Uint8Array(cvs.data);
-      const colorMapCopy = new Uint8Array(cvs.colorMap);
-      const req: WorkerRequest = { id: pendingId, mode: nextMode, data: dataCopy, colorMap: colorMapCopy, w: cvs.w, h: cvs.h };
+      const dataCopy = new Uint8Array(canvasData.levelData);
+      const overrideMapCopy = new Uint8Array(canvasData.pixelCandidateOverrideMap);
+      const req: PixelAnalysisWorkerRequest = {
+        id: pendingId,
+        mode: nextMode,
+        levelData: dataCopy,
+        pixelCandidateOverrideMap: overrideMapCopy,
+        width: canvasData.width,
+        height: canvasData.height,
+      };
       try {
-        worker.postMessage(req, [dataCopy.buffer as ArrayBuffer, colorMapCopy.buffer as ArrayBuffer]);
+        worker.postMessage(req, [dataCopy.buffer as ArrayBuffer, overrideMapCopy.buffer as ArrayBuffer]);
       } catch {
         handleError();
       }
     };
 
-    const handleMessage = (e: MessageEvent<WorkerResponse>) => {
+    const handleMessage = (e: MessageEvent<PixelAnalysisWorkerResponse>) => {
       if (e.data.id !== pendingId || !pendingMode) return;
-      if (!isSameCanvas(cacheRef.current, cvs)) {
+      if (!isSameCanvas(cacheRef.current, canvasData)) {
         cleanup();
         return;
       }
       cache.byMode[pendingMode] = toPixelMaps(e.data);
       recordDebugPerf(`pixel-analysis:${pendingMode}:preload-worker`, pendingPerfStart, {
-        w: cvs.w,
-        h: cvs.h,
-        pixels: cvs.w * cvs.h,
+        w: canvasData.width,
+        h: canvasData.height,
+        pixels: canvasData.width * canvasData.height,
       });
       pendingMode = null;
       pendingPerfStart = null;
@@ -299,9 +344,9 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): A
       if (pendingMode) {
         recordDebugPerf(`pixel-analysis:${pendingMode}:preload-worker`, pendingPerfStart, {
           status: "error",
-          w: cvs.w,
-          h: cvs.h,
-          pixels: cvs.w * cvs.h,
+          w: canvasData.width,
+          h: canvasData.height,
+          pixels: canvasData.width * canvasData.height,
         });
       }
       cleanup();
@@ -317,7 +362,7 @@ export function usePixelMaps(cvs: CanvasData, mode: MapMode, preload = false): A
       cleanup();
       resetWorker();
     };
-  }, [cvs, mode, maps, preload, ensureCache]);
+  }, [canvasData, mode, maps, preload, ensureCache]);
 
   return maps;
 }

@@ -1,14 +1,14 @@
 import { useState, useReducer, useMemo, useCallback } from "react";
-import { buildColorLUT, DEFAULT_COLOR_CHOICE_INDICES, LEVEL_CANDIDATES } from "../color-engine";
+import { buildColorLUT, DEFAULT_CANDIDATE_INDEX_BY_LEVEL, LEVEL_CANDIDATES } from "../color-engine";
 import { LEVEL_COUNT } from "../constants";
 import { colorReducer } from "../state/color-reducer";
 
-export function useColorState(hist: number[]) {
-  const [colorChoiceIndices, colorChoiceDispatch] = useReducer(colorReducer, [...DEFAULT_COLOR_CHOICE_INDICES]);
-  const [locked, setLocked] = useState<boolean[]>(new Array(LEVEL_COUNT).fill(false));
+export function useColorState(levelHistogram: number[]) {
+  const [candidateIndexByLevel, candidateIndexDispatch] = useReducer(colorReducer, [...DEFAULT_CANDIDATE_INDEX_BY_LEVEL]);
+  const [lockedLevels, setLockedLevels] = useState<boolean[]>(new Array(LEVEL_COUNT).fill(false));
 
-  const toggleLock = useCallback((lv: number) => {
-    setLocked((prev) => {
+  const toggleLevelLock = useCallback((lv: number) => {
+    setLockedLevels((prev) => {
       const n = [...prev];
       n[lv] = !n[lv];
       return n;
@@ -16,34 +16,37 @@ export function useColorState(hist: number[]) {
   }, []);
 
   const handleRandomize = useCallback(() => {
-    colorChoiceDispatch({ type: "randomize", locked, hist });
-  }, [colorChoiceDispatch, locked, hist]);
+    candidateIndexDispatch({ type: "randomize", lockedLevels, levelHistogram });
+  }, [candidateIndexDispatch, lockedLevels, levelHistogram]);
 
   const handleUnlockAll = useCallback(() => {
-    setLocked(new Array(LEVEL_COUNT).fill(false));
+    setLockedLevels(new Array(LEVEL_COUNT).fill(false));
   }, []);
 
-  const canRandomize = useMemo(() => LEVEL_CANDIDATES.some((alts, lv) => hist[lv] > 0 && !locked[lv] && alts.length > 1), [hist, locked]);
+  const canRandomize = useMemo(
+    () => LEVEL_CANDIDATES.some((alts, lv) => levelHistogram[lv] > 0 && !lockedLevels[lv] && alts.length > 1),
+    [levelHistogram, lockedLevels],
+  );
 
-  const colorLUT = useMemo(() => buildColorLUT(colorChoiceIndices), [colorChoiceIndices]);
+  const colorLUT = useMemo(() => buildColorLUT(candidateIndexByLevel), [candidateIndexByLevel]);
 
   const patternInfo = useMemo(() => {
     const allC: number[] = [];
     for (let lv = 0; lv < LEVEL_CANDIDATES.length; lv++) {
       const c = LEVEL_CANDIDATES[lv].length;
-      allC.push(hist[lv] > 0 && !locked[lv] ? c : 1);
+      allC.push(levelHistogram[lv] > 0 && !lockedLevels[lv] ? c : 1);
     }
     const total = allC.reduce((a, b) => a * b, 1);
     const expanded = allC.join("\u00d7");
     return { total, expanded, perLevel: allC };
-  }, [hist, locked]);
+  }, [levelHistogram, lockedLevels]);
 
   return {
-    colorChoiceIndices,
-    colorChoiceDispatch,
-    locked,
-    setLocked,
-    toggleLock,
+    candidateIndexByLevel,
+    candidateIndexDispatch,
+    lockedLevels,
+    setLockedLevels,
+    toggleLevelLock,
     handleRandomize,
     handleUnlockAll,
     canRandomize,

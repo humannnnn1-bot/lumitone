@@ -12,7 +12,7 @@ import type { CanvasData } from "../../types";
 
 /* ── Helpers ────────────────────────────────────────────────── */
 function makeCvs(w = 16, h = 16): CanvasData {
-  return { w, h, data: new Uint8Array(w * h), colorMap: new Uint8Array(w * h) };
+  return { width: w, height: h, levelData: new Uint8Array(w * h), pixelCandidateOverrideMap: new Uint8Array(w * h) };
 }
 
 function makeRect(left: number, top: number, width: number, height: number) {
@@ -43,73 +43,73 @@ describe("canvasPos", () => {
   });
 
   it("maps center of canvas element to center of canvas data at zoom=1, pan=0", () => {
-    const cvs = makeCvs(16, 16);
+    const canvasData = makeCvs(16, 16);
     const el = makeFakeCanvas(makeRect(0, 0, 160, 160));
     // Click at center of the element: clientX=80, clientY=80
-    const pos = canvasPos({ clientX: 80, clientY: 80 }, el, 1, { x: 0, y: 0 }, cvs);
+    const pos = canvasPos({ clientX: 80, clientY: 80 }, el, 1, { x: 0, y: 0 }, canvasData);
     expect(pos.x).toBe(8);
     expect(pos.y).toBe(8);
   });
 
   it("maps top-left corner of element to (0, 0) at zoom=1, pan=0", () => {
-    const cvs = makeCvs(16, 16);
+    const canvasData = makeCvs(16, 16);
     const el = makeFakeCanvas(makeRect(0, 0, 160, 160));
-    const pos = canvasPos({ clientX: 0, clientY: 0 }, el, 1, { x: 0, y: 0 }, cvs);
+    const pos = canvasPos({ clientX: 0, clientY: 0 }, el, 1, { x: 0, y: 0 }, canvasData);
     expect(pos.x).toBe(0);
     expect(pos.y).toBe(0);
   });
 
   it("clamps coordinates to canvas bounds", () => {
-    const cvs = makeCvs(10, 10);
+    const canvasData = makeCvs(10, 10);
     const el = makeFakeCanvas(makeRect(0, 0, 100, 100));
     // Click well outside the canvas on the right/bottom
-    const pos = canvasPos({ clientX: 200, clientY: 200 }, el, 1, { x: 0, y: 0 }, cvs);
+    const pos = canvasPos({ clientX: 200, clientY: 200 }, el, 1, { x: 0, y: 0 }, canvasData);
     expect(pos.x).toBe(9); // w - 1
     expect(pos.y).toBe(9); // h - 1
   });
 
   it("clamps negative coordinates to 0", () => {
-    const cvs = makeCvs(10, 10);
+    const canvasData = makeCvs(10, 10);
     const el = makeFakeCanvas(makeRect(100, 100, 100, 100));
     // Click well before the element
-    const pos = canvasPos({ clientX: 0, clientY: 0 }, el, 1, { x: 0, y: 0 }, cvs);
+    const pos = canvasPos({ clientX: 0, clientY: 0 }, el, 1, { x: 0, y: 0 }, canvasData);
     expect(pos.x).toBe(0);
     expect(pos.y).toBe(0);
   });
 
   it("can return unclamped coordinates outside the canvas", () => {
-    const cvs = makeCvs(10, 10);
+    const canvasData = makeCvs(10, 10);
     const el = makeFakeCanvas(makeRect(0, 0, 100, 100));
-    const pos = canvasPosUnclamped({ clientX: 200, clientY: -20 }, el, 1, { x: 0, y: 0 }, cvs);
+    const pos = canvasPosUnclamped({ clientX: 200, clientY: -20 }, el, 1, { x: 0, y: 0 }, canvasData);
     expect(pos.x).toBe(20);
     expect(pos.y).toBe(-2);
-    expect(isCanvasPointInBounds(pos, cvs)).toBe(false);
+    expect(isCanvasPointInBounds(pos, canvasData)).toBe(false);
   });
 
   it("accounts for pan offset", () => {
-    const cvs = makeCvs(16, 16);
+    const canvasData = makeCvs(16, 16);
     const el = makeFakeCanvas(makeRect(0, 0, 160, 160));
     // Pan shifts the viewport; clicking center with pan should shift result
-    const posNoPan = canvasPos({ clientX: 80, clientY: 80 }, el, 1, { x: 0, y: 0 }, cvs);
-    const posPanned = canvasPos({ clientX: 80, clientY: 80 }, el, 1, { x: 4, y: 4 }, cvs);
+    const posNoPan = canvasPos({ clientX: 80, clientY: 80 }, el, 1, { x: 0, y: 0 }, canvasData);
+    const posPanned = canvasPos({ clientX: 80, clientY: 80 }, el, 1, { x: 4, y: 4 }, canvasData);
     // Panning by +4 should move the apparent position to the left/up
     expect(posPanned.x).toBeLessThan(posNoPan.x);
     expect(posPanned.y).toBeLessThan(posNoPan.y);
   });
 
   it("accounts for zoom level", () => {
-    const cvs = makeCvs(16, 16);
+    const canvasData = makeCvs(16, 16);
     const el = makeFakeCanvas(makeRect(0, 0, 160, 160));
     // At zoom=2, clicking the center should still map to center
-    const pos = canvasPos({ clientX: 80, clientY: 80 }, el, 2, { x: 0, y: 0 }, cvs);
+    const pos = canvasPos({ clientX: 80, clientY: 80 }, el, 2, { x: 0, y: 0 }, canvasData);
     expect(pos.x).toBe(8);
     expect(pos.y).toBe(8);
   });
 
   it("handles non-square canvas", () => {
-    const cvs = makeCvs(32, 8);
+    const canvasData = makeCvs(32, 8);
     const el = makeFakeCanvas(makeRect(0, 0, 320, 80));
-    const pos = canvasPos({ clientX: 160, clientY: 40 }, el, 1, { x: 0, y: 0 }, cvs);
+    const pos = canvasPos({ clientX: 160, clientY: 40 }, el, 1, { x: 0, y: 0 }, canvasData);
     expect(pos.x).toBe(16);
     expect(pos.y).toBe(4);
   });
@@ -206,11 +206,11 @@ describe("tryStartPan", () => {
 /* ── cPosFromRefs ───────────────────────────────────────────── */
 describe("cPosFromRefs", () => {
   it("delegates to canvasPos with values from refs", () => {
-    const cvs = makeCvs(16, 16);
+    const canvasData = makeCvs(16, 16);
     const refs = {
       zoomRef: { current: 2 },
       panRef: { current: { x: 3, y: 5 } },
-      cvsRef: { current: cvs },
+      cvsRef: { current: canvasData },
     };
     const el = makeFakeCanvas(makeRect(0, 0, 160, 160));
     const event = { clientX: 80, clientY: 80 } as React.PointerEvent;
@@ -218,7 +218,7 @@ describe("cPosFromRefs", () => {
     const pos = cPosFromRefs(event, el, refs);
 
     // Should match calling canvasPos directly with same args
-    const expected = canvasPos(event, el, 2, { x: 3, y: 5 }, cvs);
+    const expected = canvasPos(event, el, 2, { x: 3, y: 5 }, canvasData);
     expect(pos).toEqual(expected);
   });
 
@@ -238,17 +238,17 @@ describe("cPosFromRefs", () => {
 /* ── updateStatusBase ───────────────────────────────────────── */
 describe("updateStatusBase", () => {
   it("clears the status when pointer capture sends an outside coordinate", () => {
-    const cvs = makeCvs(10, 10);
+    const canvasData = makeCvs(10, 10);
     const refs = {
       zoomRef: { current: 1 },
       panRef: { current: { x: 0, y: 0 } },
-      cvsRef: { current: cvs },
+      cvsRef: { current: canvasData },
     };
     const el = makeFakeCanvas(makeRect(0, 0, 100, 100));
     const statusEl = { textContent: "", title: "inside" } as HTMLDivElement;
     const formatText = vi.fn(() => "inside");
 
-    updateStatusBase({ clientX: 120, clientY: 50 } as React.PointerEvent, statusEl, el, refs, cvs.data, formatText);
+    updateStatusBase({ clientX: 120, clientY: 50 } as React.PointerEvent, statusEl, el, refs, canvasData.levelData, formatText);
 
     expect(statusEl.textContent).toBe("\u2014");
     expect(statusEl.title).toBe("");
@@ -256,18 +256,18 @@ describe("updateStatusBase", () => {
   });
 
   it("mirrors visible status text into the title for truncated rows", () => {
-    const cvs = makeCvs(10, 10);
-    cvs.data[55] = 3;
+    const canvasData = makeCvs(10, 10);
+    canvasData.levelData[55] = 3;
     const refs = {
       zoomRef: { current: 1 },
       panRef: { current: { x: 0, y: 0 } },
-      cvsRef: { current: cvs },
+      cvsRef: { current: canvasData },
     };
     const el = makeFakeCanvas(makeRect(0, 0, 100, 100));
     const statusEl = { textContent: "", title: "" } as HTMLDivElement;
     const formatText = vi.fn(() => "long status text");
 
-    updateStatusBase({ clientX: 55, clientY: 55 } as React.PointerEvent, statusEl, el, refs, cvs.data, formatText);
+    updateStatusBase({ clientX: 55, clientY: 55 } as React.PointerEvent, statusEl, el, refs, canvasData.levelData, formatText);
 
     expect(statusEl.textContent).toBe("long status text");
     expect(statusEl.title).toBe("long status text");

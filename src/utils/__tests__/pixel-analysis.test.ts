@@ -1,41 +1,47 @@
 import { describe, it, expect } from "vitest";
-import { computeNoiseLevelNorm, computeDiversity, computeBoundaryDistance, computeGradient, computeRegion } from "../pixel-analysis";
+import {
+  computeNeighborIsolationAndLevelTone,
+  computeLocalDiversity,
+  computeBoundaryDistance,
+  computeGradient,
+  computeRegion,
+} from "../pixel-analysis";
 
 describe("pixel-analysis", () => {
-  describe("computeNoiseLevelNorm", () => {
-    it("returns zero noise for uniform image", () => {
+  describe("computeNeighborIsolationAndLevelTone", () => {
+    it("returns zero neighborIsolation for uniform image", () => {
       const w = 4,
         h = 4;
       const data = new Uint8Array(w * h).fill(3);
-      const noise = new Float32Array(w * h);
-      const levelNorm = new Float32Array(w * h);
-      computeNoiseLevelNorm(data, w, h, noise, levelNorm);
+      const neighborIsolation = new Float32Array(w * h);
+      const levelTone = new Float32Array(w * h);
+      computeNeighborIsolationAndLevelTone(data, w, h, neighborIsolation, levelTone);
       for (let i = 0; i < w * h; i++) {
-        expect(noise[i]).toBe(0);
-        expect(levelNorm[i]).toBeCloseTo(3 / 7);
+        expect(neighborIsolation[i]).toBe(0);
+        expect(levelTone[i]).toBeCloseTo(3 / 7);
       }
     });
 
-    it("detects noise at boundaries", () => {
+    it("detects neighborIsolation at boundaries", () => {
       // 2x2 image: top-left=0, others=7
       const data = new Uint8Array([0, 7, 7, 7]);
-      const noise = new Float32Array(4);
-      const levelNorm = new Float32Array(4);
-      computeNoiseLevelNorm(data, 2, 2, noise, levelNorm);
+      const neighborIsolation = new Float32Array(4);
+      const levelTone = new Float32Array(4);
+      computeNeighborIsolationAndLevelTone(data, 2, 2, neighborIsolation, levelTone);
       // pixel (0,0) has 2 neighbors different (right and below), out of 4 possible
-      expect(noise[0]).toBe(0.5); // 2/4 neighbors different
-      expect(levelNorm[0]).toBe(0);
-      expect(levelNorm[1]).toBe(1);
+      expect(neighborIsolation[0]).toBe(0.5); // 2/4 neighbors different
+      expect(levelTone[0]).toBe(0);
+      expect(levelTone[1]).toBe(1);
     });
   });
 
-  describe("computeDiversity", () => {
+  describe("computeLocalDiversity", () => {
     it("returns zero diversity for uniform image", () => {
       const w = 5,
         h = 5;
       const data = new Uint8Array(w * h).fill(2);
       const diversity = new Float32Array(w * h);
-      computeDiversity(data, w, h, diversity);
+      computeLocalDiversity(data, w, h, diversity);
       for (let i = 0; i < w * h; i++) {
         expect(diversity[i]).toBe(0);
       }
@@ -52,7 +58,7 @@ describe("pixel-analysis", () => {
         }
       }
       const diversity = new Float32Array(w * h);
-      computeDiversity(data, w, h, diversity);
+      computeLocalDiversity(data, w, h, diversity);
       // Center pixel (2,2) should see both levels → diversity > 0
       expect(diversity[2 * w + 2]).toBeGreaterThan(0);
     });
@@ -103,10 +109,10 @@ describe("pixel-analysis", () => {
       const w = 4,
         h = 4;
       const data = new Uint8Array(w * h).fill(3);
-      const levelNorm = new Float32Array(w * h);
+      const levelTone = new Float32Array(w * h);
       const gradientAngle = new Float32Array(w * h);
       const gradientMagnitude = new Float32Array(w * h);
-      computeGradient(data, w, h, levelNorm, gradientAngle, gradientMagnitude);
+      computeGradient(data, w, h, levelTone, gradientAngle, gradientMagnitude);
       for (let i = 0; i < w * h; i++) {
         expect(gradientMagnitude[i]).toBe(0);
       }
@@ -115,25 +121,25 @@ describe("pixel-analysis", () => {
     it("detects horizontal gradient", () => {
       // 4x1 image: [0, 2, 5, 7]
       const data = new Uint8Array([0, 2, 5, 7]);
-      const levelNorm = new Float32Array(4);
+      const levelTone = new Float32Array(4);
       const gradientAngle = new Float32Array(4);
       const gradientMagnitude = new Float32Array(4);
-      computeGradient(data, 4, 1, levelNorm, gradientAngle, gradientMagnitude);
+      computeGradient(data, 4, 1, levelTone, gradientAngle, gradientMagnitude);
       // Interior pixels should have non-zero gradient magnitude
       expect(gradientMagnitude[1]).toBeGreaterThan(0);
       expect(gradientMagnitude[2]).toBeGreaterThan(0);
     });
 
-    it("populates levelNorm even when the first pixel is black", () => {
+    it("populates levelTone even when the first pixel is black", () => {
       const data = new Uint8Array([0, 2, 5, 7]);
-      const levelNorm = new Float32Array(4);
+      const levelTone = new Float32Array(4);
       const gradientAngle = new Float32Array(4);
       const gradientMagnitude = new Float32Array(4);
-      computeGradient(data, 4, 1, levelNorm, gradientAngle, gradientMagnitude);
-      expect(levelNorm[0]).toBe(0);
-      expect(levelNorm[1]).toBeCloseTo(2 / 7);
-      expect(levelNorm[2]).toBeCloseTo(5 / 7);
-      expect(levelNorm[3]).toBe(1);
+      computeGradient(data, 4, 1, levelTone, gradientAngle, gradientMagnitude);
+      expect(levelTone[0]).toBe(0);
+      expect(levelTone[1]).toBeCloseTo(2 / 7);
+      expect(levelTone[2]).toBeCloseTo(5 / 7);
+      expect(levelTone[3]).toBe(1);
     });
   });
 

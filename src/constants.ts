@@ -1,8 +1,8 @@
 /* ═══════════════════════════════════════════
    CONSTANTS
    ═══════════════════════════════════════════ */
-export const W0 = 320,
-  H0 = 320;
+export const DEFAULT_CANVAS_WIDTH = 320,
+  DEFAULT_CANVAS_HEIGHT = 320;
 export const MAX_UNDO = 40;
 export const DISPLAY_MIN = 280;
 export const DISPLAY_MAX_LIMIT = 1600;
@@ -58,6 +58,6 @@ export function isAllowedCanvasSize(w: number, h: number): boolean {
 
 export function defaultBrushSizeForCanvas(w: number, h: number): number {
   const shortEdge = Math.max(1, Math.min(w, h));
-  const size = Math.round((shortEdge * DEFAULT_BRUSH_SIZE) / W0);
+  const size = Math.round((shortEdge * DEFAULT_BRUSH_SIZE) / DEFAULT_CANVAS_WIDTH);
   return Math.max(BRUSH_MIN, Math.min(BRUSH_MAX, size));
 }

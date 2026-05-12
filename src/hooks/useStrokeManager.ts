@@ -15,38 +15,38 @@ import type { DirtyRect, Point, StrokeState, Diff } from "../types";
 /* ── Buffer pool management ────────────────── */
 
 export interface BufferPool {
-  pre: Uint8Array | null;
-  buf: Uint8Array | null;
+  beforeData: Uint8Array | null;
+  workingData: Uint8Array | null;
   size: number;
 }
 
-/** Allocate or reuse pre/buf from pool. Copies `data` into both. */
-export function allocateStrokeBuffers(pool: BufferPool, data: Uint8Array): { pre: Uint8Array; buf: Uint8Array } {
-  const n = data.length;
-  if (!pool.pre || !pool.buf || pool.size !== n) {
-    pool.pre = new Uint8Array(n);
-    pool.buf = new Uint8Array(n);
+/** Allocate or reuse before/working buffers from pool. Copies `levelData` into both. */
+export function allocateStrokeBuffers(pool: BufferPool, levelData: Uint8Array): { beforeData: Uint8Array; workingData: Uint8Array } {
+  const n = levelData.length;
+  if (!pool.beforeData || !pool.workingData || pool.size !== n) {
+    pool.beforeData = new Uint8Array(n);
+    pool.workingData = new Uint8Array(n);
     pool.size = n;
   }
-  pool.pre.set(data);
-  pool.buf.set(data);
-  return { pre: pool.pre, buf: pool.buf };
+  pool.beforeData.set(levelData);
+  pool.workingData.set(levelData);
+  return { beforeData: pool.beforeData, workingData: pool.workingData };
 }
 
 /* ── Stroke state creation ─────────────────── */
 
 /** Create a new StrokeState for the given tool/params/position. */
 export function createStrokeState(
-  buf: Uint8Array,
-  pre: Uint8Array,
+  workingData: Uint8Array,
+  beforeData: Uint8Array,
   tool: ToolId,
   brushLevel: number,
   brushSize: number,
   startPos: Point,
 ): StrokeState {
   return {
-    buf,
-    pre,
+    workingData,
+    beforeData,
     params: { tool, brushLevel, brushSize },
     shapeStart: startPos,
     prevShapeBBox: null,
@@ -58,7 +58,7 @@ export function createStrokeState(
 
 /** Apply brush/eraser paint between two points. Returns dirty rect. */
 export function applyBrushStroke(
-  buf: Uint8Array,
+  workingData: Uint8Array,
   last: Point,
   current: Point,
   brushSize: number,
@@ -67,7 +67,7 @@ export function applyBrushStroke(
   h: number,
 ): DirtyRect | null {
   const mask = getBrushMask(brushSize);
-  paintBrushLine(buf, last.x, last.y, current.x, current.y, mask, level, w, h);
+  paintBrushLine(workingData, last.x, last.y, current.x, current.y, mask, level, w, h);
   return brushMaskBBox(
     [
       [last.x, last.y],
@@ -80,18 +80,25 @@ export function applyBrushStroke(
 }
 
 /** Apply initial brush dot at a single point. Returns dirty rect. */
-export function applyBrushDot(buf: Uint8Array, pos: Point, brushSize: number, level: number, w: number, h: number): DirtyRect | null {
+export function applyBrushDot(
+  workingData: Uint8Array,
+  pos: Point,
+  brushSize: number,
+  level: number,
+  w: number,
+  h: number,
+): DirtyRect | null {
   const mask = getBrushMask(brushSize);
-  paintBrush(buf, pos.x, pos.y, mask, level, w, h);
+  paintBrush(workingData, pos.x, pos.y, mask, level, w, h);
   return brushMaskBBox([[pos.x, pos.y]], mask, w, h);
 }
 
 /* ── Shape stroke application ──────────────── */
 
-/** Apply shape tool stroke with restore from pre-buffer. Returns new bboxes. */
+/** Apply shape tool stroke with restore from beforeData. Returns new bboxes. */
 export function applyShapeStroke(
-  buf: Uint8Array,
-  pre: Uint8Array,
+  workingData: Uint8Array,
+  beforeData: Uint8Array,
   tool: string,
   origin: Point,
   current: Point,
@@ -104,14 +111,14 @@ export function applyShapeStroke(
   const mask = getBrushMask(brushSize);
   const newBB = shapeMaskBBox(origin.x, origin.y, current.x, current.y, mask, w, h);
   const dirtyBB = unionBBox(prevBBox, newBB);
-  if (dirtyBB) restoreRect(buf, pre, w, dirtyBB);
-  BRUSH_SHAPE_PAINTERS[tool]?.(buf, origin.x, origin.y, current.x, current.y, mask, level, w, h);
+  if (dirtyBB) restoreRect(workingData, beforeData, w, dirtyBB);
+  BRUSH_SHAPE_PAINTERS[tool]?.(workingData, origin.x, origin.y, current.x, current.y, mask, level, w, h);
   return { shapeBBox: newBB, dirtyBBox: dirtyBB };
 }
 
 /** Apply initial shape dot (origin === current). Returns bbox. */
 export function applyShapeDot(
-  buf: Uint8Array,
+  workingData: Uint8Array,
   tool: string,
   pos: Point,
   brushSize: number,
@@ -120,7 +127,7 @@ export function applyShapeDot(
   h: number,
 ): DirtyRect | null {
   const mask = getBrushMask(brushSize);
-  BRUSH_SHAPE_PAINTERS[tool]?.(buf, pos.x, pos.y, pos.x, pos.y, mask, level, w, h);
+  BRUSH_SHAPE_PAINTERS[tool]?.(workingData, pos.x, pos.y, pos.x, pos.y, mask, level, w, h);
   return shapeMaskBBox(pos.x, pos.y, pos.x, pos.y, mask, w, h);
 }
 
@@ -135,9 +142,9 @@ export function resolveLevel(tool: ToolId, brushLevel: number): number {
 export { isShapeTool };
 
 /** Compute the diff from a completed stroke. Returns null if no changes. */
-export function computeStrokeResult(pre: Uint8Array, buf: Uint8Array, fillChanged: Uint32Array | null): Diff | null {
+export function computeStrokeResult(beforeData: Uint8Array, workingData: Uint8Array, fillChanged: Uint32Array | null): Diff | null {
   if (fillChanged) {
-    return buildDiffFromFill(pre, buf, fillChanged);
+    return buildDiffFromFill(beforeData, workingData, fillChanged);
   }
-  return computeDiff(pre, buf);
+  return computeDiff(beforeData, workingData);
 }

@@ -8,22 +8,22 @@ describe("generateAllVariants", () => {
   const noneLocked = [false, false, false, false, false, false, false, false];
 
   it("returns single variant when all locked", () => {
-    const hist = [100, 100, 100, 100, 100, 100, 100, 100];
-    const result = generateAllVariants(defaultCc, allLocked, hist);
+    const levelHistogram = [100, 100, 100, 100, 100, 100, 100, 100];
+    const result = generateAllVariants(defaultCc, allLocked, levelHistogram);
     expect(result).toHaveLength(1);
   });
 
   it("returns single variant when all histogram counts are zero", () => {
-    const hist = [0, 0, 0, 0, 0, 0, 0, 0];
-    const result = generateAllVariants(defaultCc, noneLocked, hist);
+    const levelHistogram = [0, 0, 0, 0, 0, 0, 0, 0];
+    const result = generateAllVariants(defaultCc, noneLocked, levelHistogram);
     expect(result).toHaveLength(1);
   });
 
   it("generates multiple variants for unlocked levels with candidates", () => {
     // Level 0 (Black) has 1 candidate, so it contributes 1
     // Most levels have multiple candidates
-    const hist = [100, 100, 0, 0, 0, 0, 0, 0];
-    const result = generateAllVariants(defaultCc, noneLocked, hist);
+    const levelHistogram = [100, 100, 0, 0, 0, 0, 0, 0];
+    const result = generateAllVariants(defaultCc, noneLocked, levelHistogram);
     expect(result.length).toBeGreaterThan(0);
     // All variants should have length 8
     for (const v of result) {
@@ -32,18 +32,18 @@ describe("generateAllVariants", () => {
   });
 
   it("generates the current maximum of 81 variants when all levels are used and unlocked", () => {
-    const hist = [100, 100, 100, 100, 100, 100, 100, 100];
+    const levelHistogram = [100, 100, 100, 100, 100, 100, 100, 100];
     const currentMax = LEVEL_CANDIDATES.reduce((total, candidates) => total * candidates.length, 1);
 
-    const result = generateAllVariants(defaultCc, noneLocked, hist);
+    const result = generateAllVariants(defaultCc, noneLocked, levelHistogram);
 
     expect(currentMax).toBe(81);
     expect(result).toHaveLength(81);
   });
 
   it("variant values are valid indices", () => {
-    const hist = [100, 100, 100, 100, 100, 100, 100, 100];
-    const result = generateAllVariants(defaultCc, noneLocked, hist);
+    const levelHistogram = [100, 100, 100, 100, 100, 100, 100, 100];
+    const result = generateAllVariants(defaultCc, noneLocked, levelHistogram);
     for (const v of result) {
       for (let lv = 0; lv < 8; lv++) {
         expect(v[lv]).toBeGreaterThanOrEqual(0);

@@ -13,15 +13,15 @@ import { getFullStatusText, getVisibleStatusText, type StatusText, useCompactSta
 
 interface HexPanelProps {
   hexPrvRef: React.RefObject<HTMLCanvasElement | null>;
-  cvs: CanvasData;
+  canvasData: CanvasData;
   displayW: number;
   displayH: number;
-  colorChoiceIndices: readonly number[];
-  colorChoiceDispatch: React.Dispatch<ColorAction>;
-  hist: number[];
+  candidateIndexByLevel: readonly number[];
+  candidateIndexDispatch: React.Dispatch<ColorAction>;
+  levelHistogram: number[];
   total: number;
-  locked: boolean[];
-  toggleLock: (levelIndex: number) => void;
+  lockedLevels: boolean[];
+  toggleLevelLock: (levelIndex: number) => void;
   handleRandomize: () => void;
   handleUnlockAll: () => void;
   canRandomize: boolean;
@@ -45,15 +45,15 @@ const S_UNLOCK_ALL_BUTTON: React.CSSProperties = {
 export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
   const {
     hexPrvRef,
-    cvs,
+    canvasData,
     displayW,
     displayH,
-    colorChoiceIndices,
-    colorChoiceDispatch,
-    hist,
+    candidateIndexByLevel,
+    candidateIndexDispatch,
+    levelHistogram,
     total,
-    locked,
-    toggleLock,
+    lockedLevels,
+    toggleLevelLock,
     handleRandomize,
     handleUnlockAll,
     canRandomize,
@@ -62,37 +62,37 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
     onPatternClick,
   } = props;
 
-  const hasLocked = useMemo(() => locked.some(Boolean), [locked]);
+  const hasLocked = useMemo(() => lockedLevels.some(Boolean), [lockedLevels]);
   const compactStatus = useCompactStatus();
   const [hoverInfo, setHoverInfo] = useState<StatusText | null>(null);
 
   const handleCanvasPointerMove = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       const rect = e.currentTarget.getBoundingClientRect();
-      if (rect.width === 0 || rect.height === 0 || cvs.w === 0 || cvs.h === 0) {
+      if (rect.width === 0 || rect.height === 0 || canvasData.width === 0 || canvasData.height === 0) {
         setHoverInfo(null);
         return;
       }
-      const x = Math.floor(((e.clientX - rect.left) / rect.width) * cvs.w);
-      const y = Math.floor(((e.clientY - rect.top) / rect.height) * cvs.h);
-      if (x < 0 || x >= cvs.w || y < 0 || y >= cvs.h) {
+      const x = Math.floor(((e.clientX - rect.left) / rect.width) * canvasData.width);
+      const y = Math.floor(((e.clientY - rect.top) / rect.height) * canvasData.height);
+      if (x < 0 || x >= canvasData.width || y < 0 || y >= canvasData.height) {
         setHoverInfo(null);
         return;
       }
-      const lv = cvs.data[y * cvs.w + x] & LEVEL_MASK;
+      const lv = canvasData.levelData[y * canvasData.width + x] & LEVEL_MASK;
       setHoverInfo(
         formatHexPixelStatus({
           x,
           y,
           lv,
-          colorChoiceIndices,
-          hist,
+          candidateIndexByLevel,
+          levelHistogram,
           patternFactor: patternInfo.perLevel[lv] ?? 1,
-          locked: locked[lv] ?? false,
+          isLocked: lockedLevels[lv] ?? false,
         }),
       );
     },
-    [colorChoiceIndices, cvs, hist, locked, patternInfo.perLevel],
+    [candidateIndexByLevel, canvasData, levelHistogram, lockedLevels, patternInfo.perLevel],
   );
 
   const handleCanvasPointerLeave = useCallback(() => setHoverInfo(null), []);
@@ -103,12 +103,12 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const k = e.key;
       if (k >= "2" && k <= "5") {
-        colorChoiceDispatch({ type: "cycle_color", levelIndex: +k, direction: 1 });
+        candidateIndexDispatch({ type: "cycle_color", levelIndex: +k, direction: 1 });
       }
     };
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
-  }, [colorChoiceDispatch]);
+  }, [candidateIndexDispatch]);
 
   return (
     <div style={S_FLEX_COL_CENTER}>
@@ -145,12 +145,12 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
         </div>
         <div className="panel-sidebar">
           <HexDiagram
-            colorChoiceIndices={colorChoiceIndices}
-            dispatch={colorChoiceDispatch}
-            hist={hist}
+            candidateIndexByLevel={candidateIndexByLevel}
+            dispatch={candidateIndexDispatch}
+            levelHistogram={levelHistogram}
             total={total}
-            locked={locked}
-            onToggleLock={toggleLock}
+            lockedLevels={lockedLevels}
+            onToggleLock={toggleLevelLock}
             onRandomize={handleRandomize}
             canRandomize={canRandomize}
           />
@@ -219,7 +219,7 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
               <span />
               {/* spacer for ∏ᵢcᵢ = column */}
               {patternInfo.perLevel.map((_, lv) => {
-                const active = hist[lv] > 0;
+                const active = levelHistogram[lv] > 0;
                 return (
                   <React.Fragment key={"l" + lv}>
                     {lv > 0 && <span />}
@@ -234,9 +234,9 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
               {/* Row 2: Color dots — empty circle if unused */}
               <span />
               {patternInfo.perLevel.map((_, lv) => {
-                const active = hist[lv] > 0;
+                const active = levelHistogram[lv] > 0;
                 const cands = LEVEL_CANDIDATES[lv];
-                const rgb = cands[colorChoiceIndices[lv] % cands.length]?.rgb ?? [128, 128, 128];
+                const rgb = cands[candidateIndexByLevel[lv] % cands.length]?.rgb ?? [128, 128, 128];
                 return (
                   <React.Fragment key={"d" + lv}>
                     {lv > 0 && <span />}
@@ -260,8 +260,8 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
                 {"\u220F\u1D62c\u1D62 ="}
               </span>
               {patternInfo.perLevel.map((c, lv) => {
-                const active = hist[lv] > 0;
-                const mulActive = lv > 0 && hist[lv - 1] > 0 && hist.slice(lv).some((h) => h > 0);
+                const active = levelHistogram[lv] > 0;
+                const mulActive = lv > 0 && levelHistogram[lv - 1] > 0 && levelHistogram.slice(lv).some((h) => h > 0);
                 return (
                   <React.Fragment key={"c" + lv}>
                     {lv > 0 && <span style={{ fontSize: FS.sm, color: mulActive ? C.accentBright : C.textDimmer }}>{"\u00d7"}</span>}

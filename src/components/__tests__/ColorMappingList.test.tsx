@@ -13,7 +13,7 @@ vi.mock("../../i18n", () => ({
 
 function makeProps(overrides?: Partial<Parameters<typeof ColorMappingList>[0]>) {
   return {
-    colorChoiceIndices: [0, 0, 0, 0, 0, 0, 0, 0],
+    candidateIndexByLevel: [0, 0, 0, 0, 0, 0, 0, 0],
     dispatch: vi.fn(),
     brushLevel: 0,
     onSelectLevel: vi.fn(),
@@ -58,8 +58,8 @@ describe("ColorMappingList", () => {
     const edgeCandidateIndex = HEX_CANDIDATE_ANGLES[3].findIndex((angle) => angle === 210);
     expect(edgeCandidateIndex).toBeGreaterThanOrEqual(0);
 
-    const colorChoiceIndices = [0, 0, 0, edgeCandidateIndex, 0, 0, 0, 0];
-    render(<ColorMappingList {...makeProps({ colorChoiceIndices })} />);
+    const candidateIndexByLevel = [0, 0, 0, edgeCandidateIndex, 0, 0, 0, 0];
+    render(<ColorMappingList {...makeProps({ candidateIndexByLevel })} />);
 
     const outputRgb = LEVEL_CANDIDATES[3][edgeCandidateIndex].rgb;
     expect(screen.getByText("⬡300°").style.color).toBe("rgb(255, 0, 255)");

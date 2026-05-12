@@ -68,13 +68,13 @@ export function dirtyFromChanged(changed: Uint32Array, w: number, h: number): Di
   return { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 };
 }
 
-/** buf の bbox 領域のみ pre から復元（row-by-row subarray set） */
-export function restoreRect(buf: Uint8Array, pre: Uint8Array, stride: number, bb: DirtyRect): void {
+/** Restore only the bbox region from beforeData into workingData. */
+export function restoreRect(workingData: Uint8Array, beforeData: Uint8Array, stride: number, bb: DirtyRect): void {
   const x0 = bb.x,
     x1 = bb.x + bb.w,
     y1 = bb.y + bb.h;
   for (let y = bb.y; y < y1; y++) {
     const start = y * stride + x0;
-    buf.set(pre.subarray(start, y * stride + x1), start);
+    workingData.set(beforeData.subarray(start, y * stride + x1), start);
   }
 }

@@ -132,17 +132,24 @@ function scanlineFill(
   return { changed: changed.subarray(0, ci), truncated };
 }
 
-export function floodFill(data: Uint8Array, sx: number, sy: number, newVal: number, w: number, h: number): FloodFillResult | null {
-  const oldVal = data[sy * w + sx];
-  if (oldVal === newVal) return null;
+export function floodFill(
+  levelData: Uint8Array,
+  sx: number,
+  sy: number,
+  targetLevel: number,
+  w: number,
+  h: number,
+): FloodFillResult | null {
+  const sourceLevel = levelData[sy * w + sx];
+  if (sourceLevel === targetLevel) return null;
   return scanlineFill(
     sx,
     sy,
     w,
     h,
-    (idx) => data[idx] === oldVal,
+    (idx) => levelData[idx] === sourceLevel,
     (idx) => {
-      data[idx] = newVal;
+      levelData[idx] = targetLevel;
       return true;
     },
   );
@@ -151,19 +158,19 @@ export function floodFill(data: Uint8Array, sx: number, sy: number, newVal: numb
 /** Reusable visited buffer for glaze flood fill (avoids allocation per fill). */
 let _visitedBuf: Uint8Array | null = null;
 
-/** Glaze flood fill: uses data[] level connectivity, writes to colorMap[]. */
+/** Glaze flood fill: uses levelData[] connectivity and writes per-pixel candidate overrides. */
 export function glazeFloodFill(
-  data: Uint8Array,
-  colorMap: Uint8Array,
+  levelData: Uint8Array,
+  pixelCandidateOverrideMap: Uint8Array,
   sx: number,
   sy: number,
-  newCmVal: number,
+  targetColorOverrideValue: number,
   w: number,
   h: number,
 ): FloodFillResult | null {
   if (sx < 0 || sx >= w || sy < 0 || sy >= h) return null;
   const seedIdx = sy * w + sx;
-  const seedLevel = data[seedIdx] & LEVEL_MASK;
+  const seedLevel = levelData[seedIdx] & LEVEL_MASK;
   const n = w * h;
   if (!_visitedBuf || _visitedBuf.length < n) {
     _visitedBuf = new Uint8Array(n);
@@ -176,11 +183,11 @@ export function glazeFloodFill(
     sy,
     w,
     h,
-    (idx) => !visited[idx] && (data[idx] & LEVEL_MASK) === seedLevel,
+    (idx) => !visited[idx] && (levelData[idx] & LEVEL_MASK) === seedLevel,
     (idx) => {
       visited[idx] = 1;
-      if (colorMap[idx] === newCmVal) return false;
-      colorMap[idx] = newCmVal;
+      if (pixelCandidateOverrideMap[idx] === targetColorOverrideValue) return false;
+      pixelCandidateOverrideMap[idx] = targetColorOverrideValue;
       return true;
     },
   );

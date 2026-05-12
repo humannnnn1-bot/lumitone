@@ -1,12 +1,12 @@
 import { useEffect, useLayoutEffect, useCallback } from "react";
-import { renderBuf } from "../drawing/render-buf";
+import { renderCanvasBuffers } from "../drawing/render-buf";
 import type { CanvasData } from "../types";
 import type { MainTabId } from "../tabs";
 import type { CanvasDrawingResult } from "./useCanvasDrawing";
 import type { GlazeDrawingResult } from "./useGlazeDrawing";
 
 interface CanvasCoordinationOptions {
-  cvs: CanvasData;
+  canvasData: CanvasData;
   colorLUT: [number, number, number][];
   activeTabId: MainTabId;
   drawing: CanvasDrawingResult;
@@ -23,7 +23,7 @@ interface CanvasCoordinationOptions {
 
 export function useCanvasCoordination(opts: CanvasCoordinationOptions): void {
   const {
-    cvs,
+    canvasData,
     colorLUT,
     activeTabId,
     drawing,
@@ -98,13 +98,23 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): void {
   const renderGlazeCanvas = useCallback(() => {
     const gp = glazePrvRef.current;
     if (!gp) return;
-    if (gp.width !== cvs.w || gp.height !== cvs.h) {
-      gp.width = cvs.w;
-      gp.height = cvs.h;
-      glazeDrawing.imgCacheRef.current = { src: null, prv: null, s32: null, p32: null };
+    if (gp.width !== canvasData.width || gp.height !== canvasData.height) {
+      gp.width = canvasData.width;
+      gp.height = canvasData.height;
+      glazeDrawing.imgCacheRef.current = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
     }
-    renderBuf(cvs.data, cvs.w, cvs.h, colorLUT, null, gp, glazeDrawing.imgCacheRef.current, undefined, cvs.colorMap);
-  }, [cvs, colorLUT, glazePrvRef, glazeDrawing.imgCacheRef]);
+    renderCanvasBuffers(
+      canvasData.levelData,
+      canvasData.width,
+      canvasData.height,
+      colorLUT,
+      null,
+      gp,
+      glazeDrawing.imgCacheRef.current,
+      undefined,
+      canvasData.pixelCandidateOverrideMap,
+    );
+  }, [canvasData, colorLUT, glazePrvRef, glazeDrawing.imgCacheRef]);
 
   // Render buffer on state change
   useLayoutEffect(() => {
@@ -114,33 +124,34 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): void {
       hp = hexPrvRef.current;
     if (!s && !p && !hp) return;
     let needReset = false;
-    if (s && (s.width !== cvs.w || s.height !== cvs.h)) {
-      s.width = cvs.w;
-      s.height = cvs.h;
+    if (s && (s.width !== canvasData.width || s.height !== canvasData.height)) {
+      s.width = canvasData.width;
+      s.height = canvasData.height;
       needReset = true;
     }
-    if (p && (p.width !== cvs.w || p.height !== cvs.h)) {
-      p.width = cvs.w;
-      p.height = cvs.h;
+    if (p && (p.width !== canvasData.width || p.height !== canvasData.height)) {
+      p.width = canvasData.width;
+      p.height = canvasData.height;
       needReset = true;
     }
-    if (hp && (hp.width !== cvs.w || hp.height !== cvs.h)) {
-      hp.width = cvs.w;
-      hp.height = cvs.h;
+    if (hp && (hp.width !== canvasData.width || hp.height !== canvasData.height)) {
+      hp.width = canvasData.width;
+      hp.height = canvasData.height;
     }
-    if (needReset) drawing.imgCacheRef.current = { src: null, prv: null, s32: null, p32: null };
+    if (needReset)
+      drawing.imgCacheRef.current = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
     const previewCanvas = p || hp;
-    renderBuf(cvs.data, cvs.w, cvs.h, colorLUT, s, previewCanvas, drawing.imgCacheRef.current);
+    renderCanvasBuffers(canvasData.levelData, canvasData.width, canvasData.height, colorLUT, s, previewCanvas, drawing.imgCacheRef.current);
     if (hp && p) {
       const hctx = hp.getContext("2d");
-      if (hctx && drawing.imgCacheRef.current.prv) {
-        hctx.putImageData(drawing.imgCacheRef.current.prv, 0, 0);
+      if (hctx && drawing.imgCacheRef.current.previewImageData) {
+        hctx.putImageData(drawing.imgCacheRef.current.previewImageData, 0, 0);
       }
     }
     // Also render glaze tab canvas (may be null if tab not mounted yet)
     renderGlazeCanvas();
     // eslint-disable-next-line react-hooks/exhaustive-deps -- refs are stable, renderGlazeCanvas captured via closure
-  }, [cvs, colorLUT, activeTabId]);
+  }, [canvasData, colorLUT, activeTabId]);
 
   // Glaze tab effect
   useEffect(() => {

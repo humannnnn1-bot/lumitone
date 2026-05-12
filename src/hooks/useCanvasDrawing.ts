@@ -14,7 +14,7 @@ import {
   isShapeTool,
 } from "./useStrokeManager";
 import { useFloodFillWorker } from "./useFloodFillWorker";
-import { renderBuf } from "../drawing/render-buf";
+import { renderCanvasBuffers } from "../drawing/render-buf";
 import { formatColorPixelStatus, formatSourcePixelStatus } from "../utils/pixel-status";
 import type { BufferPool } from "./useStrokeManager";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
@@ -59,10 +59,10 @@ export interface CanvasDrawingResult {
 }
 
 interface CanvasDrawingOptions {
-  cvs: CanvasData;
+  canvasData: CanvasData;
   dispatch: React.Dispatch<CanvasAction>;
   colorLUT: [number, number, number][];
-  colorChoiceIndices: readonly number[];
+  candidateIndexByLevel: readonly number[];
   brushLevel: number;
   brushSize: number;
   tool: ToolId;
@@ -73,16 +73,16 @@ interface CanvasDrawingOptions {
 type CanvasStatusMode = "source" | "color";
 
 export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResult {
-  const { cvs, dispatch, colorLUT, colorChoiceIndices, brushLevel, brushSize, tool, prvRef, setBrushLevel } = opts;
+  const { canvasData, dispatch, colorLUT, candidateIndexByLevel, brushLevel, brushSize, tool, prvRef, setBrushLevel } = opts;
   const ctx = useDrawingContext();
   const { displayW, displayH, panningRef, spaceRef, zoomRef, panRef, startPan, movePan, endPan, announce, t } = ctx;
   const srcRef = useRef<HTMLCanvasElement | null>(null);
   const statusRef = useRef<HTMLDivElement | null>(null);
-  const imgCacheRef = useRef<ImgCache>({ src: null, prv: null, s32: null, p32: null });
+  const imgCacheRef = useRef<ImgCache>({ sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null });
   const strokeRef = useRef<StrokeState | null>(null);
   const drawingRef = useRef(false);
-  // Buffer pool: reuse pre/buf allocations across strokes
-  const bufPoolRef = useRef<BufferPool>({ pre: null, buf: null, size: 0 });
+  // Buffer pool: reuse before/working allocations across strokes
+  const strokeBufferPoolRef = useRef<BufferPool>({ beforeData: null, workingData: null, size: 0 });
   const lastRef = useRef<{ x: number; y: number } | null>(null);
   const strokeSmootherRef = useRef<StrokeSmoother | null>(null);
   const forceRawNextMoveRef = useRef(false);
@@ -90,12 +90,12 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
   const paintRafRef = useRef<number | null>(null);
   const pendingPaintDirtyRef = useRef<DirtyRect | null>(null);
   const paintFrameRef = useRef<{
-    buf: Uint8Array;
+    levelData: Uint8Array;
     w: number;
     h: number;
     lut: [number, number, number][];
-    srcCanvas: HTMLCanvasElement | null;
-    prvCanvas: HTMLCanvasElement | null;
+    sourceCanvas: HTMLCanvasElement | null;
+    previewCanvas: HTMLCanvasElement | null;
     imgCache: ImgCache;
   } | null>(null);
   const fillPendingRef = useRef(false);
@@ -111,12 +111,12 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
   // Refs needed by useCursorOverlay (individual for interface compatibility)
   const brushSizeRef = useSyncRef(brushSize);
   const toolRef = useSyncRef(tool);
-  const cvsRef = useSyncRef(cvs);
+  const cvsRef = useSyncRef(canvasData);
   const displayWRef = useSyncRef(displayW);
   const displayHRef = useSyncRef(displayH);
 
   // Batch-sync remaining values used in imperative callbacks
-  const s = useSyncRefs({ colorChoiceIndices, brushLevel, colorLUT, startPan, movePan, endPan, setBrushLevel, announce, t });
+  const s = useSyncRefs({ candidateIndexByLevel, brushLevel, colorLUT, startPan, movePan, endPan, setBrushLevel, announce, t });
 
   // Cursor overlay sub-hook
   const cursor = useCursorOverlay({ zoomRef, panRef, cvsRef, displayWRef, displayHRef, panningRef, brushSizeRef, toolRef }, statusRef);
@@ -141,24 +141,24 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
   }
 
   function updateStatus(e: React.PointerEvent, refEl: HTMLCanvasElement | null, mode: CanvasStatusMode) {
-    const d = drawingRef.current && strokeRef.current?.buf ? strokeRef.current.buf : cvsRef.current.data;
+    const d = drawingRef.current && strokeRef.current?.workingData ? strokeRef.current.workingData : cvsRef.current.levelData;
     const statusCanvas = refEl ?? activeCanvasRef.current ?? (mode === "color" ? cursor.prvCurRef.current : cursor.curRef.current);
     updateStatusBase(e, statusRef.current, statusCanvas, drawRefs, d, (pos, lv) =>
       mode === "source"
         ? formatSourcePixelStatus({ x: pos.x, y: pos.y, lv })
-        : formatColorPixelStatus({ x: pos.x, y: pos.y, lv, colorChoiceIndices: s.current.colorChoiceIndices }),
+        : formatColorPixelStatus({ x: pos.x, y: pos.y, lv, candidateIndexByLevel: s.current.candidateIndexByLevel }),
     );
   }
 
-  function queueBrushRender(buf: Uint8Array, W: number, H: number, dirtyBB: DirtyRect) {
+  function queueBrushRender(levelData: Uint8Array, W: number, H: number, dirtyBB: DirtyRect) {
     pendingPaintDirtyRef.current = unionBBox(pendingPaintDirtyRef.current, dirtyBB);
     paintFrameRef.current = {
-      buf,
+      levelData,
       w: W,
       h: H,
       lut: s.current.colorLUT,
-      srcCanvas: srcRef.current,
-      prvCanvas: prvRef.current,
+      sourceCanvas: srcRef.current,
+      previewCanvas: prvRef.current,
       imgCache: imgCacheRef.current,
     };
 
@@ -171,7 +171,16 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
       pendingPaintDirtyRef.current = null;
       paintFrameRef.current = null;
       if (dirtySnap && frame) {
-        renderBuf(frame.buf, frame.w, frame.h, frame.lut, frame.srcCanvas, frame.prvCanvas, frame.imgCache, dirtySnap);
+        renderCanvasBuffers(
+          frame.levelData,
+          frame.w,
+          frame.h,
+          frame.lut,
+          frame.sourceCanvas,
+          frame.previewCanvas,
+          frame.imgCache,
+          dirtySnap,
+        );
       }
     });
   }
@@ -185,8 +194,8 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     if (buttonOverride === undefined && (button === 2 || (button === 0 && e.altKey))) {
       const pos = cPos(e, refEl);
       const cv = cvsRef.current;
-      if (pos.x >= 0 && pos.x < cv.w && pos.y >= 0 && pos.y < cv.h) {
-        const lv = cv.data[pos.y * cv.w + pos.x] & LEVEL_MASK;
+      if (pos.x >= 0 && pos.x < cv.width && pos.y >= 0 && pos.y < cv.height) {
+        const lv = cv.levelData[pos.y * cv.width + pos.x] & LEVEL_MASK;
         s.current.setBrushLevel(lv);
         const info = LEVEL_INFO[lv];
         s.current.announce(s.current.t("announce_level", lv, info.name));
@@ -207,28 +216,28 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     strokeSmootherRef.current = curTool === "fill" || isShapeTool(curTool) ? null : createStrokeSmoother(pos);
     forceRawNextMoveRef.current = startPos !== undefined && !isCanvasPointInBounds(startPos, cvsRef.current);
     const cv = cvsRef.current;
-    const { pre, buf } = allocateStrokeBuffers(bufPoolRef.current, cv.data);
-    strokeRef.current = createStrokeState(buf, pre, curTool, curBL, curBS, pos);
+    const { beforeData, workingData } = allocateStrokeBuffers(strokeBufferPoolRef.current, cv.levelData);
+    strokeRef.current = createStrokeState(workingData, beforeData, curTool, curBL, curBS, pos);
     const lv = resolveLevel(curTool, curBL);
-    const W = cv.w,
-      H = cv.h;
+    const W = cv.width,
+      H = cv.height;
 
     if (curTool === "fill") {
       fillPendingRef.current = true;
       floodFillWorker
-        .requestCanvasFill(buf, pos.x, pos.y, lv, W, H)
+        .requestCanvasFill(workingData, pos.x, pos.y, lv, W, H)
         .then((res) => {
           const st = strokeRef.current;
           if (!st) {
             fillPendingRef.current = false;
             return;
           }
-          st.buf.set(res.data);
+          st.workingData.set(res.levelData);
           if (res.changed.length > 0) {
             st.fillChanged = res.changed;
             if (res.truncated) s.current.announce(s.current.t("toast_fill_truncated"));
           }
-          renderBuf(st.buf, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current);
+          renderCanvasBuffers(st.workingData, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current);
           fillPendingRef.current = false;
           if (pendingUpRef.current) {
             pendingUpRef.current = false;
@@ -245,13 +254,13 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
         });
       return;
     } else if (isShapeTool(curTool)) {
-      const bb = applyShapeDot(buf, curTool, pos, curBS, lv, W, H);
+      const bb = applyShapeDot(workingData, curTool, pos, curBS, lv, W, H);
       strokeRef.current.prevShapeBBox = bb;
-      if (bb) renderBuf(buf, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, bb);
+      if (bb) renderCanvasBuffers(workingData, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, bb);
     } else {
       const effectiveBrushSize = pressureAdjustedBrushSize(curBS, e.nativeEvent);
-      const dirtyBB = applyBrushDot(buf, pos, effectiveBrushSize, lv, W, H);
-      if (dirtyBB) renderBuf(buf, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB);
+      const dirtyBB = applyBrushDot(workingData, pos, effectiveBrushSize, lv, W, H);
+      if (dirtyBB) renderCanvasBuffers(workingData, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB);
     }
   }
 
@@ -351,18 +360,18 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
     if (!st || st.params.tool === "fill") return;
     e.preventDefault();
     const sp = st.params;
-    const buf = st.buf;
+    const workingData = st.workingData;
     const lv = resolveLevel(sp.tool, sp.brushLevel);
     const cv = cvsRef.current;
-    const W = cv.w,
-      H = cv.h;
+    const W = cv.width,
+      H = cv.height;
 
     if (isShapeTool(sp.tool)) {
       const pos = canvasPosUnclamped(e, canvasEl, zoomRef.current, panRef.current, cv);
       const origin = st.shapeStart || pos;
       const { shapeBBox: newBB, dirtyBBox: dirtyBB } = applyShapeStroke(
-        buf,
-        st.pre,
+        workingData,
+        st.beforeData,
         sp.tool,
         origin,
         pos,
@@ -374,7 +383,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
       );
       st.prevShapeBBox = newBB;
       lastRef.current = pos;
-      renderBuf(buf, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB);
+      renderCanvasBuffers(workingData, W, H, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current, dirtyBB);
       return;
     }
 
@@ -399,7 +408,9 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
         strokeSmootherRef.current.y = raw.y;
       }
       const effectiveBrushSize = pressureAdjustedBrushSize(sp.brushSize, ev);
-      const bb = last ? applyBrushStroke(buf, last, p, effectiveBrushSize, lv, W, H) : applyBrushDot(buf, p, effectiveBrushSize, lv, W, H);
+      const bb = last
+        ? applyBrushStroke(workingData, last, p, effectiveBrushSize, lv, W, H)
+        : applyBrushDot(workingData, p, effectiveBrushSize, lv, W, H);
       dirtyBB = unionBBox(dirtyBB, bb);
       last = p;
     }
@@ -407,7 +418,7 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
 
     if (!dirtyBB) return;
 
-    queueBrushRender(buf, W, H, dirtyBB);
+    queueBrushRender(workingData, W, H, dirtyBB);
   }
 
   const onDown = useCallback((e: React.PointerEvent) => {
@@ -445,13 +456,21 @@ export function useCanvasDrawing(opts: CanvasDrawingOptions): CanvasDrawingResul
       paintFrameRef.current = null;
       const st2 = strokeRef.current;
       if (st2)
-        renderBuf(st2.buf, cvsRef.current.w, cvsRef.current.h, s.current.colorLUT, srcRef.current, prvRef.current, imgCacheRef.current);
+        renderCanvasBuffers(
+          st2.workingData,
+          cvsRef.current.width,
+          cvsRef.current.height,
+          s.current.colorLUT,
+          srcRef.current,
+          prvRef.current,
+          imgCacheRef.current,
+        );
     }
     const st = strokeRef.current;
     if (drawingRef.current && st) {
-      const finalData = new Uint8Array(st.buf);
-      const diff = st.pre ? computeStrokeResult(st.pre, finalData, st.fillChanged) : null;
-      dispatch({ type: "stroke_end", finalData, diff });
+      const finalData = new Uint8Array(st.workingData);
+      const diff = st.beforeData ? computeStrokeResult(st.beforeData, finalData, st.fillChanged) : null;
+      dispatch({ type: "stroke_end", finalLevelData: finalData, diff });
     }
     drawingRef.current = false;
     lastRef.current = null;

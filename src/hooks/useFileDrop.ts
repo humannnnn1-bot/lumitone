@@ -149,7 +149,7 @@ export function useFileDrop(
                 const gray = Math.min(255, Math.round(LUMA_R * px[off] + LUMA_G * px[off + 1] + LUMA_B * px[off + 2]));
                 nd[i] = GRAY_LUT[gray];
               }
-              dispatch({ type: "load_image", w, h, data: nd });
+              dispatch({ type: "load_image", width: w, height: h, levelData: nd });
               setZoom(1);
               setPan({ x: 0, y: 0 });
               debug(`${source} ready: ${iw}x${ih} -> ${w}x${h}`);

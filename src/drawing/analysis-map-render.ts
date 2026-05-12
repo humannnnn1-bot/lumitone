@@ -14,8 +14,8 @@ const MAP_STATUS_LABEL: Record<MapMode, string> = {
   region: "MapRegion",
   gradient: "MapToneGrad",
   boundaryDistance: "MapBoundaryDist",
-  noise: "MapIsolation",
-  entropy: "MapDiversity",
+  isolation: "MapIsolation",
+  diversity: "MapDiversity",
 };
 
 function buildLUT(stops: [number, number, number][]): Uint8Array {
@@ -88,19 +88,19 @@ function candidateLabel(candidate: { ci: number; count: number }): string {
   return `c${candidate.ci + 1}/${candidate.count}`;
 }
 
-function visualKey(cvs: CanvasData, idx: number): number {
-  return ((cvs.data[idx] & LEVEL_MASK) << 8) | (cvs.colorMap[idx] ?? 0);
+function visualKey(canvasData: CanvasData, idx: number): number {
+  return ((canvasData.levelData[idx] & LEVEL_MASK) << 8) | (canvasData.pixelCandidateOverrideMap[idx] ?? 0);
 }
 
-function visualLabel(cvs: CanvasData, colorChoiceIndices: readonly number[], idx: number, lv: number): string {
-  const cm = cvs.colorMap[idx] ?? 0;
-  const candidate = cm > 0 ? resolveCandidate(lv, cm - 1) : resolveCandidate(lv, colorChoiceIndices[lv] ?? 0);
+function visualLabel(canvasData: CanvasData, candidateIndexByLevel: readonly number[], idx: number, lv: number): string {
+  const cm = canvasData.pixelCandidateOverrideMap[idx] ?? 0;
+  const candidate = cm > 0 ? resolveCandidate(lv, cm - 1) : resolveCandidate(lv, candidateIndexByLevel[lv] ?? 0);
   return `${cm > 0 ? "override" : "base"} ${candidateLabel(candidate)} ${hexStr(candidate.rgb)}`;
 }
 
-function compactVisualLabel(cvs: CanvasData, colorChoiceIndices: readonly number[], idx: number, lv: number): string {
-  const cm = cvs.colorMap[idx] ?? 0;
-  const candidate = cm > 0 ? resolveCandidate(lv, cm - 1) : resolveCandidate(lv, colorChoiceIndices[lv] ?? 0);
+function compactVisualLabel(canvasData: CanvasData, candidateIndexByLevel: readonly number[], idx: number, lv: number): string {
+  const cm = canvasData.pixelCandidateOverrideMap[idx] ?? 0;
+  const candidate = cm > 0 ? resolveCandidate(lv, cm - 1) : resolveCandidate(lv, candidateIndexByLevel[lv] ?? 0);
   return `${cm > 0 ? "ovr" : "base"} ${candidateLabel(candidate)}`;
 }
 
@@ -108,26 +108,26 @@ function luma255(rgb: readonly [number, number, number]): number {
   return Math.round(LUMA_R * rgb[0] + LUMA_G * rgb[1] + LUMA_B * rgb[2]);
 }
 
-function gradientVector(cvs: CanvasData, x: number, y: number): { gx: number; gy: number } {
-  const { data, w, h } = cvs;
-  const idx = y * w + x;
-  const center = data[idx] & LEVEL_MASK;
-  const l = x > 0 ? data[idx - 1] & LEVEL_MASK : center;
-  const r = x + 1 < w ? data[idx + 1] & LEVEL_MASK : center;
-  const u = y > 0 ? data[idx - w] & LEVEL_MASK : center;
-  const d = y + 1 < h ? data[idx + w] & LEVEL_MASK : center;
+function gradientVector(canvasData: CanvasData, x: number, y: number): { gx: number; gy: number } {
+  const { levelData, width, height } = canvasData;
+  const idx = y * width + x;
+  const center = levelData[idx] & LEVEL_MASK;
+  const l = x > 0 ? levelData[idx - 1] & LEVEL_MASK : center;
+  const r = x + 1 < width ? levelData[idx + 1] & LEVEL_MASK : center;
+  const u = y > 0 ? levelData[idx - width] & LEVEL_MASK : center;
+  const d = y + 1 < height ? levelData[idx + width] & LEVEL_MASK : center;
   return { gx: r - l, gy: d - u };
 }
 
-function diversityWindowInfo(cvs: CanvasData, x: number, y: number): { keys: number; winW: number; winH: number } {
+function diversityWindowInfo(canvasData: CanvasData, x: number, y: number): { keys: number; winW: number; winH: number } {
   const seen = new Set<number>();
   const x0 = Math.max(0, x - 2);
-  const x1 = Math.min(cvs.w - 1, x + 2);
+  const x1 = Math.min(canvasData.width - 1, x + 2);
   const y0 = Math.max(0, y - 2);
-  const y1 = Math.min(cvs.h - 1, y + 2);
+  const y1 = Math.min(canvasData.height - 1, y + 2);
   for (let ny = y0; ny <= y1; ny++) {
     for (let nx = x0; nx <= x1; nx++) {
-      seen.add(visualKey(cvs, ny * cvs.w + nx));
+      seen.add(visualKey(canvasData, ny * canvasData.width + nx));
     }
   }
   return { keys: seen.size, winW: x1 - x0 + 1, winH: y1 - y0 + 1 };
@@ -250,53 +250,53 @@ export function rasterizeAnalysisMap({
   mode,
   pixelMaps,
   colorLUT,
-  cvs,
+  canvasData,
   target,
   regionSizeById,
 }: {
   mode: MapMode;
   pixelMaps: AnalysisPixelMaps;
   colorLUT: AnalysisColorLUT;
-  cvs: CanvasData;
+  canvasData: CanvasData;
   target: Uint32Array;
   regionSizeById?: Map<number, number>;
 }): AnalysisMapRenderStatus {
-  const w = cvs.w;
-  const h = cvs.h;
+  const w = canvasData.width;
+  const h = canvasData.height;
   const n = w * h;
   target.fill(0);
 
-  if (pixelMaps.w !== w || pixelMaps.h !== h) return "stale";
+  if (pixelMaps.width !== w || pixelMaps.height !== h) return "stale";
 
-  if (mode === "entropy" && pixelMaps.localDiversity.length >= n) {
+  if (mode === "diversity" && pixelMaps.localDiversity.length >= n) {
     for (let i = 0; i < n; i++) {
       target[i] = applyLUTPacked(VIRIDIS, pixelMaps.localDiversity[i]);
     }
-  } else if (mode === "noise" && pixelMaps.noise.length >= n) {
+  } else if (mode === "isolation" && pixelMaps.neighborIsolation.length >= n) {
     for (let i = 0; i < n; i++) {
-      const v = pixelMaps.noise[i];
+      const v = pixelMaps.neighborIsolation[i];
       target[i] = applyLUTPacked(INFERNO, v * v);
     }
   } else if (mode === "boundaryDistance" && pixelMaps.boundaryDistance.length >= n) {
     for (let i = 0; i < n; i++) {
       target[i] = applyLUTPacked(TURBO, 1 - pixelMaps.boundaryDistance[i]);
     }
-  } else if (mode === "luminance" && pixelMaps.levelNorm.length >= n) {
+  } else if (mode === "luminance" && pixelMaps.levelTone.length >= n) {
     for (let i = 0; i < n; i++) {
-      target[i] = applyLUTPacked(MAGMA, pixelMaps.levelNorm[i]);
+      target[i] = applyLUTPacked(MAGMA, pixelMaps.levelTone[i]);
     }
   } else if (mode === "colorLuma") {
     for (let i = 0; i < n; i++) {
-      const lv = cvs.data[i] & LEVEL_MASK;
+      const lv = canvasData.levelData[i] & LEVEL_MASK;
       const rgb = colorLUT[lv];
       const lumVal = (LUMA_R * rgb[0] + LUMA_G * rgb[1] + LUMA_B * rgb[2]) / 255;
       target[i] = applyLUTPacked(INFERNO, lumVal);
     }
-  } else if (mode === "gradient" && pixelMaps.gradientMagnitude.length >= n && pixelMaps.levelNorm.length >= n) {
+  } else if (mode === "gradient" && pixelMaps.gradientMagnitude.length >= n && pixelMaps.levelTone.length >= n) {
     for (let i = 0; i < n; i++) {
       const mag = pixelMaps.gradientMagnitude[i];
       if (mag < 0.01) {
-        const g = (pixelMaps.levelNorm[i] * 30 + 8) | 0;
+        const g = (pixelMaps.levelTone[i] * 30 + 8) | 0;
         target[i] = packRgb(g, g, g);
         continue;
       }
@@ -329,9 +329,9 @@ export function rasterizeAnalysisMap({
   return "rendered";
 }
 
-export function buildRegionSizeMap(pixelMaps: Pick<AnalysisPixelMaps, "regionId" | "w" | "h">): Map<number, number> {
+export function buildRegionSizeMap(pixelMaps: Pick<AnalysisPixelMaps, "regionId" | "width" | "height">): Map<number, number> {
   const sizes = new Map<number, number>();
-  for (let i = 0; i < pixelMaps.w * pixelMaps.h; i++) {
+  for (let i = 0; i < pixelMaps.width * pixelMaps.height; i++) {
     const id = pixelMaps.regionId[i];
     sizes.set(id, (sizes.get(id) || 0) + 1);
   }
@@ -344,8 +344,8 @@ export function getAnalysisMapHoverInfo({
   mode,
   pixelMaps,
   colorLUT,
-  colorChoiceIndices,
-  cvs,
+  candidateIndexByLevel,
+  canvasData,
   regionSizeById,
 }: {
   x: number;
@@ -353,33 +353,33 @@ export function getAnalysisMapHoverInfo({
   mode: MapMode;
   pixelMaps: AnalysisPixelMaps;
   colorLUT: AnalysisColorLUT;
-  colorChoiceIndices: readonly number[];
-  cvs: CanvasData;
+  candidateIndexByLevel: readonly number[];
+  canvasData: CanvasData;
   regionSizeById: Map<number, number>;
 }): StatusText | null {
-  const w = cvs.w;
-  const h = cvs.h;
+  const w = canvasData.width;
+  const h = canvasData.height;
   if (x < 0 || x >= w || y < 0 || y >= h) return null;
 
   const idx = y * w + x;
-  const lv = cvs.data[idx] & LEVEL_MASK;
+  const lv = canvasData.levelData[idx] & LEVEL_MASK;
   const prefix = `(${x},${y}) ${MAP_STATUS_LABEL[mode]} L${lv}`;
   const compactPrefix = `(${x},${y}) ${MAP_STATUS_LABEL[mode].replace("Map", "")} L${lv}`;
   const needsComputedMap = mode !== "luminance" && mode !== "colorLuma";
-  if (needsComputedMap && (pixelMaps.w !== w || pixelMaps.h !== h))
+  if (needsComputedMap && (pixelMaps.width !== w || pixelMaps.height !== h))
     return { full: `${prefix} pending`, compact: `${compactPrefix} pending` };
 
-  if (mode === "entropy") {
-    const { keys, winW, winH } = diversityWindowInfo(cvs, x, y);
+  if (mode === "diversity") {
+    const { keys, winW, winH } = diversityWindowInfo(canvasData, x, y);
     const score = valueAt(pixelMaps.localDiversity, idx);
     return {
-      full: `${prefix} ${visualLabel(cvs, colorChoiceIndices, idx, lv)} win=${winW}x${winH} keys=${keys} score=${pct(score)}`,
-      compact: `${compactPrefix} ${compactVisualLabel(cvs, colorChoiceIndices, idx, lv)} keys=${keys} score=${pct(score)}`,
+      full: `${prefix} ${visualLabel(canvasData, candidateIndexByLevel, idx, lv)} win=${winW}x${winH} keys=${keys} score=${pct(score)}`,
+      compact: `${compactPrefix} ${compactVisualLabel(canvasData, candidateIndexByLevel, idx, lv)} keys=${keys} score=${pct(score)}`,
     };
   } else if (mode === "gradient") {
     const mag = valueAt(pixelMaps.gradientMagnitude, idx);
     const deg = Math.round((((valueAt(pixelMaps.gradientAngle, idx) + Math.PI) / (2 * Math.PI)) * 360 + 360) % 360);
-    const { gx, gy } = gradientVector(cvs, x, y);
+    const { gx, gy } = gradientVector(canvasData, x, y);
     return {
       full: `${prefix} g=(${signedInt(gx)},${signedInt(gy)}) dir=${deg}\u00B0 mag=${pct(mag)} ${mag < 0.01 ? "flat" : "slope"}`,
       compact: `${compactPrefix} g=(${signedInt(gx)},${signedInt(gy)}) ${deg}\u00B0 ${pct(mag)}`,
@@ -389,15 +389,15 @@ export function getAnalysisMapHoverInfo({
     const isEdge = valueAt(pixelMaps.isEdge, idx) > 0;
     const zone = isEdge ? "edge" : raw < 0.5 ? "near" : "core";
     return {
-      full: `${prefix} ${visualLabel(cvs, colorChoiceIndices, idx, lv)} distance=${pct(raw)} ${zone}`,
-      compact: `${compactPrefix} ${compactVisualLabel(cvs, colorChoiceIndices, idx, lv)} d=${pct(raw)} ${zone}`,
+      full: `${prefix} ${visualLabel(canvasData, candidateIndexByLevel, idx, lv)} distance=${pct(raw)} ${zone}`,
+      compact: `${compactPrefix} ${compactVisualLabel(canvasData, candidateIndexByLevel, idx, lv)} d=${pct(raw)} ${zone}`,
     };
-  } else if (mode === "noise") {
-    const score = valueAt(pixelMaps.noise, idx);
+  } else if (mode === "isolation") {
+    const score = valueAt(pixelMaps.neighborIsolation, idx);
     const unlike = Math.round(clamp01(score) * 4);
     return {
-      full: `${prefix} ${visualLabel(cvs, colorChoiceIndices, idx, lv)} unlike=${unlike}/4 same=${4 - unlike}/4 score=${pct(score)}`,
-      compact: `${compactPrefix} ${compactVisualLabel(cvs, colorChoiceIndices, idx, lv)} unlike=${unlike}/4 score=${pct(score)}`,
+      full: `${prefix} ${visualLabel(canvasData, candidateIndexByLevel, idx, lv)} unlike=${unlike}/4 same=${4 - unlike}/4 score=${pct(score)}`,
+      compact: `${compactPrefix} ${compactVisualLabel(canvasData, candidateIndexByLevel, idx, lv)} unlike=${unlike}/4 score=${pct(score)}`,
     };
   } else if (mode === "luminance") {
     const g = LEVEL_INFO[lv].gray;
@@ -407,7 +407,7 @@ export function getAnalysisMapHoverInfo({
     };
   } else if (mode === "colorLuma") {
     const rgb = colorLUT[lv];
-    const candidate = resolveCandidate(lv, colorChoiceIndices[lv] ?? 0);
+    const candidate = resolveCandidate(lv, candidateIndexByLevel[lv] ?? 0);
     const y255 = luma255(rgb);
     return {
       full: `${prefix} ${candidateLabel(candidate)} ${hexStr(rgb)} Y=${y255}/255 ${pct(y255 / 255)} dGray=${signedInt(
@@ -421,8 +421,8 @@ export function getAnalysisMapHoverInfo({
     const edge = valueAt(pixelMaps.isEdge, idx) ? "edge" : "interior";
     const scale = size < REGION_SMALL_THRESHOLD ? "small" : "normal";
     return {
-      full: `${prefix} ${visualLabel(cvs, colorChoiceIndices, idx, lv)} region#${id} size=${size}px ${edge} ${scale}`,
-      compact: `${compactPrefix} ${compactVisualLabel(cvs, colorChoiceIndices, idx, lv)} r#${shortCount(id)} ${shortCount(size)}px ${
+      full: `${prefix} ${visualLabel(canvasData, candidateIndexByLevel, idx, lv)} region#${id} size=${size}px ${edge} ${scale}`,
+      compact: `${compactPrefix} ${compactVisualLabel(canvasData, candidateIndexByLevel, idx, lv)} r#${shortCount(id)} ${shortCount(size)}px ${
         edge === "interior" ? "int" : "edge"
       } ${scale === "normal" ? "norm" : "small"}`,
     };

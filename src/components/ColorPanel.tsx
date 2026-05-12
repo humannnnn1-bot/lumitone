@@ -17,8 +17,8 @@ interface ColorPanelProps {
   displayH: number;
   canvasTransform: React.CSSProperties;
   canvasCursor: string;
-  colorChoiceIndices: readonly number[];
-  colorChoiceDispatch: React.Dispatch<ColorAction>;
+  candidateIndexByLevel: readonly number[];
+  candidateIndexDispatch: React.Dispatch<ColorAction>;
   brushLevel: number;
   setBrushLevel: (lv: number) => void;
   tool: ToolId;
@@ -36,8 +36,8 @@ export const ColorPanel = React.memo(function ColorPanel(props: ColorPanelProps)
     displayH,
     canvasTransform,
     canvasCursor,
-    colorChoiceIndices,
-    colorChoiceDispatch,
+    candidateIndexByLevel,
+    candidateIndexDispatch,
     brushLevel,
     setBrushLevel,
     tool,
@@ -183,8 +183,8 @@ export const ColorPanel = React.memo(function ColorPanel(props: ColorPanelProps)
         </div>
         <div className="panel-sidebar" style={{ marginTop: SP.xl }}>
           <ColorMappingList
-            colorChoiceIndices={colorChoiceIndices}
-            dispatch={colorChoiceDispatch}
+            candidateIndexByLevel={candidateIndexByLevel}
+            dispatch={candidateIndexDispatch}
             brushLevel={brushLevel}
             onSelectLevel={setBrushLevel}
           />

@@ -25,11 +25,11 @@ describe("useImageImportCrop", () => {
 
     expect(dispatch).toHaveBeenCalledWith({
       type: "load_image",
-      w: 2,
-      h: 2,
-      data: expect.any(Uint8Array),
+      width: 2,
+      height: 2,
+      levelData: expect.any(Uint8Array),
     });
-    expect(dispatch.mock.calls[0][0].data).toHaveLength(4);
+    expect(dispatch.mock.calls[0][0].levelData).toHaveLength(4);
     expect(setZoom).toHaveBeenCalledWith(1);
     expect(setPan).toHaveBeenCalledWith({ x: 0, y: 0 });
     expect(result.current.cropImage).toBeNull();

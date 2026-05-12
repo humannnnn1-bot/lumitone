@@ -4,19 +4,19 @@ import type { Diff, CompressedDiff } from "../types";
    UNDO DIFF
    ═══════════════════════════════════════════ */
 
-export function computeDiff(oldD: Uint8Array, newD: Uint8Array): Diff {
-  const len = Math.min(oldD.length, newD.length);
+export function computeDiff(beforeData: Uint8Array, afterData: Uint8Array): Diff {
+  const len = Math.min(beforeData.length, afterData.length);
   let count = 0;
-  for (let i = 0; i < len; i++) if (oldD[i] !== newD[i]) count++;
+  for (let i = 0; i < len; i++) if (beforeData[i] !== afterData[i]) count++;
   const indices = new Uint32Array(count),
     oldValues = new Uint8Array(count),
     newValues = new Uint8Array(count);
   let j = 0;
   for (let i = 0; i < len; i++) {
-    if (oldD[i] !== newD[i]) {
+    if (beforeData[i] !== afterData[i]) {
       indices[j] = i;
-      oldValues[j] = oldD[i];
-      newValues[j] = newD[i];
+      oldValues[j] = beforeData[i];
+      newValues[j] = afterData[i];
       j++;
     }
   }
@@ -24,23 +24,23 @@ export function computeDiff(oldD: Uint8Array, newD: Uint8Array): Diff {
 }
 
 export function applyDiff(data: Uint8Array, diff: Diff, reverse: boolean): Uint8Array {
-  const r = new Uint8Array(data),
-    v = reverse ? diff.oldValues : diff.newValues;
+  const result = new Uint8Array(data);
+  const values = reverse ? diff.oldValues : diff.newValues;
   const len = data.length;
   for (let i = 0; i < diff.indices.length; i++) {
     const indices = diff.indices[i];
-    if (indices < len) r[indices] = v[i];
+    if (indices < len) result[indices] = values[i];
   }
-  return r;
+  return result;
 }
 
 /** Build a Diff directly from flood-fill changed indices, avoiding a full-buffer scan. */
-export function buildDiffFromFill(pre: Uint8Array, buf: Uint8Array, changed: Uint32Array): Diff {
-  const bufLen = Math.min(pre.length, buf.length);
+export function buildDiffFromFill(beforeData: Uint8Array, workingData: Uint8Array, changed: Uint32Array): Diff {
+  const dataLength = Math.min(beforeData.length, workingData.length);
   // Filter out any out-of-bounds indices
   let validCount = 0;
   for (let i = 0; i < changed.length; i++) {
-    if (changed[i] < bufLen) validCount++;
+    if (changed[i] < dataLength) validCount++;
   }
   const indices = new Uint32Array(validCount);
   const oldValues = new Uint8Array(validCount);
@@ -48,87 +48,92 @@ export function buildDiffFromFill(pre: Uint8Array, buf: Uint8Array, changed: Uin
   let j = 0;
   for (let i = 0; i < changed.length; i++) {
     const ci = changed[i];
-    if (ci < bufLen) {
+    if (ci < dataLength) {
       indices[j] = ci;
-      oldValues[j] = pre[ci];
-      newValues[j] = buf[ci];
+      oldValues[j] = beforeData[ci];
+      newValues[j] = workingData[ci];
       j++;
     }
   }
   return { indices, oldValues, newValues };
 }
 
-/** Compute a diff for colorMap-only changes (data unchanged). */
-export function computeGlazeDiff(oldCm: Uint8Array, newCm: Uint8Array, data: Uint8Array): Diff {
-  const len = Math.min(oldCm.length, newCm.length);
+/** Compute a diff for pixel candidate override-only changes (level data unchanged). */
+export function computeGlazeDiff(oldOverrideMap: Uint8Array, newOverrideMap: Uint8Array, levelData: Uint8Array): Diff {
+  const len = Math.min(oldOverrideMap.length, newOverrideMap.length);
   let count = 0;
-  for (let i = 0; i < len; i++) if (oldCm[i] !== newCm[i]) count++;
+  for (let i = 0; i < len; i++) if (oldOverrideMap[i] !== newOverrideMap[i]) count++;
   const indices = new Uint32Array(count);
   const oldValues = new Uint8Array(count),
     newValues = new Uint8Array(count);
-  const oldColorMapValues = new Uint8Array(count),
-    newColorMapValues = new Uint8Array(count);
+  const oldPixelCandidateOverrideValues = new Uint8Array(count),
+    newPixelCandidateOverrideValues = new Uint8Array(count);
   let j = 0;
   for (let i = 0; i < len; i++) {
-    if (oldCm[i] !== newCm[i]) {
+    if (oldOverrideMap[i] !== newOverrideMap[i]) {
       indices[j] = i;
-      oldValues[j] = data[i];
-      newValues[j] = data[i];
-      oldColorMapValues[j] = oldCm[i];
-      newColorMapValues[j] = newCm[i];
+      oldValues[j] = levelData[i];
+      newValues[j] = levelData[i];
+      oldPixelCandidateOverrideValues[j] = oldOverrideMap[i];
+      newPixelCandidateOverrideValues[j] = newOverrideMap[i];
       j++;
     }
   }
-  return { indices, oldValues, newValues, oldColorMapValues, newColorMapValues };
+  return { indices, oldValues, newValues, oldPixelCandidateOverrideValues, newPixelCandidateOverrideValues };
 }
 
-/** Apply the colorMap portion of a diff. Returns original if no cm fields. */
-export function applyDiffToColorMap(colorMap: Uint8Array, diff: Diff, reverse: boolean): Uint8Array {
-  if (!diff.oldColorMapValues || !diff.newColorMapValues) return colorMap;
-  const r = new Uint8Array(colorMap);
-  const v = reverse ? diff.oldColorMapValues : diff.newColorMapValues;
+/** Apply the pixel candidate override portion of a diff. Returns original if no override fields. */
+export function applyDiffToPixelCandidateOverrideMap(pixelCandidateOverrideMap: Uint8Array, diff: Diff, reverse: boolean): Uint8Array {
+  if (!diff.oldPixelCandidateOverrideValues || !diff.newPixelCandidateOverrideValues) return pixelCandidateOverrideMap;
+  const result = new Uint8Array(pixelCandidateOverrideMap);
+  const values = reverse ? diff.oldPixelCandidateOverrideValues : diff.newPixelCandidateOverrideValues;
   for (let i = 0; i < diff.indices.length; i++) {
     const ix = diff.indices[i];
-    if (ix < r.length) r[ix] = v[i];
+    if (ix < result.length) result[ix] = values[i];
   }
-  return r;
+  return result;
 }
 
 /** Build a diff for glaze flood fill from changed indices. */
-export function buildDiffFromGlazeFill(cmPre: Uint8Array, cmBuf: Uint8Array, data: Uint8Array, changed: Uint32Array): Diff {
-  const bufLen = Math.min(cmPre.length, cmBuf.length);
+export function buildDiffFromGlazeFill(
+  beforeOverrideMap: Uint8Array,
+  workingOverrideMap: Uint8Array,
+  levelData: Uint8Array,
+  changed: Uint32Array,
+): Diff {
+  const overrideMapLength = Math.min(beforeOverrideMap.length, workingOverrideMap.length);
   let validCount = 0;
-  for (let i = 0; i < changed.length; i++) if (changed[i] < bufLen) validCount++;
+  for (let i = 0; i < changed.length; i++) if (changed[i] < overrideMapLength) validCount++;
   const indices = new Uint32Array(validCount);
   const oldValues = new Uint8Array(validCount),
     newValues = new Uint8Array(validCount);
-  const oldColorMapValues = new Uint8Array(validCount),
-    newColorMapValues = new Uint8Array(validCount);
+  const oldPixelCandidateOverrideValues = new Uint8Array(validCount),
+    newPixelCandidateOverrideValues = new Uint8Array(validCount);
   let j = 0;
   for (let i = 0; i < changed.length; i++) {
     const ci = changed[i];
-    if (ci < bufLen) {
+    if (ci < overrideMapLength) {
       indices[j] = ci;
-      oldValues[j] = data[ci];
-      newValues[j] = data[ci];
-      oldColorMapValues[j] = cmPre[ci];
-      newColorMapValues[j] = cmBuf[ci];
+      oldValues[j] = levelData[ci];
+      newValues[j] = levelData[ci];
+      oldPixelCandidateOverrideValues[j] = beforeOverrideMap[ci];
+      newPixelCandidateOverrideValues[j] = workingOverrideMap[ci];
       j++;
     }
   }
-  return { indices, oldValues, newValues, oldColorMapValues, newColorMapValues };
+  return { indices, oldValues, newValues, oldPixelCandidateOverrideValues, newPixelCandidateOverrideValues };
 }
 
 /** Compress a Diff by RLE-encoding the indices array (consecutive indices become runs). */
 export function compressDiff(diff: Diff): CompressedDiff {
-  const { indices, oldValues, newValues, oldColorMapValues, newColorMapValues } = diff;
+  const { indices, oldValues, newValues, oldPixelCandidateOverrideValues, newPixelCandidateOverrideValues } = diff;
   if (indices.length === 0) {
     return {
       runs: new Uint32Array(0),
       oldValues,
       newValues,
-      ...(oldColorMapValues !== undefined ? { oldColorMapValues } : {}),
-      ...(newColorMapValues !== undefined ? { newColorMapValues } : {}),
+      ...(oldPixelCandidateOverrideValues !== undefined ? { oldPixelCandidateOverrideValues } : {}),
+      ...(newPixelCandidateOverrideValues !== undefined ? { newPixelCandidateOverrideValues } : {}),
     };
   }
   // Count runs
@@ -156,14 +161,14 @@ export function compressDiff(diff: Diff): CompressedDiff {
     runs,
     oldValues,
     newValues,
-    ...(oldColorMapValues !== undefined ? { oldColorMapValues } : {}),
-    ...(newColorMapValues !== undefined ? { newColorMapValues } : {}),
+    ...(oldPixelCandidateOverrideValues !== undefined ? { oldPixelCandidateOverrideValues } : {}),
+    ...(newPixelCandidateOverrideValues !== undefined ? { newPixelCandidateOverrideValues } : {}),
   };
 }
 
 /** Decompress a CompressedDiff back to a Diff. */
 export function decompressDiff(cd: CompressedDiff): Diff {
-  const { runs, oldValues, newValues, oldColorMapValues, newColorMapValues } = cd;
+  const { runs, oldValues, newValues, oldPixelCandidateOverrideValues, newPixelCandidateOverrideValues } = cd;
   // Calculate total count
   let total = 0;
   for (let i = 1; i < runs.length; i += 2) total += runs[i];
@@ -178,7 +183,7 @@ export function decompressDiff(cd: CompressedDiff): Diff {
     indices,
     oldValues,
     newValues,
-    ...(oldColorMapValues !== undefined ? { oldColorMapValues } : {}),
-    ...(newColorMapValues !== undefined ? { newColorMapValues } : {}),
+    ...(oldPixelCandidateOverrideValues !== undefined ? { oldPixelCandidateOverrideValues } : {}),
+    ...(newPixelCandidateOverrideValues !== undefined ? { newPixelCandidateOverrideValues } : {}),
   };
 }

@@ -160,10 +160,10 @@ describe("useFileDrop", () => {
     const action = dispatch.mock.calls[0][0] as CanvasAction;
     expect(action.type).toBe("load_image");
     if (action.type === "load_image") {
-      expect(action.w).toBe(3);
-      expect(action.h).toBe(2);
-      expect(action.data).toBeInstanceOf(Uint8Array);
-      expect(action.data).toHaveLength(6);
+      expect(action.width).toBe(3);
+      expect(action.height).toBe(2);
+      expect(action.levelData).toBeInstanceOf(Uint8Array);
+      expect(action.levelData).toHaveLength(6);
     }
     expect(setZoom).toHaveBeenCalledWith(1);
     expect(setPan).toHaveBeenCalledWith({ x: 0, y: 0 });

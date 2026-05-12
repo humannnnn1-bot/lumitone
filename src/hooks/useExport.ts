@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { renderBuf } from "../drawing/render-buf";
+import { renderCanvasBuffers } from "../drawing/render-buf";
 import { openBlobUrlInNewTab } from "../utils";
 import type { CanvasData, ImgCache } from "../types";
 
@@ -80,59 +80,69 @@ function shareCanvas(
 }
 
 /** Render color preview to a temporary off-screen canvas. */
-function renderToTempCanvas(cvs: CanvasData, colorLUT: [number, number, number][]): HTMLCanvasElement {
+function renderToTempCanvas(canvasData: CanvasData, colorLUT: [number, number, number][]): HTMLCanvasElement {
   const c = document.createElement("canvas");
-  c.width = cvs.w;
-  c.height = cvs.h;
-  const cache: ImgCache = { src: null, prv: null, s32: null, p32: null };
-  renderBuf(cvs.data, cvs.w, cvs.h, colorLUT, null, c, cache, undefined, cvs.colorMap);
+  c.width = canvasData.width;
+  c.height = canvasData.height;
+  const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+  renderCanvasBuffers(
+    canvasData.levelData,
+    canvasData.width,
+    canvasData.height,
+    colorLUT,
+    null,
+    c,
+    cache,
+    undefined,
+    canvasData.pixelCandidateOverrideMap,
+  );
   return c;
 }
 
 export function useExport(
-  cvs: CanvasData,
+  canvasData: CanvasData,
   colorLUT: [number, number, number][],
   showToast: (message: string, type: "error" | "success" | "info") => void,
   t: import("../i18n").TranslationFn,
 ): ExportResult {
   const saveColor = useCallback(
     (ref: React.RefObject<HTMLCanvasElement | null>, name: string) => {
-      const c = ref.current ?? renderToTempCanvas(cvs, colorLUT);
+      const c = ref.current ?? renderToTempCanvas(canvasData, colorLUT);
       downloadCanvas(c, name, showToast, t);
     },
-    [cvs, colorLUT, showToast, t],
+    [canvasData, colorLUT, showToast, t],
   );
 
   const saveColorWithLUT = useCallback(
     (lut: [number, number, number][], name: string) => {
-      const c = renderToTempCanvas(cvs, lut);
+      const c = renderToTempCanvas(canvasData, lut);
       downloadCanvas(c, name, showToast, t);
     },
-    [cvs, showToast, t],
+    [canvasData, showToast, t],
   );
 
   const saveGlaze = useCallback(
     (name: string) => {
-      const c = renderToTempCanvas(cvs, colorLUT);
+      const c = renderToTempCanvas(canvasData, colorLUT);
       downloadCanvas(c, name, showToast, t);
     },
-    [cvs, colorLUT, showToast, t],
+    [canvasData, colorLUT, showToast, t],
   );
 
   const shareColor = useCallback(
     (ref: React.RefObject<HTMLCanvasElement | null>, name: string) => {
-      const c = ref.current ?? renderToTempCanvas(cvs, colorLUT);
+      const c = ref.current ?? renderToTempCanvas(canvasData, colorLUT);
       shareCanvas(c, name, showToast, t);
     },
-    [cvs, colorLUT, showToast, t],
+    [canvasData, colorLUT, showToast, t],
   );
 
   const shareGlaze = useCallback(
     (name: string) => {
-      const c = renderToTempCanvas(cvs, colorLUT);
+      const c = renderToTempCanvas(canvasData, colorLUT);
       shareCanvas(c, name, showToast, t);
     },
-    [cvs, colorLUT, showToast, t],
+    [canvasData, colorLUT, showToast, t],
   );
 
   return { saveColor, saveColorWithLUT, saveGlaze, shareColor, shareGlaze };

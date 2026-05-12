@@ -2,58 +2,58 @@
 import { describe, it, expect } from "vitest";
 import { renderHook, waitFor } from "@testing-library/react";
 import { generateAllVariants, renderThumbnail, useGallery } from "../useGallery";
-import { DEFAULT_COLOR_CHOICE_INDICES, buildColorLUT, LEVEL_CANDIDATES } from "../../color-engine";
+import { DEFAULT_CANDIDATE_INDEX_BY_LEVEL, buildColorLUT, LEVEL_CANDIDATES } from "../../color-engine";
 import type { CanvasData } from "../../types";
 
 function makeCvs(w = 4, h = 4): CanvasData {
   const data = new Uint8Array(w * h);
   for (let i = 0; i < data.length; i++) data[i] = i % 8;
-  return { w, h, data, colorMap: new Uint8Array(w * h) };
+  return { width: w, height: h, levelData: data, pixelCandidateOverrideMap: new Uint8Array(w * h) };
 }
 
 describe("generateAllVariants", () => {
   it("returns single variant when all levels are locked", () => {
     const locked = new Array(8).fill(true);
-    const hist = new Array(8).fill(100);
-    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
+    const levelHistogram = new Array(8).fill(100);
+    const result = generateAllVariants([...DEFAULT_CANDIDATE_INDEX_BY_LEVEL], locked, levelHistogram);
     expect(result.length).toBe(1);
   });
 
   it("returns single variant when all levels have single candidate", () => {
     // Levels 0 (black) and 7 (white) have only 1 candidate each
     const locked = new Array(8).fill(false);
-    const hist = new Array(8).fill(0);
-    hist[0] = 100; // only black
-    hist[7] = 100; // only white
-    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
+    const levelHistogram = new Array(8).fill(0);
+    levelHistogram[0] = 100; // only black
+    levelHistogram[7] = 100; // only white
+    const result = generateAllVariants([...DEFAULT_CANDIDATE_INDEX_BY_LEVEL], locked, levelHistogram);
     expect(result.length).toBe(1);
   });
 
   it("returns correct count for unlocked levels with multiple candidates", () => {
     const locked = new Array(8).fill(true);
-    const hist = new Array(8).fill(100);
+    const levelHistogram = new Array(8).fill(100);
     // Unlock level 2 (Red vertex, has candidates)
     locked[2] = false;
     const expected = LEVEL_CANDIDATES[2].length;
-    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
+    const result = generateAllVariants([...DEFAULT_CANDIDATE_INDEX_BY_LEVEL], locked, levelHistogram);
     expect(result.length).toBe(expected);
   });
 
   it("excludes levels with 0 pixels from variation", () => {
     const locked = new Array(8).fill(false);
-    const hist = new Array(8).fill(0);
-    hist[0] = 100; // only level 0 used
-    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
+    const levelHistogram = new Array(8).fill(0);
+    levelHistogram[0] = 100; // only level 0 used
+    const result = generateAllVariants([...DEFAULT_CANDIDATE_INDEX_BY_LEVEL], locked, levelHistogram);
     // level 0 has only 1 candidate, all others unused → 1 variant
     expect(result.length).toBe(1);
   });
 
   it("generates the current maximum of 81 variants when all levels are used and unlocked", () => {
     const locked = new Array(8).fill(false);
-    const hist = new Array(8).fill(100);
+    const levelHistogram = new Array(8).fill(100);
     const currentMax = LEVEL_CANDIDATES.reduce((total, candidates) => total * candidates.length, 1);
 
-    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
+    const result = generateAllVariants([...DEFAULT_CANDIDATE_INDEX_BY_LEVEL], locked, levelHistogram);
 
     expect(currentMax).toBe(81);
     expect(result).toHaveLength(81);
@@ -61,10 +61,10 @@ describe("generateAllVariants", () => {
 
   it("each variant has exactly 8 elements", () => {
     const locked = new Array(8).fill(false);
-    const hist = new Array(8).fill(100);
+    const levelHistogram = new Array(8).fill(100);
     locked[0] = true;
     locked[7] = true; // lock extremes
-    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
+    const result = generateAllVariants([...DEFAULT_CANDIDATE_INDEX_BY_LEVEL], locked, levelHistogram);
     for (const v of result) {
       expect(v.length).toBe(8);
     }
@@ -72,10 +72,10 @@ describe("generateAllVariants", () => {
 
   it("variant indices are valid for each level's candidates", () => {
     const locked = new Array(8).fill(false);
-    const hist = new Array(8).fill(100);
+    const levelHistogram = new Array(8).fill(100);
     locked[0] = true;
     locked[7] = true;
-    const result = generateAllVariants([...DEFAULT_COLOR_CHOICE_INDICES], locked, hist);
+    const result = generateAllVariants([...DEFAULT_CANDIDATE_INDEX_BY_LEVEL], locked, levelHistogram);
     for (const v of result) {
       for (let lv = 0; lv < 8; lv++) {
         expect(v[lv]).toBeGreaterThanOrEqual(0);
@@ -84,16 +84,16 @@ describe("generateAllVariants", () => {
     }
   });
 
-  it("locked levels preserve their colorChoiceIndices value", () => {
-    const colorChoiceIndices = [...DEFAULT_COLOR_CHOICE_INDICES];
+  it("locked levels preserve their candidateIndexByLevel value", () => {
+    const candidateIndexByLevel = [...DEFAULT_CANDIDATE_INDEX_BY_LEVEL];
     const locked = new Array(8).fill(true);
     locked[3] = false; // only unlock level 3
-    const hist = new Array(8).fill(100);
-    const result = generateAllVariants(colorChoiceIndices, locked, hist);
+    const levelHistogram = new Array(8).fill(100);
+    const result = generateAllVariants(candidateIndexByLevel, locked, levelHistogram);
     for (const v of result) {
       for (let lv = 0; lv < 8; lv++) {
         if (lv !== 3) {
-          expect(v[lv]).toBe(colorChoiceIndices[lv] % LEVEL_CANDIDATES[lv].length);
+          expect(v[lv]).toBe(candidateIndexByLevel[lv] % LEVEL_CANDIDATES[lv].length);
         }
       }
     }
@@ -103,7 +103,7 @@ describe("generateAllVariants", () => {
 describe("renderThumbnail", () => {
   it("produces ImageData of correct dimensions", () => {
     const data = new Uint8Array(16).fill(0); // 4x4 canvas
-    const lut = buildColorLUT([...DEFAULT_COLOR_CHOICE_INDICES]);
+    const lut = buildColorLUT([...DEFAULT_CANDIDATE_INDEX_BY_LEVEL]);
     const img = renderThumbnail(data, 4, 4, lut, 2, 2);
     expect(img.width).toBe(2);
     expect(img.height).toBe(2);
@@ -112,7 +112,7 @@ describe("renderThumbnail", () => {
 
   it("maps level 0 to correct LUT color", () => {
     const data = new Uint8Array(4).fill(0); // 2x2 all level 0
-    const lut = buildColorLUT([...DEFAULT_COLOR_CHOICE_INDICES]);
+    const lut = buildColorLUT([...DEFAULT_CANDIDATE_INDEX_BY_LEVEL]);
     const img = renderThumbnail(data, 2, 2, lut, 2, 2);
     const rgb = lut[0];
     // Check first pixel
@@ -142,7 +142,7 @@ describe("renderThumbnail", () => {
     data[14] = 7;
     data[15] = 7; // bottom-right: level 7
 
-    const lut = buildColorLUT([...DEFAULT_COLOR_CHOICE_INDICES]);
+    const lut = buildColorLUT([...DEFAULT_CANDIDATE_INDEX_BY_LEVEL]);
     const img = renderThumbnail(data, 4, 4, lut, 2, 2);
 
     // Each pixel of 2x2 thumbnail samples from a different quadrant
@@ -154,7 +154,7 @@ describe("renderThumbnail", () => {
 
   it("handles 1x1 thumbnail", () => {
     const data = new Uint8Array(100).fill(4);
-    const lut = buildColorLUT([...DEFAULT_COLOR_CHOICE_INDICES]);
+    const lut = buildColorLUT([...DEFAULT_CANDIDATE_INDEX_BY_LEVEL]);
     const img = renderThumbnail(data, 10, 10, lut, 1, 1);
     expect(img.width).toBe(1);
     expect(img.height).toBe(1);
@@ -167,7 +167,7 @@ describe("renderThumbnail", () => {
   it("masks pixel values to 3 bits", () => {
     // Value 0xFF should be masked to 7
     const data = new Uint8Array(4).fill(0xff);
-    const lut = buildColorLUT([...DEFAULT_COLOR_CHOICE_INDICES]);
+    const lut = buildColorLUT([...DEFAULT_CANDIDATE_INDEX_BY_LEVEL]);
     const img = renderThumbnail(data, 2, 2, lut, 2, 2);
     const rgb = lut[7]; // 0xFF & 7 = 7
     expect(img.data[0]).toBe(rgb[0]);
@@ -176,11 +176,11 @@ describe("renderThumbnail", () => {
 
 describe("useGallery", () => {
   const locked = new Array(8).fill(true);
-  const hist = new Array(8).fill(1);
+  const levelHistogram = new Array(8).fill(1);
 
   it("waits while inactive and generates when activated", async () => {
-    const cvs = makeCvs();
-    const hook = renderHook(({ active }) => useGallery(cvs, [...DEFAULT_COLOR_CHOICE_INDICES], locked, hist, active), {
+    const canvasData = makeCvs();
+    const hook = renderHook(({ active }) => useGallery(canvasData, [...DEFAULT_CANDIDATE_INDEX_BY_LEVEL], locked, levelHistogram, active), {
       initialProps: { active: false },
     });
 
@@ -197,16 +197,18 @@ describe("useGallery", () => {
   it("reuses generated items for the same canvas data and regenerates when data changes", async () => {
     const first = makeCvs();
     const second = makeCvs();
-    const colorChoiceIndices = [...DEFAULT_COLOR_CHOICE_INDICES];
-    const hook = renderHook(({ cvs }) => useGallery(cvs, colorChoiceIndices, locked, hist, true), { initialProps: { cvs: first } });
+    const candidateIndexByLevel = [...DEFAULT_CANDIDATE_INDEX_BY_LEVEL];
+    const hook = renderHook(({ canvasData }) => useGallery(canvasData, candidateIndexByLevel, locked, levelHistogram, true), {
+      initialProps: { canvasData: first },
+    });
 
     await waitFor(() => expect(hook.result.current.items).toHaveLength(1));
     const firstItems = hook.result.current.items;
 
-    hook.rerender({ cvs: { ...first } });
+    hook.rerender({ canvasData: { ...first } });
     expect(hook.result.current.items).toBe(firstItems);
 
-    hook.rerender({ cvs: second });
+    hook.rerender({ canvasData: second });
     await waitFor(() => expect(hook.result.current.items).not.toBe(firstItems));
 
     hook.unmount();

@@ -1,126 +1,142 @@
 /*
- * Canvas reducer — owns both pixel data AND colorMap mutations.
- * colorMap is managed here (not in color-reducer) so that undo/redo
+ * Canvas reducer - owns both level data and per-pixel candidate override mutations.
+ * Candidate overrides are managed here (not in color-reducer) so that undo/redo
  * operations are atomic: a single undo step can revert both the pixel
- * level change and any associated colorMap change together.
+ * level change and any associated override change together.
  */
 import { MAX_UNDO, LEVEL_MASK, isAllowedCanvasSize } from "../constants";
-import { computeDiff, applyDiff, applyDiffToColorMap, compressDiff, decompressDiff } from "./undo-diff";
+import { computeDiff, applyDiff, applyDiffToPixelCandidateOverrideMap, compressDiff, decompressDiff } from "./undo-diff";
 import { RingBuffer } from "../utils/ring-buffer";
 import type { AppState, CanvasAction, CompressedDiff, Diff } from "../types";
-import { W0, H0 } from "../constants";
+import { DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT } from "../constants";
 
-/** Build a merged diff that clears both pixel data and colorMap to zero. */
+/** Build a merged diff that clears both level data and pixel candidate overrides to zero. */
 function buildMergedClearDiff(
-  data: Uint8Array,
-  colorMap: Uint8Array,
-  dataDiff: { indices: Uint32Array; oldValues: Uint8Array; newValues: Uint8Array },
+  levelData: Uint8Array,
+  pixelCandidateOverrideMap: Uint8Array,
+  levelDataDiff: { indices: Uint32Array; oldValues: Uint8Array; newValues: Uint8Array },
 ): import("../types").Diff {
-  const n = data.length;
-  const dataChanged = new Set<number>();
-  for (let i = 0; i < dataDiff.indices.length; i++) dataChanged.add(dataDiff.indices[i]);
-  // Count total changed pixels (data or colorMap)
+  const n = levelData.length;
+  const levelDataChanged = new Set<number>();
+  for (let i = 0; i < levelDataDiff.indices.length; i++) levelDataChanged.add(levelDataDiff.indices[i]);
   let count = 0;
   for (let i = 0; i < n; i++) {
-    if (dataChanged.has(i) || colorMap[i] !== 0) count++;
+    if (levelDataChanged.has(i) || pixelCandidateOverrideMap[i] !== 0) count++;
   }
   const indices = new Uint32Array(count);
   const oldValues = new Uint8Array(count),
     newValues = new Uint8Array(count);
-  const oldColorMapValues = new Uint8Array(count),
-    newColorMapValues = new Uint8Array(count);
+  const oldPixelCandidateOverrideValues = new Uint8Array(count),
+    newPixelCandidateOverrideValues = new Uint8Array(count);
   let j = 0;
   for (let i = 0; i < n; i++) {
-    if (dataChanged.has(i) || colorMap[i] !== 0) {
+    if (levelDataChanged.has(i) || pixelCandidateOverrideMap[i] !== 0) {
       indices[j] = i;
-      oldValues[j] = data[i];
+      oldValues[j] = levelData[i];
       newValues[j] = 0;
-      oldColorMapValues[j] = colorMap[i];
-      newColorMapValues[j] = 0;
+      oldPixelCandidateOverrideValues[j] = pixelCandidateOverrideMap[i];
+      newPixelCandidateOverrideValues[j] = 0;
       j++;
     }
   }
-  return { indices, oldValues, newValues, oldColorMapValues, newColorMapValues };
+  return { indices, oldValues, newValues, oldPixelCandidateOverrideValues, newPixelCandidateOverrideValues };
 }
 
-function computeHist(data: Uint8Array): number[] {
-  const h = new Array(8).fill(0);
-  for (let i = 0; i < data.length; i++) h[data[i] & LEVEL_MASK]++;
-  return h;
+function computeLevelHistogram(levelData: Uint8Array): number[] {
+  const levelHistogram = new Array(8).fill(0);
+  for (let i = 0; i < levelData.length; i++) levelHistogram[levelData[i] & LEVEL_MASK]++;
+  return levelHistogram;
 }
 
 /** Apply diff delta to histogram. Set reverse=true for undo (swap oldValues/newValues). */
-function applyHistDelta(
-  hist: number[],
+function applyLevelHistogramDelta(
+  levelHistogram: number[],
   diff: { indices: Uint32Array; oldValues: Uint8Array; newValues: Uint8Array },
   reverse: boolean,
 ): number[] {
-  const h = hist.slice();
+  const nextLevelHistogram = levelHistogram.slice();
   const src = reverse ? diff.newValues : diff.oldValues;
   const dst = reverse ? diff.oldValues : diff.newValues;
   for (let i = 0; i < diff.indices.length; i++) {
-    h[src[i] & LEVEL_MASK]--;
-    h[dst[i] & LEVEL_MASK]++;
+    nextLevelHistogram[src[i] & LEVEL_MASK]--;
+    nextLevelHistogram[dst[i] & LEVEL_MASK]++;
   }
-  return h;
+  return nextLevelHistogram;
 }
 
-function clearColorMapForDataChanges(colorMap: Uint8Array, diff: Diff): { colorMap: Uint8Array; diff: Diff } {
-  let hasColorMapClear = false;
+function clearOverridesForLevelChanges(
+  pixelCandidateOverrideMap: Uint8Array,
+  diff: Diff,
+): { pixelCandidateOverrideMap: Uint8Array; diff: Diff } {
+  let hasOverrideClear = false;
   for (let i = 0; i < diff.indices.length; i++) {
     const ix = diff.indices[i];
-    if (ix < colorMap.length && diff.oldValues[i] !== diff.newValues[i] && colorMap[ix] !== 0) {
-      hasColorMapClear = true;
+    if (ix < pixelCandidateOverrideMap.length && diff.oldValues[i] !== diff.newValues[i] && pixelCandidateOverrideMap[ix] !== 0) {
+      hasOverrideClear = true;
       break;
     }
   }
 
-  if (!hasColorMapClear) return { colorMap, diff };
+  if (!hasOverrideClear) return { pixelCandidateOverrideMap, diff };
 
-  const nextColorMap = new Uint8Array(colorMap);
-  const oldColorMapValues = new Uint8Array(diff.indices.length);
-  const newColorMapValues = new Uint8Array(diff.indices.length);
-  if (diff.oldColorMapValues && diff.oldColorMapValues.length === diff.indices.length) oldColorMapValues.set(diff.oldColorMapValues);
-  if (diff.newColorMapValues && diff.newColorMapValues.length === diff.indices.length) newColorMapValues.set(diff.newColorMapValues);
+  const nextPixelCandidateOverrideMap = new Uint8Array(pixelCandidateOverrideMap);
+  const oldPixelCandidateOverrideValues = new Uint8Array(diff.indices.length);
+  const newPixelCandidateOverrideValues = new Uint8Array(diff.indices.length);
+  if (diff.oldPixelCandidateOverrideValues && diff.oldPixelCandidateOverrideValues.length === diff.indices.length)
+    oldPixelCandidateOverrideValues.set(diff.oldPixelCandidateOverrideValues);
+  if (diff.newPixelCandidateOverrideValues && diff.newPixelCandidateOverrideValues.length === diff.indices.length)
+    newPixelCandidateOverrideValues.set(diff.newPixelCandidateOverrideValues);
 
   for (let i = 0; i < diff.indices.length; i++) {
     const ix = diff.indices[i];
-    if (ix < colorMap.length && diff.oldValues[i] !== diff.newValues[i] && colorMap[ix] !== 0) {
-      oldColorMapValues[i] = colorMap[ix];
-      newColorMapValues[i] = 0;
-      nextColorMap[ix] = 0;
+    if (ix < pixelCandidateOverrideMap.length && diff.oldValues[i] !== diff.newValues[i] && pixelCandidateOverrideMap[ix] !== 0) {
+      oldPixelCandidateOverrideValues[i] = pixelCandidateOverrideMap[ix];
+      newPixelCandidateOverrideValues[i] = 0;
+      nextPixelCandidateOverrideMap[ix] = 0;
     }
   }
 
-  return { colorMap: nextColorMap, diff: { ...diff, oldColorMapValues, newColorMapValues } };
+  return {
+    pixelCandidateOverrideMap: nextPixelCandidateOverrideMap,
+    diff: { ...diff, oldPixelCandidateOverrideValues, newPixelCandidateOverrideValues },
+  };
 }
 
 export function createInitialState(): AppState {
-  const initData = new Uint8Array(W0 * H0);
+  const initData = new Uint8Array(DEFAULT_CANVAS_WIDTH * DEFAULT_CANVAS_HEIGHT);
   return {
-    cvs: { w: W0, h: H0, data: initData, colorMap: new Uint8Array(W0 * H0) },
+    canvasData: {
+      width: DEFAULT_CANVAS_WIDTH,
+      height: DEFAULT_CANVAS_HEIGHT,
+      levelData: initData,
+      pixelCandidateOverrideMap: new Uint8Array(DEFAULT_CANVAS_WIDTH * DEFAULT_CANVAS_HEIGHT),
+    },
     undoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
     redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
-    hist: computeHist(initData),
+    levelHistogram: computeLevelHistogram(initData),
   };
 }
 
 export function canvasReducer(state: AppState, action: CanvasAction): AppState {
   switch (action.type) {
     case "stroke_end": {
-      const { finalData, finalColorMap, diff } = action;
+      const { finalLevelData, finalPixelCandidateOverrideMap, diff } = action;
       if (!diff || diff.indices.length === 0) return state;
-      const colorMapUpdate = finalColorMap ? { colorMap: finalColorMap, diff } : clearColorMapForDataChanges(state.cvs.colorMap, diff);
-      const newCvs = { ...state.cvs, data: finalData };
-      if (colorMapUpdate.colorMap !== state.cvs.colorMap) newCvs.colorMap = colorMapUpdate.colorMap;
+      const overrideUpdate = finalPixelCandidateOverrideMap
+        ? { pixelCandidateOverrideMap: finalPixelCandidateOverrideMap, diff }
+        : clearOverridesForLevelChanges(state.canvasData.pixelCandidateOverrideMap, diff);
+      const newCanvasData = { ...state.canvasData, levelData: finalLevelData };
+      if (overrideUpdate.pixelCandidateOverrideMap !== state.canvasData.pixelCandidateOverrideMap) {
+        newCanvasData.pixelCandidateOverrideMap = overrideUpdate.pixelCandidateOverrideMap;
+      }
       const newUndo = state.undoStack.clone();
-      newUndo.push(compressDiff(colorMapUpdate.diff));
+      newUndo.push(compressDiff(overrideUpdate.diff));
       return {
         ...state,
-        cvs: newCvs,
+        canvasData: newCanvasData,
         undoStack: newUndo,
         redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
-        hist: applyHistDelta(state.hist, colorMapUpdate.diff, false),
+        levelHistogram: applyLevelHistogramDelta(state.levelHistogram, overrideUpdate.diff, false),
       };
     }
     case "undo": {
@@ -133,10 +149,14 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
       newRedo.unshift(cdiff);
       return {
         ...state,
-        cvs: { ...state.cvs, data: applyDiff(state.cvs.data, diff, true), colorMap: applyDiffToColorMap(state.cvs.colorMap, diff, true) },
+        canvasData: {
+          ...state.canvasData,
+          levelData: applyDiff(state.canvasData.levelData, diff, true),
+          pixelCandidateOverrideMap: applyDiffToPixelCandidateOverrideMap(state.canvasData.pixelCandidateOverrideMap, diff, true),
+        },
         undoStack: newUndo,
         redoStack: newRedo,
-        hist: applyHistDelta(state.hist, diff, true),
+        levelHistogram: applyLevelHistogramDelta(state.levelHistogram, diff, true),
       };
     }
     case "redo": {
@@ -149,84 +169,91 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
       newUndo.push(cdiff);
       return {
         ...state,
-        cvs: { ...state.cvs, data: applyDiff(state.cvs.data, diff, false), colorMap: applyDiffToColorMap(state.cvs.colorMap, diff, false) },
+        canvasData: {
+          ...state.canvasData,
+          levelData: applyDiff(state.canvasData.levelData, diff, false),
+          pixelCandidateOverrideMap: applyDiffToPixelCandidateOverrideMap(state.canvasData.pixelCandidateOverrideMap, diff, false),
+        },
         undoStack: newUndo,
         redoStack: newRedo,
-        hist: applyHistDelta(state.hist, diff, false),
+        levelHistogram: applyLevelHistogramDelta(state.levelHistogram, diff, false),
       };
     }
     case "load_image": {
-      const { w, h, data } = action;
-      if (!isAllowedCanvasSize(w, h)) return state;
-      if (data.length !== w * h) return state;
-      const colorMap = action.colorMap && action.colorMap.length === w * h ? action.colorMap : new Uint8Array(w * h);
+      const { width, height, levelData } = action;
+      if (!isAllowedCanvasSize(width, height)) return state;
+      if (levelData.length !== width * height) return state;
+      const pixelCandidateOverrideMap =
+        action.pixelCandidateOverrideMap && action.pixelCandidateOverrideMap.length === width * height
+          ? action.pixelCandidateOverrideMap
+          : new Uint8Array(width * height);
       return {
         ...state,
-        cvs: { w, h, data, colorMap },
+        canvasData: { width, height, levelData, pixelCandidateOverrideMap },
         undoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
         redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
-        hist: computeHist(data),
+        levelHistogram: computeLevelHistogram(levelData),
       };
     }
     case "clear": {
-      const n = state.cvs.w * state.cvs.h;
+      const n = state.canvasData.width * state.canvasData.height;
       const blank = new Uint8Array(n);
-      const dataDiff = computeDiff(state.cvs.data, blank);
-      if (dataDiff.indices.length === 0 && state.cvs.colorMap.every((v) => v === 0)) return state;
+      const levelDataDiff = computeDiff(state.canvasData.levelData, blank);
+      if (levelDataDiff.indices.length === 0 && state.canvasData.pixelCandidateOverrideMap.every((v) => v === 0)) return state;
       const clearHist = new Array(8).fill(0);
       clearHist[0] = n;
-      const mergedDiff = buildMergedClearDiff(state.cvs.data, state.cvs.colorMap, dataDiff);
+      const mergedDiff = buildMergedClearDiff(state.canvasData.levelData, state.canvasData.pixelCandidateOverrideMap, levelDataDiff);
       if (mergedDiff.indices.length === 0) return state;
       const newUndo = state.undoStack.clone();
       newUndo.push(compressDiff(mergedDiff));
       return {
         ...state,
-        cvs: { ...state.cvs, data: blank, colorMap: new Uint8Array(n) },
+        canvasData: { ...state.canvasData, levelData: blank, pixelCandidateOverrideMap: new Uint8Array(n) },
         undoStack: newUndo,
         redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
-        hist: clearHist,
+        levelHistogram: clearHist,
       };
     }
     case "new_canvas": {
-      const { w, h } = action;
-      if (!isAllowedCanvasSize(w, h)) return state;
-      const data = new Uint8Array(w * h);
-      const hist = new Array(8).fill(0);
-      hist[0] = w * h;
+      const { width, height } = action;
+      if (!isAllowedCanvasSize(width, height)) return state;
+      const levelData = new Uint8Array(width * height);
+      const levelHistogram = new Array(8).fill(0);
+      levelHistogram[0] = width * height;
       return {
-        cvs: { w, h, data, colorMap: new Uint8Array(w * h) },
+        canvasData: { width, height, levelData, pixelCandidateOverrideMap: new Uint8Array(width * height) },
         undoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
         redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
-        hist,
+        levelHistogram,
       };
     }
     case "glaze_clear": {
-      const oldCm = state.cvs.colorMap;
-      const n = oldCm.length;
+      const oldPixelCandidateOverrideMap = state.canvasData.pixelCandidateOverrideMap;
+      const n = oldPixelCandidateOverrideMap.length;
       let count = 0;
-      for (let i = 0; i < n; i++) if (oldCm[i] !== 0) count++;
+      for (let i = 0; i < n; i++) if (oldPixelCandidateOverrideMap[i] !== 0) count++;
       if (count === 0) return state;
       const indices = new Uint32Array(count);
       const oldValues = new Uint8Array(count),
         newValues = new Uint8Array(count);
-      const oldColorMapValues = new Uint8Array(count),
-        newColorMapValues = new Uint8Array(count);
+      const oldPixelCandidateOverrideValues = new Uint8Array(count),
+        newPixelCandidateOverrideValues = new Uint8Array(count);
       let j = 0;
       for (let i = 0; i < n; i++) {
-        if (oldCm[i] !== 0) {
+        if (oldPixelCandidateOverrideMap[i] !== 0) {
           indices[j] = i;
-          oldValues[j] = state.cvs.data[i];
-          newValues[j] = state.cvs.data[i];
-          oldColorMapValues[j] = oldCm[i];
-          newColorMapValues[j] = 0;
+          oldValues[j] = state.canvasData.levelData[i];
+          newValues[j] = state.canvasData.levelData[i];
+          oldPixelCandidateOverrideValues[j] = oldPixelCandidateOverrideMap[i];
+          newPixelCandidateOverrideValues[j] = 0;
           j++;
         }
       }
       const newUndo = state.undoStack.clone();
-      newUndo.push(compressDiff({ indices, oldValues, newValues, oldColorMapValues, newColorMapValues }));
+      newUndo.push(compressDiff({ indices, oldValues, newValues, oldPixelCandidateOverrideValues, newPixelCandidateOverrideValues }));
       return {
         ...state,
-        cvs: { ...state.cvs, colorMap: new Uint8Array(n) },
+        canvasData: { ...state.canvasData, pixelCandidateOverrideMap: new Uint8Array(n) },
         undoStack: newUndo,
         redoStack: new RingBuffer<CompressedDiff>(MAX_UNDO),
       };

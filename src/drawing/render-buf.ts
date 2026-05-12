@@ -1,5 +1,5 @@
 /*
- * renderBuf — CPU-side pixel buffer renderer using putImageData.
+ * renderCanvasBuffers — CPU-side pixel buffer renderer using putImageData.
  * NOTE: Migrating to WebGL would eliminate the putImageData bottleneck
  * by rendering directly to a GPU texture, avoiding the per-frame
  * CPU-to-canvas copy. Deferred until profiling shows this is the
@@ -11,7 +11,7 @@ import type { DirtyRect, ImgCache } from "../types";
 import { recordDebugPerf, startDebugPerf } from "../utils/perf-debug";
 
 /* ═══════════════════════════════════════════
-   renderBuf — module-level function
+   renderCanvasBuffers — module-level function
    Receives canvas elements and ImageData cache as args.
    Supports dirty-rect optimization + GRAY_VALUES LUT.
    ═══════════════════════════════════════════ */
@@ -47,34 +47,34 @@ for (let i = 0; i < 8; i++) {
 const _lutPacked = new Uint32Array(8);
 let _cachedLutRef: [number, number, number][] | null = null;
 
-export function renderBuf(
-  data: Uint8Array,
+export function renderCanvasBuffers(
+  levelData: Uint8Array,
   w: number,
   h: number,
   lut: [number, number, number][],
-  srcCanvas: HTMLCanvasElement | null,
-  prvCanvas: HTMLCanvasElement | null,
+  sourceCanvas: HTMLCanvasElement | null,
+  previewCanvas: HTMLCanvasElement | null,
   imgCache: ImgCache,
   dirty?: DirtyRect | null,
-  colorMap?: Uint8Array | null,
+  pixelCandidateOverrideMap?: Uint8Array | null,
 ): void {
-  if (!srcCanvas && !prvCanvas) return;
+  if (!sourceCanvas && !previewCanvas) return;
   const perfStart = startDebugPerf();
-  const sc = srcCanvas?.getContext("2d") ?? null;
-  const pc = prvCanvas?.getContext("2d") ?? null;
-  if (!sc && !pc) return;
-  if (!imgCache.src || imgCache.src.width !== w || imgCache.src.height !== h) {
-    imgCache.src = (sc ?? pc)!.createImageData(w, h);
-    imgCache.prv = (pc ?? sc)!.createImageData(w, h);
-    imgCache.s32 = new Uint32Array(imgCache.src.data.buffer);
-    imgCache.p32 = new Uint32Array(imgCache.prv.data.buffer);
+  const sourceContext = sourceCanvas?.getContext("2d") ?? null;
+  const previewContext = previewCanvas?.getContext("2d") ?? null;
+  if (!sourceContext && !previewContext) return;
+  if (!imgCache.sourceImageData || imgCache.sourceImageData.width !== w || imgCache.sourceImageData.height !== h) {
+    imgCache.sourceImageData = (sourceContext ?? previewContext)!.createImageData(w, h);
+    imgCache.previewImageData = (previewContext ?? sourceContext)!.createImageData(w, h);
+    imgCache.sourcePixels32 = new Uint32Array(imgCache.sourceImageData.data.buffer);
+    imgCache.previewPixels32 = new Uint32Array(imgCache.previewImageData.data.buffer);
   }
-  const si = imgCache.src!,
-    pi = imgCache.prv!;
-  const s32 = imgCache.s32!,
-    p32 = imgCache.p32!;
-  const hasColorMap = colorMap != null && colorMap.length > 0;
-  const targets = (sc ? 1 : 0) + (pc ? 1 : 0);
+  const sourceImageData = imgCache.sourceImageData!;
+  const previewImageData = imgCache.previewImageData!;
+  const sourcePixels32 = imgCache.sourcePixels32!;
+  const previewPixels32 = imgCache.previewPixels32!;
+  const hasPixelCandidateOverrides = pixelCandidateOverrideMap != null && pixelCandidateOverrideMap.length > 0;
+  const targets = (sourceContext ? 1 : 0) + (previewContext ? 1 : 0);
   // Rebuild _lutPacked only when lut reference changes
   if (lut !== _cachedLutRef) {
     _cachedLutRef = lut;
@@ -92,60 +92,60 @@ export function renderBuf(
     for (let y = y0; y < y1; y++) {
       for (let x = x0; x < x1; x++) {
         const i = y * w + x;
-        const lv = data[i] & LEVEL_MASK;
-        s32[i] = _grayPacked[lv];
-        if (hasColorMap && colorMap![i] > 0) {
-          const vi = colorMap![i] - 1;
-          p32[i] = vi < VARIANT_COUNTS[lv] ? PACKED_CANDIDATES[lv * MAX_VARIANTS + vi] : _lutPacked[lv];
+        const lv = levelData[i] & LEVEL_MASK;
+        sourcePixels32[i] = _grayPacked[lv];
+        if (hasPixelCandidateOverrides && pixelCandidateOverrideMap![i] > 0) {
+          const vi = pixelCandidateOverrideMap![i] - 1;
+          previewPixels32[i] = vi < VARIANT_COUNTS[lv] ? PACKED_CANDIDATES[lv * MAX_VARIANTS + vi] : _lutPacked[lv];
         } else {
-          p32[i] = _lutPacked[lv];
+          previewPixels32[i] = _lutPacked[lv];
         }
       }
     }
     const dw = x1 - x0,
       dh = y1 - y0;
     if (dw > 0 && dh > 0) {
-      if (sc) sc.putImageData(si, 0, 0, x0, y0, dw, dh);
-      if (pc) pc.putImageData(pi, 0, 0, x0, y0, dw, dh);
-      recordDebugPerf("renderBuf", perfStart, {
+      if (sourceContext) sourceContext.putImageData(sourceImageData, 0, 0, x0, y0, dw, dh);
+      if (previewContext) previewContext.putImageData(previewImageData, 0, 0, x0, y0, dw, dh);
+      recordDebugPerf("renderCanvasBuffers", perfStart, {
         mode: "dirty",
         w,
         h,
         pixels: dw * dh,
         targets,
-        colorMap: hasColorMap,
+        pixelCandidateOverrides: hasPixelCandidateOverrides,
       });
     }
   } else {
-    const n = Math.min(w * h, data.length);
-    if (!hasColorMap) {
-      // Fast path: no colorMap, skip per-pixel variant check
+    const n = Math.min(w * h, levelData.length);
+    if (!hasPixelCandidateOverrides) {
+      // Fast path: no per-pixel overrides, skip variant lookup.
       for (let i = 0; i < n; i++) {
-        const lv = data[i] & LEVEL_MASK;
-        s32[i] = _grayPacked[lv];
-        p32[i] = _lutPacked[lv];
+        const lv = levelData[i] & LEVEL_MASK;
+        sourcePixels32[i] = _grayPacked[lv];
+        previewPixels32[i] = _lutPacked[lv];
       }
     } else {
       for (let i = 0; i < n; i++) {
-        const lv = data[i] & LEVEL_MASK;
-        s32[i] = _grayPacked[lv];
-        if (colorMap![i] > 0) {
-          const vi = colorMap![i] - 1;
-          p32[i] = vi < VARIANT_COUNTS[lv] ? PACKED_CANDIDATES[lv * MAX_VARIANTS + vi] : _lutPacked[lv];
+        const lv = levelData[i] & LEVEL_MASK;
+        sourcePixels32[i] = _grayPacked[lv];
+        if (pixelCandidateOverrideMap![i] > 0) {
+          const vi = pixelCandidateOverrideMap![i] - 1;
+          previewPixels32[i] = vi < VARIANT_COUNTS[lv] ? PACKED_CANDIDATES[lv * MAX_VARIANTS + vi] : _lutPacked[lv];
         } else {
-          p32[i] = _lutPacked[lv];
+          previewPixels32[i] = _lutPacked[lv];
         }
       }
     }
-    if (sc) sc.putImageData(si, 0, 0);
-    if (pc) pc.putImageData(pi, 0, 0);
-    recordDebugPerf("renderBuf", perfStart, {
+    if (sourceContext) sourceContext.putImageData(sourceImageData, 0, 0);
+    if (previewContext) previewContext.putImageData(previewImageData, 0, 0);
+    recordDebugPerf("renderCanvasBuffers", perfStart, {
       mode: "full",
       w,
       h,
       pixels: n,
       targets,
-      colorMap: hasColorMap,
+      pixelCandidateOverrides: hasPixelCandidateOverrides,
     });
   }
 }
