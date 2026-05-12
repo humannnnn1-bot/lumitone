@@ -42,7 +42,14 @@ const MusicPanel = lazy(async () => {
 /* ═══════════════════════════════════════════
    LAYOUT STYLE CONSTANTS
    ═══════════════════════════════════════════ */
-const S_ROOT: React.CSSProperties = { minHeight: "100vh", background: C.bgRoot, color: C.textPrimary, fontFamily: FONT.sans };
+const S_ROOT: React.CSSProperties = {
+  minHeight: "100vh",
+  background: C.bgRoot,
+  color: C.textPrimary,
+  fontFamily: FONT.sans,
+  display: "flex",
+  flexDirection: "column",
+};
 const S_HEADER: React.CSSProperties = { textAlign: "center", marginBottom: "var(--sp-header-mb)" };
 const S_TITLE: React.CSSProperties = {
   fontFamily: FONT.sans,
@@ -76,6 +83,14 @@ const S_HEADER_ACTION: React.CSSProperties = {
 const S_HEADER_SEPARATOR: React.CSSProperties = { color: C.textSubtle };
 const S_HEADER_LANGUAGE_SEPARATOR: React.CSSProperties = { color: C.textSubtle, marginLeft: 4, marginRight: 4 };
 const S_TAB_CENTER: React.CSSProperties = { display: "flex", justifyContent: "center", width: "100%" };
+const S_FOOTER: React.CSSProperties = {
+  marginTop: "auto",
+  paddingTop: 40,
+  textAlign: "center",
+  fontFamily: FONT.mono,
+  fontSize: FS.sm,
+  color: C.textSubtle,
+};
 const S_DROP_OVERLAY: React.CSSProperties = {
   position: "fixed",
   inset: 0,
@@ -571,6 +586,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
           </div>
         )}
       </div>
+      <footer style={S_FOOTER}>© 2026 Doctor Chromaticus</footer>
     </main>
   );
 }
