@@ -9,9 +9,15 @@ below are covered by the CC BY 4.0 notice in [LICENSE.md](./LICENSE.md).
 
 ## Technical Documentation
 
-1. [Architecture](./architecture.md)
+1. [User Guide](./user-guide.md)
+   Explains the first-time app workflow, browser-local autosave, PNG export,
+   drawing/navigation basics, and model limits.
+2. [Architecture](./architecture.md)
    Describes the browser-only React/Vite runtime, state model, drawing
    pipeline, workers, persistence, and quality gates.
+
+For contributor setup, local checks, documentation expectations, and licensing
+boundaries, see [../CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## Core Corpus: Tractatus Chromaticus
 

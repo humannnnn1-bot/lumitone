@@ -130,15 +130,16 @@ x2 > x1 + x0 and x1 > x0.
 
 ## Implementation Status
 
-| Area | Status | Notes |
+| Proposal | Status | Notes |
 | --- | --- | --- |
-| Rename `theory_title` | Done | UI uses `Discrete Algebraic Color Theory` / `離散代数的色彩理論`. |
-| Luma terminology | Done | UI uses `Luma` / `ルマ` rather than luminance/輝度 for BT.601 luma. |
-| Human-vision wording | Done | Binary-level copy ties the ordering to BT.601 luma coefficient inequalities. |
+| P0: Claim Hygiene | Done | UI uses `Discrete Algebraic Color Theory` / `離散代数的色彩理論`, `Luma` / `ルマ`, BT.601 coefficient-bound wording, and `XOR Operation` / `XOR 演算`. |
 | Scope card | Partial | Scope and Limits summary exists; a near-top concise scope card remains optional. |
 | Dice-net rigor | Done | Cube-net enumeration and hue-path adjacency are machine-checked. |
-| References in app UI | Deferred | Docs carry the bibliography; an in-app references drawer remains optional. |
-| Coefficient comparison | Remaining | Optional theorem explorer, not required for the core model. |
+| P1: Known / CHROMALUM Adds Labels | Deferred | The docs already separate known prior art from CHROMALUM-specific synthesis; compact in-app labels remain optional. |
+| P1: References Drawer | Deferred | Docs carry the bibliography; an in-app references drawer remains optional. |
+| P1: Formal Proof Cards | Partial | Core proofs and proof sketches exist in docs/UI copy and are backed by tests; dedicated proof-card UI remains optional. |
+| P2: Coefficient Switcher | Remaining | Optional theorem explorer, not required for the core model. |
+| P2: Known vs Added Synthesis Panel | Deferred | The curated prior-art map already records this split; an end-of-tab synthesis panel remains optional. |
 
 ## Tests To Keep
 

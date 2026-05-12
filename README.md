@@ -228,8 +228,10 @@ Long-form research notes keep their editorial line wrapping and are excluded in
 
 ## Documentation
 
-See [docs/README.md](./docs/README.md) for the documentation map and the
-recommended reading order for research notes.
+For first-time app usage, see [docs/user-guide.md](./docs/user-guide.md). For
+the full documentation map and the recommended reading order for research
+notes, see [docs/README.md](./docs/README.md). For contribution workflow and
+local verification expectations, see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 The core corpus is the three-part _Tractatus Chromaticus_ ("Chromatic
 Treatise"), a unified treatise on the discrete algebraic color model that
@@ -267,6 +269,7 @@ diagrams in the Theory tab. The code that implements those views remains
 MIT-licensed.
 
 Technical project documentation, including
+[docs/user-guide.md](./docs/user-guide.md) and
 [docs/architecture.md](./docs/architecture.md), follows the MIT-licensed
 project documentation unless a document says otherwise.
 

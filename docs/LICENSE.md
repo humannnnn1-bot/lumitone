@@ -27,7 +27,7 @@ CC BY 4.0 license covers the expressive content surfaced by that
 implementation: authored prose, section labels, and the rendered diagrams
 when reused as visual artifacts (e.g., screenshots, embedded images).
 
-Technical project documentation in this directory, such as
+Technical project documentation in this directory, such as `user-guide.md` and
 `architecture.md`, follows the repository's MIT-licensed project documentation
 unless a document states otherwise.
 

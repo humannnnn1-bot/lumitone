@@ -26,7 +26,7 @@
 5. 位相差に応じて合成振幅が変化する三角関数的干渉式。
 6. 12 平均律、純正律、ダイアトニック、オクタトニックなどの既存音階への角度写像。
 
-特に、色を音へ写す研究・装置には [See ColOr](https://icad.org/Proceedings/2010/BolognaDevillePun2010.pdf)、[Colorophone 2.0](https://www.mdpi.com/1424-8220/21/21/7351)、[Sonifyd:Colormatrics](https://nime.pubpub.org/pub/efyd2zra/release/1) などの先行例がある。また、色相と音高の対応は心理物理的に安定した普遍対応として扱うべきではない。この境界線については、色聴・カラーオルガン史を批判的に整理する Spence & Di Stefano のレビューを主要参考にする。
+特に、色を音へ写す研究・装置には [See ColOr](https://icad.org/Proceedings/2010/BolognaDevillePun2010.pdf)、[Colorophone 2.0](https://www.mdpi.com/1424-8220/21/21/7351)、[Sonifyd:Colormatrics](https://nime.pubpub.org/pub/efyd2zra) などの先行例がある。また、色相と音高の対応は心理物理的に安定した普遍対応として扱うべきではない。この境界線については、色聴・カラーオルガン史を批判的に整理する [Spence & Di Stefano のレビュー](https://doi.org/10.1177/20416695221092802) を主要参考にする。
 
 CHROMALUM 側の固有性は、これらの標準要素を単独で使う点ではなく、BT.601 luma 順の 8 頂点 RGB アトラス、L0/L7 補色半径、`alpha0` / `alpha7` 位相、GRB bit order、Fano/Hamming/polyhedral などの代数的色彩構造と、Music タブのピッチ・ゲイン・位相写像を同じ操作系で連動させる点にある。詳細な先行研究と設計上の示唆は [Music-Linked Visualization — 先行研究と設計ノート](./prior-art-music-linked-visualization.md) に分離する。
 
