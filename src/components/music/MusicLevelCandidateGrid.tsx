@@ -215,7 +215,10 @@ export const MusicLevelCandidateGrid = React.memo(function MusicLevelCandidateGr
   ...columnProps
 }: MusicLevelCandidateGridProps) {
   return (
-    <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center", marginTop: SP.lg }}>
+    <div
+      className="music-candidate-grid"
+      style={{ display: "flex", gap: SP.sm, justifyContent: "center", alignItems: "center", marginTop: SP.lg }}
+    >
       {levelPreview.map((level) => (
         <MusicLevelCandidateColumn key={level.levelIndex} {...columnProps} level={level} />
       ))}

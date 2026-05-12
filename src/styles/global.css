@@ -131,7 +131,10 @@ input[type="checkbox"]:focus-visible {
   outline-offset: 2px;
 }
 
-/* Map mode buttons: force line break between row 1 (3) and row 2 (4) */
+/* Map mode buttons: mobile uses 3+4 rows; desktop keeps a single row */
+.map-mode-buttons {
+  flex-wrap: wrap;
+}
 .map-mode-break {
   flex-basis: 100%;
   height: 0;
@@ -244,6 +247,9 @@ input[type="checkbox"]:focus-visible {
 }
 
 /* Theory tab */
+.theory-reset-surface {
+  width: 100%;
+}
 .theory-container {
   display: flex;
   flex-direction: column;
@@ -336,6 +342,13 @@ button.theory-diagram-button {
   .music-layout > .panel-canvas,
   .music-layout > .panel-sidebar {
     max-width: 360px;
+  }
+  .music-candidate-grid {
+    margin-bottom: 12px;
+    transform: translateY(12px);
+  }
+  .music-layout .linked-viz-root {
+    transform: translateY(22px);
   }
   .music-algebra-wrapper {
     max-width: 736px; /* 360 + 16 + 360 */
@@ -511,6 +524,13 @@ button.theory-diagram-button {
     align-self: flex-start;
     gap: 3px;
   }
+  .music-candidate-grid {
+    margin-bottom: 10px;
+    transform: translateY(10px);
+  }
+  .music-layout .linked-viz-root {
+    transform: translateY(11px);
+  }
   .music-algebra-wrapper {
     max-width: 872px; /* 420 + 32 + 420 */
     align-self: center;
@@ -591,6 +611,15 @@ button.theory-diagram-button {
   }
   .map-mode-break {
     display: none;
+  }
+  .map-mode-buttons {
+    flex-wrap: nowrap;
+    max-width: calc(100vw - 32px);
+    width: max-content;
+  }
+  .panel-canvas--map .map-status-line {
+    --map-status-line-max-width: calc(100vw - 32px);
+    --map-status-line-width: max(var(--display-max, 0px), 500px);
   }
 }
 

@@ -67,7 +67,10 @@ export const AnalyzePanel = React.memo(
       <div style={{ display: "flex", flexDirection: "column", gap: SP.lg, alignItems: "center" }}>
         <div style={S_PANEL_SUBTITLE}>{t("stats_title")}</div>
         <div className="panel-layout">
-          <div className={getCanvasPanelClassName(displayW, displayH)} style={getCanvasPanelStyle(displayW, displayH)}>
+          <div
+            className={`${getCanvasPanelClassName(displayW, displayH)} panel-canvas--map`}
+            style={getCanvasPanelStyle(displayW, displayH)}
+          >
             <MapCanvas
               mode={mapMode}
               pixelMaps={pixelMaps}
@@ -78,10 +81,7 @@ export const AnalyzePanel = React.memo(
               displayH={displayH}
               {...(showToast ? { showToast } : {})}
             />
-            <div
-              className="map-mode-buttons"
-              style={{ display: "flex", flexWrap: "wrap", gap: SP.xs, justifyContent: "center", marginTop: SP.xs }}
-            >
+            <div className="map-mode-buttons" style={{ display: "flex", gap: SP.xs, justifyContent: "center", marginTop: SP.xs }}>
               {(["luminance", "colorLuma", "gradient"] as const).map((m) => (
                 <button
                   key={m}

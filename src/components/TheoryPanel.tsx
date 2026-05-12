@@ -95,144 +95,146 @@ export const TheoryPanel = React.memo(function TheoryPanel() {
 
   return (
     <PinResetContext.Provider value={pinReset}>
-      <div className="theory-container" onClick={onBgClick}>
-        {/* Subtitle */}
-        <div style={S_PANEL_SUBTITLE}>{t("label_theory")}</div>
+      <div className="theory-reset-surface" onClick={onBgClick}>
+        <div className="theory-container">
+          {/* Subtitle */}
+          <div style={S_PANEL_SUBTITLE}>{t("label_theory")}</div>
 
-        {/* Page title */}
-        <div style={{ textAlign: "center" }}>
-          <h2 className="theory-title">{t("theory_title")}</h2>
-          {splitParagraphs(t("theory_intro")).map((paragraph, i) => (
-            <p key={i} className="theory-desc theory-intro" style={{ marginTop: i === 0 ? SP.xl : SP.md }}>
-              {paragraph}
-            </p>
-          ))}
-        </div>
+          {/* Page title */}
+          <div style={{ textAlign: "center" }}>
+            <h2 className="theory-title">{t("theory_title")}</h2>
+            {splitParagraphs(t("theory_intro")).map((paragraph, i) => (
+              <p key={i} className="theory-desc theory-intro" style={{ marginTop: i === 0 ? SP.xl : SP.md }}>
+                {paragraph}
+              </p>
+            ))}
+          </div>
 
-        {/* Pin hint */}
-        <p className="theory-hint">{t("theory_pin_hint")}</p>
+          {/* Pin hint */}
+          <p className="theory-hint">{t("theory_pin_hint")}</p>
 
-        {/* ═══════════════════════════════════════
+          {/* ═══════════════════════════════════════
            FOUNDATIONS & NOTATION (前提と記法)  §1-§2
            ═══════════════════════════════════════ */}
-        <div style={S_GROUP_LABEL}>{t("theory_group_foundations")}</div>
+          <div style={S_GROUP_LABEL}>{t("theory_group_foundations")}</div>
 
-        {/* §1 Venn Diagram — Rosetta stone: 8 colors = P({G,R,B}) */}
-        <Section title={t("theory_venn_title")} desc={t("theory_venn_desc")}>
-          <VennDiagram hlLevel={hlLevel} onHover={onHover} />
-        </Section>
+          {/* §1 Venn Diagram — Rosetta stone: 8 colors = P({G,R,B}) */}
+          <Section title={t("theory_venn_title")} desc={t("theory_venn_desc")}>
+            <VennDiagram hlLevel={hlLevel} onHover={onHover} />
+          </Section>
 
-        <hr style={S_DIVIDER} />
+          <hr style={S_DIVIDER} />
 
-        {/* §2 Binary Levels */}
-        <Section title={t("theory_binary_title")} desc={t("theory_binary_desc")}>
-          <BinaryTable hlLevel={hlLevel} onHover={onHover} />
-        </Section>
+          {/* §2 Binary Levels */}
+          <Section title={t("theory_binary_title")} desc={t("theory_binary_desc")}>
+            <BinaryTable hlLevel={hlLevel} onHover={onHover} />
+          </Section>
 
-        <hr style={S_DIVIDER} />
+          <hr style={S_DIVIDER} />
 
-        {/* §3 XOR Operation */}
-        <Section title={t("theory_xor_title")} desc={t("theory_xor_desc")}>
-          <XorDemo hlLevel={hlLevel} onHover={onHover} />
-        </Section>
+          {/* §3 XOR Operation */}
+          <Section title={t("theory_xor_title")} desc={t("theory_xor_desc")}>
+            <XorDemo hlLevel={hlLevel} onHover={onHover} />
+          </Section>
 
-        {/* ═══════════════════════════════════════
+          {/* ═══════════════════════════════════════
            CUBE & CYCLES (立方体と巡回)  §3-§6
            ═══════════════════════════════════════ */}
-        <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_geometry")}</div>
+          <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_geometry")}</div>
 
-        {/* §3 Color Cube */}
-        <Section title={t("theory_cube_title")} desc={t("theory_cube_desc")}>
-          <ColorCube hlLevel={hlLevel} onHover={onHover} />
-          <h4 style={S_SUBHEADING}>{t("theory_cube_hasse")}</h4>
-          <p className="theory-desc">{t("theory_cube_desc2")}</p>
-        </Section>
+          {/* §3 Color Cube */}
+          <Section title={t("theory_cube_title")} desc={t("theory_cube_desc")}>
+            <ColorCube hlLevel={hlLevel} onHover={onHover} />
+            <h4 style={S_SUBHEADING}>{t("theory_cube_hasse")}</h4>
+            <p className="theory-desc">{t("theory_cube_desc2")}</p>
+          </Section>
 
-        <hr style={S_DIVIDER} />
+          <hr style={S_DIVIDER} />
 
-        {/* §4 Gray Code Cycle */}
-        <Section title={t("theory_gray_title")} desc={t("theory_gray_desc")}>
-          <GrayCodeHex hlLevel={hlLevel} onHover={onHover} />
-        </Section>
+          {/* §4 Gray Code Cycle */}
+          <Section title={t("theory_gray_title")} desc={t("theory_gray_desc")}>
+            <GrayCodeHex hlLevel={hlLevel} onHover={onHover} />
+          </Section>
 
-        <hr style={S_DIVIDER} />
+          <hr style={S_DIVIDER} />
 
-        {/* §5 Luma Zigzag */}
-        <Section title={t("theory_zigzag_title")} desc={t("theory_zigzag_desc")}>
-          <LuminanceZigzag hlLevel={hlLevel} onHover={onHover} />
-        </Section>
+          {/* §5 Luma Zigzag */}
+          <Section title={t("theory_zigzag_title")} desc={t("theory_zigzag_desc")}>
+            <LuminanceZigzag hlLevel={hlLevel} onHover={onHover} />
+          </Section>
 
-        <hr style={S_DIVIDER} />
+          <hr style={S_DIVIDER} />
 
-        {/* §6 Color Die */}
-        <Section title={t("theory_dice_title")} desc={[t("theory_dice_desc"), t("theory_dice_desc2")]}>
-          <ColorDice hlLevel={hlLevel} onHover={onHover} />
-        </Section>
+          {/* §6 Color Die */}
+          <Section title={t("theory_dice_title")} desc={[t("theory_dice_desc"), t("theory_dice_desc2")]}>
+            <ColorDice hlLevel={hlLevel} onHover={onHover} />
+          </Section>
 
-        {/* ═══════════════════════════════════════
+          {/* ═══════════════════════════════════════
            PROJECTIVE GEOMETRY & CODING (射影幾何と符号)  §7-§8
            ═══════════════════════════════════════ */}
-        <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_algebra")}</div>
+          <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_algebra")}</div>
 
-        {/* §7 Fano Plane */}
-        <Section title={t("theory_fano_title")} desc={[t("theory_fano_desc"), t("theory_fano_desc2")]}>
-          <FanoPlane hlLevel={hlLevel} onHover={onHover} />
-        </Section>
+          {/* §7 Fano Plane */}
+          <Section title={t("theory_fano_title")} desc={[t("theory_fano_desc"), t("theory_fano_desc2")]}>
+            <FanoPlane hlLevel={hlLevel} onHover={onHover} />
+          </Section>
 
-        <hr style={S_DIVIDER} />
+          <hr style={S_DIVIDER} />
 
-        {/* §8 Hamming Code */}
-        <Section title={t("theory_hamming_title")} desc={[t("theory_hamming_desc"), t("theory_hamming_desc2")]}>
-          <HammingDiagram hlLevel={hlLevel} onHover={onHover} />
-        </Section>
+          {/* §8 Hamming Code */}
+          <Section title={t("theory_hamming_title")} desc={[t("theory_hamming_desc"), t("theory_hamming_desc2")]}>
+            <HammingDiagram hlLevel={hlLevel} onHover={onHover} />
+          </Section>
 
-        {/* ═══════════════════════════════════════
+          {/* ═══════════════════════════════════════
            POLYHEDRA (多面体)  §9-§10
            ═══════════════════════════════════════ */}
-        <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_polyhedra")}</div>
+          <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_polyhedra")}</div>
 
-        {/* §9 Chromatic Octahedron */}
-        <Section title={t("theory_octa_title")} desc={[t("theory_octa_desc"), t("theory_octa_desc2")]}>
-          <Octahedron hlLevel={hlLevel} onHover={onHover} />
-        </Section>
+          {/* §9 Chromatic Octahedron */}
+          <Section title={t("theory_octa_title")} desc={[t("theory_octa_desc"), t("theory_octa_desc2")]}>
+            <Octahedron hlLevel={hlLevel} onHover={onHover} />
+          </Section>
 
-        <hr style={S_DIVIDER} />
+          <hr style={S_DIVIDER} />
 
-        {/* §10 Color Tetra */}
-        <Section title={t("theory_tetra_title")} desc={t("theory_tetra_desc")}>
-          <TetraDecomposition hlLevel={hlLevel} onHover={onHover} />
-        </Section>
+          {/* §10 Color Tetra */}
+          <Section title={t("theory_tetra_title")} desc={t("theory_tetra_desc")}>
+            <TetraDecomposition hlLevel={hlLevel} onHover={onHover} />
+          </Section>
 
-        <hr style={S_DIVIDER} />
+          <hr style={S_DIVIDER} />
 
-        {/* §11 Color Star (Stella Octangula) */}
-        <Section title={t("theory_stella_title")} desc={t("theory_stella_desc")}>
-          <StellaOctangula hlLevel={hlLevel} onHover={onHover} />
-        </Section>
+          {/* §11 Color Star (Stella Octangula) */}
+          <Section title={t("theory_stella_title")} desc={t("theory_stella_desc")}>
+            <StellaOctangula hlLevel={hlLevel} onHover={onHover} />
+          </Section>
 
-        <hr style={S_DIVIDER} />
+          <hr style={S_DIVIDER} />
 
-        {/* §12 Polyhedra Transformation Network */}
-        <Section title={t("theory_conn_polyhedra")} desc={t("theory_conn_polyhedra_desc")}>
-          <PolyhedraNetwork />
-        </Section>
+          {/* §12 Polyhedra Transformation Network */}
+          <Section title={t("theory_conn_polyhedra")} desc={t("theory_conn_polyhedra_desc")}>
+            <PolyhedraNetwork />
+          </Section>
 
-        {/* ═══════════════════════════════════════
+          {/* ═══════════════════════════════════════
            SYNTHESIS & LIMITS (総括と限界)  §13-§14
            ═══════════════════════════════════════ */}
-        <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_synthesis")}</div>
+          <div style={{ ...S_GROUP_LABEL, marginTop: SP["2xl"] }}>{t("theory_group_synthesis")}</div>
 
-        {/* §13 Connections */}
-        <Section title={t("theory_connections_title")} desc={t("theory_connections_desc")}>
-          <ConnectionsSummary />
-        </Section>
+          {/* §13 Connections */}
+          <Section title={t("theory_connections_title")} desc={t("theory_connections_desc")}>
+            <ConnectionsSummary />
+          </Section>
 
-        <hr style={S_DIVIDER} />
+          <hr style={S_DIVIDER} />
 
-        {/* §14 Scope */}
-        <Section title={t("theory_conn_boundary_title")} desc={t("theory_conn_extended")}>
-          <ScopeSummary />
-        </Section>
+          {/* §14 Scope */}
+          <Section title={t("theory_conn_boundary_title")} desc={t("theory_conn_extended")}>
+            <ScopeSummary />
+          </Section>
+        </div>
       </div>
     </PinResetContext.Provider>
   );

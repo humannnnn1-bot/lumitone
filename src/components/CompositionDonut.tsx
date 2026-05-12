@@ -16,9 +16,6 @@ interface Slice {
   isGlazed?: boolean;
 }
 
-const SELECTED_ARC_STROKE_WIDTH = 1.4;
-const SELECTED_ARC_INSET = SELECTED_ARC_STROKE_WIDTH / 2;
-
 function computeSlices(entries: { count: number; color: string; info: string[]; isGlazed?: boolean }[], total: number): Slice[] {
   const slices: Slice[] = [];
   for (const v of entries) {
@@ -34,7 +31,6 @@ function drawRing(
   cy: number,
   rOuter: number,
   rInner: number,
-  selectedSliceId: string | null,
   onPreview: (info: string[] | null, color?: string) => void,
   onActivate: (sliceId: string, info: string[], color: string) => void,
 ): React.ReactNode[] {
@@ -45,7 +41,6 @@ function drawRing(
   for (let i = 0; i < slices.length; i++) {
     const s = slices[i];
     const sliceId = `${ringId}-${i}`;
-    const selected = selectedSliceId === sliceId;
     const sweep = s.fraction * Math.PI * 2;
     if (sweep < 0.001) continue;
 
@@ -60,32 +55,14 @@ function drawRing(
     };
 
     if (s.fraction > 0.999) {
-      const selectedOuterRadius = rOuter - SELECTED_ARC_INSET;
-      const selectedInnerRadius = rInner + SELECTED_ARC_INSET;
       elems.push(
         <React.Fragment key={sliceId}>
           <circle cx={cx} cy={cy} r={(rOuter + rInner) / 2} fill="none" stroke={s.color} strokeWidth={rOuter - rInner} {...handlers} />
-          {selected &&
-            [selectedOuterRadius, selectedInnerRadius].map((r) => (
-              <circle
-                key={r}
-                cx={cx}
-                cy={cy}
-                r={r}
-                fill="none"
-                stroke={C.textWhite}
-                strokeWidth={SELECTED_ARC_STROKE_WIDTH}
-                opacity={0.9}
-                pointerEvents="none"
-              />
-            ))}
         </React.Fragment>,
       );
       break;
     }
 
-    const selectedOuterRadius = rOuter - SELECTED_ARC_INSET;
-    const selectedInnerRadius = rInner + SELECTED_ARC_INSET;
     const x1 = cx + rOuter * Math.cos(angle);
     const y1 = cy + rOuter * Math.sin(angle);
     const x2 = cx + rOuter * Math.cos(angle + sweep);
@@ -94,37 +71,14 @@ function drawRing(
     const y3 = cy + rInner * Math.sin(angle + sweep);
     const x4 = cx + rInner * Math.cos(angle);
     const y4 = cy + rInner * Math.sin(angle);
-    const xo1 = cx + selectedOuterRadius * Math.cos(angle);
-    const yo1 = cy + selectedOuterRadius * Math.sin(angle);
-    const xo2 = cx + selectedOuterRadius * Math.cos(angle + sweep);
-    const yo2 = cy + selectedOuterRadius * Math.sin(angle + sweep);
-    const xi1 = cx + selectedInnerRadius * Math.cos(angle);
-    const yi1 = cy + selectedInnerRadius * Math.sin(angle);
-    const xi2 = cx + selectedInnerRadius * Math.cos(angle + sweep);
-    const yi2 = cy + selectedInnerRadius * Math.sin(angle + sweep);
     const large = sweep > Math.PI ? 1 : 0;
 
     const d = `M${x1},${y1} A${rOuter},${rOuter} 0 ${large} 1 ${x2},${y2} L${x3},${y3} A${rInner},${rInner} 0 ${large} 0 ${x4},${y4} Z`;
-    const outerArc = `M${xo1},${yo1} A${selectedOuterRadius},${selectedOuterRadius} 0 ${large} 1 ${xo2},${yo2}`;
-    const innerArc = `M${xi1},${yi1} A${selectedInnerRadius},${selectedInnerRadius} 0 ${large} 1 ${xi2},${yi2}`;
     // Only show border on glazed slices
     const showBorder = s.isGlazed;
     elems.push(
       <React.Fragment key={sliceId}>
         <path d={d} fill={s.color} stroke={showBorder ? C.bgPanel : "none"} strokeWidth={showBorder ? 0.5 : 0} {...handlers} />
-        {selected &&
-          [outerArc, innerArc].map((arc, arcIndex) => (
-            <path
-              key={arcIndex}
-              d={arc}
-              fill="none"
-              stroke={C.textWhite}
-              strokeWidth={SELECTED_ARC_STROKE_WIDTH}
-              strokeLinecap="round"
-              opacity={0.9}
-              pointerEvents="none"
-            />
-          ))}
       </React.Fragment>,
     );
     angle += sweep;
@@ -320,9 +274,9 @@ export const CompositionDonut = React.memo(function CompositionDonut({
           aria-label={t("stats_composition")}
           style={{ display: "block", WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
         >
-          {drawRing("gray", graySlices, cx, cy, grayOuter, grayInner, selected?.id ?? null, onPreview, onActivate)}
-          {drawRing("color", colorSlices, cx, cy, colorOuter, colorInner, selected?.id ?? null, onPreview, onActivate)}
-          {hasGlaze && drawRing("glaze", glazeSlices, cx, cy, glazeOuter, glazeInner, selected?.id ?? null, onPreview, onActivate)}
+          {drawRing("gray", graySlices, cx, cy, grayOuter, grayInner, onPreview, onActivate)}
+          {drawRing("color", colorSlices, cx, cy, colorOuter, colorInner, onPreview, onActivate)}
+          {hasGlaze && drawRing("glaze", glazeSlices, cx, cy, glazeOuter, glazeInner, onPreview, onActivate)}
           {activeInfo && <circle cx={cx} cy={cy} r={grayInner - 18} fill={activeInfo.color} stroke={C.border} strokeWidth={1} />}
         </svg>
       </div>

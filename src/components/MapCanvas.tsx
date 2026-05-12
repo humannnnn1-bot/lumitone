@@ -166,6 +166,7 @@ export function MapCanvas({
 
   return (
     <div
+      className="map-canvas-frame"
       style={{ alignItems: "center", display: "flex", flexDirection: "column", maxWidth: "100%", position: "relative", width: displayW }}
     >
       <canvas
@@ -210,7 +211,16 @@ export function MapCanvas({
           Saving...
         </div>
       )}
-      <div title={hoverInfo ? getFullStatusText(hoverInfo) : undefined} style={S_CANVAS_STATUS_STABLE}>
+      <div
+        className="map-status-line"
+        title={hoverInfo ? getFullStatusText(hoverInfo) : undefined}
+        style={{
+          ...S_CANVAS_STATUS_STABLE,
+          alignSelf: "center",
+          maxWidth: "var(--map-status-line-max-width, 100%)",
+          width: "var(--map-status-line-width, 100%)",
+        }}
+      >
         {hoverInfo ? getVisibleStatusText(hoverInfo, compactStatus) : "\u2014"}
       </div>
       <ConfirmModal

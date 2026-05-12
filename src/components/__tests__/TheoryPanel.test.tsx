@@ -78,6 +78,19 @@ describe("TheoryPanel", () => {
     expect(tetraPair.querySelectorAll("svg")).toHaveLength(2);
   });
 
+  it("clears pinned highlights when clicking the full-width background surface", () => {
+    const { container } = renderWithLanguage();
+
+    const venn = screen.getByRole("img", { name: "Venn Diagram" });
+    fireEvent.click(venn);
+    expect(venn.querySelector('rect[stroke="#fff"]')).toBeTruthy();
+
+    const resetSurface = container.querySelector(".theory-reset-surface");
+    expect(resetSurface).toBeTruthy();
+    fireEvent.click(resetSurface!);
+    expect(venn.querySelector('rect[stroke="#fff"]')).toBeFalsy();
+  });
+
   it("shows Color Star surface ridges and returns from K8 to surface mode", () => {
     renderWithLanguage();
 
