@@ -2,16 +2,18 @@ import { describe, expect, it } from "vitest";
 import { getCanvasPanelClassName, getCanvasPanelStyle, getPanelLayoutClassName } from "../panel-layout";
 
 describe("panel layout helpers", () => {
-  it("adds a capped desktop offset hint for landscape canvases", () => {
+  it("adds a modest desktop offset hint for landscape canvases", () => {
     expect(getCanvasPanelClassName(796, 448)).toBe("panel-canvas panel-canvas--landscape");
     expect(getCanvasPanelStyle(796, 448)).toEqual({
       "--display-max": "796px",
-      "--canvas-landscape-offset": "42px",
+      "--canvas-landscape-offset": "12px",
     });
+  });
 
+  it("adds extra offset only for ultra-wide landscape canvases", () => {
     expect(getCanvasPanelStyle(1200, 200)).toEqual({
       "--display-max": "1200px",
-      "--canvas-landscape-offset": "72px",
+      "--canvas-landscape-offset": "48px",
     });
   });
 

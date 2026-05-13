@@ -3,6 +3,7 @@ import { DISPLAY_MIN, DISPLAY_MAX_LIMIT } from "../constants";
 import { canvasReducer, createInitialState } from "../state/canvas-reducer";
 import { SAVED_STATE_VERSION, saveState, loadStateWithStatus, requestPersistentStorage } from "../utils/idb-persistence";
 import { createErrorHandler } from "../utils/error-handler";
+import { LANDSCAPE_CANVAS_BASE_OFFSET_MAX } from "../utils/panel-layout";
 import { useToolState } from "./useToolState";
 import { useUIState } from "./useUIState";
 import { useColorState } from "./useColorState";
@@ -15,6 +16,7 @@ const DESKTOP_UI_OVERHEAD = 180;
 const DESKTOP_PANEL_GAP = 32;
 const DESKTOP_PANEL_SIDEBAR_WIDTH = 420;
 const DESKTOP_ROOT_INLINE_PADDING = 32;
+const DESKTOP_LANDSCAPE_CONTROL_RESERVE = 16;
 const MOBILE_WIDTH_RESERVE = 32;
 const MOBILE_PORTRAIT_HEIGHT_BOOST = 1.2;
 
@@ -45,7 +47,11 @@ export function getCanvasDisplaySize(canvasWidth: number, canvasHeight: number, 
     const contentWidth = viewportWidth - DESKTOP_ROOT_INLINE_PADDING;
     const widthLimit = Math.floor(contentWidth - DESKTOP_PANEL_GAP - DESKTOP_PANEL_SIDEBAR_WIDTH);
     if (asp > 1) {
-      const displayWidth = clampDisplayMax(Math.min(widthLimit, heightLimit * asp));
+      const landscapeHeightLimit = Math.max(
+        DISPLAY_MIN,
+        heightLimit - LANDSCAPE_CANVAS_BASE_OFFSET_MAX - DESKTOP_LANDSCAPE_CONTROL_RESERVE,
+      );
+      const displayWidth = clampDisplayMax(Math.min(widthLimit, Math.floor(landscapeHeightLimit * asp)));
       return { displayWidth, displayHeight: Math.round(displayWidth / asp) };
     }
     const displayHeight = Math.round(clampDisplayMax(Math.min(heightLimit, widthLimit / asp)));

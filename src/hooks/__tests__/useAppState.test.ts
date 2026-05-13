@@ -38,6 +38,10 @@ describe("useAppState", () => {
     expect(getCanvasDisplaySize(1600, 900, 1280, 720)).toEqual({ displayWidth: 796, displayHeight: 448 });
   });
 
+  it("reserves room for the desktop landscape offset when height constrains the canvas", () => {
+    expect(getCanvasDisplaySize(1600, 900, 1920, 918)).toEqual({ displayWidth: 1262, displayHeight: 710 });
+  });
+
   it("uses side-by-side sizing earlier for portrait canvases", () => {
     expect(getCanvasDisplaySize(900, 1600, 840, 720)).toEqual({ displayWidth: 304, displayHeight: 540 });
     expect(getCanvasDisplaySize(1200, 1600, 900, 1000)).toEqual({ displayWidth: 416, displayHeight: 555 });
