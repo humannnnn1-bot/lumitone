@@ -185,7 +185,7 @@ export const en = {
   about_body_1:
     "CHROMALUM is an art tool that starts from eight colors: the three primary colors of light, the three primary colors of pigment, plus white and black. It rearranges brightness into relationships of color, supported by an algebraic structure behind the eight-color system.",
   about_body_2:
-    "Start by drawing in the Source tab or loading an image. In the Hex and Color tabs, assign colors to the eight luma levels and shape the palette. The Gallery tab lets you browse all resulting pattern combinations. In the Glaze tab, you can overlay alternative candidate colors, while the Map tab analyzes information in the canvas.",
+    "Start by drawing in the Source tab or loading an image. In the Hex and Color tabs, assign colors to the eight brightness levels and shape the palette. The Gallery tab lets you browse all resulting pattern combinations. In the Glaze tab, you can overlay alternative candidate colors, while the Map tab analyzes information in the canvas.",
   about_body_3: "The Theory tab explains the underlying color system, and the Music tab explores the same color structure through sound.",
 
   // Tablist
