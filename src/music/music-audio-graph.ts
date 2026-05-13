@@ -4,8 +4,8 @@ import { BASE_FREQ, angleToFreq, type ScaleMode } from "../data/music-frequency"
 import { BT601_LUMA_COEFFICIENT_BY_LEVEL, MAX_BT601_LUMA_COEFFICIENT, lumaToFreq } from "./music-engine-core";
 
 export interface SonificationLevel {
-  lv: number;
-  angle: number; // hue angle in degrees (0-360)
+  levelIndex: number;
+  hueAngleDeg: number;
   luma255: number;
 }
 
@@ -149,21 +149,21 @@ export function buildFM(nodes: AudioNodes, levels: SonificationLevel[], scaleMod
   const fmOscs: OscillatorNode[] = [];
   const fmGains: GainNode[] = [];
 
-  for (const [carrierLv, modLv] of C2_PAIRS) {
-    const carrierData = levels.find((l) => l.lv === carrierLv);
-    const modData = levels.find((l) => l.lv === modLv);
-    if (!carrierData || !modData) continue;
+  for (const [carrierLevelIndex, modulatorLevelIndex] of C2_PAIRS) {
+    const carrierLevel = levels.find((level) => level.levelIndex === carrierLevelIndex);
+    const modulatorLevel = levels.find((level) => level.levelIndex === modulatorLevelIndex);
+    if (!carrierLevel || !modulatorLevel) continue;
 
     const modOsc = nodes.ctx.createOscillator();
     modOsc.type = "sine";
-    modOsc.frequency.value = angleToFreq(modData.angle, scaleMode);
+    modOsc.frequency.value = angleToFreq(modulatorLevel.hueAngleDeg, scaleMode);
 
     const modGain = nodes.ctx.createGain();
-    const modIndex = (Math.abs(carrierData.luma255 - modData.luma255) / 255) * 400;
+    const modIndex = (Math.abs(carrierLevel.luma255 - modulatorLevel.luma255) / 255) * 400;
     modGain.gain.value = modIndex;
 
-    // carrier index in oscs array is (carrierLv - 1)
-    const carrierOsc = nodes.oscs[carrierLv - 1];
+    // The carrier oscillator array is indexed by levelIndex - 1.
+    const carrierOsc = nodes.oscs[carrierLevelIndex - 1];
     modOsc.connect(modGain).connect(carrierOsc.frequency);
     modOsc.start();
 
@@ -192,11 +192,11 @@ export function triggerLumaBurst(nodes: AudioNodes, luma255: number) {
 }
 
 /** Trigger a short tone burst at a hue-derived pitch. */
-function triggerPitchBurst(nodes: AudioNodes, angle: number, scaleMode: ScaleMode) {
+function triggerPitchBurst(nodes: AudioNodes, hueAngleDeg: number, scaleMode: ScaleMode) {
   const ctx = nodes.ctx;
   const osc = ctx.createOscillator();
   osc.type = "sine";
-  osc.frequency.value = angleToFreq(angle, scaleMode);
+  osc.frequency.value = angleToFreq(hueAngleDeg, scaleMode);
 
   const gain = ctx.createGain();
   const now = ctx.currentTime;
@@ -209,21 +209,21 @@ function triggerPitchBurst(nodes: AudioNodes, angle: number, scaleMode: ScaleMod
   osc.stop(now + 0.35);
 }
 
-export function triggerPitchOrLumaBurst(nodes: AudioNodes, lv: number, angle: number, scaleMode: ScaleMode) {
-  if (angle < 0) {
-    triggerLumaBurst(nodes, LUMA_VALUES[lv] ?? 0);
+export function triggerPitchOrLumaBurst(nodes: AudioNodes, levelIndex: number, hueAngleDeg: number, scaleMode: ScaleMode) {
+  if (hueAngleDeg < 0) {
+    triggerLumaBurst(nodes, LUMA_VALUES[levelIndex] ?? 0);
     return;
   }
 
-  triggerPitchBurst(nodes, angle, scaleMode);
+  triggerPitchBurst(nodes, hueAngleDeg, scaleMode);
 }
 
 /** Trigger a bit-basis timbre burst: GF(2)^3 bits select spectral basis components. */
-export function triggerBitSpectrumBurst(nodes: AudioNodes, lv: number, angle: number, panEnabled: boolean) {
-  const components = bitSpectrumComponents(lv);
+export function triggerBitSpectrumBurst(nodes: AudioNodes, levelIndex: number, hueAngleDeg: number, panEnabled: boolean) {
+  const components = bitSpectrumComponents(levelIndex);
   if (components.length === 0) return;
 
-  const lumaNorm = Math.max(0, Math.min(1, (LUMA_VALUES[lv] ?? 0) / 255));
+  const lumaNorm = Math.max(0, Math.min(1, (LUMA_VALUES[levelIndex] ?? 0) / 255));
   if (lumaNorm <= 0) return;
 
   const ctx = nodes.ctx;
@@ -235,8 +235,8 @@ export function triggerBitSpectrumBurst(nodes: AudioNodes, lv: number, angle: nu
   group.gain.linearRampToValueAtTime(lumaNorm * BIT_TIMBRE_GAIN_SCALE, now + 0.01);
   group.gain.linearRampToValueAtTime(0, now + 0.31);
 
-  if (panEnabled && angle >= 0) {
-    panner.pan.value = Math.cos((angle * Math.PI) / 180);
+  if (panEnabled && hueAngleDeg >= 0) {
+    panner.pan.value = Math.cos((hueAngleDeg * Math.PI) / 180);
   }
 
   const componentNorm = 1 / Math.sqrt(components.length);
@@ -285,7 +285,7 @@ export function triggerErrorMarker(nodes: AudioNodes) {
 export function applyParams(
   nodes: AudioNodes,
   levels: SonificationLevel[],
-  hoveredLv: number | null,
+  hoveredLevelIndex: number | null,
   alpha0: number,
   alpha7: number,
   volume: number,
@@ -317,35 +317,35 @@ export function applyParams(
   }
 
   for (let i = 0; i < 6; i++) {
-    const lv = i + 1;
-    const lvData = levels.find((l) => l.lv === lv);
-    if (!lvData) continue;
+    const levelIndex = i + 1;
+    const levelData = levels.find((level) => level.levelIndex === levelIndex);
+    if (!levelData) continue;
 
     // Frequency: active alpha rotates pitch mapping around the hue wheel
-    const rotatedAngle = lvData.angle + activeAlpha;
+    const rotatedAngle = levelData.hueAngleDeg + activeAlpha;
     nodes.oscs[i].frequency.setTargetAtTime(angleToFreq(rotatedAngle, scaleMode), now, RAMP_TC);
 
     // Gain: hover logic with Fano line boost
     // L0 mode: brighter levels are louder (luma/255)
     // L7 mode: darker levels are louder (1 - luma/255), matching the inverted radius
     const gainScale =
-      lumaMode === "bt601Luma" && BT601_LUMA_COEFFICIENT_BY_LEVEL[lv] !== undefined
-        ? (BT601_LUMA_COEFFICIENT_BY_LEVEL[lv] / MAX_BT601_LUMA_COEFFICIENT) * GAIN_SCALE
+      lumaMode === "bt601Luma" && BT601_LUMA_COEFFICIENT_BY_LEVEL[levelIndex] !== undefined
+        ? (BT601_LUMA_COEFFICIENT_BY_LEVEL[levelIndex] / MAX_BT601_LUMA_COEFFICIENT) * GAIN_SCALE
         : GAIN_SCALE;
-    const lumaNorm = originMode === 0 ? lvData.luma255 / 255 : 1 - lvData.luma255 / 255;
+    const lumaNorm = originMode === 0 ? levelData.luma255 / 255 : 1 - levelData.luma255 / 255;
     const baseGain = lumaNorm * gainScale;
     let targetGain: number;
 
-    if (hoveredLv !== null) {
+    if (hoveredLevelIndex !== null) {
       // Individual level hover takes priority
-      if (hoveredLv === lv) {
+      if (hoveredLevelIndex === levelIndex) {
         targetGain = baseGain * HOVER_BOOST;
       } else {
         targetGain = baseGain * HOVER_DUCK * phaseFactor;
       }
     } else if (fanoBoostSet !== null) {
       // Fano line hover: boost members, duck others
-      if (fanoBoostSet.has(lv)) {
+      if (fanoBoostSet.has(levelIndex)) {
         targetGain = baseGain * HOVER_BOOST;
       } else {
         targetGain = baseGain * HOVER_DUCK * phaseFactor;
@@ -354,12 +354,12 @@ export function applyParams(
       targetGain = baseGain * phaseFactor;
     }
 
-    const tc = hoveredLv !== null || fanoBoostSet !== null ? DUCK_TC : RAMP_TC;
+    const tc = hoveredLevelIndex !== null || fanoBoostSet !== null ? DUCK_TC : RAMP_TC;
     // When drone is muted, only play hovered level or Fano line members
     let finalGain: number;
     if (droneMuted) {
-      const isHoveredLevel = hoveredLv !== null && hoveredLv === lv;
-      const isFanoMember = fanoBoostSet !== null && fanoBoostSet.has(lv);
+      const isHoveredLevel = hoveredLevelIndex !== null && hoveredLevelIndex === levelIndex;
+      const isFanoMember = fanoBoostSet !== null && fanoBoostSet.has(levelIndex);
       finalGain = isHoveredLevel || isFanoMember ? baseGain * HOVER_BOOST : 0;
     } else {
       finalGain = targetGain;
@@ -367,7 +367,7 @@ export function applyParams(
     nodes.gains[i].gain.setTargetAtTime(finalGain, now, tc);
 
     // Stereo pan
-    const panValue = panEnabled ? Math.cos((lvData.angle * Math.PI) / 180) : 0;
+    const panValue = panEnabled ? Math.cos((levelData.hueAngleDeg * Math.PI) / 180) : 0;
     nodes.panners[i].pan.setTargetAtTime(panValue, now, RAMP_TC);
   }
 
@@ -376,25 +376,25 @@ export function applyParams(
   const l7Radius = originMode === 0 ? l7Luma255 / 255 : 1 - l7Luma255 / 255;
   const noiseBase = NOISE_GAIN * l7Radius;
   let noiseTarget = noiseBase * phaseFactor;
-  if (hoveredLv === 7) noiseTarget = noiseBase * HOVER_BOOST;
-  else if (hoveredLv !== null) noiseTarget = noiseBase * HOVER_DUCK;
+  if (hoveredLevelIndex === 7) noiseTarget = noiseBase * HOVER_BOOST;
+  else if (hoveredLevelIndex !== null) noiseTarget = noiseBase * HOVER_DUCK;
   else if (fanoBoostSet !== null) noiseTarget = noiseBase * HOVER_DUCK;
-  const finalNoise = droneMuted ? (hoveredLv === 7 ? noiseBase * HOVER_BOOST : 0) : noiseTarget;
+  const finalNoise = droneMuted ? (hoveredLevelIndex === 7 ? noiseBase * HOVER_BOOST : 0) : noiseTarget;
   nodes.noiseGain.gain.setTargetAtTime(finalNoise, now, DUCK_TC);
 
   // FM synthesis: update modulator parameters if enabled
   if (fmEnabled && nodes.fmOscs.length > 0) {
     let pairIdx = 0;
-    for (const [carrierLv, modLv] of C2_PAIRS) {
+    for (const [carrierLevelIndex, modulatorLevelIndex] of C2_PAIRS) {
       if (pairIdx >= nodes.fmOscs.length) break;
-      const carrierData = levels.find((l) => l.lv === carrierLv);
-      const modData = levels.find((l) => l.lv === modLv);
-      if (!carrierData || !modData) {
+      const carrierLevel = levels.find((level) => level.levelIndex === carrierLevelIndex);
+      const modulatorLevel = levels.find((level) => level.levelIndex === modulatorLevelIndex);
+      if (!carrierLevel || !modulatorLevel) {
         pairIdx++;
         continue;
       }
-      nodes.fmOscs[pairIdx].frequency.setTargetAtTime(angleToFreq(modData.angle + activeAlpha, scaleMode), now, RAMP_TC);
-      const modIndex = (Math.abs(carrierData.luma255 - modData.luma255) / 255) * 400;
+      nodes.fmOscs[pairIdx].frequency.setTargetAtTime(angleToFreq(modulatorLevel.hueAngleDeg + activeAlpha, scaleMode), now, RAMP_TC);
+      const modIndex = (Math.abs(carrierLevel.luma255 - modulatorLevel.luma255) / 255) * 400;
       nodes.fmGains[pairIdx].gain.setTargetAtTime(modIndex, now, RAMP_TC);
       pairIdx++;
     }

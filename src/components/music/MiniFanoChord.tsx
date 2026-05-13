@@ -6,9 +6,9 @@ import { FANO_LINE_DUAL_POINTS, FANO_POINT_POSITIONS, FANO_VIEWBOX_HEIGHT, FANO_
 interface MiniFanoChordProps {
   hoveredLine: number | null;
   onLineHover: (lineIndex: number | null) => void;
-  onNodeClick?: (lv: number) => void;
+  onNodeClick?: (levelIndex: number) => void;
   onLineClick?: (lineIndex: number) => void;
-  activeLevels: { lv: number; rgb: readonly [number, number, number] }[];
+  activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
   /** Currently playing level from Gray melody (1-7 or null) */
   playingLevel?: number | null;
   /** Currently firing Fano line indices from rhythm (each beat triggers up to 3). */
@@ -23,7 +23,7 @@ const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff"
 const NODE_HIT_R = 14;
 
 function pointColor(lv: number, activeLevels: MiniFanoChordProps["activeLevels"]): string {
-  const found = activeLevels.find((l) => l.lv === lv);
+  const found = activeLevels.find((level) => level.levelIndex === lv);
   if (found) return `rgb(${found.rgb.join(",")})`;
   return LV_COLORS[lv] ?? "#888";
 }

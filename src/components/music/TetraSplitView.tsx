@@ -14,8 +14,8 @@ const EDGES: [number, number][] = [
   [2, 3],
 ];
 
-function pointColor(lv: number, activeLevels: { lv: number; rgb: readonly [number, number, number] }[]): string {
-  const found = activeLevels.find((l) => l.lv === lv);
+function pointColor(lv: number, activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[]): string {
+  const found = activeLevels.find((level) => level.levelIndex === lv);
   if (found) return `rgb(${found.rgb.join(",")})`;
   return LV_COLORS[lv] ?? "#888";
 }
@@ -35,7 +35,7 @@ function groupPoints(cx: number): Record<number, [number, number]> {
 
 interface Props {
   phase: "t0" | "t1" | null;
-  activeLevels: { lv: number; rgb: readonly [number, number, number] }[];
+  activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
 }
 
 export const TetraSplitView = React.memo(function TetraSplitView({ phase, activeLevels }: Props) {

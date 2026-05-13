@@ -9,11 +9,11 @@ import type { useMusicBurstHighlightState, useMusicPaletteState, useMusicTranspo
 type MusicPaletteState = ReturnType<typeof useMusicPaletteState>;
 type MusicTransportState = ReturnType<typeof useMusicTransportState>;
 type MusicBurstHighlightState = ReturnType<typeof useMusicBurstHighlightState>;
-type MusicSonificationLevel = { lv: number; angle: number };
+type MusicSonificationLevel = { levelIndex: number; hueAngleDeg: number };
 
 function useMusicKeyboardShortcuts(
   sonificationLevels: MusicSonificationLevel[],
-  onLevelTrigger: (levelIndex: number, angle: number) => void,
+  onLevelTrigger: (levelIndex: number, hueAngleDeg: number) => void,
 ): void {
   const sonificationLevelsRef = useRef(sonificationLevels);
   useEffect(() => {
@@ -26,8 +26,8 @@ function useMusicKeyboardShortcuts(
       const k = e.key;
       if (k >= "1" && k <= "6") {
         const levelIndex = +k;
-        const entry = sonificationLevelsRef.current.find((s) => s.lv === levelIndex);
-        if (entry) onLevelTrigger(levelIndex, entry.angle);
+        const entry = sonificationLevelsRef.current.find((level) => level.levelIndex === levelIndex);
+        if (entry) onLevelTrigger(levelIndex, entry.hueAngleDeg);
       }
     };
     document.addEventListener("keydown", handler);
@@ -61,8 +61,8 @@ export function useMusicHuePaletteHandlers({
   const { setBurstHighlight, burstTimersRef } = burst;
 
   const triggerToneBurstAtActiveAlpha = useCallback(
-    (levelIndex: number, angle: number) => {
-      engine.triggerToneBurst(levelIndex, angle >= 0 ? angle + activeAlpha : angle);
+    (levelIndex: number, hueAngleDeg: number) => {
+      engine.triggerToneBurst(levelIndex, hueAngleDeg >= 0 ? hueAngleDeg + activeAlpha : hueAngleDeg);
     },
     [activeAlpha, engine],
   );
@@ -90,10 +90,10 @@ export function useMusicHuePaletteHandlers({
   );
 
   const handleBlockClick = useCallback(
-    (levelIndex: number, angle: number) => {
+    (levelIndex: number, hueAngleDeg: number) => {
       ensureAudio();
       engine.initAudio();
-      triggerToneBurstAtActiveAlpha(levelIndex, angle);
+      triggerToneBurstAtActiveAlpha(levelIndex, hueAngleDeg);
       const prev = burstTimersRef.current.get(levelIndex);
       if (prev) clearTimeout(prev);
       setBurstHighlight((s) => {

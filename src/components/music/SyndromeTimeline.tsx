@@ -4,7 +4,7 @@ import { C } from "../../styles/tokens";
 interface SyndromeTimelineProps {
   phase: "original" | "corrupted" | "syndrome" | "corrected" | null;
   errorPos: number;
-  activeLevels: { lv: number; rgb: readonly [number, number, number] }[];
+  activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
 }
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
@@ -18,7 +18,7 @@ const PARITY_LABELS = ["P1", "P2", "P4"];
 const PARITY_COLORS = ["#0000ff", "#ff0000", "#00ff00"];
 
 function pointColor(lv: number, activeLevels: SyndromeTimelineProps["activeLevels"]): string {
-  const found = activeLevels.find((l) => l.lv === lv);
+  const found = activeLevels.find((level) => level.levelIndex === lv);
   if (found) return `rgb(${found.rgb.join(",")})`;
   return LV_COLORS[lv] ?? "#888";
 }

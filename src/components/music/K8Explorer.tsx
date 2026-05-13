@@ -7,7 +7,7 @@ import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
 
 interface K8ExplorerProps {
   engine: MusicEngineReturn;
-  activeLevels: { lv: number; rgb: readonly [number, number, number] }[];
+  activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
   stopSignal: number;
   resetSignal: number;
   tetraPhase: "t0" | "t1" | null;

@@ -3,7 +3,7 @@ import { C } from "../../styles/tokens";
 
 interface GrayCubeProps {
   currentCode: number | null;
-  activeLevels: { lv: number; rgb: readonly [number, number, number] }[];
+  activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
 }
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];

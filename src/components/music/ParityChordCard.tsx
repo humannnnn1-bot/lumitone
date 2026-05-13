@@ -8,7 +8,7 @@ import type { DecoderPhase } from "../../music/types";
 
 interface ParityChordCardProps {
   engine: MusicEngineReturn;
-  activeLevels: { lv: number; rgb: readonly [number, number, number] }[];
+  activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
   stopSignal: number;
   /** Syndrome-phase parity groups from ErrorCorrectionCard */
   errorPos: number;

@@ -7,7 +7,7 @@ interface WeightHistogramProps {
   mode: HammingMode;
   currentWeight: number;
   currentIndex: number;
-  activeLevels: { lv: number; rgb: readonly [number, number, number] }[];
+  activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
 }
 
 // [7,4,3]: weights 0,3,4,7 — counts [1,7,7,1]

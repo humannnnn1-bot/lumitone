@@ -191,12 +191,12 @@ function last(values: number[]) {
 }
 
 const levels: SonificationLevel[] = [
-  { lv: 1, angle: 240, luma255: 29 },
-  { lv: 2, angle: 0, luma255: 76 },
-  { lv: 3, angle: 300, luma255: 105 },
-  { lv: 4, angle: 120, luma255: 150 },
-  { lv: 5, angle: 180, luma255: 179 },
-  { lv: 6, angle: 60, luma255: 226 },
+  { levelIndex: 1, hueAngleDeg: 240, luma255: 29 },
+  { levelIndex: 2, hueAngleDeg: 0, luma255: 76 },
+  { levelIndex: 3, hueAngleDeg: 300, luma255: 105 },
+  { levelIndex: 4, hueAngleDeg: 120, luma255: 150 },
+  { levelIndex: 5, hueAngleDeg: 180, luma255: 179 },
+  { levelIndex: 6, hueAngleDeg: 60, luma255: 226 },
 ];
 
 describe("music-audio-graph", () => {

@@ -7,7 +7,7 @@ import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
 
 interface TetraSplitCardProps {
   engine: MusicEngineReturn;
-  activeLevels: { lv: number; rgb: readonly [number, number, number] }[];
+  activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
   stopSignal: number;
   highlighted: boolean;
   onPhaseChange?: (phase: "t0" | "t1" | null) => void;

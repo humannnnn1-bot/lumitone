@@ -14,7 +14,7 @@ interface MusicLevelCandidateGridProps {
   onCandidateOverridesByLevelChange: React.Dispatch<React.SetStateAction<Map<number, number>>>;
   onSelectedLevelsChange: React.Dispatch<React.SetStateAction<Set<number>>>;
   onHoveredCandidateChange: (candidate: MusicCandidateHover) => void;
-  onBlockClick: (levelIndex: number, angle: number) => void;
+  onBlockClick: (levelIndex: number, hueAngleDeg: number) => void;
 }
 
 interface MusicLevelCandidateColumnProps extends Omit<MusicLevelCandidateGridProps, "levelPreview"> {

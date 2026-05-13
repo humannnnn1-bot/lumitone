@@ -15,8 +15,8 @@ const PTS: Record<number, [number, number]> = {
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
 
-function pointColor(lv: number, activeLevels: { lv: number; rgb: readonly [number, number, number] }[]): string {
-  const found = activeLevels.find((l) => l.lv === lv);
+function pointColor(lv: number, activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[]): string {
+  const found = activeLevels.find((level) => level.levelIndex === lv);
   if (found) return `rgb(${found.rgb.join(",")})`;
   return LV_COLORS[lv] ?? "#888";
 }
@@ -33,7 +33,7 @@ interface Props {
   lvA: number | null;
   lvB: number | null;
   phase: "pair" | "result" | null;
-  activeLevels: { lv: number; rgb: readonly [number, number, number] }[];
+  activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
 }
 
 export const OctahedronMix = React.memo(function OctahedronMix({ lvA, lvB, phase, activeLevels }: Props) {

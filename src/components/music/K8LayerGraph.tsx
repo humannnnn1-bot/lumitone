@@ -25,8 +25,8 @@ const LAYERS = {
   3: { edges: COMPLEMENT_EDGES, labelKey: "music_k8_d3", color: "#ff8f8f" },
 } as const;
 
-function pointColor(lv: number, activeLevels: { lv: number; rgb: readonly [number, number, number] }[]): string {
-  const found = activeLevels.find((l) => l.lv === lv);
+function pointColor(lv: number, activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[]): string {
+  const found = activeLevels.find((level) => level.levelIndex === lv);
   if (found) return `rgb(${found.rgb.join(",")})`;
   return LV_COLORS[lv] ?? "#888";
 }
@@ -39,7 +39,7 @@ interface Props {
   /** `null` = no layer playing → render nodes only, no edges. */
   layer: 1 | 2 | 3 | null;
   activeEdgeIndex: number;
-  activeLevels: { lv: number; rgb: readonly [number, number, number] }[];
+  activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
   tetraPhase?: "t0" | "t1" | null;
 }
 

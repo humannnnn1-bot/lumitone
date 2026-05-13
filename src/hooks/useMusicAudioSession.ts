@@ -20,7 +20,7 @@ type MusicLumaMode = "symmetric" | "bt601Luma";
 interface MusicAudioSessionParams {
   enabled: boolean;
   levels: SonificationLevel[];
-  hoveredLv: number | null;
+  hoveredLevelIndex: number | null;
   alpha0: number;
   alpha7: number;
   volume: number;
@@ -35,7 +35,7 @@ interface MusicAudioSessionParams {
 
 interface MusicAudioSessionSnapshot {
   levels: SonificationLevel[];
-  hoveredLv: number | null;
+  hoveredLevelIndex: number | null;
   alpha0: number;
   alpha7: number;
   volume: number;
@@ -53,9 +53,9 @@ interface MusicAudioSessionReturn {
   analyserNode: AnalyserNode | null;
   initAudio: () => void;
   stopAudio: () => void;
-  triggerToneBurst: (lv: number, angle: number) => void;
-  playPitchLevel: (lv: number) => void;
-  playBitVectorLevel: (lv: number) => void;
+  triggerToneBurst: (levelIndex: number, hueAngleDeg: number) => void;
+  playPitchLevel: (levelIndex: number) => void;
+  playBitVectorLevel: (levelIndex: number) => void;
   triggerLumaBurst: (luma255: number) => void;
   triggerErrorMarker: () => void;
   setLumaMode: (mode: MusicLumaMode) => void;
@@ -65,7 +65,7 @@ interface MusicAudioSessionReturn {
 export function useMusicAudioSession({
   enabled,
   levels,
-  hoveredLv,
+  hoveredLevelIndex,
   alpha0,
   alpha7,
   volume,
@@ -83,7 +83,7 @@ export function useMusicAudioSession({
 
   const paramsRef = useRef<MusicAudioSessionSnapshot>({
     levels,
-    hoveredLv,
+    hoveredLevelIndex,
     alpha0,
     alpha7,
     volume,
@@ -96,7 +96,7 @@ export function useMusicAudioSession({
   });
   paramsRef.current = {
     levels,
-    hoveredLv,
+    hoveredLevelIndex,
     alpha0,
     alpha7,
     volume,
@@ -113,7 +113,7 @@ export function useMusicAudioSession({
     applyParams(
       nodes,
       p.levels,
-      p.hoveredLv,
+      p.hoveredLevelIndex,
       p.alpha0,
       p.alpha7,
       p.volume,
@@ -180,7 +180,7 @@ export function useMusicAudioSession({
   }, [
     enabled,
     levels,
-    hoveredLv,
+    hoveredLevelIndex,
     alpha0,
     alpha7,
     volume,
@@ -193,36 +193,36 @@ export function useMusicAudioSession({
     applyCurrentParams,
   ]);
 
-  const angleForLv = useCallback((lv: number): number => {
+  const hueAngleForLevel = useCallback((levelIndex: number): number => {
     const p = paramsRef.current;
-    const d = p.levels.find((l) => l.lv === lv);
+    const d = p.levels.find((level) => level.levelIndex === levelIndex);
     const activeAlpha = p.originMode === 0 ? p.alpha0 : p.alpha7;
-    return (d?.angle ?? 0) + activeAlpha;
+    return (d?.hueAngleDeg ?? 0) + activeAlpha;
   }, []);
 
-  const triggerToneBurst = useCallback((lv: number, angle: number) => {
+  const triggerToneBurst = useCallback((levelIndex: number, hueAngleDeg: number) => {
     const nodes = nodesRef.current;
     if (!nodes) return;
-    triggerPitchOrLumaBurst(nodes, lv, angle, paramsRef.current.scaleMode);
+    triggerPitchOrLumaBurst(nodes, levelIndex, hueAngleDeg, paramsRef.current.scaleMode);
   }, []);
 
   const playPitchLevel = useCallback(
-    (lv: number) => {
+    (levelIndex: number) => {
       const nodes = nodesRef.current;
       if (!nodes) return;
-      if (lv === 0 || lv === 7) {
-        triggerPitchOrLumaBurst(nodes, lv, -1, paramsRef.current.scaleMode);
+      if (levelIndex === 0 || levelIndex === 7) {
+        triggerPitchOrLumaBurst(nodes, levelIndex, -1, paramsRef.current.scaleMode);
         return;
       }
-      triggerPitchOrLumaBurst(nodes, lv, angleForLv(lv), paramsRef.current.scaleMode);
+      triggerPitchOrLumaBurst(nodes, levelIndex, hueAngleForLevel(levelIndex), paramsRef.current.scaleMode);
     },
-    [angleForLv],
+    [hueAngleForLevel],
   );
 
-  const playBitVectorLevel = useCallback((lv: number) => {
+  const playBitVectorLevel = useCallback((levelIndex: number) => {
     const nodes = nodesRef.current;
     if (!nodes) return;
-    triggerBitSpectrumBurst(nodes, lv, -1, false);
+    triggerBitSpectrumBurst(nodes, levelIndex, -1, false);
   }, []);
 
   const triggerLumaBurstForSession = useCallback((luma255: number) => {

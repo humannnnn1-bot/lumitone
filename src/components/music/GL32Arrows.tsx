@@ -3,7 +3,7 @@ import { C } from "../../styles/tokens";
 
 interface GL32ArrowsProps {
   perm: number[]; // current permutation [0,1,2,3,4,5,6,7] or permuted
-  activeLevels: { lv: number; rgb: readonly [number, number, number] }[];
+  activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
   flash?: boolean; // true for ~500ms after a transform is applied
 }
 
@@ -17,7 +17,7 @@ const X_START = 24;
 const X_GAP = 22;
 
 function lvColor(lv: number, activeLevels: GL32ArrowsProps["activeLevels"]): string {
-  const found = activeLevels.find((l) => l.lv === lv);
+  const found = activeLevels.find((level) => level.levelIndex === lv);
   if (found) return `rgb(${found.rgb.join(",")})`;
   return LV_COLORS[lv] ?? "#888";
 }

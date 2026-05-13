@@ -3,7 +3,7 @@ import { C } from "../../styles/tokens";
 
 interface ParityGridProps {
   activeGroups: (0 | 1 | 2)[];
-  activeLevels: { lv: number; rgb: readonly [number, number, number] }[];
+  activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
 }
 
 const LV_COLORS = ["#000", "#0000ff", "#ff0000", "#ff00ff", "#00ff00", "#00ffff", "#ffff00", "#fff"];
@@ -26,7 +26,7 @@ const LEFT = LABEL_W + 4;
 const TOP = HEADER_H + 4;
 
 function pointColor(lv: number, activeLevels: ParityGridProps["activeLevels"]): string {
-  const found = activeLevels.find((l) => l.lv === lv);
+  const found = activeLevels.find((level) => level.levelIndex === lv);
   if (found) return `rgb(${found.rgb.join(",")})`;
   return LV_COLORS[lv] ?? "#888";
 }

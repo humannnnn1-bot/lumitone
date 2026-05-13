@@ -25,7 +25,9 @@ export function buildMusicSonificationLevels(
   return MUSIC_ACTIVE_LEVELS.map((levelIndex) => {
     const candidateIndex = getCandidateIndex(candidateOverridesByLevel, levelIndex, hueAngle);
     const cand = LEVEL_CANDIDATES[levelIndex][candidateIndex];
-    return cand ? { lv: levelIndex, angle: cand.angle, luma255: LEVEL_INFO[levelIndex].gray } : { lv: levelIndex, angle: 0, luma255: 0 };
+    return cand
+      ? { levelIndex, hueAngleDeg: cand.angle, luma255: LEVEL_INFO[levelIndex].gray }
+      : { levelIndex, hueAngleDeg: 0, luma255: 0 };
   });
 }
 
@@ -41,7 +43,7 @@ export function buildMusicLevelPreview(candidateOverridesByLevel: ReadonlyMap<nu
 export function buildActiveMusicLevels(levelPreview: readonly MusicLevelPreview[]): ActiveMusicLevel[] {
   return levelPreview
     .filter((lp) => lp.levelIndex >= 1 && lp.levelIndex <= 6)
-    .map((lp) => ({ lv: lp.levelIndex, rgb: lp.rgb as readonly [number, number, number] }));
+    .map((lp) => ({ levelIndex: lp.levelIndex, rgb: lp.rgb as readonly [number, number, number] }));
 }
 
 export function buildMusicHueTicks(): MusicHueTick[] {

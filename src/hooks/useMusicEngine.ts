@@ -36,7 +36,7 @@ export type { ScaleMode } from "../data/music-frequency";
 interface MusicEngineParams {
   enabled: boolean;
   levels: SonificationLevel[];
-  hoveredLv: number | null;
+  hoveredLevelIndex: number | null;
   alpha0: number;
   alpha7: number;
   volume: number; // 0-1
@@ -51,18 +51,18 @@ interface MusicEngineParams {
 export interface MusicEngineReturn {
   initAudio: () => void;
   stopAudio: () => void;
-  triggerToneBurst: (lv: number, angle: number) => void;
-  playGrayMelody: (tempo: number, onStep: (lv: number | null) => void) => void;
+  triggerToneBurst: (levelIndex: number, hueAngleDeg: number) => void;
+  playGrayMelody: (tempo: number, onStep: (levelIndex: number | null) => void) => void;
   stopGrayMelody: () => void;
   startFanoRhythm: (tempo: number, onBeat: (lines: number[], pos: number) => void) => void;
   stopFanoRhythm: () => void;
   analyserNode: AnalyserNode | null;
-  playXorTriple: (lvA: number, lvB: number, onStep: (lv: number | null) => void) => void;
+  playXorTriple: (levelIndexA: number, levelIndexB: number, onStep: (levelIndex: number | null) => void) => void;
   playParityChord: (parityBit: 0 | 1 | 2) => void;
   playComplementChord: (lineIndex: number) => void;
   playLineAndComplement: (lineIndex: number, onStep: (phase: "line" | "complement" | null) => void) => void;
   playSyndromeDemo: (errorPos: number, onPhase: (phase: "original" | "corrupted" | "syndrome" | "corrected" | null) => void) => void;
-  playGray3Voice: (onStep: (lv: number | null) => void) => void;
+  playGray3Voice: (onStep: (levelIndex: number | null) => void) => void;
   playWeightSpectrum: (onStep: (positions: number[], weight: number, index: number) => void) => void;
   playCayleyRow: (row: number, onStep: (col: number, value: number) => void) => void;
   applyGL32Transform: (gen: "A" | "B" | "C", onPerm?: (perm: number[]) => void) => void;
@@ -93,7 +93,7 @@ export interface MusicEngineReturn {
 export function useMusicEngine({
   enabled,
   levels,
-  hoveredLv,
+  hoveredLevelIndex,
   alpha0,
   alpha7,
   volume,
@@ -134,7 +134,7 @@ export function useMusicEngine({
   } = useMusicAudioSession({
     enabled,
     levels,
-    hoveredLv,
+    hoveredLevelIndex,
     alpha0,
     alpha7,
     volume,
@@ -149,16 +149,16 @@ export function useMusicEngine({
 
   /* ── Gray Code Melody ── */
   const playGrayMelody = useCallback(
-    (tempo: number, onStep: (lv: number | null) => void) => {
+    (tempo: number, onStep: (levelIndex: number | null) => void) => {
       if (!nodesRef.current) return;
       const intervalMs = 60000 / tempo;
       let step = 0;
       replaceInterval(
         grayIntervalRef,
         () => {
-          const lv = FULL_GRAY_CODE[step % FULL_GRAY_CODE.length];
-          playPitchLevel(lv);
-          onStep(lv);
+          const levelIndex = FULL_GRAY_CODE[step % FULL_GRAY_CODE.length];
+          playPitchLevel(levelIndex);
+          onStep(levelIndex);
           step++;
         },
         intervalMs,
@@ -260,9 +260,9 @@ export function useMusicEngine({
 
   /* ── 1. playXorTriple ── */
   const playXorTriple = useCallback(
-    (lvA: number, lvB: number, onStep: (lv: number | null) => void) => {
+    (levelIndexA: number, levelIndexB: number, onStep: (levelIndex: number | null) => void) => {
       if (!nodesRef.current) return;
-      scheduleXorTriple(lvA, lvB, onStep, oneShotPlayback);
+      scheduleXorTriple(levelIndexA, levelIndexB, onStep, oneShotPlayback);
     },
     [nodesRef, oneShotPlayback],
   );
@@ -312,7 +312,7 @@ export function useMusicEngine({
 
   /* ── 6. playGray3Voice (looping) ── */
   const playGray3Voice = useCallback(
-    (onStep: (lv: number | null) => void) => {
+    (onStep: (levelIndex: number | null) => void) => {
       if (!nodesRef.current) return;
 
       let step = 0;
@@ -322,12 +322,12 @@ export function useMusicEngine({
           const nodes = nodesRef.current;
           if (!nodes) return;
           const ctx = nodes.ctx;
-          const lv = FULL_GRAY_CODE[step % FULL_GRAY_CODE.length];
-          onStep(lv);
+          const levelIndex = FULL_GRAY_CODE[step % FULL_GRAY_CODE.length];
+          onStep(levelIndex);
 
           // Create oscillators for each bit that is 1
           for (let bit = 0; bit < 3; bit++) {
-            if (lv & (1 << bit)) {
+            if (levelIndex & (1 << bit)) {
               const osc = ctx.createOscillator();
               osc.type = "sine";
               osc.frequency.value = GRAY_VOICE_FREQS[bit];
@@ -394,15 +394,15 @@ export function useMusicEngine({
       const now = nodes.ctx.currentTime;
       const newPerm = gl32PermRef.current;
       const activeAlpha = p.originMode === 0 ? p.alpha0 : p.alpha7;
-      const freqForLv = (lv: number): number => {
-        if (lv === 0 || lv === 7) return lumaToFreq(LUMA_VALUES[lv]);
-        const lvData = p.levels.find((l) => l.lv === lv);
-        return angleToFreq((lvData?.angle ?? 0) + activeAlpha, p.scaleMode);
+      const freqForLevel = (levelIndex: number): number => {
+        if (levelIndex === 0 || levelIndex === 7) return lumaToFreq(LUMA_VALUES[levelIndex]);
+        const levelData = p.levels.find((level) => level.levelIndex === levelIndex);
+        return angleToFreq((levelData?.hueAngleDeg ?? 0) + activeAlpha, p.scaleMode);
       };
 
       for (let i = 0; i < 6; i++) {
         const targetLv = newPerm[i];
-        nodes.oscs[i].frequency.setTargetAtTime(freqForLv(targetLv), now, RAMP_TC);
+        nodes.oscs[i].frequency.setTargetAtTime(freqForLevel(targetLv), now, RAMP_TC);
       }
 
       onPerm?.([0, ...newPerm]);
@@ -423,9 +423,9 @@ export function useMusicEngine({
       const now = nodes.ctx.currentTime;
       const activeAlpha = p.originMode === 0 ? p.alpha0 : p.alpha7;
       for (let i = 0; i < 6; i++) {
-        const lvData = p.levels.find((l) => l.lv === i + 1);
-        if (!lvData) continue;
-        nodes.oscs[i].frequency.setTargetAtTime(angleToFreq(lvData.angle + activeAlpha, p.scaleMode), now, RAMP_TC);
+        const levelData = p.levels.find((level) => level.levelIndex === i + 1);
+        if (!levelData) continue;
+        nodes.oscs[i].frequency.setTargetAtTime(angleToFreq(levelData.hueAngleDeg + activeAlpha, p.scaleMode), now, RAMP_TC);
       }
       onPerm?.([0, 1, 2, 3, 4, 5, 6, 7]);
     },

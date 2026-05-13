@@ -21,17 +21,17 @@ describe("music panel derived data", () => {
     const candidateOverridesByLevel = new Map<number, number>([[2, directCandidate]]);
     const levels = buildMusicSonificationLevels(candidateOverridesByLevel, 123);
 
-    expect(levels.map((level) => level.lv)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(levels.map((level) => level.levelIndex)).toEqual([1, 2, 3, 4, 5, 6]);
     expect(levels[1]).toEqual({
-      lv: 2,
-      angle: LEVEL_CANDIDATES[2][directCandidate].angle,
+      levelIndex: 2,
+      hueAngleDeg: LEVEL_CANDIDATES[2][directCandidate].angle,
       luma255: LEVEL_INFO[2].gray,
     });
 
     const fallbackCandidate = findClosestCandidate(3, 123);
     expect(levels[2]).toEqual({
-      lv: 3,
-      angle: LEVEL_CANDIDATES[3][fallbackCandidate].angle,
+      levelIndex: 3,
+      hueAngleDeg: LEVEL_CANDIDATES[3][fallbackCandidate].angle,
       luma255: LEVEL_INFO[3].gray,
     });
   });
@@ -54,7 +54,7 @@ describe("music panel derived data", () => {
     const preview = buildMusicLevelPreview(new Map(), 180);
     const active = buildActiveMusicLevels(preview);
 
-    expect(active.map((level) => level.lv)).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(active.map((level) => level.levelIndex)).toEqual([1, 2, 3, 4, 5, 6]);
     expect(active[0].rgb).toEqual(preview[1].rgb);
   });
 

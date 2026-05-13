@@ -287,7 +287,7 @@ export function useMusicPanelController() {
   const engine = useMusicEngine({
     enabled: true,
     levels: sonificationLevels,
-    hoveredLv: hoveredCandidate?.levelIndex ?? null,
+    hoveredLevelIndex: hoveredCandidate?.levelIndex ?? null,
     alpha0,
     alpha7,
     volume: muted ? 0 : volume,
