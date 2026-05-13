@@ -28,7 +28,7 @@
     "format:check": "prettier --check src e2e scripts/**/*.mjs .github README.md CONTRIBUTING.md SECURITY.md docs/**/*.md index.html public/*.webmanifest .lintstagedrc.json tsconfig*.json playwright.config.ts playwright.pwa.config.ts playwright.visual.config.ts vite.config.ts",
     "verify": "npm run format:check && npm run lint && npm run deadcode && npm run typecheck:all && npm run build && npm test",
     "verify:e2e": "npm run verify && npm run test:e2e && npm run test:pwa",
-    "verify:full": "npm run format:check && npm run lint && npm run deadcode && npm run typecheck:all && npm run build && npm run test:coverage && npm run test:e2e && npm run test:pwa",
+    "verify:full": "npm run format:check && npm run lint && npm run deadcode && npm run typecheck:all && npm run build && npm run test:coverage && npm run test:e2e && npm run test:pwa && npm run test:visual",
     "prepare": "husky"
   },
   "volta": {
