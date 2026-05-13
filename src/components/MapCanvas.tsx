@@ -36,7 +36,13 @@ export function MapCanvas({
   const ref = useRef<HTMLCanvasElement>(null);
   const cw = canvasData.width;
   const ch = canvasData.height;
-  const regionSizeCache = useMemo(() => (mode === "region" ? buildRegionSizeMap(pixelMaps) : EMPTY_REGION_SIZE_BY_ID), [mode, pixelMaps]);
+  const regionSizeCache = useMemo(
+    () =>
+      mode === "region" && pixelMaps.width === cw && pixelMaps.height === ch && pixelMaps.regionId.length >= cw * ch
+        ? buildRegionSizeMap(pixelMaps)
+        : EMPTY_REGION_SIZE_BY_ID,
+    [mode, pixelMaps, cw, ch],
+  );
   const compactStatus = useCompactStatus();
 
   useEffect(() => {

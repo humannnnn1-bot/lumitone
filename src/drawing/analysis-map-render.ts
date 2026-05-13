@@ -5,7 +5,7 @@ import { hexStr } from "../utils";
 import type { StatusText } from "../utils/status-display";
 
 export type AnalysisColorLUT = [number, number, number][];
-export type AnalysisMapRenderStatus = "rendered" | "stale";
+export type AnalysisMapRenderStatus = "rendered" | "pending" | "stale";
 
 const REGION_SMALL_THRESHOLD = 10;
 const MAP_STATUS_LABEL: Record<MapMode, string> = {
@@ -62,6 +62,32 @@ function shortCount(n: number): string {
 function valueAt<T extends Float32Array | Int32Array | Uint8Array>(arr: T, idx: number, fallback = 0): number {
   const v = arr[idx];
   return Number.isFinite(v) ? v : fallback;
+}
+
+function hasPixels(arr: Float32Array | Int32Array | Uint8Array, n: number): boolean {
+  return arr.length >= n;
+}
+
+function getMapRenderStatus(
+  mode: MapMode,
+  pixelMaps: AnalysisPixelMaps,
+  canvasData: CanvasData,
+): Exclude<AnalysisMapRenderStatus, "rendered"> | null {
+  const n = canvasData.width * canvasData.height;
+
+  if (mode === "levelTone" || mode === "colorLuma") return null;
+  if (pixelMaps.width !== canvasData.width || pixelMaps.height !== canvasData.height) return "stale";
+
+  if (mode === "diversity") return hasPixels(pixelMaps.localDiversity, n) ? null : "pending";
+  if (mode === "isolation") return hasPixels(pixelMaps.neighborIsolation, n) ? null : "pending";
+  if (mode === "boundaryDistance") return hasPixels(pixelMaps.boundaryDistance, n) && hasPixels(pixelMaps.edgeMask, n) ? null : "pending";
+  if (mode === "gradient")
+    return hasPixels(pixelMaps.gradientMagnitude, n) && hasPixels(pixelMaps.gradientAngle, n) && hasPixels(pixelMaps.levelTone, n)
+      ? null
+      : "pending";
+  if (mode === "region") return hasPixels(pixelMaps.regionId, n) && hasPixels(pixelMaps.edgeMask, n) ? null : "pending";
+
+  return "pending";
 }
 
 function signedInt(v: number): string {
@@ -266,7 +292,8 @@ export function rasterizeAnalysisMap({
   const n = w * h;
   target.fill(0);
 
-  if (pixelMaps.width !== w || pixelMaps.height !== h) return "stale";
+  const unavailableStatus = getMapRenderStatus(mode, pixelMaps, canvasData);
+  if (unavailableStatus) return unavailableStatus;
 
   if (mode === "diversity" && pixelMaps.localDiversity.length >= n) {
     for (let i = 0; i < n; i++) {
@@ -281,9 +308,9 @@ export function rasterizeAnalysisMap({
     for (let i = 0; i < n; i++) {
       target[i] = applyLUTPacked(TURBO, 1 - pixelMaps.boundaryDistance[i]);
     }
-  } else if (mode === "levelTone" && pixelMaps.levelTone.length >= n) {
+  } else if (mode === "levelTone") {
     for (let i = 0; i < n; i++) {
-      target[i] = applyLUTPacked(MAGMA, pixelMaps.levelTone[i]);
+      target[i] = applyLUTPacked(MAGMA, (canvasData.levelData[i] & LEVEL_MASK) / 7);
     }
   } else if (mode === "colorLuma") {
     for (let i = 0; i < n; i++) {
@@ -331,7 +358,9 @@ export function rasterizeAnalysisMap({
 
 export function buildRegionSizeMap(pixelMaps: Pick<AnalysisPixelMaps, "regionId" | "width" | "height">): Map<number, number> {
   const sizes = new Map<number, number>();
-  for (let i = 0; i < pixelMaps.width * pixelMaps.height; i++) {
+  const n = pixelMaps.width * pixelMaps.height;
+  if (pixelMaps.regionId.length < n) return sizes;
+  for (let i = 0; i < n; i++) {
     const id = pixelMaps.regionId[i];
     sizes.set(id, (sizes.get(id) || 0) + 1);
   }
@@ -365,9 +394,8 @@ export function getAnalysisMapHoverInfo({
   const lv = canvasData.levelData[idx] & LEVEL_MASK;
   const prefix = `(${x},${y}) ${MAP_STATUS_LABEL[mode]} L${lv}`;
   const compactPrefix = `(${x},${y}) ${MAP_STATUS_LABEL[mode].replace("Map", "")} L${lv}`;
-  const needsComputedMap = mode !== "levelTone" && mode !== "colorLuma";
-  if (needsComputedMap && (pixelMaps.width !== w || pixelMaps.height !== h))
-    return { full: `${prefix} pending`, compact: `${compactPrefix} pending` };
+  const unavailableStatus = getMapRenderStatus(mode, pixelMaps, canvasData);
+  if (unavailableStatus) return { full: `${prefix} ${unavailableStatus}`, compact: `${compactPrefix} ${unavailableStatus}` };
 
   if (mode === "diversity") {
     const { keys, winW, winH } = diversityWindowInfo(canvasData, x, y);

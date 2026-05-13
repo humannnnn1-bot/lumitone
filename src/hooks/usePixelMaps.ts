@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { LEVEL_MASK } from "../constants";
 import type { AnalysisPixelMaps, CanvasData, MapMode } from "../types";
@@ -26,7 +26,29 @@ type PixelMapsCache = {
   byMode: Partial<Record<MapMode, AnalysisPixelMaps>>;
 };
 
-function emptyPixelMaps(width: number, height: number): AnalysisPixelMaps {
+type PixelMapsState = {
+  levelData: Uint8Array;
+  pixelCandidateOverrideMap: Uint8Array;
+  mode: MapMode;
+  maps: AnalysisPixelMaps;
+};
+
+function pendingPixelMaps(width: number, height: number): AnalysisPixelMaps {
+  return {
+    neighborIsolation: new Float32Array(0),
+    boundaryDistance: new Float32Array(0),
+    gradientAngle: new Float32Array(0),
+    gradientMagnitude: new Float32Array(0),
+    regionId: new Int32Array(0),
+    edgeMask: new Uint8Array(0),
+    levelTone: new Float32Array(0),
+    localDiversity: new Float32Array(0),
+    width,
+    height,
+  };
+}
+
+function emptyComputedPixelMaps(width: number, height: number): AnalysisPixelMaps {
   const n = width * height;
   return {
     neighborIsolation: new Float32Array(n),
@@ -46,7 +68,7 @@ function emptyPixelMaps(width: number, height: number): AnalysisPixelMaps {
 function computePixelMapsSync(canvasData: CanvasData, mode: MapMode): AnalysisPixelMaps {
   const { levelData, width, height } = canvasData;
   const n = width * height;
-  const maps = emptyPixelMaps(width, height);
+  const maps = emptyComputedPixelMaps(width, height);
   if (n === 0) return maps;
   switch (mode) {
     case "isolation":
@@ -105,8 +127,28 @@ function isSameCanvas(cache: PixelMapsCache | null, canvasData: CanvasData): cac
   );
 }
 
+function makePixelMapsState(canvasData: CanvasData, mode: MapMode, maps: AnalysisPixelMaps): PixelMapsState {
+  return {
+    levelData: canvasData.levelData,
+    pixelCandidateOverrideMap: canvasData.pixelCandidateOverrideMap,
+    mode,
+    maps,
+  };
+}
+
+function isCurrentMaps(state: PixelMapsState, canvasData: CanvasData, mode: MapMode): boolean {
+  return (
+    state.mode === mode &&
+    state.maps.width === canvasData.width &&
+    state.maps.height === canvasData.height &&
+    state.levelData === canvasData.levelData &&
+    state.pixelCandidateOverrideMap === canvasData.pixelCandidateOverrideMap
+  );
+}
+
 export function usePixelMaps(canvasData: CanvasData, mode: MapMode, preload = false): AnalysisPixelMaps {
-  const [maps, setMaps] = useState<AnalysisPixelMaps>(() => emptyPixelMaps(canvasData.width, canvasData.height));
+  const pendingMaps = useMemo(() => pendingPixelMaps(canvasData.width, canvasData.height), [canvasData.width, canvasData.height]);
+  const [mapsState, setMapsState] = useState<PixelMapsState>(() => makePixelMapsState(canvasData, mode, pendingMaps));
   const workerRef = useRef<Worker | null>(null);
   const preloadWorkerRef = useRef<Worker | null>(null);
   const workerFailedRef = useRef(false);
@@ -140,7 +182,7 @@ export function usePixelMaps(canvasData: CanvasData, mode: MapMode, preload = fa
     const cache = ensureCache();
     const cachedMaps = cache.byMode[mode];
     if (cachedMaps) {
-      setMaps(cachedMaps);
+      setMapsState(makePixelMapsState(canvasData, mode, cachedMaps));
       return;
     }
 
@@ -148,7 +190,7 @@ export function usePixelMaps(canvasData: CanvasData, mode: MapMode, preload = fa
       const perfStart = startDebugPerf();
       const nextMaps = computePixelMapsSync(canvasData, mode);
       cache.byMode[mode] = nextMaps;
-      setMaps(nextMaps);
+      setMapsState(makePixelMapsState(canvasData, mode, nextMaps));
       recordDebugPerf(`pixel-analysis:${mode}:sync`, perfStart, {
         w: canvasData.width,
         h: canvasData.height,
@@ -171,7 +213,7 @@ export function usePixelMaps(canvasData: CanvasData, mode: MapMode, preload = fa
       const perfStart = startDebugPerf();
       const nextMaps = computePixelMapsSync(canvasData, mode);
       cache.byMode[mode] = nextMaps;
-      setMaps(nextMaps);
+      setMapsState(makePixelMapsState(canvasData, mode, nextMaps));
       recordDebugPerf(`pixel-analysis:${mode}:sync-fallback`, perfStart, {
         w: canvasData.width,
         h: canvasData.height,
@@ -211,7 +253,7 @@ export function usePixelMaps(canvasData: CanvasData, mode: MapMode, preload = fa
       if (disposed) return;
       const nextMaps = computePixelMapsSync(canvasData, mode);
       cache.byMode[mode] = nextMaps;
-      setMaps(nextMaps);
+      setMapsState(makePixelMapsState(canvasData, mode, nextMaps));
       recordDebugPerf(`pixel-analysis:${mode}:sync-fallback`, perfStart, {
         status: "worker-error",
         w: canvasData.width,
@@ -226,7 +268,7 @@ export function usePixelMaps(canvasData: CanvasData, mode: MapMode, preload = fa
       if (disposed) return;
       const nextMaps = toPixelMaps(e.data);
       cache.byMode[mode] = nextMaps;
-      setMaps(nextMaps);
+      setMapsState(makePixelMapsState(canvasData, mode, nextMaps));
       recordDebugPerf(`pixel-analysis:${mode}:worker`, perfStart, {
         w: canvasData.width,
         h: canvasData.height,
@@ -362,7 +404,10 @@ export function usePixelMaps(canvasData: CanvasData, mode: MapMode, preload = fa
       cleanup();
       resetWorker();
     };
-  }, [canvasData, mode, maps, preload, ensureCache]);
+  }, [canvasData, mode, mapsState, preload, ensureCache]);
 
-  return maps;
+  const cachedCurrentMaps = isSameCanvas(cacheRef.current, canvasData) ? cacheRef.current.byMode[mode] : undefined;
+  if (cachedCurrentMaps) return cachedCurrentMaps;
+  if (isCurrentMaps(mapsState, canvasData, mode)) return mapsState.maps;
+  return pendingMaps;
 }

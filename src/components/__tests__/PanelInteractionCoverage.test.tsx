@@ -658,4 +658,46 @@ describe("MapCanvas rendering and inspection", () => {
     expect(putImageData).toHaveBeenCalledOnce();
     expect((putImageData.mock.calls[0][0] as ImageData).data.every((value) => value === 0)).toBe(true);
   });
+
+  it("clears pending same-sized map output and reports pending on hover", () => {
+    const putImageData = vi.fn();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- HTMLCanvasElement#getContext has incompatible overloads in tests
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockImplementation(function (_contextId: string): any {
+      return {
+        createImageData: (width: number, height: number) => new ImageData(width, height),
+        putImageData,
+      };
+    });
+
+    const pixelMaps = { ...makePixelMaps(2, 2), neighborIsolation: new Float32Array(0) };
+    const { container } = render(
+      <MapCanvas
+        mode="isolation"
+        pixelMaps={pixelMaps}
+        colorLUT={colorLUT}
+        candidateIndexByLevel={DEFAULT_CANDIDATE_INDEX_BY_LEVEL}
+        canvasData={makeCanvasData(2, 2)}
+        displayWidth={20}
+        displayHeight={20}
+      />,
+    );
+
+    expect(putImageData).toHaveBeenCalledOnce();
+    expect((putImageData.mock.calls[0][0] as ImageData).data.every((value) => value === 0)).toBe(true);
+
+    const canvas = container.querySelector("canvas")!;
+    vi.spyOn(canvas, "getBoundingClientRect").mockReturnValue({
+      left: 0,
+      top: 0,
+      width: 20,
+      height: 20,
+      right: 20,
+      bottom: 20,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    fireEvent.mouseMove(canvas, { clientX: 5, clientY: 5 });
+    expect(screen.getByText("(0,0) MapIsolation L0 pending")).toBeTruthy();
+  });
 });

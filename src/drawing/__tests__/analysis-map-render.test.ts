@@ -76,6 +76,54 @@ describe("analysis-map-render", () => {
     expect(Array.from(target)).toEqual([0, 0, 0, 0]);
   });
 
+  it("clears the target and reports pending when required map arrays are not ready", () => {
+    const target = new Uint32Array([1, 2, 3, 4]);
+    const canvasData = makeCanvasData();
+    const pixelMaps = {
+      ...makePixelMaps(),
+      neighborIsolation: new Float32Array(0),
+    };
+
+    const status = rasterizeAnalysisMap({
+      mode: "isolation",
+      pixelMaps,
+      colorLUT,
+      canvasData,
+      target,
+    });
+    const hover = getAnalysisMapHoverInfo({
+      x: 0,
+      y: 0,
+      mode: "isolation",
+      pixelMaps,
+      colorLUT,
+      candidateIndexByLevel: DEFAULT_CANDIDATE_INDEX_BY_LEVEL,
+      canvasData,
+      regionSizeById: buildRegionSizeMap(pixelMaps),
+    });
+
+    expect(status).toBe("pending");
+    expect(Array.from(target)).toEqual([0, 0, 0, 0]);
+    expect(hover).toEqual({ full: "(0,0) MapIsolation L0 pending", compact: "(0,0) Isolation L0 pending" });
+  });
+
+  it("renders direct canvas-derived modes even while pixel maps are pending", () => {
+    const canvasData = makeCanvasData();
+    const pixelMaps = {
+      ...makePixelMaps(),
+      width: canvasData.width,
+      height: canvasData.height,
+      levelTone: new Float32Array(0),
+    };
+
+    for (const mode of ["levelTone", "colorLuma"] satisfies MapMode[]) {
+      const target = new Uint32Array(4);
+      const status = rasterizeAnalysisMap({ mode, pixelMaps, colorLUT, canvasData, target });
+      expect(status).toBe("rendered");
+      expect(Array.from(target).some((pixel) => pixel !== 0)).toBe(true);
+    }
+  });
+
   it("reuses a supplied region size map for region rasterization", () => {
     const canvasData = makeCanvasData();
     const pixelMaps = makePixelMaps();

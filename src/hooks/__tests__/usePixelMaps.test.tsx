@@ -127,6 +127,33 @@ describe("usePixelMaps", () => {
     expect(MockPixelAnalysisWorker.instances).toHaveLength(1);
   });
 
+  it("returns pending maps instead of same-sized stale maps while recomputing", async () => {
+    vi.useFakeTimers();
+    MockPixelAnalysisWorker.delays = [0, 50];
+    const first = { width: 4, height: 4, levelData: new Uint8Array(16), pixelCandidateOverrideMap: new Uint8Array(16) };
+    const second = { width: 4, height: 4, levelData: new Uint8Array(16), pixelCandidateOverrideMap: new Uint8Array(16) };
+    const { result, rerender } = renderHook(({ canvasData }) => usePixelMaps(canvasData, "isolation"), {
+      initialProps: { canvasData: first },
+    });
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(0);
+    });
+    expect(result.current.neighborIsolation[0]).toBe(1);
+
+    await act(async () => {
+      rerender({ canvasData: second });
+    });
+    expect(result.current.width).toBe(4);
+    expect(result.current.height).toBe(4);
+    expect(result.current.neighborIsolation).toHaveLength(0);
+
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(50);
+    });
+    expect(result.current.neighborIsolation[0]).toBe(2);
+  });
+
   it("reuses cached maps when switching back to the same mode on the same canvas", async () => {
     const canvasData = { width: 4, height: 4, levelData: new Uint8Array(16), pixelCandidateOverrideMap: new Uint8Array(16) };
     const initialProps: { mode: "isolation" | "boundaryDistance" } = { mode: "isolation" };
