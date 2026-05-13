@@ -10,9 +10,6 @@ interface K8ExplorerProps {
   activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
   stopSignal: number;
   resetSignal: number;
-  tetraPhase: "t0" | "t1" | null;
-  /** `null` when no layer is playing (graph shows only nodes). */
-  onLayerChange?: (layer: 1 | 2 | 3 | null) => void;
 }
 
 const S_LABEL: React.CSSProperties = {
@@ -21,14 +18,7 @@ const S_LABEL: React.CSSProperties = {
   whiteSpace: "nowrap",
 };
 
-export const K8Explorer = React.memo(function K8Explorer({
-  engine,
-  activeLevels,
-  stopSignal,
-  resetSignal,
-  tetraPhase,
-  onLayerChange,
-}: K8ExplorerProps) {
+export const K8Explorer = React.memo(function K8Explorer({ engine, activeLevels, stopSignal, resetSignal }: K8ExplorerProps) {
   const { t } = useTranslation();
 
   // null = no layer playing → graph shows only nodes (no edges).
@@ -44,8 +34,7 @@ export const K8Explorer = React.memo(function K8Explorer({
     }
     setActiveLayer(null);
     setEdgeIndex(-1);
-    onLayerChange?.(null);
-  }, [stopSignal, onLayerChange]);
+  }, [stopSignal]);
 
   // Each d=N button is both selector and play toggle for that layer.
   const handleLayerToggle = useCallback(
@@ -54,16 +43,14 @@ export const K8Explorer = React.memo(function K8Explorer({
       if (activeLayer === targetLayer) {
         setActiveLayer(null);
         setEdgeIndex(-1);
-        onLayerChange?.(null);
         return;
       }
       engine.initAudio();
       setActiveLayer(targetLayer);
       setEdgeIndex(-1);
-      onLayerChange?.(targetLayer);
       engine.playK8Layer?.(targetLayer, (ei) => setEdgeIndex(ei));
     },
-    [engine, activeLayer, onLayerChange],
+    [engine, activeLayer],
   );
 
   // Reset defaults signal from parent
@@ -75,8 +62,7 @@ export const K8Explorer = React.memo(function K8Explorer({
     }
     setActiveLayer(null);
     setEdgeIndex(-1);
-    onLayerChange?.(null);
-  }, [resetSignal, onLayerChange]);
+  }, [resetSignal]);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--music-card-gap, 4px)", width: "100%", flex: 1 }}>
@@ -114,12 +100,7 @@ export const K8Explorer = React.memo(function K8Explorer({
           </button>
         </div>
       </div>
-      <K8LayerGraph
-        layer={activeLayer}
-        activeEdgeIndex={edgeIndex}
-        activeLevels={activeLevels}
-        tetraPhase={activeLayer === 2 ? tetraPhase : null}
-      />
+      <K8LayerGraph layer={activeLayer} activeEdgeIndex={edgeIndex} activeLevels={activeLevels} />
     </div>
   );
 });

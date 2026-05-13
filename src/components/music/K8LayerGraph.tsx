@@ -1,10 +1,10 @@
 import React from "react";
 import { C, FS, FW } from "../../styles/tokens";
 import { useTranslation } from "../../i18n";
-import { COMPLEMENT_EDGES, CUBE_EDGES, STELLA_EDGES, TETRA_T0, TETRA_T0_EDGES } from "../../data/theory-data";
+import { COMPLEMENT_EDGES, CUBE_EDGES, STELLA_EDGES, TETRA_T0_EDGES } from "../../data/theory-data";
 
-export const COLOR_T0 = "#ffd36e";
-export const COLOR_T1 = "#90c8ff";
+const COLOR_T0 = "#ffd36e";
+const COLOR_T1 = "#90c8ff";
 
 const VERTS: Record<number, [number, number]> = {
   0: [74, 116],
@@ -40,14 +40,12 @@ interface Props {
   layer: 1 | 2 | 3 | null;
   activeEdgeIndex: number;
   activeLevels: { levelIndex: number; rgb: readonly [number, number, number] }[];
-  tetraPhase?: "t0" | "t1" | null;
 }
 
-export const K8LayerGraph = React.memo(function K8LayerGraph({ layer, activeEdgeIndex, activeLevels, tetraPhase }: Props) {
+export const K8LayerGraph = React.memo(function K8LayerGraph({ layer, activeEdgeIndex, activeLevels }: Props) {
   const { t } = useTranslation();
   const layerInfo = layer !== null ? LAYERS[layer] : null;
   const t0Split = TETRA_T0_EDGES.length; // 6
-  const t0Set = new Set(TETRA_T0 as readonly number[]);
 
   return (
     <svg viewBox="12 0 156 134" style={{ width: "100%" }}>
@@ -72,7 +70,6 @@ export const K8LayerGraph = React.memo(function K8LayerGraph({ layer, activeEdge
         const isT0Edge = layer === 2 && i < t0Split;
         const isT1Edge = layer === 2 && i >= t0Split;
         const edgeColor = isT0Edge ? COLOR_T0 : isT1Edge ? COLOR_T1 : layerInfo.color;
-        const phaseDimmed = layer === 2 && tetraPhase !== null && (tetraPhase === "t0" ? isT1Edge : isT0Edge);
         return (
           <line
             key={`${a}-${b}-${i}`}
@@ -82,7 +79,7 @@ export const K8LayerGraph = React.memo(function K8LayerGraph({ layer, activeEdge
             y2={VERTS[b][1]}
             stroke={edgeColor}
             strokeWidth={active ? 2.5 : 1.2}
-            opacity={phaseDimmed ? 0.12 : active ? 1 : 0.4}
+            opacity={active ? 1 : 0.4}
             strokeDasharray={layer === 3 ? "4,2" : undefined}
             filter={active ? "url(#k8-glow)" : undefined}
           />
@@ -92,9 +89,8 @@ export const K8LayerGraph = React.memo(function K8LayerGraph({ layer, activeEdge
       {[0, 1, 2, 3, 4, 5, 6, 7].map((lv) => {
         const [x, y] = VERTS[lv];
         const active = activeEdgeIndex >= 0 && layerInfo?.edges[activeEdgeIndex]?.includes(lv);
-        const vertDimmed = layer === 2 && tetraPhase !== null && (tetraPhase === "t0" ? !t0Set.has(lv) : t0Set.has(lv));
         return (
-          <g key={lv} filter={active ? "url(#k8-glow)" : undefined} opacity={vertDimmed ? 0.25 : 1}>
+          <g key={lv} filter={active ? "url(#k8-glow)" : undefined}>
             <circle cx={x} cy={y} r={active ? 8 : 5} fill={pointColor(lv, activeLevels)} stroke="#fff" strokeWidth={active ? 1.5 : 0.8} />
             <text x={x} y={y + 3} textAnchor="middle" fontSize={FS.xxs} fontWeight={FW.bold} fill={textColor(lv)}>
               {lv}

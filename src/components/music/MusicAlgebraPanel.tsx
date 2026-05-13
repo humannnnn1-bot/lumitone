@@ -12,7 +12,6 @@ import { GrayCube } from "./GrayCube";
 import { K8Explorer } from "./K8Explorer";
 import { OctahedronMix } from "./OctahedronMix";
 import { ParityChordCard } from "./ParityChordCard";
-import { TetraSplitCard } from "./TetraSplitCard";
 import { WeightHistogram } from "./WeightHistogram";
 import { ZigzagCard } from "./ZigzagCard";
 import type { ActiveMusicLevel, DecoderPhase } from "../../music/types";
@@ -93,13 +92,6 @@ interface MusicGray3AlgebraState {
   onCodeChange: StateSetter<number | null>;
 }
 
-interface MusicPolyhedraAlgebraState {
-  k8Layer: 1 | 2 | 3 | null;
-  onK8LayerChange: StateSetter<1 | 2 | 3 | null>;
-  tetraPhase: "t0" | "t1" | null;
-  onTetraPhaseChange: StateSetter<"t0" | "t1" | null>;
-}
-
 interface MusicGl32AlgebraState {
   perm: number[];
   onPermChange: StateSetter<number[]>;
@@ -119,7 +111,6 @@ interface MusicAlgebraPanelProps {
   hamming: MusicHammingAlgebraState;
   octahedron: MusicOctahedronAlgebraState;
   gray3: MusicGray3AlgebraState;
-  polyhedra: MusicPolyhedraAlgebraState;
   gl32: MusicGl32AlgebraState;
 }
 
@@ -138,7 +129,6 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
   hamming,
   octahedron,
   gray3,
-  polyhedra,
   gl32,
 }: MusicAlgebraPanelProps) {
   const { t } = useTranslation();
@@ -173,7 +163,6 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
     onPhaseChange: onOctaPhaseChange,
   } = octahedron;
   const { playing: gray3Playing, onPlayingChange: onGray3PlayingChange, code: gray3Code, onCodeChange: onGray3CodeChange } = gray3;
-  const { k8Layer, onK8LayerChange, tetraPhase, onTetraPhaseChange } = polyhedra;
   const { perm: gl32Perm, onPermChange: onGl32PermChange, flash: gl32Flash, onFlashChange: onGl32FlashChange } = gl32;
   const octaResult = octaA ^ octaB;
   const octaPlayable = octaA !== octaB && octaResult >= 1 && octaResult <= 6;
@@ -492,24 +481,7 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
         </div>
 
         <div style={S_CARD_CUBE}>
-          <K8Explorer
-            engine={engine}
-            activeLevels={activeLevels}
-            stopSignal={stopSignal}
-            resetSignal={resetSignal}
-            tetraPhase={tetraPhase}
-            onLayerChange={onK8LayerChange}
-          />
-        </div>
-
-        <div style={S_CARD_CUBE}>
-          <TetraSplitCard
-            engine={engine}
-            activeLevels={activeLevels}
-            stopSignal={stopSignal}
-            highlighted={k8Layer === 2}
-            onPhaseChange={onTetraPhaseChange}
-          />
+          <K8Explorer engine={engine} activeLevels={activeLevels} stopSignal={stopSignal} resetSignal={resetSignal} />
         </div>
 
         <div style={S_CARD_LUMA}>

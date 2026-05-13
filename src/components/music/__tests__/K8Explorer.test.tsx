@@ -10,7 +10,6 @@ const mockEngine = {
   initAudio: vi.fn(),
   stopAlgebra: vi.fn(),
   playK8Layer: vi.fn(),
-  playTetraSplit: vi.fn(),
 } as unknown as MusicEngineReturn;
 
 function renderWithLanguage(node: ReactNode) {
@@ -19,10 +18,9 @@ function renderWithLanguage(node: ReactNode) {
 }
 
 describe("K8Explorer", () => {
-  it("shows the K8 layer view with the tetra split when layer 2 is active", () => {
-    renderWithLanguage(<K8Explorer engine={mockEngine} activeLevels={[]} stopSignal={0} resetSignal={0} tetraPhase={null} />);
+  it("shows the K8 layer view", () => {
+    renderWithLanguage(<K8Explorer engine={mockEngine} activeLevels={[]} stopSignal={0} resetSignal={0} />);
 
-    // Default layer is 1, so Tetra split should not show
     expect(screen.getByText("K8 Explorer")).toBeTruthy();
   });
 });

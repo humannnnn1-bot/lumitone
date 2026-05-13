@@ -77,10 +77,6 @@ export const MusicPanel = React.memo(function MusicPanel() {
     setOctaB,
     octaPhase,
     setOctaPhase,
-    k8Layer,
-    setK8Layer,
-    tetraPhase,
-    setTetraPhase,
     errorPos,
     setErrorPos,
     errorPhase,
@@ -289,12 +285,6 @@ export const MusicPanel = React.memo(function MusicPanel() {
           onPlayingChange: setGray3Playing,
           code: gray3Code,
           onCodeChange: setGray3Code,
-        }}
-        polyhedra={{
-          k8Layer,
-          onK8LayerChange: setK8Layer,
-          tetraPhase,
-          onTetraPhaseChange: setTetraPhase,
         }}
         gl32={{
           perm: gl32Perm,

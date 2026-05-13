@@ -35,9 +35,6 @@ const mockEngine = vi.hoisted(() => ({
   playDistributiveLaw: vi.fn(),
   playAndTriads: vi.fn(),
   playOctahedronMix: vi.fn(),
-  playTetraSplit: vi.fn(),
-  playTetraT0: vi.fn(),
-  playTetraT1: vi.fn(),
   playK8Layer: vi.fn(),
 }));
 

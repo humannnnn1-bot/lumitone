@@ -59,9 +59,6 @@ function makeMusicEngine(overrides: Partial<MusicEngineReturn> = {}): MusicEngin
     playDistributiveLaw: vi.fn(),
     playAndTriads: vi.fn(),
     playOctahedronMix: vi.fn(),
-    playTetraSplit: vi.fn(),
-    playTetraT0: vi.fn(),
-    playTetraT1: vi.fn(),
     playK8Layer: vi.fn(),
     ...overrides,
   };
@@ -132,7 +129,7 @@ function makeFanoProps(overrides: Partial<FanoProps> = {}): FanoProps {
 
 type AlgebraPropsOverrides = Omit<
   Partial<AlgebraProps>,
-  "cayley" | "distributive" | "andTriads" | "errorCorrection" | "hamming" | "octahedron" | "gray3" | "polyhedra" | "gl32"
+  "cayley" | "distributive" | "andTriads" | "errorCorrection" | "hamming" | "octahedron" | "gray3" | "gl32"
 > & {
   cayley?: Partial<AlgebraProps["cayley"]>;
   distributive?: Partial<AlgebraProps["distributive"]>;
@@ -141,7 +138,6 @@ type AlgebraPropsOverrides = Omit<
   hamming?: Partial<AlgebraProps["hamming"]>;
   octahedron?: Partial<AlgebraProps["octahedron"]>;
   gray3?: Partial<AlgebraProps["gray3"]>;
-  polyhedra?: Partial<AlgebraProps["polyhedra"]>;
   gl32?: Partial<AlgebraProps["gl32"]>;
 };
 
@@ -200,12 +196,6 @@ function makeAlgebraProps(overrides: AlgebraPropsOverrides = {}): AlgebraProps {
       code: null,
       onCodeChange: mockFn<AlgebraProps["gray3"]["onCodeChange"]>(),
     },
-    polyhedra: {
-      k8Layer: null,
-      onK8LayerChange: mockFn<AlgebraProps["polyhedra"]["onK8LayerChange"]>(),
-      tetraPhase: null,
-      onTetraPhaseChange: mockFn<AlgebraProps["polyhedra"]["onTetraPhaseChange"]>(),
-    },
     gl32: {
       perm: [0, 1, 2, 3, 4, 5, 6, 7],
       onPermChange: mockFn<AlgebraProps["gl32"]["onPermChange"]>(),
@@ -224,7 +214,6 @@ function makeAlgebraProps(overrides: AlgebraPropsOverrides = {}): AlgebraProps {
     hamming: { ...props.hamming, ...overrides.hamming },
     octahedron: { ...props.octahedron, ...overrides.octahedron },
     gray3: { ...props.gray3, ...overrides.gray3 },
-    polyhedra: { ...props.polyhedra, ...overrides.polyhedra },
     gl32: { ...props.gl32, ...overrides.gl32 },
   };
 }

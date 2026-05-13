@@ -13,9 +13,6 @@ import {
   scheduleOctahedronMix,
   schedulePointFanoContext,
   scheduleSyndromeDemo,
-  scheduleTetraSplit,
-  scheduleTetraT0,
-  scheduleTetraT1,
   scheduleWeightSpectrum,
   scheduleXorTriple,
   type MusicPlaybackRuntime,
@@ -83,9 +80,6 @@ export interface MusicEngineReturn {
   ) => void;
   playAndTriads: (onStep: (step: { pairIndex: number; phase: "operands" | "result" } | null) => void) => void;
   playOctahedronMix: (lvA: number, lvB: number, onStep: (phase: "pair" | "result" | null) => void) => void;
-  playTetraSplit: (onStep: (phase: "t0" | "t1" | null) => void) => void;
-  playTetraT0: (onStep: (phase: "t0" | null) => void) => void;
-  playTetraT1: (onStep: (phase: "t1" | null) => void) => void;
   playK8Layer: (layer: 1 | 2 | 3, onStep: (edgeIndex: number, pair: [number, number] | null) => void) => void;
 }
 
@@ -509,30 +503,6 @@ export function useMusicEngine({
     [nodesRef, oneShotPlayback],
   );
 
-  const playTetraSplit = useCallback(
-    (onStep: (phase: "t0" | "t1" | null) => void) => {
-      if (!nodesRef.current) return;
-      scheduleTetraSplit(onStep, oneShotPlayback);
-    },
-    [nodesRef, oneShotPlayback],
-  );
-
-  const playTetraT0 = useCallback(
-    (onStep: (phase: "t0" | null) => void) => {
-      if (!nodesRef.current) return;
-      scheduleTetraT0(onStep, oneShotPlayback);
-    },
-    [nodesRef, oneShotPlayback],
-  );
-
-  const playTetraT1 = useCallback(
-    (onStep: (phase: "t1" | null) => void) => {
-      if (!nodesRef.current) return;
-      scheduleTetraT1(onStep, oneShotPlayback);
-    },
-    [nodesRef, oneShotPlayback],
-  );
-
   const playK8Layer = useCallback(
     (layer: 1 | 2 | 3, onStep: (edgeIndex: number, pair: [number, number] | null) => void) => {
       if (!nodesRef.current) return;
@@ -585,9 +555,6 @@ export function useMusicEngine({
     playDistributiveLaw,
     playAndTriads,
     playOctahedronMix,
-    playTetraSplit,
-    playTetraT0,
-    playTetraT1,
     playK8Layer,
   };
 }

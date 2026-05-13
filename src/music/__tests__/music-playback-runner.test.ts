@@ -8,9 +8,6 @@ import {
   scheduleOctahedronMix,
   schedulePointFanoContext,
   scheduleSyndromeDemo,
-  scheduleTetraSplit,
-  scheduleTetraT0,
-  scheduleTetraT1,
   scheduleWeightSpectrum,
   scheduleXorTriple,
   type MusicPlaybackRuntime,
@@ -145,23 +142,5 @@ describe("music-playback-runner", () => {
     const invalidOctahedron = createRuntime();
     expect(scheduleOctahedronMix(1, 1, vi.fn(), invalidOctahedron.runtime)).toBe(false);
     expect(invalidOctahedron.clear).not.toHaveBeenCalled();
-
-    const tetraSplit = createRuntime();
-    const onTetraSplit = vi.fn();
-    scheduleTetraSplit(onTetraSplit, tetraSplit.runtime);
-    tetraSplit.scheduled.forEach((event) => event.fn());
-    expect(onTetraSplit.mock.calls).toEqual([["t0"], ["t1"], [null]]);
-
-    const tetraT0 = createRuntime();
-    const onTetraT0 = vi.fn();
-    scheduleTetraT0(onTetraT0, tetraT0.runtime);
-    tetraT0.scheduled.forEach((event) => event.fn());
-    expect(onTetraT0.mock.calls).toEqual([["t0"], [null]]);
-
-    const tetraT1 = createRuntime();
-    const onTetraT1 = vi.fn();
-    scheduleTetraT1(onTetraT1, tetraT1.runtime);
-    tetraT1.scheduled.forEach((event) => event.fn());
-    expect(onTetraT1.mock.calls).toEqual([["t1"], [null]]);
   });
 });

@@ -25,8 +25,6 @@ interface UseMusicStopAllHandlerOptions {
     | "setDistPhase"
     | "setOctaPhase"
     | "setGl32Flash"
-    | "setK8Layer"
-    | "setTetraPhase"
     | "setErrorPhase"
   >;
   signals: Pick<MusicSignalsState, "setStopSignal">;
@@ -45,8 +43,6 @@ export function useMusicStopAllHandler({ engine, transport, fano, algebra, signa
     setDistPhase,
     setOctaPhase,
     setGl32Flash,
-    setK8Layer,
-    setTetraPhase,
     setErrorPhase,
   } = algebra;
   const { setStopSignal } = signals;
@@ -73,8 +69,6 @@ export function useMusicStopAllHandler({ engine, transport, fano, algebra, signa
     setDistPhase(null);
     setOctaPhase(null);
     setGl32Flash(false);
-    setK8Layer(null);
-    setTetraPhase(null);
     setErrorPhase(null);
     setStopSignal((s) => s + 1);
     engine.setDroneMuted(true);
@@ -93,13 +87,11 @@ export function useMusicStopAllHandler({ engine, transport, fano, algebra, signa
     setGray3Playing,
     setGrayStep,
     setHueDir,
-    setK8Layer,
     setOctaPhase,
     setPartitionPhase,
     setRhythmFiringLines,
     setRhythmPlaying,
     setStopSignal,
-    setTetraPhase,
     setWeightPlaying,
     setWeightStep,
     setXorStep,

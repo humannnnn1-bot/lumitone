@@ -6,7 +6,6 @@ import { LanguageProvider } from "../../../i18n";
 import type { MusicEngineReturn } from "../../../hooks/useMusicEngine";
 import { AndTriads } from "../AndTriads";
 import { OctahedronMix } from "../OctahedronMix";
-import { TetraSplitView } from "../TetraSplitView";
 import { K8LayerGraph } from "../K8LayerGraph";
 import { GrayCube } from "../GrayCube";
 import { ParityChordCard } from "../ParityChordCard";
@@ -30,15 +29,6 @@ describe("Music polyhedra widgets", () => {
     renderWithLanguage(<OctahedronMix lvA={1} lvB={2} phase="result" activeLevels={[]} />);
 
     expect(screen.getByText("1⊕2=3")).toBeTruthy();
-  });
-
-  it("shows the T0/T1 tetra split", () => {
-    renderWithLanguage(<TetraSplitView phase="t0" activeLevels={[]} />);
-
-    expect(screen.getByText("T0")).toBeTruthy();
-    expect(screen.getByText("T1")).toBeTruthy();
-    expect(screen.getByText("even")).toBeTruthy();
-    expect(screen.getByText("odd")).toBeTruthy();
   });
 
   it("shows the selected K8 layer label", () => {

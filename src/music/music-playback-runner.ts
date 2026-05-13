@@ -9,8 +9,6 @@ import {
   octahedronMixSequence,
   pointFanoContextLines,
   syndromeDemoEvents,
-  tetraSingleEvents,
-  tetraSplitEvents,
   timedCodewordEnd,
   weightSpectrumTimeline,
   type DistributivePhase,
@@ -31,7 +29,6 @@ type ComplementCanonStepHandler = (pairIndex: number, phase: "playing" | null) =
 type DistributiveStepHandler = (phase: DistributivePhase | null, value: number) => void;
 type AndTriadStep = { pairIndex: number; phase: "operands" | "result" } | null;
 type OctahedronMixPhase = "pair" | "result" | null;
-type TetraSplitPhase = "t0" | "t1" | null;
 
 export function scheduleXorTriple(lvA: number, lvB: number, onStep: (lv: number | null) => void, runtime: MusicPlaybackRuntime) {
   runtime.clear();
@@ -181,34 +178,4 @@ export function scheduleOctahedronMix(
     }, event.at);
   }
   return true;
-}
-
-export function scheduleTetraSplit(onStep: (phase: TetraSplitPhase) => void, runtime: MusicPlaybackRuntime) {
-  runtime.clear();
-  for (const event of tetraSplitEvents()) {
-    runtime.schedule(() => {
-      onStep(event.phase);
-      event.play.forEach((lv) => runtime.playBitVectorLevel(lv));
-    }, event.at);
-  }
-}
-
-export function scheduleTetraT0(onStep: (phase: "t0" | null) => void, runtime: MusicPlaybackRuntime) {
-  runtime.clear();
-  for (const event of tetraSingleEvents("t0")) {
-    runtime.schedule(() => {
-      onStep(event.phase === "t1" ? null : event.phase);
-      event.play.forEach((lv) => runtime.playBitVectorLevel(lv));
-    }, event.at);
-  }
-}
-
-export function scheduleTetraT1(onStep: (phase: "t1" | null) => void, runtime: MusicPlaybackRuntime) {
-  runtime.clear();
-  for (const event of tetraSingleEvents("t1")) {
-    runtime.schedule(() => {
-      onStep(event.phase === "t0" ? null : event.phase);
-      event.play.forEach((lv) => runtime.playBitVectorLevel(lv));
-    }, event.at);
-  }
 }

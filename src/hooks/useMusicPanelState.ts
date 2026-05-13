@@ -13,8 +13,6 @@ type MusicLumaMode = "symmetric" | "bt601Luma";
 type MusicPartitionPhase = "line" | "complement" | null;
 type MusicRotationDir = 1 | -1 | 0;
 type MusicOriginMode = 0 | 7;
-type MusicK8Layer = 1 | 2 | 3 | null;
-type MusicTetraPhase = "t0" | "t1" | null;
 
 export function createDefaultMusicDirectCandidates() {
   const candidates = new Map<number, number>();
@@ -121,8 +119,6 @@ export function useMusicAlgebraState() {
   const [octaA, setOctaA] = useState(1);
   const [octaB, setOctaB] = useState(2);
   const [octaPhase, setOctaPhase] = useState<MusicOctaPhase>(null);
-  const [k8Layer, setK8Layer] = useState<MusicK8Layer>(null);
-  const [tetraPhase, setTetraPhase] = useState<MusicTetraPhase>(null);
   const [errorPos, setErrorPos] = useState(1);
   const [errorPhase, setErrorPhase] = useState<DecoderPhase>(null);
 
@@ -161,10 +157,6 @@ export function useMusicAlgebraState() {
     setOctaB,
     octaPhase,
     setOctaPhase,
-    k8Layer,
-    setK8Layer,
-    tetraPhase,
-    setTetraPhase,
     errorPos,
     setErrorPos,
     errorPhase,

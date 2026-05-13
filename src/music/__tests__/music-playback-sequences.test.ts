@@ -10,8 +10,6 @@ import {
   octahedronMixSequence,
   pointFanoContextLines,
   syndromeDemoEvents,
-  tetraSingleEvents,
-  tetraSplitEvents,
   weightSpectrumTimeline,
   zigzagStep,
 } from "../music-playback-sequences";
@@ -88,12 +86,7 @@ describe("music-playback-sequences", () => {
     expect(octahedronMixSequence(1, 1)).toBeNull();
   });
 
-  it("builds tetra and K8 layer sequences", () => {
-    expect(tetraSplitEvents().map((event) => event.phase)).toEqual(["t0", "t1", null]);
-    expect(tetraSingleEvents("t0")).toEqual([
-      { at: 0, phase: "t0", play: [0, 3, 5, 6] },
-      { at: 650, phase: null, play: [] },
-    ]);
+  it("builds K8 layer sequences", () => {
     expect(k8LayerStep(3, 0).intervalMs).toBe(520);
     expect(k8LayerStep(1, 0).intervalMs).toBe(280);
   });

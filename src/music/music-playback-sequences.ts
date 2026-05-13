@@ -1,4 +1,4 @@
-import { FANO_LINES, TETRA_T0, TETRA_T1 } from "../data/theory-data";
+import { FANO_LINES } from "../data/theory-data";
 import { COMPLEMENT_PAIRS, ZIGZAG_PATH } from "../data/music-data";
 import { ALL_POINTS, AND_TRIADS, K8_LAYER_EDGES, extendedHammingCodewords, linesThrough } from "./music-engine-core";
 
@@ -191,21 +191,6 @@ export function octahedronMixSequence(
       { at: 920, phase: null, play: [] },
     ],
   };
-}
-
-export function tetraSplitEvents(): Array<{ at: number; phase: "t0" | "t1" | null; play: number[] }> {
-  return [
-    { at: 0, phase: "t0", play: [...TETRA_T0] },
-    { at: 650, phase: "t1", play: [...TETRA_T1] },
-    { at: 1300, phase: null, play: [] },
-  ];
-}
-
-export function tetraSingleEvents(which: "t0" | "t1"): Array<{ at: number; phase: "t0" | "t1" | null; play: number[] }> {
-  return [
-    { at: 0, phase: which, play: which === "t0" ? [...TETRA_T0] : [...TETRA_T1] },
-    { at: 650, phase: null, play: [] },
-  ];
 }
 
 export function k8LayerStep(layer: 1 | 2 | 3, step: number): { intervalMs: number; edgeIndex: number; pair: [number, number] } {
