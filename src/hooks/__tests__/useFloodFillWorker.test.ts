@@ -36,7 +36,7 @@ const { MockWorker } = vi.hoisted(() => {
       levelData: Uint8Array;
       targetLevel: number;
       pixelCandidateOverrideMap?: Uint8Array;
-      targetColorOverrideValue?: number;
+      targetPixelCandidateOverrideValue?: number;
     }) {
       if (this.mode === "hang") return;
       if (this.mode === "error") {
@@ -52,10 +52,16 @@ const { MockWorker } = vi.hoisted(() => {
         if (req.kind === "glaze") {
           const pixelCandidateOverrideMap = req.pixelCandidateOverrideMap ?? new Uint8Array(0);
           if (pixelCandidateOverrideMap.length > 0)
-            pixelCandidateOverrideMap[0] = req.targetColorOverrideValue ?? pixelCandidateOverrideMap[0];
+            pixelCandidateOverrideMap[0] = req.targetPixelCandidateOverrideValue ?? pixelCandidateOverrideMap[0];
           for (const handler of this.messageHandlers) {
             handler({
-              data: { id: req.id, levelData: req.levelData, pixelCandidateOverrideMap, changed: new Uint32Array([0]), truncated: false },
+              data: {
+                id: req.id,
+                levelData: req.levelData,
+                pixelCandidateOverrideMap,
+                changedIndices: new Uint32Array([0]),
+                truncated: false,
+              },
             } as MessageEvent);
           }
           return;
@@ -64,7 +70,7 @@ const { MockWorker } = vi.hoisted(() => {
         if (req.levelData.length > 0) req.levelData[0] = req.targetLevel;
         for (const handler of this.messageHandlers) {
           handler({
-            data: { id: req.id, levelData: req.levelData, changed: new Uint32Array([0]), truncated: false },
+            data: { id: req.id, levelData: req.levelData, changedIndices: new Uint32Array([0]), truncated: false },
           } as MessageEvent);
         }
       }, 0);
@@ -103,7 +109,7 @@ describe("useFloodFillWorker", () => {
     const fillResult = await result.current.requestCanvasFill(buf, 0, 0, 5, w, h);
     expect(fillResult).toBeDefined();
     expect(fillResult.levelData).toBeInstanceOf(Uint8Array);
-    expect(fillResult.changed).toBeInstanceOf(Uint32Array);
+    expect(fillResult.changedIndices).toBeInstanceOf(Uint32Array);
     expect(typeof fillResult.truncated).toBe("boolean");
     expect(MockWorker.instances).toHaveLength(0);
   });
@@ -114,7 +120,7 @@ describe("useFloodFillWorker", () => {
       h = 5;
     const buf = new Uint8Array(w * h).fill(2);
     const fillResult = await result.current.requestCanvasFill(buf, 0, 0, 4, w, h);
-    expect(fillResult.changed.length).toBe(w * h);
+    expect(fillResult.changedIndices.length).toBe(w * h);
     expect(fillResult.levelData[0]).toBe(4);
   });
 

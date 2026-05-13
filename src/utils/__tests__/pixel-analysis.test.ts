@@ -75,14 +75,14 @@ describe("pixel-analysis", () => {
           data[y * w + x] = x < 2 ? 0 : 3;
         }
       }
-      const isEdge = new Uint8Array(w * h);
+      const edgeMask = new Uint8Array(w * h);
       const depth = new Float32Array(w * h);
-      computeBoundaryDistance(data, w, h, isEdge, depth);
+      computeBoundaryDistance(data, w, h, edgeMask, depth);
       // Pixels at x=1 and x=2 should be edges (boundary)
-      expect(isEdge[0 * w + 1]).toBe(1); // (1,0) is next to (2,0) which is different
-      expect(isEdge[0 * w + 2]).toBe(1);
+      expect(edgeMask[0 * w + 1]).toBe(1); // (1,0) is next to (2,0) which is different
+      expect(edgeMask[0 * w + 2]).toBe(1);
       // Corner pixel (0,0) is not directly on boundary
-      expect(isEdge[0]).toBe(0);
+      expect(edgeMask[0]).toBe(0);
     });
 
     it("assigns zero depth to edge pixels", () => {
@@ -94,12 +94,12 @@ describe("pixel-analysis", () => {
           data[y * w + x] = x < 2 ? 0 : 3;
         }
       }
-      const isEdge = new Uint8Array(w * h);
+      const edgeMask = new Uint8Array(w * h);
       const depth = new Float32Array(w * h);
-      computeBoundaryDistance(data, w, h, isEdge, depth);
+      computeBoundaryDistance(data, w, h, edgeMask, depth);
       // Edge pixels have depth 0
       for (let i = 0; i < w * h; i++) {
-        if (isEdge[i]) expect(depth[i]).toBe(0);
+        if (edgeMask[i]) expect(depth[i]).toBe(0);
       }
     });
   });
@@ -149,8 +149,8 @@ describe("pixel-analysis", () => {
         h = 4;
       const data = new Uint8Array(w * h).fill(2);
       const regionId = new Int32Array(w * h);
-      const isEdge = new Uint8Array(w * h);
-      computeRegion(data, w, h, regionId, isEdge);
+      const edgeMask = new Uint8Array(w * h);
+      computeRegion(data, w, h, regionId, edgeMask);
       // All pixels should have the same region ID
       const id = regionId[0];
       for (let i = 1; i < w * h; i++) {
@@ -162,8 +162,8 @@ describe("pixel-analysis", () => {
       // 3x3 image with a cross pattern: center is level 7, corners are level 0
       const data = new Uint8Array([0, 7, 0, 7, 7, 7, 0, 7, 0]);
       const regionId = new Int32Array(9);
-      const isEdge = new Uint8Array(9);
-      computeRegion(data, 3, 3, regionId, isEdge);
+      const edgeMask = new Uint8Array(9);
+      computeRegion(data, 3, 3, regionId, edgeMask);
       // The four corner pixels (0,2,6,8) are all level 0 but disconnected
       // They should have different region IDs
       const cornerIds = new Set([regionId[0], regionId[2], regionId[6], regionId[8]]);
@@ -173,14 +173,14 @@ describe("pixel-analysis", () => {
     it("marks edges between different levels", () => {
       const data = new Uint8Array([0, 0, 7, 7, 0, 0, 7, 7, 0, 0, 7, 7, 0, 0, 7, 7]);
       const regionId = new Int32Array(16);
-      const isEdge = new Uint8Array(16);
-      computeRegion(data, 4, 4, regionId, isEdge);
+      const edgeMask = new Uint8Array(16);
+      computeRegion(data, 4, 4, regionId, edgeMask);
       // Pixels at boundary (x=1 and x=2) should be edges
-      expect(isEdge[0 * 4 + 1]).toBe(1);
-      expect(isEdge[0 * 4 + 2]).toBe(1);
+      expect(edgeMask[0 * 4 + 1]).toBe(1);
+      expect(edgeMask[0 * 4 + 2]).toBe(1);
       // Interior pixels should not be edges
-      expect(isEdge[0]).toBe(0);
-      expect(isEdge[3]).toBe(0);
+      expect(edgeMask[0]).toBe(0);
+      expect(edgeMask[3]).toBe(0);
     });
   });
 });

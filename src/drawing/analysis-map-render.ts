@@ -303,11 +303,11 @@ export function rasterizeAnalysisMap({
       const hue = ((pixelMaps.gradientAngle[i] + Math.PI) / (2 * Math.PI)) * 360;
       target[i] = hslPacked(hue, 0.7 + mag * 0.3, 0.15 + mag * 0.4);
     }
-  } else if (mode === "region" && pixelMaps.regionId.length >= n && pixelMaps.isEdge.length >= n) {
+  } else if (mode === "region" && pixelMaps.regionId.length >= n && pixelMaps.edgeMask.length >= n) {
     const phi = 0.618033988749895;
     const regionSize = regionSizeById ?? buildRegionSizeMap(pixelMaps);
     for (let i = 0; i < n; i++) {
-      if (pixelMaps.isEdge[i]) {
+      if (pixelMaps.edgeMask[i]) {
         target[i] = 0xff000000;
         continue;
       }
@@ -386,8 +386,8 @@ export function getAnalysisMapHoverInfo({
     };
   } else if (mode === "boundaryDistance") {
     const raw = valueAt(pixelMaps.boundaryDistance, idx);
-    const isEdge = valueAt(pixelMaps.isEdge, idx) > 0;
-    const zone = isEdge ? "edge" : raw < 0.5 ? "near" : "core";
+    const edgeMask = valueAt(pixelMaps.edgeMask, idx) > 0;
+    const zone = edgeMask ? "edge" : raw < 0.5 ? "near" : "core";
     return {
       full: `${prefix} ${visualLabel(canvasData, candidateIndexByLevel, idx, lv)} distance=${pct(raw)} ${zone}`,
       compact: `${compactPrefix} ${compactVisualLabel(canvasData, candidateIndexByLevel, idx, lv)} d=${pct(raw)} ${zone}`,
@@ -418,7 +418,7 @@ export function getAnalysisMapHoverInfo({
   } else if (mode === "region") {
     const id = valueAt(pixelMaps.regionId, idx);
     const size = regionSizeById.get(id) ?? 0;
-    const edge = valueAt(pixelMaps.isEdge, idx) ? "edge" : "interior";
+    const edge = valueAt(pixelMaps.edgeMask, idx) ? "edge" : "interior";
     const scale = size < REGION_SMALL_THRESHOLD ? "small" : "normal";
     return {
       full: `${prefix} ${visualLabel(canvasData, candidateIndexByLevel, idx, lv)} region#${id} size=${size}px ${edge} ${scale}`,

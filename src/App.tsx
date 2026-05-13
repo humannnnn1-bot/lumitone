@@ -116,13 +116,13 @@ const S_LAZY_PANEL_FALLBACK: React.CSSProperties = {
 interface AppContentProps {
   app: ReturnType<typeof useAppState>;
   panZoom: ReturnType<typeof usePanZoom>;
-  sharedSchedCursorRef: React.MutableRefObject<(() => void) | null>;
+  sharedScheduleCursorRedrawRef: React.MutableRefObject<(() => void) | null>;
   announce: (msg: string) => void;
   ariaLiveRef: React.MutableRefObject<HTMLDivElement | null>;
   t: import("./i18n").TranslationFn;
 }
 
-function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef, t }: AppContentProps) {
+function AppContent({ app, panZoom, sharedScheduleCursorRedrawRef, announce, ariaLiveRef, t }: AppContentProps) {
   const {
     state,
     dispatch,
@@ -137,7 +137,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     setTool,
     activeTabId,
     setActiveTabId,
-    hasOpenedStats,
+    hasOpenedMap,
     showHelp,
     setShowHelp,
     toast,
@@ -147,15 +147,15 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     lockedLevels,
     mapMode,
     setMapMode,
-    hueAngle,
-    setHueAngle,
+    hueAngleDeg,
+    setHueAngleDeg,
     glazeTool,
     setGlazeTool,
     candidateOverridesByLevel,
     setCandidateOverridesByLevel,
     colorLUT,
-    displayW,
-    displayH,
+    displayWidth,
+    displayHeight,
     toggleLevelLock,
     handleRandomize,
     handleUnlockAll,
@@ -172,11 +172,11 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     document.title = `CHROMALUM - ${t(tabFromId(activeTabId).key)}`;
   }, [activeTabId, t]);
 
-  const prvRef = useRef<HTMLCanvasElement | null>(null);
-  const glazePrvRef = useRef<HTMLCanvasElement | null>(null);
-  const hexPrvRef = useRef<HTMLCanvasElement | null>(null);
-  const srcWrapRef = useRef<HTMLDivElement | null>(null);
-  const prvWrapRef = useRef<HTMLDivElement | null>(null);
+  const previewCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const glazePreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const hexPreviewCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const sourceCanvasWrapRef = useRef<HTMLDivElement | null>(null);
+  const previewCanvasWrapRef = useRef<HTMLDivElement | null>(null);
   const glazeWrapRef = useRef<HTMLDivElement | null>(null);
   const helpRef = useRef<HTMLDivElement | null>(null);
 
@@ -188,7 +188,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     brushLevel,
     brushSize,
     tool,
-    prvRef,
+    previewCanvasRef,
     setBrushLevel,
   });
 
@@ -197,11 +197,11 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     dispatch,
     colorLUT,
     candidateIndexByLevel,
-    hueAngle,
-    setHueAngle,
+    hueAngleDeg,
+    setHueAngleDeg,
     glazeTool,
     brushSize,
-    prvRef: glazePrvRef,
+    previewCanvasRef: glazePreviewCanvasRef,
     candidateOverridesByLevel,
   });
 
@@ -211,13 +211,13 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     activeTabId,
     drawing,
     glazeDrawing,
-    srcWrapRef,
-    prvWrapRef,
+    sourceCanvasWrapRef,
+    previewCanvasWrapRef,
     glazeWrapRef,
-    prvRef,
-    hexPrvRef,
-    glazePrvRef,
-    sharedSchedCursorRef,
+    previewCanvasRef,
+    hexPreviewCanvasRef,
+    glazePreviewCanvasRef,
+    sharedScheduleCursorRedrawRef,
     onWheel: panZoom.onWheel,
   });
 
@@ -263,10 +263,10 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
   const canvasTransform = useMemo(
     () => ({
       imageRendering: "pixelated" as const,
-      transform: `scale(${panZoom.zoom}) translate(${(panZoom.pan.x * displayW) / canvasData.width}px,${(panZoom.pan.y * displayH) / canvasData.height}px)`,
+      transform: `scale(${panZoom.zoom}) translate(${(panZoom.pan.x * displayWidth) / canvasData.width}px,${(panZoom.pan.y * displayHeight) / canvasData.height}px)`,
       transformOrigin: "center center",
     }),
-    [panZoom.zoom, panZoom.pan.x, panZoom.pan.y, displayW, displayH, canvasData.width, canvasData.height],
+    [panZoom.zoom, panZoom.pan.x, panZoom.pan.y, displayWidth, displayHeight, canvasData.width, canvasData.height],
   );
 
   const canvasCursor =
@@ -280,9 +280,9 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
             ? "crosshair"
             : "none";
 
-  const schedCursorFn = useCallback(() => {
-    drawing.schedCursorRef.current?.();
-  }, [drawing.schedCursorRef]);
+  const scheduleCursorRedrawFn = useCallback(() => {
+    drawing.scheduleCursorRedrawRef.current?.();
+  }, [drawing.scheduleCursorRedrawRef]);
 
   const toolState = useMemo(
     () => ({
@@ -301,12 +301,12 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
       zoom: panZoom.zoom,
       setZoom: panZoom.setZoom,
       setPan: panZoom.setPan,
-      displayW,
-      displayH,
+      displayWidth,
+      displayHeight,
       canvasTransform,
       canvasCursor,
     }),
-    [panZoom.zoom, panZoom.setZoom, panZoom.setPan, displayW, displayH, canvasTransform, canvasCursor],
+    [panZoom.zoom, panZoom.setZoom, panZoom.setPan, displayWidth, displayHeight, canvasTransform, canvasCursor],
   );
 
   const saveActionsObj = useMemo(
@@ -339,7 +339,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
   const panZoomHandlers = useStablePanZoomHandlers({
     setZoom: panZoom.setZoom,
     setPan: panZoom.setPan,
-    schedCursorRef: sharedSchedCursorRef,
+    scheduleCursorRedrawRef: sharedScheduleCursorRedrawRef,
     spaceRef: panZoom.spaceRef,
     panningRef: panZoom.panningRef,
     startPan: panZoom.startPan,
@@ -348,12 +348,12 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
     endPan: panZoom.endPan,
   });
   const drawingHandlers = useStableDrawingHandlers({
-    onDownPrv: drawing.onWorkspaceDownPrv,
-    onMovePrv: drawing.onWorkspaceMovePrv,
+    onPreviewPointerDown: drawing.onPreviewWorkspacePointerDown,
+    onPreviewPointerMove: drawing.onPreviewWorkspacePointerMove,
     onUp: drawing.onUp,
-    onPointerLeavePrv: drawing.onWorkspaceLeavePrv,
-    trackCursorPrv: drawing.trackCursorPrv,
-    clearCursorPrv: drawing.clearCursorPrv,
+    onPreviewPointerLeave: drawing.onWorkspaceLeavePrv,
+    trackPreviewCursor: drawing.trackPreviewCursor,
+    clearPreviewCursor: drawing.clearPreviewCursor,
   });
 
   return (
@@ -407,9 +407,9 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
         {activeTabId === "source" && (
           <div id={getTabPanelId("source")} role="tabpanel" aria-labelledby={getTabButtonId("source")}>
             <SourcePanel
-              srcRef={drawing.srcRef}
-              curRef={drawing.curRef}
-              srcWrapRef={srcWrapRef}
+              sourceCanvasRef={drawing.sourceCanvasRef}
+              cursorCanvasRef={drawing.cursorCanvasRef}
+              sourceCanvasWrapRef={sourceCanvasWrapRef}
               statusRef={drawing.statusRef}
               toolState={toolState}
               viewState={viewState}
@@ -426,8 +426,8 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
               handleClear={handleClear}
               loadImg={fileDrop.loadImg}
               announce={announce}
-              schedCursor={schedCursorFn}
-              prvRef={prvRef}
+              scheduleCursorRedraw={scheduleCursorRedrawFn}
+              previewCanvasRef={previewCanvasRef}
               onNewCanvas={handleNewCanvas}
               panZoomMode={panZoom.panZoomMode}
               setPanZoomMode={panZoom.setPanZoomMode}
@@ -441,12 +441,12 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
         {activeTabId === "color" && (
           <div id={getTabPanelId("color")} role="tabpanel" aria-labelledby={getTabButtonId("color")}>
             <ColorPanel
-              prvRef={prvRef}
-              prvCurRef={drawing.prvCurRef}
-              prvWrapRef={prvWrapRef}
+              previewCanvasRef={previewCanvasRef}
+              previewCursorRef={drawing.previewCursorRef}
+              previewCanvasWrapRef={previewCanvasWrapRef}
               statusRef={drawing.statusRef}
-              displayW={displayW}
-              displayH={displayH}
+              displayWidth={displayWidth}
+              displayHeight={displayHeight}
               canvasTransform={canvasTransform}
               canvasCursor={canvasCursor}
               candidateIndexByLevel={candidateIndexByLevel}
@@ -462,10 +462,10 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
         {activeTabId === "hex" && (
           <div id={getTabPanelId("hex")} role="tabpanel" aria-labelledby={getTabButtonId("hex")}>
             <HexPanel
-              hexPrvRef={hexPrvRef}
+              hexPreviewCanvasRef={hexPreviewCanvasRef}
               canvasData={canvasData}
-              displayW={displayW}
-              displayH={displayH}
+              displayWidth={displayWidth}
+              displayHeight={displayHeight}
               candidateIndexByLevel={candidateIndexByLevel}
               candidateIndexDispatch={candidateIndexDispatch}
               levelHistogram={levelHistogram}
@@ -487,8 +487,8 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
         {activeTabId === "glaze" && (
           <div id={getTabPanelId("glaze")} role="tabpanel" aria-labelledby={getTabButtonId("glaze")}>
             <GlazeContextProvider
-              hueAngle={hueAngle}
-              setHueAngle={setHueAngle}
+              hueAngleDeg={hueAngleDeg}
+              setHueAngleDeg={setHueAngleDeg}
               glazeTool={glazeTool}
               setGlazeTool={setGlazeTool}
               brushSize={brushSize}
@@ -497,10 +497,10 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
               setCandidateOverridesByLevel={setCandidateOverridesByLevel}
             >
               <GlazePanel
-                prvRef={glazePrvRef}
-                prvWrapRef={glazeWrapRef}
-                displayW={displayW}
-                displayH={displayH}
+                previewCanvasRef={glazePreviewCanvasRef}
+                previewCanvasWrapRef={glazeWrapRef}
+                displayWidth={displayWidth}
+                displayHeight={displayHeight}
                 canvasTransform={canvasTransform}
                 canvasCursor={
                   panZoom.cursorMode === "grabbing"
@@ -529,12 +529,12 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
             </GlazeContextProvider>
           </div>
         )}
-        {(activeTabId === "stats" || hasOpenedStats) && (
+        {(activeTabId === "map" || hasOpenedMap) && (
           <div
-            id={getTabPanelId("stats")}
+            id={getTabPanelId("map")}
             role="tabpanel"
-            aria-labelledby={getTabButtonId("stats")}
-            style={{ display: activeTabId === "stats" ? undefined : "none" }}
+            aria-labelledby={getTabButtonId("map")}
+            style={{ display: activeTabId === "map" ? undefined : "none" }}
           >
             <AnalyzePanel
               levelHistogram={levelHistogram}
@@ -544,9 +544,9 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
               brushLevel={brushLevel}
               setBrushLevel={setBrushLevel}
               canvasData={canvasData}
-              displayW={displayW}
-              displayH={displayH}
-              active={activeTabId === "stats"}
+              displayWidth={displayWidth}
+              displayHeight={displayHeight}
+              active={activeTabId === "map"}
               mapMode={mapMode}
               setMapMode={setMapMode}
               showToast={showToast}
@@ -596,7 +596,7 @@ function AppContent({ app, panZoom, sharedSchedCursorRef, announce, ariaLiveRef,
 export default function App() {
   const { t } = useTranslation();
   const app = useAppState(t);
-  const { canvasData, displayW, displayH } = app;
+  const { canvasData, displayWidth, displayHeight } = app;
 
   const ariaLiveRef = useRef<HTMLDivElement | null>(null);
 
@@ -604,9 +604,9 @@ export default function App() {
     if (ariaLiveRef.current) ariaLiveRef.current.textContent = msg;
   }, []);
 
-  const sharedSchedCursorRef = useRef<(() => void) | null>(null);
+  const sharedScheduleCursorRedrawRef = useRef<(() => void) | null>(null);
 
-  const panZoom = usePanZoom(canvasData, displayW, sharedSchedCursorRef);
+  const panZoom = usePanZoom(canvasData, displayWidth, sharedScheduleCursorRedrawRef);
 
   return (
     <DrawingContextProvider
@@ -619,15 +619,15 @@ export default function App() {
       startPan={panZoom.startPan}
       movePan={panZoom.movePan}
       endPan={panZoom.endPan}
-      displayW={displayW}
-      displayH={displayH}
+      displayWidth={displayWidth}
+      displayHeight={displayHeight}
       announce={announce}
       t={t}
     >
       <AppContent
         app={app}
         panZoom={panZoom}
-        sharedSchedCursorRef={sharedSchedCursorRef}
+        sharedScheduleCursorRedrawRef={sharedScheduleCursorRedrawRef}
         announce={announce}
         ariaLiveRef={ariaLiveRef}
         t={t}

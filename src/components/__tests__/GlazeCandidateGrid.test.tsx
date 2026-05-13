@@ -27,7 +27,7 @@ function makeLevelPreview(levelIndex: number): GlazeLevelPreview {
 function makeProps(overrides: Partial<GridProps> = {}): GridProps {
   return {
     levelPreview: [makeLevelPreview(2)],
-    hueAngle: 0,
+    hueAngleDeg: 0,
     candidateOverridesByLevel: new Map(),
     selectedLevels: new Set(),
     hoveredCandidate: null,

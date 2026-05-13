@@ -15,7 +15,7 @@ type GlazeCandidateHover = { levelIndex: number; candidateIndex: number } | null
 
 interface GlazeCandidateGridProps {
   levelPreview: GlazeLevelPreview[];
-  hueAngle: number;
+  hueAngleDeg: number;
   candidateOverridesByLevel: Map<number, number>;
   selectedLevels: Set<number>;
   hoveredCandidate: GlazeCandidateHover;
@@ -34,7 +34,7 @@ function candidateHex(rgb: readonly number[]) {
 
 const GlazeCandidateColumn = React.memo(function GlazeCandidateColumn({
   level,
-  hueAngle,
+  hueAngleDeg,
   candidateOverridesByLevel,
   selectedLevels,
   hoveredCandidate,
@@ -48,7 +48,7 @@ const GlazeCandidateColumn = React.memo(function GlazeCandidateColumn({
   const hasCands = cands.length > 1;
   const isDirect = candidateOverridesByLevel.has(level.levelIndex);
   const overrideCandidateIndex = candidateOverridesByLevel.get(level.levelIndex);
-  const autoCandidateIndex = hasCands ? findClosestCandidate(level.levelIndex, hueAngle) : 0;
+  const autoCandidateIndex = hasCands ? findClosestCandidate(level.levelIndex, hueAngleDeg) : 0;
   const currentCandidateIndex = isDirect ? overrideCandidateIndex! : autoCandidateIndex;
   const previousCandidateIndex = hasCands ? (currentCandidateIndex - 1 + cands.length) % cands.length : -1;
   const nextCandidateIndex = hasCands ? (currentCandidateIndex + 1) % cands.length : -1;
@@ -86,7 +86,7 @@ const GlazeCandidateColumn = React.memo(function GlazeCandidateColumn({
     const isSelected = candidateOverridesByLevel.get(level.levelIndex) === candidateIndex;
     const isHovered =
       hoveredCandidate !== null && hoveredCandidate.levelIndex === level.levelIndex && hoveredCandidate.candidateIndex === candidateIndex;
-    const angleLabel = `${Math.round(cand.angle)}\u00b0`;
+    const angleLabel = `${Math.round(cand.hueAngleDeg)}\u00b0`;
     return (
       <div
         key={candidateIndex}
@@ -173,7 +173,7 @@ const GlazeCandidateColumn = React.memo(function GlazeCandidateColumn({
   const mainCandidateIndex = currentCandidateIndex;
   const mainCand = cands[mainCandidateIndex];
   const mainHex = mainCand ? candidateHex(mainCand.rgb) : "";
-  const mainAngleLabel = mainCand ? `${Math.round(mainCand.angle)}\u00b0` : "";
+  const mainAngleLabel = mainCand ? `${Math.round(mainCand.hueAngleDeg)}\u00b0` : "";
   const isMainHovered =
     hoveredCandidate !== null && hoveredCandidate.levelIndex === level.levelIndex && hoveredCandidate.candidateIndex === mainCandidateIndex;
   const mainSelected = selectedLevels.has(level.levelIndex);

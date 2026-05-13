@@ -59,7 +59,7 @@ function makeCanvasData(w = 4, h = 4): CanvasData {
 function makeState(withUndo = false): AppState {
   const undoStack = new RingBuffer<CompressedDiff>(MAX_UNDO);
   if (withUndo) {
-    undoStack.push({ runs: new Uint32Array([0, 1]), oldValues: new Uint8Array([0]), newValues: new Uint8Array([1]) });
+    undoStack.push({ indexRuns: new Uint32Array([0, 1]), oldLevelValues: new Uint8Array([0]), newLevelValues: new Uint8Array([1]) });
   }
   return {
     canvasData: makeCanvasData(),
@@ -73,7 +73,7 @@ function makePanZoom(overrides?: Partial<PanZoomHandlers>): PanZoomHandlers {
   return {
     setZoom: vi.fn(),
     setPan: vi.fn(),
-    schedCursorRef: { current: vi.fn() },
+    scheduleCursorRedrawRef: { current: vi.fn() },
     spaceRef: { current: false },
     panningRef: { current: false },
     startPan: vi.fn(),
@@ -86,13 +86,13 @@ function makePanZoom(overrides?: Partial<PanZoomHandlers>): PanZoomHandlers {
 
 function makeGlazeDrawing(overrides?: Partial<GlazeDrawingResult>): GlazeDrawingResult {
   return {
-    srcRef: { current: null },
-    curRef: { current: null },
+    sourceCanvasRef: { current: null },
+    cursorCanvasRef: { current: null },
     statusRef: { current: null },
     imgCacheRef: { current: { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null } },
     drawingRef: { current: false },
     cursorRafRef: { current: null },
-    schedCursorRef: { current: null },
+    scheduleCursorRedrawRef: { current: null },
     cursorPosRef: { current: null },
     onDown: vi.fn(),
     onMove: vi.fn(),
@@ -116,7 +116,7 @@ function makePixelMaps(w = 2, h = 2): PixelMaps {
     gradientAngle: new Float32Array([0, Math.PI / 2, Math.PI, -Math.PI / 2]),
     gradientMagnitude: new Float32Array([0, 0.2, 0.5, 1]),
     regionId: new Int32Array([1, 1, 2, 3]),
-    isEdge: new Uint8Array([0, 1, 0, 0]),
+    edgeMask: new Uint8Array([0, 1, 0, 0]),
     levelTone: new Float32Array([0, 0.25, 0.5, 1]),
     localDiversity: new Float32Array([0, 0.25, 0.75, 1]),
   } satisfies AnalysisPixelMaps;
@@ -132,8 +132,8 @@ describe("SourcePanel interactions", () => {
   });
 
   function renderSource(overrides?: Partial<React.ComponentProps<typeof SourcePanel>>) {
-    const srcRef = React.createRef<HTMLCanvasElement>();
-    const prvRef = React.createRef<HTMLCanvasElement>();
+    const sourceCanvasRef = React.createRef<HTMLCanvasElement>();
+    const previewCanvasRef = React.createRef<HTMLCanvasElement>();
     const setBrushSize = vi.fn();
     const setPan = vi.fn();
     const setZoom = vi.fn();
@@ -142,9 +142,9 @@ describe("SourcePanel interactions", () => {
     const shareColor = vi.fn();
     const shareGlaze = vi.fn();
     const props: React.ComponentProps<typeof SourcePanel> = {
-      srcRef,
-      curRef: React.createRef<HTMLCanvasElement>(),
-      srcWrapRef: React.createRef<HTMLDivElement>(),
+      sourceCanvasRef,
+      cursorCanvasRef: React.createRef<HTMLCanvasElement>(),
+      sourceCanvasWrapRef: React.createRef<HTMLDivElement>(),
       statusRef: React.createRef<HTMLDivElement>(),
       toolState: {
         tool: "brush",
@@ -158,8 +158,8 @@ describe("SourcePanel interactions", () => {
         zoom: 1,
         setZoom,
         setPan,
-        displayW: 64,
-        displayH: 64,
+        displayWidth: 64,
+        displayHeight: 64,
         canvasTransform: {},
         canvasCursor: "crosshair",
       },
@@ -182,8 +182,8 @@ describe("SourcePanel interactions", () => {
       handleClear: vi.fn(),
       loadImg: vi.fn().mockResolvedValue(undefined),
       announce: vi.fn(),
-      schedCursor: vi.fn(),
-      prvRef,
+      scheduleCursorRedraw: vi.fn(),
+      previewCanvasRef,
       onNewCanvas: vi.fn(),
       panZoomMode: false,
       setPanZoomMode: vi.fn(),
@@ -194,7 +194,19 @@ describe("SourcePanel interactions", () => {
       ...overrides,
     };
     const view = render(<SourcePanel {...props} />);
-    return { ...view, props, setBrushSize, setPan, setZoom, saveColor, saveGlaze, shareColor, shareGlaze, srcRef, prvRef };
+    return {
+      ...view,
+      props,
+      setBrushSize,
+      setPan,
+      setZoom,
+      saveColor,
+      saveGlaze,
+      shareColor,
+      shareGlaze,
+      sourceCanvasRef,
+      previewCanvasRef,
+    };
   }
 
   it("routes tool, brush-size, zoom, pan, and mobile save-confirm controls", () => {
@@ -212,7 +224,7 @@ describe("SourcePanel interactions", () => {
     fireEvent.click(zoomButton);
     expect(setZoom).toHaveBeenCalledWith(1);
     expect(setPan).toHaveBeenCalledWith({ x: 0, y: 0 });
-    expect(props.schedCursor).toHaveBeenCalled();
+    expect(props.scheduleCursorRedraw).toHaveBeenCalled();
 
     setPan.mockClear();
     const canvasWrap = screen.getByRole("application", { name: "aria_drawing_canvas" }).parentElement!;
@@ -299,8 +311,8 @@ describe("SourcePanel interactions", () => {
         zoom: 1,
         setZoom,
         setPan,
-        displayW: 64,
-        displayH: 32,
+        displayWidth: 64,
+        displayHeight: 32,
         canvasTransform: {},
         canvasCursor: "crosshair",
       },
@@ -340,21 +352,21 @@ describe("ColorPanel interactions", () => {
     const setZoom = vi.fn();
     const panZoom = makePanZoom({ setZoom });
     const drawing = {
-      onDownPrv: vi.fn(),
-      onMovePrv: vi.fn(),
+      onPreviewPointerDown: vi.fn(),
+      onPreviewPointerMove: vi.fn(),
       onUp: vi.fn(),
-      onPointerLeavePrv: vi.fn(),
-      trackCursorPrv: vi.fn(),
-      clearCursorPrv: vi.fn(),
+      onPreviewPointerLeave: vi.fn(),
+      trackPreviewCursor: vi.fn(),
+      clearPreviewCursor: vi.fn(),
     };
     render(
       <ColorPanel
-        prvRef={React.createRef<HTMLCanvasElement>()}
-        prvCurRef={React.createRef<HTMLCanvasElement>()}
-        prvWrapRef={React.createRef<HTMLDivElement>()}
+        previewCanvasRef={React.createRef<HTMLCanvasElement>()}
+        previewCursorRef={React.createRef<HTMLCanvasElement>()}
+        previewCanvasWrapRef={React.createRef<HTMLDivElement>()}
         statusRef={React.createRef<HTMLDivElement>()}
-        displayW={64}
-        displayH={64}
+        displayWidth={64}
+        displayHeight={64}
         canvasTransform={{}}
         canvasCursor="crosshair"
         candidateIndexByLevel={[0, 0, 0, 0, 0, 0, 0, 0]}
@@ -369,7 +381,7 @@ describe("ColorPanel interactions", () => {
 
     const canvas = screen.getByRole("img", { name: "aria_color_preview_canvas" });
     fireEvent.pointerDown(canvas, { button: 0 });
-    expect(drawing.onDownPrv).toHaveBeenCalled();
+    expect(drawing.onPreviewPointerDown).toHaveBeenCalled();
 
     panZoom.panningRef.current = true;
     fireEvent.pointerMove(canvas);
@@ -379,7 +391,7 @@ describe("ColorPanel interactions", () => {
 
     const wrap = screen.getByLabelText("aria_color_preview");
     fireEvent.mouseLeave(wrap);
-    expect(drawing.clearCursorPrv).toHaveBeenCalled();
+    expect(drawing.clearPreviewCursor).toHaveBeenCalled();
 
     fireEvent.keyDown(wrap, { key: "+" });
     expect(setZoom).toHaveBeenCalledWith(expect.any(Function));
@@ -393,13 +405,13 @@ describe("GlazePanel interactions", () => {
   });
 
   function renderGlaze(options?: { context?: Partial<GlazeContextValue>; props?: Partial<React.ComponentProps<typeof GlazePanel>> }) {
-    const setHueAngle = vi.fn();
+    const setHueAngleDeg = vi.fn();
     const setGlazeTool = vi.fn();
     const setBrushSize = vi.fn();
     const setCandidateOverridesByLevel = vi.fn();
     const context: GlazeContextValue = {
-      hueAngle: 45,
-      setHueAngle,
+      hueAngleDeg: 45,
+      setHueAngleDeg,
       glazeTool: "glaze_brush",
       setGlazeTool,
       brushSize: 4,
@@ -411,10 +423,10 @@ describe("GlazePanel interactions", () => {
     const panZoom = makePanZoom();
     const glazeDrawing = makeGlazeDrawing();
     const props: React.ComponentProps<typeof GlazePanel> = {
-      prvRef: React.createRef<HTMLCanvasElement>(),
-      prvWrapRef: React.createRef<HTMLDivElement>(),
-      displayW: 64,
-      displayH: 64,
+      previewCanvasRef: React.createRef<HTMLCanvasElement>(),
+      previewCanvasWrapRef: React.createRef<HTMLDivElement>(),
+      displayWidth: 64,
+      displayHeight: 64,
       canvasTransform: {},
       canvasCursor: "crosshair",
       canvasData: { ...makeCanvasData(), pixelCandidateOverrideMap: new Uint8Array([0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]) },
@@ -438,18 +450,18 @@ describe("GlazePanel interactions", () => {
         <GlazePanel {...props} />
       </GlazeContextProvider>,
     );
-    return { ...view, props, context, panZoom, glazeDrawing, setHueAngle, setGlazeTool, setBrushSize, setCandidateOverridesByLevel };
+    return { ...view, props, context, panZoom, glazeDrawing, setHueAngleDeg, setGlazeTool, setBrushSize, setCandidateOverridesByLevel };
   }
 
   it("routes tool shortcuts, hue selection, clear action, and canvas pointer modes", () => {
-    const { props, panZoom, glazeDrawing, setHueAngle, setGlazeTool, setBrushSize, setCandidateOverridesByLevel } = renderGlaze();
+    const { props, panZoom, glazeDrawing, setHueAngleDeg, setGlazeTool, setBrushSize, setCandidateOverridesByLevel } = renderGlaze();
 
     fireEvent.click(screen.getByRole("radio", { name: /tool_glaze_fill/ }));
     expect(setGlazeTool).toHaveBeenCalledWith("glaze_fill");
     expect(props.announce).toHaveBeenCalledWith("announce_glaze_fill");
 
     fireEvent.change(screen.getByLabelText("aria_hue_slider"), { target: { value: "120" } });
-    expect(setHueAngle).toHaveBeenCalledWith(120);
+    expect(setHueAngleDeg).toHaveBeenCalledWith(120);
     expect(setCandidateOverridesByLevel).toHaveBeenCalledWith(new Map());
 
     fireEvent.click(screen.getByRole("button", { name: "btn_glaze_clear" }));
@@ -498,11 +510,11 @@ describe("GlazePanel interactions", () => {
   it("routes keyboard tool switching, zoom reset, and pan-mode pointer controls", () => {
     const setZoom = vi.fn();
     const setPan = vi.fn();
-    const schedCursor = vi.fn();
+    const scheduleCursorRedraw = vi.fn();
     const { props, panZoom, setGlazeTool } = renderGlaze({
       props: {
         panZoomMode: true,
-        panZoom: makePanZoom({ setZoom, setPan, schedCursorRef: { current: schedCursor } }),
+        panZoom: makePanZoom({ setZoom, setPan, scheduleCursorRedrawRef: { current: scheduleCursorRedraw } }),
       },
     });
 
@@ -516,7 +528,7 @@ describe("GlazePanel interactions", () => {
     fireEvent.keyDown(wrap, { key: "0" });
     expect(setZoom).toHaveBeenCalledWith(1);
     expect(setPan).toHaveBeenCalledWith({ x: 0, y: 0 });
-    expect(schedCursor).toHaveBeenCalled();
+    expect(scheduleCursorRedraw).toHaveBeenCalled();
 
     fireEvent.pointerDown(canvas, { button: 0 });
     fireEvent.pointerMove(canvas);
@@ -581,8 +593,8 @@ describe("MapCanvas rendering and inspection", () => {
         colorLUT={colorLUT}
         candidateIndexByLevel={DEFAULT_CANDIDATE_INDEX_BY_LEVEL}
         canvasData={canvasData}
-        displayW={20}
-        displayH={20}
+        displayWidth={20}
+        displayHeight={20}
       />,
     );
 
@@ -594,8 +606,8 @@ describe("MapCanvas rendering and inspection", () => {
           colorLUT={colorLUT}
           candidateIndexByLevel={DEFAULT_CANDIDATE_INDEX_BY_LEVEL}
           canvasData={canvasData}
-          displayW={20}
-          displayH={20}
+          displayWidth={20}
+          displayHeight={20}
         />,
       );
     }
@@ -638,8 +650,8 @@ describe("MapCanvas rendering and inspection", () => {
         colorLUT={colorLUT}
         candidateIndexByLevel={DEFAULT_CANDIDATE_INDEX_BY_LEVEL}
         canvasData={makeCanvasData(2, 2)}
-        displayW={20}
-        displayH={20}
+        displayWidth={20}
+        displayHeight={20}
       />,
     );
 

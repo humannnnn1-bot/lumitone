@@ -7,7 +7,7 @@
  */
 import { LEVEL_INFO, LEVEL_CANDIDATES } from "../color-engine";
 import { LEVEL_MASK } from "../constants";
-import type { DirtyRect, ImgCache } from "../types";
+import type { DirtyRect, ImageRenderCache } from "../types";
 import { recordDebugPerf, startDebugPerf } from "../utils/perf-debug";
 
 /* ═══════════════════════════════════════════
@@ -54,7 +54,7 @@ export function renderCanvasBuffers(
   lut: [number, number, number][],
   sourceCanvas: HTMLCanvasElement | null,
   previewCanvas: HTMLCanvasElement | null,
-  imgCache: ImgCache,
+  imgCache: ImageRenderCache,
   dirty?: DirtyRect | null,
   pixelCandidateOverrideMap?: Uint8Array | null,
 ): void {

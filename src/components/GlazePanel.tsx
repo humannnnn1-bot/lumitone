@@ -14,10 +14,10 @@ import { C, Z, SP, FS, R, HUE_GRADIENT } from "../styles/tokens";
 import { getCanvasPanelClassName, getCanvasPanelStyle, getPanelLayoutClassName } from "../utils/panel-layout";
 
 interface GlazePanelProps {
-  prvRef: React.RefObject<HTMLCanvasElement | null>;
-  prvWrapRef: React.RefObject<HTMLDivElement | null>;
-  displayW: number;
-  displayH: number;
+  previewCanvasRef: React.RefObject<HTMLCanvasElement | null>;
+  previewCanvasWrapRef: React.RefObject<HTMLDivElement | null>;
+  displayWidth: number;
+  displayHeight: number;
   canvasTransform: React.CSSProperties;
   canvasCursor: string;
   canvasData: CanvasData;
@@ -74,10 +74,10 @@ const S_GLAZE_ACTION_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_ACTIVE, ...
 
 export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps) {
   const {
-    prvRef,
-    prvWrapRef,
-    displayW,
-    displayH,
+    previewCanvasRef,
+    previewCanvasWrapRef,
+    displayWidth,
+    displayHeight,
     canvasTransform,
     canvasCursor,
     canvasData,
@@ -95,10 +95,10 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
     onPinchMove,
     onPinchUp,
   } = props;
-  const { statusRef: glazeStatusRef, curRef: glazeCurRef } = glazeDrawing;
+  const { statusRef: glazeStatusRef, cursorCanvasRef: glazeCursorCanvasRef } = glazeDrawing;
   const {
-    hueAngle,
-    setHueAngle,
+    hueAngleDeg,
+    setHueAngleDeg,
     glazeTool,
     setGlazeTool,
     brushSize,
@@ -149,32 +149,32 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
       if (e.key === "+" || e.key === "=") {
         e.preventDefault();
         panZoom.setZoom((z) => Math.min(ZOOM_MAX, z * ZOOM_STEP));
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       } else if (e.key === "-") {
         e.preventDefault();
         panZoom.setZoom((z) => Math.max(ZOOM_MIN, z / ZOOM_STEP));
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
         panZoom.setPan((p) => ({ ...p, x: p.x + 10 }));
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
         panZoom.setPan((p) => ({ ...p, x: p.x - 10 }));
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         panZoom.setPan((p) => ({ ...p, y: p.y + 10 }));
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
         panZoom.setPan((p) => ({ ...p, y: p.y - 10 }));
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       } else if (e.key === "0") {
         e.preventDefault();
         panZoom.setZoom(1);
         panZoom.setPan({ x: 0, y: 0 });
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       }
     },
     [panZoom, setGlazeTool, announce, t, setBrushSize],
@@ -251,11 +251,11 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
 
   const handleHueChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      setHueAngle(Number(e.target.value));
+      setHueAngleDeg(Number(e.target.value));
       setCandidateOverridesByLevel(new Map());
       setSelectedLevels(new Set());
     },
-    [setHueAngle, setCandidateOverridesByLevel],
+    [setHueAngleDeg, setCandidateOverridesByLevel],
   );
 
   const handleGlazeClear = useCallback(() => {
@@ -265,31 +265,31 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
   const handleZoomReset = useCallback(() => {
     panZoom.setZoom(1);
     panZoom.setPan({ x: 0, y: 0 });
-    panZoom.schedCursorRef.current?.();
+    panZoom.scheduleCursorRedrawRef.current?.();
   }, [panZoom]);
 
   // Preview: for selected hue angle, show what color each level maps to
   const levelPreview = useMemo<GlazeLevelPreview[]>(() => {
     return LEVEL_INFO.map((info, levelIndex) => {
       const candidates = LEVEL_CANDIDATES[levelIndex];
-      const candidateIndex = findClosestCandidate(levelIndex, hueAngle);
+      const candidateIndex = findClosestCandidate(levelIndex, hueAngleDeg);
       const rgb = candidates[candidateIndex]?.rgb ?? [128, 128, 128];
       return { levelIndex, name: info.name, rgb, hex: `rgb(${rgb[0]},${rgb[1]},${rgb[2]})` };
     });
-  }, [hueAngle]);
+  }, [hueAngleDeg]);
 
   const hueTicks = useMemo(() => {
-    const ticks: { deg: number; color: string }[] = [];
+    const ticks: { hueAngleDeg: number; color: string }[] = [];
     for (let levelIndex = 2; levelIndex <= 5; levelIndex++) {
       const cands = LEVEL_CANDIDATES[levelIndex];
-      if (cands.length <= 1 || cands[0].angle < 0) continue;
-      const angles = cands.map((c) => c.angle).sort((a, b) => a - b);
+      if (cands.length <= 1 || cands[0].hueAngleDeg < 0) continue;
+      const angles = cands.map((c) => c.hueAngleDeg).sort((a, b) => a - b);
       for (let i = 0; i < angles.length; i++) {
         const a1 = angles[i];
         const a2 = angles[(i + 1) % angles.length];
         const diff = (a2 - a1 + 360) % 360;
         const mid = (a1 + diff / 2) % 360;
-        ticks.push({ deg: mid, color: `rgb(${cands[0].rgb.join(",")})` });
+        ticks.push({ hueAngleDeg: mid, color: `rgb(${cands[0].rgb.join(",")})` });
       }
     }
     return ticks;
@@ -303,7 +303,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
   }, [canvasData.pixelCandidateOverrideMap]);
 
   // Hue marker position — 360° wraps to 0° (same hue)
-  const hueMarkerLeft = `${((hueAngle % 360) / 360) * 100}%`;
+  const hueMarkerLeft = `${((hueAngleDeg % 360) / 360) * 100}%`;
 
   // Highlight overlay: debounced generation to avoid jank during rapid strokes
   const highlightCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -334,11 +334,11 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg }}>
       <div style={S_PANEL_SUBTITLE}>{t("label_glaze")}</div>
-      <div className={getPanelLayoutClassName(displayW, displayH)}>
-        <div className={getCanvasPanelClassName(displayW, displayH)} style={getCanvasPanelStyle(displayW, displayH)}>
+      <div className={getPanelLayoutClassName(displayWidth, displayHeight)}>
+        <div className={getCanvasPanelClassName(displayWidth, displayHeight)} style={getCanvasPanelStyle(displayWidth, displayHeight)}>
           <div
             className="canvas-workspace"
-            ref={prvWrapRef}
+            ref={previewCanvasWrapRef}
             tabIndex={0}
             onKeyDown={handleKeyDown}
             onPointerDown={handlePointerDown}
@@ -352,8 +352,8 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
               borderRadius: R.lg,
               overflow: "hidden",
               position: "relative",
-              width: displayW,
-              height: displayH,
+              width: displayWidth,
+              height: displayHeight,
               outline: "none",
               cursor: panZoomMode ? "grab" : canvasCursor,
               touchAction: "none",
@@ -361,12 +361,12 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
             }}
           >
             <canvas
-              ref={prvRef}
+              ref={previewCanvasRef}
               role="img"
               aria-label={t("label_glaze")}
               style={{
-                width: displayW,
-                height: displayH,
+                width: displayWidth,
+                height: displayHeight,
                 display: "block",
                 ...canvasTransform,
                 cursor: panZoomMode ? "grab" : canvasCursor,
@@ -383,8 +383,8 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                   position: "absolute",
                   top: 0,
                   left: 0,
-                  width: displayW,
-                  height: displayH,
+                  width: displayWidth,
+                  height: displayHeight,
                   pointerEvents: "none",
                   zIndex: Z.cursorOverlay,
                   ...canvasTransform,
@@ -394,15 +394,15 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
             )}
             <canvas
               className="canvas-cursor-overlay"
-              ref={glazeCurRef}
-              width={displayW}
-              height={displayH}
+              ref={glazeCursorCanvasRef}
+              width={displayWidth}
+              height={displayHeight}
               style={{
                 position: "absolute",
                 top: 0,
                 left: 0,
-                width: displayW,
-                height: displayH,
+                width: displayWidth,
+                height: displayHeight,
                 pointerEvents: "none",
                 zIndex: Z.cursorOverlay,
               }}
@@ -536,7 +536,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                   style={{
                     position: "absolute",
                     top: 3,
-                    left: `${(tick.deg / 359) * 100}%`,
+                    left: `${(tick.hueAngleDeg / 359) * 100}%`,
                     transform: "translateX(-0.5px)",
                     width: 1,
                     height: 5,
@@ -550,7 +550,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
                 min={0}
                 max={359}
                 step={1}
-                value={Math.round(hueAngle) % 360}
+                value={Math.round(hueAngleDeg) % 360}
                 onChange={handleHueChange}
                 aria-label={t("aria_hue_slider")}
                 style={S_HUE_INPUT}
@@ -560,7 +560,7 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
 
           <GlazeCandidateGrid
             levelPreview={levelPreview}
-            hueAngle={hueAngle}
+            hueAngleDeg={hueAngleDeg}
             candidateOverridesByLevel={candidateOverridesByLevel}
             selectedLevels={selectedLevels}
             hoveredCandidate={hoveredCandidate}
@@ -571,9 +571,9 @@ export const GlazePanel = React.memo(function GlazePanel(props: GlazePanelProps)
 
           {/* ── Linked 4-View Visualization ── */}
           <LinkedVisualization
-            hueAngle={hueAngle}
+            hueAngleDeg={hueAngleDeg}
             brushLevel={brushLevel}
-            onHueAngleChange={setHueAngle}
+            onHueAngleDegChange={setHueAngleDeg}
             hoveredCandidate={hoveredCandidate}
             onHoverCandidate={setHoveredCandidate}
             candidateOverridesByLevel={candidateOverridesByLevel}

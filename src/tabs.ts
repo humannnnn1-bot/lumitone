@@ -4,7 +4,7 @@ export const MAIN_TABS = [
   { id: "source", key: "tab_source", hash: "source" },
   { id: "color", key: "tab_color", hash: "color" },
   { id: "glaze", key: "tab_glaze", hash: "glaze" },
-  { id: "stats", key: "tab_stats", hash: "map" },
+  { id: "map", key: "tab_map", hash: "map" },
   { id: "theory", key: "tab_theory", hash: "theory" },
   { id: "music", key: "tab_music", hash: "music" },
 ] as const;
@@ -13,7 +13,7 @@ export type MainTab = (typeof MAIN_TABS)[number];
 export type MainTabId = MainTab["id"];
 
 export const DEFAULT_TAB_ID: MainTabId = "source";
-export const STATS_TAB_ID: MainTabId = "stats";
+export const MAP_TAB_ID: MainTabId = "map";
 
 export function tabIdFromIndex(index: number): MainTabId | null {
   return MAIN_TABS[index]?.id ?? null;

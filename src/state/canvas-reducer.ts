@@ -14,7 +14,7 @@ import { DEFAULT_CANVAS_WIDTH, DEFAULT_CANVAS_HEIGHT } from "../constants";
 function buildMergedClearDiff(
   levelData: Uint8Array,
   pixelCandidateOverrideMap: Uint8Array,
-  levelDataDiff: { indices: Uint32Array; oldValues: Uint8Array; newValues: Uint8Array },
+  levelDataDiff: { indices: Uint32Array; oldLevelValues: Uint8Array; newLevelValues: Uint8Array },
 ): import("../types").Diff {
   const n = levelData.length;
   const levelDataChanged = new Set<number>();
@@ -24,22 +24,22 @@ function buildMergedClearDiff(
     if (levelDataChanged.has(i) || pixelCandidateOverrideMap[i] !== 0) count++;
   }
   const indices = new Uint32Array(count);
-  const oldValues = new Uint8Array(count),
-    newValues = new Uint8Array(count);
+  const oldLevelValues = new Uint8Array(count),
+    newLevelValues = new Uint8Array(count);
   const oldPixelCandidateOverrideValues = new Uint8Array(count),
     newPixelCandidateOverrideValues = new Uint8Array(count);
   let j = 0;
   for (let i = 0; i < n; i++) {
     if (levelDataChanged.has(i) || pixelCandidateOverrideMap[i] !== 0) {
       indices[j] = i;
-      oldValues[j] = levelData[i];
-      newValues[j] = 0;
+      oldLevelValues[j] = levelData[i];
+      newLevelValues[j] = 0;
       oldPixelCandidateOverrideValues[j] = pixelCandidateOverrideMap[i];
       newPixelCandidateOverrideValues[j] = 0;
       j++;
     }
   }
-  return { indices, oldValues, newValues, oldPixelCandidateOverrideValues, newPixelCandidateOverrideValues };
+  return { indices, oldLevelValues, newLevelValues, oldPixelCandidateOverrideValues, newPixelCandidateOverrideValues };
 }
 
 function computeLevelHistogram(levelData: Uint8Array): number[] {
@@ -48,15 +48,15 @@ function computeLevelHistogram(levelData: Uint8Array): number[] {
   return levelHistogram;
 }
 
-/** Apply diff delta to histogram. Set reverse=true for undo (swap oldValues/newValues). */
+/** Apply diff delta to histogram. Set reverse=true for undo (swap oldLevelValues/newLevelValues). */
 function applyLevelHistogramDelta(
   levelHistogram: number[],
-  diff: { indices: Uint32Array; oldValues: Uint8Array; newValues: Uint8Array },
+  diff: { indices: Uint32Array; oldLevelValues: Uint8Array; newLevelValues: Uint8Array },
   reverse: boolean,
 ): number[] {
   const nextLevelHistogram = levelHistogram.slice();
-  const src = reverse ? diff.newValues : diff.oldValues;
-  const dst = reverse ? diff.oldValues : diff.newValues;
+  const src = reverse ? diff.newLevelValues : diff.oldLevelValues;
+  const dst = reverse ? diff.oldLevelValues : diff.newLevelValues;
   for (let i = 0; i < diff.indices.length; i++) {
     nextLevelHistogram[src[i] & LEVEL_MASK]--;
     nextLevelHistogram[dst[i] & LEVEL_MASK]++;
@@ -71,7 +71,7 @@ function clearOverridesForLevelChanges(
   let hasOverrideClear = false;
   for (let i = 0; i < diff.indices.length; i++) {
     const ix = diff.indices[i];
-    if (ix < pixelCandidateOverrideMap.length && diff.oldValues[i] !== diff.newValues[i] && pixelCandidateOverrideMap[ix] !== 0) {
+    if (ix < pixelCandidateOverrideMap.length && diff.oldLevelValues[i] !== diff.newLevelValues[i] && pixelCandidateOverrideMap[ix] !== 0) {
       hasOverrideClear = true;
       break;
     }
@@ -89,7 +89,7 @@ function clearOverridesForLevelChanges(
 
   for (let i = 0; i < diff.indices.length; i++) {
     const ix = diff.indices[i];
-    if (ix < pixelCandidateOverrideMap.length && diff.oldValues[i] !== diff.newValues[i] && pixelCandidateOverrideMap[ix] !== 0) {
+    if (ix < pixelCandidateOverrideMap.length && diff.oldLevelValues[i] !== diff.newLevelValues[i] && pixelCandidateOverrideMap[ix] !== 0) {
       oldPixelCandidateOverrideValues[i] = pixelCandidateOverrideMap[ix];
       newPixelCandidateOverrideValues[i] = 0;
       nextPixelCandidateOverrideMap[ix] = 0;
@@ -234,23 +234,25 @@ export function canvasReducer(state: AppState, action: CanvasAction): AppState {
       for (let i = 0; i < n; i++) if (oldPixelCandidateOverrideMap[i] !== 0) count++;
       if (count === 0) return state;
       const indices = new Uint32Array(count);
-      const oldValues = new Uint8Array(count),
-        newValues = new Uint8Array(count);
+      const oldLevelValues = new Uint8Array(count),
+        newLevelValues = new Uint8Array(count);
       const oldPixelCandidateOverrideValues = new Uint8Array(count),
         newPixelCandidateOverrideValues = new Uint8Array(count);
       let j = 0;
       for (let i = 0; i < n; i++) {
         if (oldPixelCandidateOverrideMap[i] !== 0) {
           indices[j] = i;
-          oldValues[j] = state.canvasData.levelData[i];
-          newValues[j] = state.canvasData.levelData[i];
+          oldLevelValues[j] = state.canvasData.levelData[i];
+          newLevelValues[j] = state.canvasData.levelData[i];
           oldPixelCandidateOverrideValues[j] = oldPixelCandidateOverrideMap[i];
           newPixelCandidateOverrideValues[j] = 0;
           j++;
         }
       }
       const newUndo = state.undoStack.clone();
-      newUndo.push(compressDiff({ indices, oldValues, newValues, oldPixelCandidateOverrideValues, newPixelCandidateOverrideValues }));
+      newUndo.push(
+        compressDiff({ indices, oldLevelValues, newLevelValues, oldPixelCandidateOverrideValues, newPixelCandidateOverrideValues }),
+      );
       return {
         ...state,
         canvasData: { ...state.canvasData, pixelCandidateOverrideMap: new Uint8Array(n) },

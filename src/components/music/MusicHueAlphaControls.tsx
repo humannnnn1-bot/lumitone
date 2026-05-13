@@ -5,7 +5,7 @@ import type { MusicHueTick } from "../../music/types";
 import { S_ALPHA_TRACK, S_HUE_INPUT, S_HUE_TRACK, S_HUE_WRAP } from "./music-panel-styles";
 
 interface MusicHueAlphaControlsProps {
-  hueAngle: number;
+  hueAngleDeg: number;
   alpha0: number;
   hueTicks: MusicHueTick[];
   onHueChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
@@ -38,14 +38,14 @@ function Marker({ left }: { left: string }) {
 }
 
 export const MusicHueAlphaControls = React.memo(function MusicHueAlphaControls({
-  hueAngle,
+  hueAngleDeg,
   alpha0,
   hueTicks,
   onHueChange,
   onAlphaChange,
 }: MusicHueAlphaControlsProps) {
   const { t } = useTranslation();
-  const roundedHue = Math.round(((hueAngle % 360) + 360) % 360);
+  const roundedHue = Math.round(((hueAngleDeg % 360) + 360) % 360);
   const roundedAlpha = Math.round(((alpha0 % 360) + 360) % 360);
 
   return (
@@ -55,14 +55,14 @@ export const MusicHueAlphaControls = React.memo(function MusicHueAlphaControls({
       </div>
       <div style={S_HUE_WRAP}>
         <div style={S_HUE_TRACK} />
-        <Marker left={angleToMarkerLeft(hueAngle)} />
+        <Marker left={angleToMarkerLeft(hueAngleDeg)} />
         {hueTicks.map((tick, i) => (
           <div
             key={i}
             style={{
               position: "absolute",
               top: 3,
-              left: `${(tick.deg / 359) * 100}%`,
+              left: `${(tick.hueAngleDeg / 359) * 100}%`,
               transform: "translateX(-0.5px)",
               width: 1,
               height: 5,

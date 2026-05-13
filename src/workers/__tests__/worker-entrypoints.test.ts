@@ -49,7 +49,7 @@ describe("worker entrypoints", () => {
     const canvasResp = fakeSelf.postMessage.mock.calls[0][0] as FloodFillWorkerResponse;
     expect(canvasResp.id).toBe(1);
     expect([...canvasResp.levelData]).toEqual([3, 3, 0, 0]);
-    expect([...canvasResp.changed]).toEqual([0, 1]);
+    expect([...canvasResp.changedIndices]).toEqual([0, 1]);
     expect(fakeSelf.postMessage.mock.calls[0][1]).toHaveLength(2);
 
     const glazeReq: FloodFillWorkerRequest = {
@@ -59,8 +59,7 @@ describe("worker entrypoints", () => {
       pixelCandidateOverrideMap: new Uint8Array([0, 0, 0, 0]),
       seedX: 0,
       seedY: 0,
-      targetLevel: 0,
-      targetColorOverrideValue: 5,
+      targetPixelCandidateOverrideValue: 5,
       width: 2,
       height: 2,
     };
@@ -69,7 +68,7 @@ describe("worker entrypoints", () => {
     const glazeResp = fakeSelf.postMessage.mock.calls[1][0] as FloodFillWorkerResponse;
     expect(glazeResp.id).toBe(2);
     expect([...(glazeResp.pixelCandidateOverrideMap ?? new Uint8Array())]).toEqual([5, 5, 0, 0]);
-    expect([...glazeResp.changed]).toEqual([0, 1]);
+    expect([...glazeResp.changedIndices]).toEqual([0, 1]);
     expect(fakeSelf.postMessage.mock.calls[1][1]).toHaveLength(3);
   });
 
@@ -95,7 +94,7 @@ describe("worker entrypoints", () => {
     expect(responses[0].levelTone).toHaveLength(4);
     expect(responses[1].localDiversity).toHaveLength(4);
     expect(responses[2].boundaryDistance).toHaveLength(4);
-    expect(responses[2].isEdge).toHaveLength(4);
+    expect(responses[2].edgeMask).toHaveLength(4);
     expect(responses[3].gradientAngle).toHaveLength(4);
     expect(responses[3].gradientMagnitude).toHaveLength(4);
     expect(responses[4].regionId).toHaveLength(4);

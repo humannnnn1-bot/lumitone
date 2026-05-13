@@ -271,7 +271,7 @@ export const CompositionDonut = React.memo(function CompositionDonut({
           height="auto"
           viewBox={`0 0 ${size} ${size}`}
           role="img"
-          aria-label={t("stats_composition")}
+          aria-label={t("map_composition")}
           style={{ display: "block", WebkitTapHighlightColor: "transparent", touchAction: "manipulation" }}
         >
           {drawRing("gray", graySlices, cx, cy, grayOuter, grayInner, onPreview, onActivate)}

@@ -7,8 +7,8 @@ describe("computeDiff", () => {
     const b = new Uint8Array([1, 2, 3, 4]);
     const diff = computeDiff(a, b);
     expect(diff.indices.length).toBe(0);
-    expect(diff.oldValues.length).toBe(0);
-    expect(diff.newValues.length).toBe(0);
+    expect(diff.oldLevelValues.length).toBe(0);
+    expect(diff.newLevelValues.length).toBe(0);
   });
 
   it("detects changed pixels", () => {
@@ -17,8 +17,8 @@ describe("computeDiff", () => {
     const diff = computeDiff(a, b);
     expect(diff.indices.length).toBe(2);
     expect(Array.from(diff.indices)).toEqual([1, 3]);
-    expect(Array.from(diff.oldValues)).toEqual([1, 3]);
-    expect(Array.from(diff.newValues)).toEqual([5, 7]);
+    expect(Array.from(diff.oldLevelValues)).toEqual([1, 3]);
+    expect(Array.from(diff.newLevelValues)).toEqual([5, 7]);
   });
 
   it("detects all changed when fully different", () => {
@@ -71,8 +71,8 @@ describe("buildDiffFromFill", () => {
     const diff = buildDiffFromFill(pre, buf, changed);
     expect(diff.indices.length).toBe(2);
     expect(Array.from(diff.indices)).toEqual([1, 3]);
-    expect(Array.from(diff.oldValues)).toEqual([0, 0]);
-    expect(Array.from(diff.newValues)).toEqual([3, 3]);
+    expect(Array.from(diff.oldLevelValues)).toEqual([0, 0]);
+    expect(Array.from(diff.newLevelValues)).toEqual([3, 3]);
   });
 
   it("produces equivalent result to computeDiff for same changes", () => {
@@ -82,8 +82,8 @@ describe("buildDiffFromFill", () => {
     const fillDiff = buildDiffFromFill(pre, buf, changed);
     const fullDiff = computeDiff(pre, buf);
     expect(Array.from(fillDiff.indices)).toEqual(Array.from(fullDiff.indices));
-    expect(Array.from(fillDiff.oldValues)).toEqual(Array.from(fullDiff.oldValues));
-    expect(Array.from(fillDiff.newValues)).toEqual(Array.from(fullDiff.newValues));
+    expect(Array.from(fillDiff.oldLevelValues)).toEqual(Array.from(fullDiff.oldLevelValues));
+    expect(Array.from(fillDiff.newLevelValues)).toEqual(Array.from(fullDiff.newLevelValues));
   });
 
   it("empty changed array produces empty diff", () => {

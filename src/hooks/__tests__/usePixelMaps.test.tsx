@@ -47,7 +47,7 @@ const { MockPixelAnalysisWorker } = vi.hoisted(() => {
               gradientAngle: new Float32Array(0),
               gradientMagnitude: new Float32Array(0),
               regionId: new Int32Array(0),
-              isEdge: new Uint8Array(0),
+              edgeMask: new Uint8Array(0),
               levelTone: new Float32Array(0),
               localDiversity: new Float32Array(0),
               width: req.width,

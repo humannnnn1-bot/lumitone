@@ -16,8 +16,8 @@ interface AnalyzePanelProps {
   brushLevel: number;
   setBrushLevel: (lv: number) => void;
   canvasData: CanvasData;
-  displayW: number;
-  displayH: number;
+  displayWidth: number;
+  displayHeight: number;
   active: boolean;
   mapMode: MapMode;
   setMapMode: (mode: MapMode) => void;
@@ -53,8 +53,8 @@ export const AnalyzePanel = React.memo(
     brushLevel: _brushLevel,
     setBrushLevel: _setBrushLevel,
     canvasData,
-    displayW,
-    displayH,
+    displayWidth,
+    displayHeight,
     active,
     mapMode,
     setMapMode,
@@ -65,11 +65,11 @@ export const AnalyzePanel = React.memo(
 
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: SP.lg, alignItems: "center" }}>
-        <div style={S_PANEL_SUBTITLE}>{t("stats_title")}</div>
-        <div className={getPanelLayoutClassName(displayW, displayH)}>
+        <div style={S_PANEL_SUBTITLE}>{t("map_title")}</div>
+        <div className={getPanelLayoutClassName(displayWidth, displayHeight)}>
           <div
-            className={`${getCanvasPanelClassName(displayW, displayH)} panel-canvas--map`}
-            style={getCanvasPanelStyle(displayW, displayH)}
+            className={`${getCanvasPanelClassName(displayWidth, displayHeight)} panel-canvas--map`}
+            style={getCanvasPanelStyle(displayWidth, displayHeight)}
           >
             <MapCanvas
               mode={mapMode}
@@ -77,8 +77,8 @@ export const AnalyzePanel = React.memo(
               colorLUT={colorLUT}
               candidateIndexByLevel={candidateIndexByLevel}
               canvasData={canvasData}
-              displayW={displayW}
-              displayH={displayH}
+              displayWidth={displayWidth}
+              displayHeight={displayHeight}
               {...(showToast ? { showToast } : {})}
             />
             <div className="map-mode-buttons" style={{ display: "flex", gap: SP.xs, justifyContent: "center", marginTop: SP.xs }}>
@@ -91,7 +91,7 @@ export const AnalyzePanel = React.memo(
                     ...S_MAP_MODE_BTN,
                   }}
                 >
-                  {t("stats_map_" + m)}
+                  {t("map_map_" + m)}
                 </button>
               ))}
               <span className="map-mode-break" />
@@ -104,13 +104,13 @@ export const AnalyzePanel = React.memo(
                     ...S_MAP_MODE_BTN,
                   }}
                 >
-                  {t("stats_map_" + m)}
+                  {t("map_map_" + m)}
                 </button>
               ))}
             </div>
           </div>
           <div className="panel-sidebar">
-            <ST title={t("stats_composition")} />
+            <ST title={t("map_composition")} />
             <div style={{ marginTop: -4 }}>
               <CompositionDonut
                 canvasData={canvasData}
@@ -131,7 +131,7 @@ export const AnalyzePanel = React.memo(
     if (prev.canvasData !== next.canvasData) return false;
     if (prev.candidateIndexByLevel !== next.candidateIndexByLevel) return false;
     if (prev.active !== next.active) return false;
-    if (prev.displayW !== next.displayW || prev.displayH !== next.displayH) return false;
+    if (prev.displayWidth !== next.displayWidth || prev.displayHeight !== next.displayHeight) return false;
     for (let i = 0; i < 8; i++) {
       if (prev.levelHistogram[i] !== next.levelHistogram[i]) return false;
       const prevColor = prev.colorLUT[i],

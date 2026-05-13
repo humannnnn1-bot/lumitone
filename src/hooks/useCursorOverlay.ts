@@ -8,26 +8,26 @@ import type { CanvasData } from "../types";
 interface CursorOverlayRefs {
   zoomRef: React.MutableRefObject<number>;
   panRef: React.MutableRefObject<{ x: number; y: number }>;
-  cvsRef: React.MutableRefObject<CanvasData>;
-  displayWRef: React.MutableRefObject<number>;
-  displayHRef: React.MutableRefObject<number>;
+  canvasDataRef: React.MutableRefObject<CanvasData>;
+  displayWidthRef: React.MutableRefObject<number>;
+  displayHeightRef: React.MutableRefObject<number>;
   panningRef: React.MutableRefObject<boolean>;
   brushSizeRef: React.MutableRefObject<number>;
   toolRef: React.MutableRefObject<ToolId>;
 }
 
 interface CursorOverlayResult {
-  curRef: React.MutableRefObject<HTMLCanvasElement | null>;
-  prvCurRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  cursorCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  previewCursorRef: React.MutableRefObject<HTMLCanvasElement | null>;
   cursorRafRef: React.MutableRefObject<number | null>;
-  schedCursorRef: React.MutableRefObject<(() => void) | null>;
+  scheduleCursorRedrawRef: React.MutableRefObject<(() => void) | null>;
   cursorPosRef: React.MutableRefObject<{ dx: number; dy: number } | null>;
-  prvCursorPosRef: React.MutableRefObject<{ dx: number; dy: number } | null>;
+  previewCursorPosRef: React.MutableRefObject<{ dx: number; dy: number } | null>;
   trackCursor: (e: React.PointerEvent) => void;
   clearCursor: () => void;
-  trackCursorPrv: (e: React.PointerEvent) => void;
-  clearCursorPrv: () => void;
-  schedCursor: () => void;
+  trackPreviewCursor: (e: React.PointerEvent) => void;
+  clearPreviewCursor: () => void;
+  scheduleCursorRedraw: () => void;
 }
 
 function snapGridLine(value: number): number {
@@ -39,19 +39,19 @@ function snapGridEdge(value: number, min: number, max: number): number {
 }
 
 export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.MutableRefObject<HTMLDivElement | null>): CursorOverlayResult {
-  const curRef = useRef<HTMLCanvasElement | null>(null);
-  const prvCurRef = useRef<HTMLCanvasElement | null>(null);
+  const cursorCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const previewCursorRef = useRef<HTMLCanvasElement | null>(null);
   const cursorRafRef = useRef<number | null>(null);
-  const schedCursorRef = useRef<(() => void) | null>(null);
+  const scheduleCursorRedrawRef = useRef<(() => void) | null>(null);
   const cursorPosRef = useRef<{ dx: number; dy: number } | null>(null);
-  const prvCursorPosRef = useRef<{ dx: number; dy: number } | null>(null);
+  const previewCursorPosRef = useRef<{ dx: number; dy: number } | null>(null);
   const prevGridStateRef = useRef<string>("");
   const forceSrcRedrawRef = useRef(false);
   const forcePrvRedrawRef = useRef(false);
-  const getCurRect = useRectCache(curRef);
-  const getPrvRect = useRectCache(prvCurRef);
+  const getCursorRect = useRectCache(cursorCanvasRef);
+  const getPreviewCursorRect = useRectCache(previewCursorRef);
 
-  const { zoomRef, panRef, cvsRef, displayWRef, displayHRef, panningRef, brushSizeRef, toolRef } = refs;
+  const { zoomRef, panRef, canvasDataRef, displayWidthRef, displayHeightRef, panningRef, brushSizeRef, toolRef } = refs;
 
   function drawCursorAndGridOn(c: HTMLCanvasElement | null, posRef: React.MutableRefObject<{ dx: number; dy: number } | null>) {
     if (!c) return;
@@ -59,10 +59,10 @@ export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.Mutab
     if (!ctx) return;
     ctx.clearRect(0, 0, c.width, c.height);
     const z = zoomRef.current,
-      cv = cvsRef.current,
+      cv = canvasDataRef.current,
       p = panRef.current;
-    const dW = displayWRef.current,
-      dH = displayHRef.current;
+    const dW = displayWidthRef.current,
+      dH = displayHeightRef.current;
     const pxPerCell = (dW / cv.width) * z;
 
     if (z >= GRID_ZOOM_THRESHOLD && pxPerCell >= 4) {
@@ -165,10 +165,10 @@ export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.Mutab
   function drawCursorAndGrid() {
     // Only redraw canvases that have a cursor or need grid update
     const hasSrc = cursorPosRef.current !== null;
-    const hasPrv = prvCursorPosRef.current !== null;
+    const hasPrv = previewCursorPosRef.current !== null;
     const z = zoomRef.current,
       p = panRef.current,
-      cv = cvsRef.current;
+      cv = canvasDataRef.current;
     const gridKey = `${z}_${p.x}_${p.y}_${cv.width}_${cv.height}_${brushSizeRef.current}_${toolRef.current}_${panningRef.current}`;
     const gridChanged = gridKey !== prevGridStateRef.current;
     if (gridChanged) prevGridStateRef.current = gridKey;
@@ -177,11 +177,11 @@ export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.Mutab
     forceSrcRedrawRef.current = false;
     forcePrvRedrawRef.current = false;
     // Always redraw if grid changed (zoom/pan), otherwise only the canvas with active cursor
-    if (hasSrc || gridChanged || forceSrc) drawCursorAndGridOn(curRef.current, cursorPosRef);
-    if (hasPrv || gridChanged || forcePrv) drawCursorAndGridOn(prvCurRef.current, prvCursorPosRef);
+    if (hasSrc || gridChanged || forceSrc) drawCursorAndGridOn(cursorCanvasRef.current, cursorPosRef);
+    if (hasPrv || gridChanged || forcePrv) drawCursorAndGridOn(previewCursorRef.current, previewCursorPosRef);
   }
 
-  function schedCursor() {
+  function scheduleCursorRedraw() {
     if (cursorRafRef.current) return;
     cursorRafRef.current = requestAnimationFrame(() => {
       cursorRafRef.current = null;
@@ -191,68 +191,68 @@ export function useCursorOverlay(refs: CursorOverlayRefs, statusRef: React.Mutab
 
   // Intentionally runs every render (no deps) to keep ref in sync with latest closure
   useLayoutEffect(() => {
-    schedCursorRef.current = schedCursor;
+    scheduleCursorRedrawRef.current = scheduleCursorRedraw;
   });
 
   const trackCursor = useCallback(
     (e: React.PointerEvent) => {
-      const c = curRef.current;
+      const c = cursorCanvasRef.current;
       if (!c) return;
-      const r = getCurRect();
+      const r = getCursorRect();
       cursorPosRef.current = { dx: e.clientX - r.left, dy: e.clientY - r.top };
-      schedCursor();
+      scheduleCursorRedraw();
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- schedCursor is synced through schedCursorRef
-    [getCurRect],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- scheduleCursorRedraw is synced through scheduleCursorRedrawRef
+    [getCursorRect],
   );
 
   const clearCursor = useCallback(() => {
     cursorPosRef.current = null;
     forceSrcRedrawRef.current = true;
-    schedCursor();
+    scheduleCursorRedraw();
     const el = statusRef.current;
     if (el) {
       el.textContent = "\u2014";
       el.title = "";
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- schedCursor is synced through schedCursorRef
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- scheduleCursorRedraw is synced through scheduleCursorRedrawRef
   }, [statusRef]);
 
-  const trackCursorPrv = useCallback(
+  const trackPreviewCursor = useCallback(
     (e: React.PointerEvent) => {
-      const c = prvCurRef.current;
+      const c = previewCursorRef.current;
       if (!c) return;
-      const r = getPrvRect();
-      prvCursorPosRef.current = { dx: e.clientX - r.left, dy: e.clientY - r.top };
-      schedCursor();
+      const r = getPreviewCursorRect();
+      previewCursorPosRef.current = { dx: e.clientX - r.left, dy: e.clientY - r.top };
+      scheduleCursorRedraw();
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- schedCursor is synced through schedCursorRef
-    [getPrvRect],
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- scheduleCursorRedraw is synced through scheduleCursorRedrawRef
+    [getPreviewCursorRect],
   );
 
-  const clearCursorPrv = useCallback(() => {
-    prvCursorPosRef.current = null;
+  const clearPreviewCursor = useCallback(() => {
+    previewCursorPosRef.current = null;
     forcePrvRedrawRef.current = true;
-    schedCursor();
+    scheduleCursorRedraw();
     const el = statusRef.current;
     if (el) {
       el.textContent = "\u2014";
       el.title = "";
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- schedCursor is synced through schedCursorRef
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- scheduleCursorRedraw is synced through scheduleCursorRedrawRef
   }, [statusRef]);
 
   return {
-    curRef,
-    prvCurRef,
+    cursorCanvasRef,
+    previewCursorRef,
     cursorRafRef,
-    schedCursorRef,
+    scheduleCursorRedrawRef,
     cursorPosRef,
-    prvCursorPosRef,
+    previewCursorPosRef,
     trackCursor,
     clearCursor,
-    trackCursorPrv,
-    clearCursorPrv,
-    schedCursor,
+    trackPreviewCursor,
+    clearPreviewCursor,
+    scheduleCursorRedraw,
   };
 }

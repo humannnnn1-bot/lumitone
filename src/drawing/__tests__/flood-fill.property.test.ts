@@ -104,7 +104,7 @@ describe("floodFill properties", () => {
         expect(result).not.toBeNull();
         expect(result!.truncated).toBe(false);
 
-        const changed = new Set(Array.from(result!.changed));
+        const changed = new Set(Array.from(result!.changedIndices));
         expect(changed.size).toBe(component.size);
         expect(changed).toEqual(component);
 

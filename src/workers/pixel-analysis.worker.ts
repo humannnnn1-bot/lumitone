@@ -30,7 +30,7 @@ self.onmessage = (e: MessageEvent<PixelAnalysisWorkerRequest>) => {
   const n = width * height;
 
   const needsIsolation = mode === "isolation";
-  const needsDepth = mode === "boundaryDistance";
+  const needsBoundaryDistance = mode === "boundaryDistance";
   const needsGrad = mode === "gradient";
   const needsRegion = mode === "region";
   const needsEdge = mode === "boundaryDistance" || mode === "region";
@@ -40,11 +40,11 @@ self.onmessage = (e: MessageEvent<PixelAnalysisWorkerRequest>) => {
   const result: PixelAnalysisWorkerResponse = {
     id,
     neighborIsolation: new Float32Array(needsIsolation ? n : 0),
-    boundaryDistance: new Float32Array(needsDepth ? n : 0),
+    boundaryDistance: new Float32Array(needsBoundaryDistance ? n : 0),
     gradientAngle: new Float32Array(needsGrad ? n : 0),
     gradientMagnitude: new Float32Array(needsGrad ? n : 0),
     regionId: new Int32Array(needsRegion ? n : 0),
-    isEdge: new Uint8Array(needsEdge ? n : 0),
+    edgeMask: new Uint8Array(needsEdge ? n : 0),
     levelTone: new Float32Array(needsLevelTone ? n : 0),
     localDiversity: new Float32Array(needsDiversity ? n : 0),
     width,
@@ -64,13 +64,13 @@ self.onmessage = (e: MessageEvent<PixelAnalysisWorkerRequest>) => {
       computeLocalDiversity(levelData, width, height, result.localDiversity, pixelCandidateOverrideMap);
       break;
     case "boundaryDistance":
-      computeBoundaryDistance(levelData, width, height, result.isEdge, result.boundaryDistance, pixelCandidateOverrideMap);
+      computeBoundaryDistance(levelData, width, height, result.edgeMask, result.boundaryDistance, pixelCandidateOverrideMap);
       break;
     case "gradient":
       computeGradient(levelData, width, height, result.levelTone, result.gradientAngle, result.gradientMagnitude);
       break;
     case "region":
-      computeRegion(levelData, width, height, result.regionId, result.isEdge, pixelCandidateOverrideMap);
+      computeRegion(levelData, width, height, result.regionId, result.edgeMask, pixelCandidateOverrideMap);
       break;
     case "levelTone":
       for (let i = 0; i < n; i++) result.levelTone[i] = (levelData[i] & LEVEL_MASK) / 7;
@@ -88,7 +88,7 @@ self.onmessage = (e: MessageEvent<PixelAnalysisWorkerRequest>) => {
     result.gradientAngle,
     result.gradientMagnitude,
     result.regionId,
-    result.isEdge,
+    result.edgeMask,
     result.levelTone,
     result.localDiversity,
   ];

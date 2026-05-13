@@ -40,9 +40,9 @@ export interface LinkedVisualizationOverlayContext {
 }
 
 export interface LinkedVisualizationProps {
-  hueAngle: number;
+  hueAngleDeg: number;
   brushLevel: number;
-  onHueAngleChange?: (angle: number) => void;
+  onHueAngleDegChange?: (angle: number) => void;
   hoveredCandidate?: LinkedVisualizationHover | null;
   onHoverCandidate?: (d: LinkedVisualizationHover | null) => void;
   candidateOverridesByLevel?: Map<number, number>;
@@ -87,9 +87,9 @@ const S_TOGGLE_ACTIVE: React.CSSProperties = {
 };
 
 export const LinkedVisualization = React.memo(function LinkedVisualization({
-  hueAngle,
+  hueAngleDeg,
   brushLevel,
-  onHueAngleChange,
+  onHueAngleDegChange,
   hoveredCandidate,
   onHoverCandidate,
   candidateOverridesByLevel,
@@ -143,9 +143,9 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
 
   // Compute dots
   const dots = useMemo(() => {
-    return buildLinkedVisualizationDots(hueAngle, candidateOverridesByLevel);
+    return buildLinkedVisualizationDots(hueAngleDeg, candidateOverridesByLevel);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- brushLevel triggers re-render for active dot updates
-  }, [hueAngle, brushLevel, candidateOverridesByLevel]);
+  }, [hueAngleDeg, brushLevel, candidateOverridesByLevel]);
 
   const activeDots = useMemo(() => dots.filter((d) => d.isActive), [dots]);
   const projectionDots = useMemo(() => [...dots].sort((a, b) => Number(a.isActive) - Number(b.isActive)), [dots]);
@@ -178,9 +178,9 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
       // Immediately update hue
       const pt = svgCoord(e.clientX, e.clientY);
       const hue = clampHueFromRightGraphX(pt.x);
-      onHueAngleChange?.(Math.round(hue));
+      onHueAngleDegChange?.(Math.round(hue));
     },
-    [svgCoord, onHueAngleChange],
+    [svgCoord, onHueAngleDegChange],
   );
 
   // Hue line drag (on bottom graph)
@@ -191,9 +191,9 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
       svgRef.current?.setPointerCapture(e.pointerId);
       const pt = svgCoord(e.clientX, e.clientY);
       const hue = clampHueFromBottomGraphY(pt.y);
-      onHueAngleChange?.(Math.round(hue));
+      onHueAngleDegChange?.(Math.round(hue));
     },
-    [svgCoord, onHueAngleChange],
+    [svgCoord, onHueAngleDegChange],
   );
 
   const onPointerMove = useCallback(
@@ -209,13 +209,13 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
         else setAlpha7(newAlpha);
       } else if (drag.type === "hue") {
         const hue = clampHueFromRightGraphX(pt.x);
-        onHueAngleChange?.(Math.round(hue));
+        onHueAngleDegChange?.(Math.round(hue));
       } else if (drag.type === "hue-bottom") {
         const hue = clampHueFromBottomGraphY(pt.y);
-        onHueAngleChange?.(Math.round(hue));
+        onHueAngleDegChange?.(Math.round(hue));
       }
     },
-    [svgCoord, mode, setAlpha0, setAlpha7, onHueAngleChange],
+    [svgCoord, mode, setAlpha0, setAlpha7, onHueAngleDegChange],
   );
 
   const onPointerUp = useCallback(() => {
@@ -279,7 +279,7 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
 
         <RightProjectionGraph
           mode={mode}
-          hueAngle={hueAngle}
+          hueAngleDeg={hueAngleDeg}
           alpha0={alpha0}
           alpha7={alpha7}
           activeAlpha={activeAlpha}
@@ -298,7 +298,7 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
 
         <BottomProjectionGraph
           mode={mode}
-          hueAngle={hueAngle}
+          hueAngleDeg={hueAngleDeg}
           alpha0={alpha0}
           alpha7={alpha7}
           activeAlpha={activeAlpha}
@@ -341,7 +341,7 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
     // eslint-disable-next-line react-hooks/exhaustive-deps -- hoveredDot is intentionally reactive
   }, [
     dots,
-    hueAngle,
+    hueAngleDeg,
     alpha0,
     alpha7,
     mode,
@@ -431,7 +431,7 @@ export const LinkedVisualization = React.memo(function LinkedVisualization({
           alpha={activeAlpha}
           radiusFn={activeRadiusFn}
           dots={dots}
-          hueAngle={hueAngle}
+          hueAngleDeg={hueAngleDeg}
           hoveredDot={hoveredDot}
           onHoverDot={setHoveredDot}
           mode={mode}

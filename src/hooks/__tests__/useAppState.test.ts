@@ -30,19 +30,19 @@ describe("useAppState", () => {
   });
 
   it("uses desktop width for wide landscape canvases while preserving square and portrait sizing", () => {
-    expect(getCanvasDisplaySize(320, 320, 1280, 720)).toEqual({ displayW: 540, displayH: 540 });
-    expect(getCanvasDisplaySize(900, 1600, 1280, 720)).toEqual({ displayW: 304, displayH: 540 });
-    expect(getCanvasDisplaySize(1600, 900, 1280, 720)).toEqual({ displayW: 796, displayH: 448 });
+    expect(getCanvasDisplaySize(320, 320, 1280, 720)).toEqual({ displayWidth: 540, displayHeight: 540 });
+    expect(getCanvasDisplaySize(900, 1600, 1280, 720)).toEqual({ displayWidth: 304, displayHeight: 540 });
+    expect(getCanvasDisplaySize(1600, 900, 1280, 720)).toEqual({ displayWidth: 796, displayHeight: 448 });
   });
 
   it("uses side-by-side sizing earlier for portrait canvases", () => {
-    expect(getCanvasDisplaySize(900, 1600, 840, 720)).toEqual({ displayW: 304, displayH: 540 });
-    expect(getCanvasDisplaySize(1200, 1600, 900, 1000)).toEqual({ displayW: 416, displayH: 555 });
-    expect(getCanvasDisplaySize(320, 320, 900, 1000)).toEqual({ displayW: 700, displayH: 700 });
+    expect(getCanvasDisplaySize(900, 1600, 840, 720)).toEqual({ displayWidth: 304, displayHeight: 540 });
+    expect(getCanvasDisplaySize(1200, 1600, 900, 1000)).toEqual({ displayWidth: 416, displayHeight: 555 });
+    expect(getCanvasDisplaySize(320, 320, 900, 1000)).toEqual({ displayWidth: 700, displayHeight: 700 });
   });
 
   it("keeps mobile landscape canvases on the existing width-constrained sizing path", () => {
-    expect(getCanvasDisplaySize(1600, 900, 390, 844)).toEqual({ displayW: 358, displayH: 201 });
+    expect(getCanvasDisplaySize(1600, 900, 390, 844)).toEqual({ displayWidth: 358, displayHeight: 201 });
   });
 
   it("composes the initial app state needed by the canvas UI", () => {

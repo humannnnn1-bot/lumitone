@@ -108,7 +108,7 @@ export const ColorMappingList = memo(
                 )}
               </div>
               {CANONICAL_ANGLES[i] != null &&
-                cur.angle >= 0 &&
+                cur.hueAngleDeg >= 0 &&
                 (() => {
                   const canon = CANONICAL_ANGLES[i]!;
                   const hexAngle = HEX_CANDIDATE_ANGLES[i]?.[ci];

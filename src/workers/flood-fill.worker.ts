@@ -4,49 +4,56 @@
  */
 import { floodFill, glazeFloodFill } from "../drawing/flood-fill";
 
-export interface FloodFillWorkerRequest {
+interface FloodFillWorkerRequestBase {
   id: number;
-  kind: "canvas" | "glaze";
   levelData: Uint8Array;
   seedX: number;
   seedY: number;
-  targetLevel: number;
   width: number;
   height: number;
-  /** Only for kind === "glaze" */
-  pixelCandidateOverrideMap?: Uint8Array;
-  /** Only for kind === "glaze" */
-  targetColorOverrideValue?: number;
 }
+
+export type FloodFillWorkerRequest =
+  | (FloodFillWorkerRequestBase & {
+      kind: "canvas";
+      targetLevel: number;
+    })
+  | (FloodFillWorkerRequestBase & {
+      kind: "glaze";
+      pixelCandidateOverrideMap: Uint8Array;
+      targetPixelCandidateOverrideValue: number;
+    });
 
 export interface FloodFillWorkerResponse {
   id: number;
   levelData: Uint8Array;
   pixelCandidateOverrideMap?: Uint8Array;
-  changed: Uint32Array;
+  changedIndices: Uint32Array;
   truncated: boolean;
 }
 
 self.onmessage = (e: MessageEvent<FloodFillWorkerRequest>) => {
-  const { id, kind, levelData, seedX, seedY, targetLevel, width, height, pixelCandidateOverrideMap, targetColorOverrideValue } = e.data;
+  const { id, kind, levelData, seedX, seedY, width, height } = e.data;
 
-  if (kind === "glaze" && pixelCandidateOverrideMap != null && targetColorOverrideValue != null) {
-    const result = glazeFloodFill(levelData, pixelCandidateOverrideMap, seedX, seedY, targetColorOverrideValue, width, height);
-    const changed = result ? result.changed : new Uint32Array(0);
+  if (kind === "glaze") {
+    const { pixelCandidateOverrideMap, targetPixelCandidateOverrideValue } = e.data;
+    const result = glazeFloodFill(levelData, pixelCandidateOverrideMap, seedX, seedY, targetPixelCandidateOverrideValue, width, height);
+    const changedIndices = result ? result.changedIndices : new Uint32Array(0);
     const truncated = result ? result.truncated : false;
-    const resp: FloodFillWorkerResponse = { id, levelData, pixelCandidateOverrideMap, changed, truncated };
+    const resp: FloodFillWorkerResponse = { id, levelData, pixelCandidateOverrideMap, changedIndices, truncated };
     const transfer: Transferable[] = [
       levelData.buffer as ArrayBuffer,
       pixelCandidateOverrideMap.buffer as ArrayBuffer,
-      changed.buffer as ArrayBuffer,
+      changedIndices.buffer as ArrayBuffer,
     ];
     (self as unknown as Worker).postMessage(resp, transfer);
   } else {
+    const { targetLevel } = e.data;
     const result = floodFill(levelData, seedX, seedY, targetLevel, width, height);
-    const changed = result ? result.changed : new Uint32Array(0);
+    const changedIndices = result ? result.changedIndices : new Uint32Array(0);
     const truncated = result ? result.truncated : false;
-    const resp: FloodFillWorkerResponse = { id, levelData, changed, truncated };
-    const transfer: Transferable[] = [levelData.buffer as ArrayBuffer, changed.buffer as ArrayBuffer];
+    const resp: FloodFillWorkerResponse = { id, levelData, changedIndices, truncated };
+    const transfer: Transferable[] = [levelData.buffer as ArrayBuffer, changedIndices.buffer as ArrayBuffer];
     (self as unknown as Worker).postMessage(resp, transfer);
   }
 };

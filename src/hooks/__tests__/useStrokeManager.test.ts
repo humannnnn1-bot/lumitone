@@ -74,7 +74,7 @@ describe("createStrokeState", () => {
     expect(state.params.brushSize).toBe(5);
     expect(state.shapeStart).toEqual({ x: 2, y: 3 });
     expect(state.prevShapeBBox).toBeNull();
-    expect(state.fillChanged).toBeNull();
+    expect(state.fillChangedIndices).toBeNull();
   });
 });
 
@@ -228,11 +228,11 @@ describe("computeStrokeResult", () => {
     const diff = computeStrokeResult(pre, buf, null);
     expect(diff).not.toBeNull();
     expect(diff!.indices.length).toBe(3);
-    expect(diff!.newValues[0]).toBe(3);
-    expect(diff!.oldValues[0]).toBe(0);
+    expect(diff!.newLevelValues[0]).toBe(3);
+    expect(diff!.oldLevelValues[0]).toBe(0);
   });
 
-  it("uses buildDiffFromFill when fillChanged provided", () => {
+  it("uses buildDiffFromFill when fillChangedIndices provided", () => {
     const pre = mkBuf(10, 10, 0);
     const buf = mkBuf(10, 10, 0);
     buf[5] = 2;
@@ -242,7 +242,7 @@ describe("computeStrokeResult", () => {
     const diff = computeStrokeResult(pre, buf, changed);
     expect(diff).not.toBeNull();
     expect(diff!.indices.length).toBe(3);
-    // fillChanged indices should match
+    // fillChangedIndices indices should match
     expect(diff!.indices[0]).toBe(5);
     expect(diff!.indices[1]).toBe(15);
     expect(diff!.indices[2]).toBe(25);

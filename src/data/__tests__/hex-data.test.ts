@@ -4,10 +4,10 @@ import {
   HEX_VERTICES,
   HEX_EDGES,
   HEX_EDGE_COLORS,
-  HEX_VERTEX_ALTS,
-  HEX_EDGE_ALTS,
+  HEX_VERTEX_CANDIDATE_INDICES,
+  HEX_EDGE_CANDIDATE_INDICES,
   HEX_DOTS,
-  HEX_VP,
+  HEX_VERTEX_POSITIONS,
   HEX_CX,
   HEX_CY,
   HEX_R,
@@ -27,14 +27,14 @@ describe("HEX_VERTICES", () => {
   });
 
   it("covers all 6 color names", () => {
-    const names = HEX_VERTICES.map((v) => v.c).sort();
+    const names = HEX_VERTICES.map((v) => v.label).sort();
     expect(names).toEqual(["B", "C", "G", "M", "R", "Y"]);
   });
 
   it("each vertex has a valid luminance level 0-7", () => {
     for (const v of HEX_VERTICES) {
-      expect(v.lv).toBeGreaterThanOrEqual(0);
-      expect(v.lv).toBeLessThanOrEqual(7);
+      expect(v.level).toBeGreaterThanOrEqual(0);
+      expect(v.level).toBeLessThanOrEqual(7);
     }
   });
 });
@@ -46,12 +46,12 @@ describe("HEX_EDGES", () => {
 
   it("edge.t wraps correctly for last edge", () => {
     const last = HEX_EDGES[HEX_EDGES.length - 1];
-    expect(last.t % NUM_VERTICES).toBe(0); // wraps back to vertex 0
+    expect(last.toVertexIndex % NUM_VERTICES).toBe(0); // wraps back to vertex 0
   });
 
   it("each edge lv entries are valid levels", () => {
     for (const e of HEX_EDGES) {
-      for (const lv of e.lv) {
+      for (const lv of e.levels) {
         expect(lv).toBeGreaterThanOrEqual(0);
         expect(lv).toBeLessThanOrEqual(7);
       }
@@ -66,7 +66,7 @@ describe("HEX_EDGE_COLORS", () => {
 
   it("inner array length matches edge lv count", () => {
     for (let i = 0; i < HEX_EDGES.length; i++) {
-      expect(HEX_EDGE_COLORS[i].length).toBe(HEX_EDGES[i].lv.length);
+      expect(HEX_EDGE_COLORS[i].length).toBe(HEX_EDGES[i].levels.length);
     }
   });
 
@@ -94,34 +94,34 @@ describe("HEX_EDGE_COLORS", () => {
   });
 });
 
-describe("HEX_VERTEX_ALTS", () => {
+describe("HEX_VERTEX_CANDIDATE_INDICES", () => {
   it("has one alt index per vertex", () => {
-    expect(HEX_VERTEX_ALTS.length).toBe(HEX_VERTICES.length);
+    expect(HEX_VERTEX_CANDIDATE_INDICES.length).toBe(HEX_VERTICES.length);
   });
 
   it("each alt is a valid candidate index", () => {
     for (let i = 0; i < HEX_VERTICES.length; i++) {
-      const lv = HEX_VERTICES[i].lv;
-      const alt = HEX_VERTEX_ALTS[i];
+      const lv = HEX_VERTICES[i].level;
+      const alt = HEX_VERTEX_CANDIDATE_INDICES[i];
       expect(alt).toBeGreaterThanOrEqual(0);
       expect(alt).toBeLessThan(LEVEL_CANDIDATES[lv].length);
     }
   });
 });
 
-describe("HEX_EDGE_ALTS", () => {
+describe("HEX_EDGE_CANDIDATE_INDICES", () => {
   it("has correct shape matching HEX_EDGES", () => {
-    expect(HEX_EDGE_ALTS.length).toBe(HEX_EDGES.length);
+    expect(HEX_EDGE_CANDIDATE_INDICES.length).toBe(HEX_EDGES.length);
     for (let i = 0; i < HEX_EDGES.length; i++) {
-      expect(HEX_EDGE_ALTS[i].length).toBe(HEX_EDGES[i].lv.length);
+      expect(HEX_EDGE_CANDIDATE_INDICES[i].length).toBe(HEX_EDGES[i].levels.length);
     }
   });
 
   it("each alt is a valid candidate index for its level", () => {
     for (let ei = 0; ei < HEX_EDGES.length; ei++) {
-      for (let li = 0; li < HEX_EDGES[ei].lv.length; li++) {
-        const lv = HEX_EDGES[ei].lv[li];
-        const alt = HEX_EDGE_ALTS[ei][li];
+      for (let li = 0; li < HEX_EDGES[ei].levels.length; li++) {
+        const lv = HEX_EDGES[ei].levels[li];
+        const alt = HEX_EDGE_CANDIDATE_INDICES[ei][li];
         expect(alt).toBeGreaterThanOrEqual(0);
         expect(alt).toBeLessThan(LEVEL_CANDIDATES[lv].length);
       }
@@ -131,34 +131,34 @@ describe("HEX_EDGE_ALTS", () => {
 
 describe("HEX_DOTS", () => {
   it("has 6 vertex dots + sum of edge lv lengths", () => {
-    const edgeDots = HEX_EDGES.reduce((sum, e) => sum + e.lv.length, 0);
+    const edgeDots = HEX_EDGES.reduce((sum, e) => sum + e.levels.length, 0);
     expect(HEX_DOTS.length).toBe(6 + edgeDots);
   });
 
   it("vertex dots have vi >= 0 and ei = -1", () => {
-    const vertexDots = HEX_DOTS.filter((d) => d.vi >= 0);
+    const vertexDots = HEX_DOTS.filter((d) => d.vertexIndex >= 0);
     expect(vertexDots.length).toBe(6);
     for (const d of vertexDots) {
-      expect(d.ei).toBe(-1);
-      expect(d.si).toBe(-1);
+      expect(d.edgeIndex).toBe(-1);
+      expect(d.segmentIndex).toBe(-1);
     }
   });
 
   it("edge dots have ei >= 0 and vi = -1", () => {
-    const edgeDots = HEX_DOTS.filter((d) => d.ei >= 0);
+    const edgeDots = HEX_DOTS.filter((d) => d.edgeIndex >= 0);
     for (const d of edgeDots) {
-      expect(d.vi).toBe(-1);
+      expect(d.vertexIndex).toBe(-1);
     }
   });
 });
 
-describe("HEX_VP (vertex positions)", () => {
+describe("HEX_VERTEX_POSITIONS (vertex positions)", () => {
   it("has 6 positions", () => {
-    expect(HEX_VP.length).toBe(6);
+    expect(HEX_VERTEX_POSITIONS.length).toBe(6);
   });
 
   it("all positions are within expected SVG bounds", () => {
-    for (const p of HEX_VP) {
+    for (const p of HEX_VERTEX_POSITIONS) {
       expect(p.x).toBeGreaterThan(HEX_CX - HEX_R - 1);
       expect(p.x).toBeLessThan(HEX_CX + HEX_R + 1);
       expect(p.y).toBeGreaterThan(HEX_CY - HEX_R - 1);
@@ -167,7 +167,7 @@ describe("HEX_VP (vertex positions)", () => {
   });
 
   it("positions form a regular hexagon (equidistant from center)", () => {
-    for (const p of HEX_VP) {
+    for (const p of HEX_VERTEX_POSITIONS) {
       const dist = Math.sqrt((p.x - HEX_CX) ** 2 + (p.y - HEX_CY) ** 2);
       expect(dist).toBeCloseTo(HEX_R, 5);
     }

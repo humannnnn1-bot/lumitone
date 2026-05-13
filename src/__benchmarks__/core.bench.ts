@@ -10,7 +10,7 @@ import {
   computeRegion,
 } from "../utils/pixel-analysis";
 import { applyDiff, compressDiff, computeDiff, decompressDiff } from "../state/undo-diff";
-import type { ImgCache } from "../types";
+import type { ImageRenderCache } from "../types";
 
 const BENCH_OPTIONS = {
   time: 200,
@@ -75,7 +75,7 @@ describe("renderCanvasBuffers", () => {
   bench(
     "full render, source and preview",
     () => {
-      const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+      const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
       renderCanvasBuffers(data, w, h, lut, makeCanvas(w, h), makeCanvas(w, h), cache);
     },
     BENCH_OPTIONS,
@@ -84,7 +84,7 @@ describe("renderCanvasBuffers", () => {
   bench(
     "dirty rect render with pixel candidate overrides",
     () => {
-      const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+      const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
       renderCanvasBuffers(
         data,
         w,

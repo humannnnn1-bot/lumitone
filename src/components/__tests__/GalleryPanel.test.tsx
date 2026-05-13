@@ -54,7 +54,7 @@ function farFromHue(hue: number): number[] {
     let best = 0;
     let bestDistance = -1;
     LEVEL_CANDIDATES[lv].forEach((candidate, idx) => {
-      const diff = Math.abs(candidate.angle - hue);
+      const diff = Math.abs(candidate.hueAngleDeg - hue);
       const distance = Math.min(diff, 360 - diff);
       if (distance > bestDistance) {
         best = idx;

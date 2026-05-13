@@ -12,9 +12,9 @@ function makeMocks() {
     levelData: new Uint8Array(320 * 320),
     pixelCandidateOverrideMap: new Uint8Array(320 * 320),
   };
-  const displayW = 320;
-  const schedCursorRef = { current: null as (() => void) | null };
-  return { canvasData, displayW, schedCursorRef };
+  const displayWidth = 320;
+  const scheduleCursorRedrawRef = { current: null as (() => void) | null };
+  return { canvasData, displayWidth, scheduleCursorRedrawRef };
 }
 
 describe("usePanZoom", () => {
@@ -74,26 +74,26 @@ describe("usePanZoom", () => {
   }
 
   it("initial zoom is 1", () => {
-    const { canvasData, displayW, schedCursorRef } = makeMocks();
-    const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+    const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+    const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
     expect(result.current.zoom).toBe(1);
   });
 
   it("initial pan is {x:0, y:0}", () => {
-    const { canvasData, displayW, schedCursorRef } = makeMocks();
-    const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+    const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+    const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
     expect(result.current.pan).toEqual({ x: 0, y: 0 });
   });
 
   it("initial cursorMode is null", () => {
-    const { canvasData, displayW, schedCursorRef } = makeMocks();
-    const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+    const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+    const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
     expect(result.current.cursorMode).toBeNull();
   });
 
   it("setZoom changes zoom", () => {
-    const { canvasData, displayW, schedCursorRef } = makeMocks();
-    const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+    const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+    const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
     act(() => {
       result.current.setZoom(2);
     });
@@ -101,8 +101,8 @@ describe("usePanZoom", () => {
   });
 
   it("setPan changes pan", () => {
-    const { canvasData, displayW, schedCursorRef } = makeMocks();
-    const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+    const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+    const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
     act(() => {
       result.current.setPan({ x: 10, y: 20 });
     });
@@ -110,8 +110,8 @@ describe("usePanZoom", () => {
   });
 
   it("setPan with same values does not cause new reference (equality check)", () => {
-    const { canvasData, displayW, schedCursorRef } = makeMocks();
-    const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+    const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+    const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
 
     act(() => {
       result.current.setPan({ x: 5, y: 10 });
@@ -129,8 +129,8 @@ describe("usePanZoom", () => {
   });
 
   it("setPan with function updater works", () => {
-    const { canvasData, displayW, schedCursorRef } = makeMocks();
-    const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+    const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+    const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
 
     act(() => {
       result.current.setPan({ x: 5, y: 10 });
@@ -142,8 +142,8 @@ describe("usePanZoom", () => {
   });
 
   it("refs are exposed and initialized", () => {
-    const { canvasData, displayW, schedCursorRef } = makeMocks();
-    const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+    const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+    const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
     expect(result.current.panningRef.current).toBe(false);
     expect(result.current.spaceRef.current).toBe(false);
     expect(result.current.panStartRef.current).toEqual({ x: 0, y: 0 });
@@ -151,10 +151,10 @@ describe("usePanZoom", () => {
   });
 
   it("clears transient pan state when pan-zoom mode is disabled", () => {
-    const { canvasData, displayW, schedCursorRef } = makeMocks();
-    const schedCursor = vi.fn();
-    schedCursorRef.current = schedCursor;
-    const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+    const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+    const scheduleCursorRedraw = vi.fn();
+    scheduleCursorRedrawRef.current = scheduleCursorRedraw;
+    const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
 
     act(() => {
       result.current.setPanZoomMode(true);
@@ -170,18 +170,18 @@ describe("usePanZoom", () => {
     expect(result.current.cursorMode).toBeNull();
     expect(result.current.panningRef.current).toBe(false);
     expect(result.current.spaceRef.current).toBe(false);
-    expect(schedCursor).toHaveBeenCalled();
+    expect(scheduleCursorRedraw).toHaveBeenCalled();
   });
 
   it("movePan clamps pan to canvas bounds and schedules cursor redraw", () => {
-    const { canvasData, displayW, schedCursorRef } = makeMocks();
+    const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
     let scheduledPan: { x: number; y: number } | null = null;
     let readCurrentPan: (() => { x: number; y: number }) | null = null;
-    const schedCursor = vi.fn(() => {
+    const scheduleCursorRedraw = vi.fn(() => {
       scheduledPan = readCurrentPan?.() ?? null;
     });
-    schedCursorRef.current = schedCursor;
-    const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+    scheduleCursorRedrawRef.current = scheduleCursorRedraw;
+    const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
     readCurrentPan = () => result.current.panRef.current;
 
     act(() => {
@@ -193,15 +193,15 @@ describe("usePanZoom", () => {
 
     expect(result.current.pan).toEqual({ x: canvasData.width, y: -canvasData.height });
     expect(scheduledPan).toEqual({ x: canvasData.width, y: -canvasData.height });
-    expect(schedCursor).toHaveBeenCalled();
+    expect(scheduleCursorRedraw).toHaveBeenCalled();
   });
 
   describe("onWheel", () => {
     it("zooms in and out around the pointer", () => {
-      const { canvasData, displayW, schedCursorRef } = makeMocks();
-      const schedCursor = vi.fn();
-      schedCursorRef.current = schedCursor;
-      const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+      const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+      const scheduleCursorRedraw = vi.fn();
+      scheduleCursorRedrawRef.current = scheduleCursorRedraw;
+      const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
 
       act(() => {
         result.current.onWheel(makeWheelEvent({ deltaY: -100 }));
@@ -212,12 +212,12 @@ describe("usePanZoom", () => {
         result.current.onWheel(makeWheelEvent({ deltaY: 100 }));
       });
       expect(result.current.zoom).toBeCloseTo(1);
-      expect(schedCursor).toHaveBeenCalled();
+      expect(scheduleCursorRedraw).toHaveBeenCalled();
     });
 
     it("clamps wheel zoom to configured min and max", () => {
-      const { canvasData, displayW, schedCursorRef } = makeMocks();
-      const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+      const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
 
       act(() => {
         result.current.setZoom(ZOOM_MAX / 1.01);
@@ -237,8 +237,8 @@ describe("usePanZoom", () => {
     });
 
     it("clamps wheel-generated pan to canvas bounds", () => {
-      const { canvasData, displayW, schedCursorRef } = makeMocks();
-      const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+      const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
 
       act(() => {
         result.current.setPan({ x: 10_000, y: -10_000 });
@@ -256,8 +256,8 @@ describe("usePanZoom", () => {
 
   describe("pinch handlers", () => {
     it("uses one pointer as pan input and clamps the result", () => {
-      const { canvasData, displayW, schedCursorRef } = makeMocks();
-      const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+      const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
 
       act(() => {
         result.current.onPinchDown(makeFakePointerEvent({ pointerId: 1, clientX: 0, clientY: 0 }));
@@ -276,8 +276,8 @@ describe("usePanZoom", () => {
     });
 
     it("pinch-zooms with two pointers and resumes pan when one remains", () => {
-      const { canvasData, displayW, schedCursorRef } = makeMocks();
-      const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+      const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
 
       act(() => {
         result.current.onPinchDown(makeFakePointerEvent({ pointerId: 1, clientX: 0, clientY: 0 }));
@@ -297,10 +297,10 @@ describe("usePanZoom", () => {
     });
 
     it("pans with two pointers when the pinch center moves", () => {
-      const { canvasData, displayW, schedCursorRef } = makeMocks();
-      const schedCursor = vi.fn();
-      schedCursorRef.current = schedCursor;
-      const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+      const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+      const scheduleCursorRedraw = vi.fn();
+      scheduleCursorRedrawRef.current = scheduleCursorRedraw;
+      const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
 
       act(() => {
         result.current.onPinchDown(makeFakePointerEvent({ pointerId: 1, clientX: 100, clientY: 100 }));
@@ -314,13 +314,13 @@ describe("usePanZoom", () => {
 
       expect(result.current.zoom).toBeCloseTo(1);
       expect(result.current.pan).toEqual({ x: 40, y: 30 });
-      expect(schedCursor).toHaveBeenCalled();
+      expect(scheduleCursorRedraw).toHaveBeenCalled();
     });
 
     it("keeps the pinch focal point stable near the canvas edge", () => {
-      const { canvasData, displayW, schedCursorRef } = makeMocks();
-      const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
-      const startCenter = { x: 280 / displayW, y: 160 / displayW };
+      const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
+      const startCenter = { x: 280 / displayWidth, y: 160 / displayWidth };
 
       act(() => {
         result.current.setPan({ x: 40, y: 0 });
@@ -347,8 +347,8 @@ describe("usePanZoom", () => {
 
   describe("handleMiddleDown", () => {
     it("first middle-click starts pan (delegates to startPan)", () => {
-      const { canvasData, displayW, schedCursorRef } = makeMocks();
-      const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+      const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
 
       act(() => {
         result.current.handleMiddleDown(makeFakePointerEvent({ button: 1 }));
@@ -358,8 +358,8 @@ describe("usePanZoom", () => {
     });
 
     it("double middle-click within 400ms resets zoom and pan", () => {
-      const { canvasData, displayW, schedCursorRef } = makeMocks();
-      const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+      const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
 
       // Set non-default zoom/pan
       act(() => {
@@ -389,8 +389,8 @@ describe("usePanZoom", () => {
     });
 
     it("two middle-clicks spaced > 400ms apart both start pan", () => {
-      const { canvasData, displayW, schedCursorRef } = makeMocks();
-      const { result } = renderHook(() => usePanZoom(canvasData, displayW, schedCursorRef));
+      const { canvasData, displayWidth, scheduleCursorRedrawRef } = makeMocks();
+      const { result } = renderHook(() => usePanZoom(canvasData, displayWidth, scheduleCursorRedrawRef));
 
       act(() => {
         result.current.setZoom(2);

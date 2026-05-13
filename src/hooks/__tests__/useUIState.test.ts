@@ -33,24 +33,24 @@ describe("useUIState", () => {
     expect(result.current.activeTabId).toBe("theory");
   });
 
-  it("tracks whether the stats tab has been opened from the initial hash", () => {
+  it("tracks whether the map tab has been opened from the initial hash", () => {
     window.history.replaceState(null, "", "/#map");
 
     const { result } = renderHook(() => useUIState(t));
 
     expect(result.current.activeTab).toBe(5);
-    expect(result.current.activeTabId).toBe("stats");
-    expect(result.current.hasOpenedStats).toBe(true);
+    expect(result.current.activeTabId).toBe("map");
+    expect(result.current.hasOpenedMap).toBe(true);
   });
 
-  it("initial activeTab supports the legacy stats URL hash alias", () => {
+  it("initial activeTab supports the legacy map URL hash alias", () => {
     window.history.replaceState(null, "", "/#stats");
 
     const { result } = renderHook(() => useUIState(t));
 
     expect(result.current.activeTab).toBe(5);
-    expect(result.current.activeTabId).toBe("stats");
-    expect(result.current.hasOpenedStats).toBe(true);
+    expect(result.current.activeTabId).toBe("map");
+    expect(result.current.hasOpenedMap).toBe(true);
   });
 
   it("initial activeTab falls back to the stored tab when no hash is present", () => {
@@ -111,20 +111,20 @@ describe("useUIState", () => {
     expect(window.location.hash).toBe("#theory");
   });
 
-  it("tracks whether the stats tab has been opened through tab changes", () => {
+  it("tracks whether the map tab has been opened through tab changes", () => {
     const { result } = renderHook(() => useUIState(t));
-    expect(result.current.hasOpenedStats).toBe(false);
+    expect(result.current.hasOpenedMap).toBe(false);
 
     act(() => {
       result.current.setActiveTab(5);
     });
-    expect(result.current.hasOpenedStats).toBe(true);
-    expect(result.current.activeTabId).toBe("stats");
+    expect(result.current.hasOpenedMap).toBe(true);
+    expect(result.current.activeTabId).toBe("map");
 
     act(() => {
       result.current.setActiveTab(2);
     });
-    expect(result.current.hasOpenedStats).toBe(true);
+    expect(result.current.hasOpenedMap).toBe(true);
     expect(result.current.activeTabId).toBe("source");
   });
 
@@ -141,9 +141,9 @@ describe("useUIState", () => {
     expect(localStorage.getItem("chromalum-active-tab-v2")).toBe("7");
   });
 
-  it("tracks stats opening from manual hash changes", () => {
+  it("tracks map opening from manual hash changes", () => {
     const { result } = renderHook(() => useUIState(t));
-    expect(result.current.hasOpenedStats).toBe(false);
+    expect(result.current.hasOpenedMap).toBe(false);
 
     act(() => {
       window.history.pushState(null, "", "#map");
@@ -151,8 +151,8 @@ describe("useUIState", () => {
     });
 
     expect(result.current.activeTab).toBe(5);
-    expect(result.current.activeTabId).toBe("stats");
-    expect(result.current.hasOpenedStats).toBe(true);
+    expect(result.current.activeTabId).toBe("map");
+    expect(result.current.hasOpenedMap).toBe(true);
   });
 
   it("syncs activeTab from browser history state", () => {

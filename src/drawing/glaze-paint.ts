@@ -10,9 +10,9 @@ import type { BrushMask } from "./brush-mask";
    ═══════════════════════════════════════════ */
 
 /** Pre-compute level→override value lookup for a given hue. Call once per stroke. */
-export function buildGlazeLUT(hueAngle: number): Uint8Array {
+export function buildGlazeLUT(hueAngleDeg: number): Uint8Array {
   const lut = new Uint8Array(8);
-  for (let lv = 0; lv < 8; lv++) lut[lv] = findClosestCandidate(lv, hueAngle) + 1;
+  for (let lv = 0; lv < 8; lv++) lut[lv] = findClosestCandidate(lv, hueAngleDeg) + 1;
   return lut;
 }
 

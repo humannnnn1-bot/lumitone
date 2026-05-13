@@ -14,8 +14,8 @@ const analyzeMocks = vi.hoisted(() => ({
 vi.mock("../../i18n", () => ({
   useTranslation: () => ({
     t: (key: string, ...args: unknown[]) => {
-      if (key === "stats_title") return "Statistics";
-      if (key === "stats_composition") return "Composition";
+      if (key === "map_title") return "Statistics";
+      if (key === "map_composition") return "Composition";
       return args.length ? `${key}(${args.join(",")})` : key;
     },
   }),
@@ -53,8 +53,8 @@ function makeProps(overrides?: Partial<Parameters<typeof AnalyzePanel>[0]>) {
     brushLevel: 0,
     setBrushLevel: vi.fn(),
     canvasData: { width: w, height: h, levelData: new Uint8Array(w * h), pixelCandidateOverrideMap: new Uint8Array(w * h) },
-    displayW: 320,
-    displayH: 320,
+    displayWidth: 320,
+    displayHeight: 320,
     active: true,
     mapMode: "levelTone" as const,
     setMapMode: vi.fn(),
@@ -85,20 +85,20 @@ describe("AnalyzePanel", () => {
     render(<AnalyzePanel {...makeProps()} />);
 
     expect(screen.getAllByRole("button").map((button) => button.textContent)).toEqual([
-      "stats_map_levelTone",
-      "stats_map_colorLuma",
-      "stats_map_gradient",
-      "stats_map_region",
-      "stats_map_boundaryDistance",
-      "stats_map_isolation",
-      "stats_map_diversity",
+      "map_map_levelTone",
+      "map_map_colorLuma",
+      "map_map_gradient",
+      "map_map_region",
+      "map_map_boundaryDistance",
+      "map_map_isolation",
+      "map_map_diversity",
     ]);
   });
 
   it("keeps the active region mode button from changing text width", () => {
     render(<AnalyzePanel {...makeProps({ mapMode: "region" })} />);
 
-    expect(screen.getByRole("button", { name: "stats_map_region" }).style.fontWeight).toBe("400");
+    expect(screen.getByRole("button", { name: "map_map_region" }).style.fontWeight).toBe("400");
   });
 
   it("routes every map mode button through setMapMode", () => {
@@ -106,7 +106,7 @@ describe("AnalyzePanel", () => {
     render(<AnalyzePanel {...makeProps({ setMapMode })} />);
 
     for (const mode of ["levelTone", "colorLuma", "gradient", "region", "boundaryDistance", "isolation", "diversity"] satisfies MapMode[]) {
-      fireEvent.click(screen.getByRole("button", { name: `stats_map_${mode}` }));
+      fireEvent.click(screen.getByRole("button", { name: `map_map_${mode}` }));
       expect(setMapMode).toHaveBeenLastCalledWith(mode);
     }
     expect(setMapMode).toHaveBeenCalledTimes(7);
@@ -127,8 +127,8 @@ describe("AnalyzePanel", () => {
         colorLUT: props.colorLUT,
         candidateIndexByLevel: props.candidateIndexByLevel,
         canvasData: props.canvasData,
-        displayW: props.displayW,
-        displayH: props.displayH,
+        displayWidth: props.displayWidth,
+        displayHeight: props.displayHeight,
         showToast,
       }),
     );

@@ -28,7 +28,7 @@ function patternHue(patternCandidateIndexByLevel: readonly number[]): number {
   for (let lv = 0; lv < 8; lv++) {
     const cands = LEVEL_CANDIDATES[lv];
     if (cands.length <= 1) continue;
-    const angle = cands[patternCandidateIndexByLevel[lv] % cands.length].angle;
+    const angle = cands[patternCandidateIndexByLevel[lv] % cands.length].hueAngleDeg;
     if (angle >= 0) {
       sumAngle += angle;
       count++;
@@ -43,7 +43,7 @@ function matchesHueFilter(patternCandidateIndexByLevel: readonly number[], filte
     const cands = LEVEL_CANDIDATES[lv];
     if (cands.length <= 1) continue;
     const ci = patternCandidateIndexByLevel[lv] % cands.length;
-    const angle = cands[ci].angle;
+    const angle = cands[ci].hueAngleDeg;
     if (angle < 0) continue;
     const diff = Math.abs(angle - filterHue);
     if (Math.min(diff, 360 - diff) <= filterRange) return true;

@@ -28,12 +28,12 @@ describe("findClosestCandidate", () => {
       const candidates = LEVEL_CANDIDATES[lv];
       if (candidates.length <= 1) continue;
       // Find if there's a candidate near 0° (or near 360°)
-      const nearZero = candidates.findIndex((c) => c.angle < 30 || c.angle > 330);
+      const nearZero = candidates.findIndex((c) => c.hueAngleDeg < 30 || c.hueAngleDeg > 330);
       if (nearZero >= 0) {
         const indices = findClosestCandidate(lv, 355);
         const selected = candidates[indices];
         // Should pick a candidate close to 355° (i.e., near 0° with wraparound)
-        const dist = Math.min(Math.abs(selected.angle - 355), 360 - Math.abs(selected.angle - 355));
+        const dist = Math.min(Math.abs(selected.hueAngleDeg - 355), 360 - Math.abs(selected.hueAngleDeg - 355));
         expect(dist).toBeLessThan(180);
       }
     }
@@ -63,7 +63,7 @@ describe("computeGlazeDiff / applyDiffToPixelCandidateOverrideMap", () => {
     expect(diff.oldPixelCandidateOverrideValues).toBeDefined();
     expect(diff.newPixelCandidateOverrideValues).toBeDefined();
     // levelData unchanged
-    expect(diff.oldValues[0]).toBe(diff.newValues[0]);
+    expect(diff.oldLevelValues[0]).toBe(diff.newLevelValues[0]);
   });
 
   it("round-trips: apply forward then reverse", () => {
@@ -81,7 +81,7 @@ describe("computeGlazeDiff / applyDiffToPixelCandidateOverrideMap", () => {
 
   it("returns original if diff has no pixel candidate override fields", () => {
     const pixelCandidateOverrideMap = new Uint8Array([1, 2, 3]);
-    const diff = { indices: new Uint32Array([0]), oldValues: new Uint8Array([1]), newValues: new Uint8Array([2]) };
+    const diff = { indices: new Uint32Array([0]), oldLevelValues: new Uint8Array([1]), newLevelValues: new Uint8Array([2]) };
     const result = applyDiffToPixelCandidateOverrideMap(pixelCandidateOverrideMap, diff, false);
     expect(result).toBe(pixelCandidateOverrideMap); // same reference
   });
@@ -114,7 +114,7 @@ describe("glazeFloodFill", () => {
     const result = glazeFloodFill(levelData, pixelCandidateOverrideMap, 0, 0, 3, 2, 2);
     // Fill traverses the region but finds nothing to change
     expect(result).not.toBeNull();
-    expect(result!.changed.length).toBe(0);
+    expect(result!.changedIndices.length).toBe(0);
   });
 
   it("does not modify levelData array", () => {
@@ -212,7 +212,7 @@ describe("renderCanvasBuffers with pixelCandidateOverrideMap", () => {
       previewImageData: null,
       sourcePixels32: null,
       previewPixels32: null,
-    } as import("../../types").ImgCache;
+    } as import("../../types").ImageRenderCache;
     const canvas = createStubCanvas(1, 1);
     renderCanvasBuffers(levelData, 1, 1, lut, null, canvas, cache, undefined, pixelCandidateOverrideMap);
     // Preview should use variant color, not LUT
@@ -235,6 +235,6 @@ describe("buildDiffFromGlazeFill", () => {
     expect(diff.oldPixelCandidateOverrideValues![0]).toBe(0);
     expect(diff.newPixelCandidateOverrideValues![0]).toBe(5);
     // levelData unchanged
-    expect(diff.oldValues[0]).toBe(diff.newValues[0]);
+    expect(diff.oldLevelValues[0]).toBe(diff.newLevelValues[0]);
   });
 });

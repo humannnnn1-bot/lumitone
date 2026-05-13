@@ -19,14 +19,14 @@ const mockPanRef = { current: { x: 0, y: 0 } };
 const cursorOverlayMocks = vi.hoisted(() => ({
   trackCursor: vi.fn(),
   clearCursor: vi.fn(),
-  trackCursorPrv: vi.fn(),
-  clearCursorPrv: vi.fn(),
+  trackPreviewCursor: vi.fn(),
+  clearPreviewCursor: vi.fn(),
 }));
 
 vi.mock("../../state/DrawingContext", () => ({
   useDrawingContext: () => ({
-    displayW: 320,
-    displayH: 320,
+    displayWidth: 320,
+    displayHeight: 320,
     panningRef: mockPanningRef,
     spaceRef: mockSpaceRef,
     zoomRef: mockZoomRef,
@@ -41,21 +41,23 @@ vi.mock("../../state/DrawingContext", () => ({
 
 vi.mock("../useFloodFillWorker", () => ({
   useFloodFillWorker: () => ({
-    requestCanvasFill: vi.fn(() => Promise.resolve({ levelData: new Uint8Array(100), changed: new Uint32Array(0), truncated: false })),
+    requestCanvasFill: vi.fn(() =>
+      Promise.resolve({ levelData: new Uint8Array(100), changedIndices: new Uint32Array(0), truncated: false }),
+    ),
   }),
 }));
 
 vi.mock("../useCursorOverlay", () => ({
   useCursorOverlay: () => ({
-    curRef: { current: document.createElement("canvas") },
-    prvCurRef: { current: document.createElement("canvas") },
+    cursorCanvasRef: { current: document.createElement("canvas") },
+    previewCursorRef: { current: document.createElement("canvas") },
     cursorRafRef: { current: null },
-    schedCursorRef: { current: null },
+    scheduleCursorRedrawRef: { current: null },
     cursorPosRef: { current: null },
     trackCursor: cursorOverlayMocks.trackCursor,
     clearCursor: cursorOverlayMocks.clearCursor,
-    trackCursorPrv: cursorOverlayMocks.trackCursorPrv,
-    clearCursorPrv: cursorOverlayMocks.clearCursorPrv,
+    trackPreviewCursor: cursorOverlayMocks.trackPreviewCursor,
+    clearPreviewCursor: cursorOverlayMocks.clearPreviewCursor,
   }),
 }));
 
@@ -81,7 +83,7 @@ function makeOpts(overrides?: Partial<Parameters<typeof useCanvasDrawing>[0]>) {
     brushLevel: 3,
     brushSize: 1,
     tool: "brush" as ToolId,
-    prvRef: { current: null as HTMLCanvasElement | null },
+    previewCanvasRef: { current: null as HTMLCanvasElement | null },
     setBrushLevel: vi.fn(),
     ...overrides,
   };
@@ -143,7 +145,7 @@ describe("useCanvasDrawing", () => {
   it("paints a brush dot and dispatches the completed stroke", () => {
     const dispatch = vi.fn();
     const { result } = renderHook(() => useCanvasDrawing(makeOpts({ dispatch, brushLevel: 3, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     const down = pointerEvent({ target: canvas });
@@ -168,7 +170,7 @@ describe("useCanvasDrawing", () => {
         finalLevelData: expect.any(Uint8Array),
         diff: expect.objectContaining({
           indices: expect.any(Uint32Array),
-          newValues: expect.any(Uint8Array),
+          newLevelValues: expect.any(Uint8Array),
         }),
       }),
     );
@@ -179,7 +181,7 @@ describe("useCanvasDrawing", () => {
 
   it("uses pen pressure for brush size while keeping mouse input fixed", () => {
     const mouse = renderHook(() => useCanvasDrawing(makeOpts({ canvasData: makeCvs(20, 20), brushLevel: 3, brushSize: 10 })));
-    const mouseCanvas = mouse.result.current.curRef.current!;
+    const mouseCanvas = mouse.result.current.cursorCanvasRef.current!;
     mockCanvasRect(mouseCanvas);
 
     act(() => {
@@ -194,7 +196,7 @@ describe("useCanvasDrawing", () => {
     expect(mouse.result.current.strokeRef.current?.workingData[10 * 20 + 16]).toBe(0);
 
     const pen = renderHook(() => useCanvasDrawing(makeOpts({ canvasData: makeCvs(20, 20), brushLevel: 3, brushSize: 10 })));
-    const penCanvas = pen.result.current.curRef.current!;
+    const penCanvas = pen.result.current.cursorCanvasRef.current!;
     mockCanvasRect(penCanvas);
 
     act(() => {
@@ -218,7 +220,7 @@ describe("useCanvasDrawing", () => {
       const canvasData = makeCvs(10, 10);
       canvasData.levelData.fill(initialLevel);
       const { result } = renderHook(() => useCanvasDrawing(makeOpts({ canvasData, tool, brushLevel: 3, brushSize: 1 })));
-      const canvas = result.current.curRef.current!;
+      const canvas = result.current.cursorCanvasRef.current!;
       mockCanvasRect(canvas);
 
       act(() => {
@@ -236,7 +238,7 @@ describe("useCanvasDrawing", () => {
 
   it("keeps outside brush movement from smearing along the nearest edge and connects on re-entry", () => {
     const { result } = renderHook(() => useCanvasDrawing(makeOpts({ brushLevel: 3, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -267,7 +269,7 @@ describe("useCanvasDrawing", () => {
 
   it("uses the true outside endpoint for line strokes instead of clamping to the edge", () => {
     const { result } = renderHook(() => useCanvasDrawing(makeOpts({ tool: "line", brushLevel: 3, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -288,7 +290,7 @@ describe("useCanvasDrawing", () => {
 
   it("uses the true outside endpoint for rectangle strokes instead of drawing a clamped edge", () => {
     const { result } = renderHook(() => useCanvasDrawing(makeOpts({ tool: "rect", brushLevel: 3, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -310,7 +312,7 @@ describe("useCanvasDrawing", () => {
 
   it("uses the true outside endpoint for ellipse strokes instead of clamping the radius", () => {
     const { result } = renderHook(() => useCanvasDrawing(makeOpts({ tool: "ellipse", brushLevel: 3, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -338,7 +340,7 @@ describe("useCanvasDrawing", () => {
 
     try {
       const { result } = renderHook(() => useCanvasDrawing(makeOpts({ brushLevel: 3, brushSize: 1 })));
-      const canvas = result.current.curRef.current!;
+      const canvas = result.current.cursorCanvasRef.current!;
       mockCanvasRect(canvas);
 
       act(() => {
@@ -373,7 +375,7 @@ describe("useCanvasDrawing", () => {
     canvasData.levelData[55] = 5;
     const setBrushLevel = vi.fn();
     const { result } = renderHook(() => useCanvasDrawing(makeOpts({ canvasData, setBrushLevel })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -388,7 +390,7 @@ describe("useCanvasDrawing", () => {
   it("arms a background drag and starts a brush stroke only after entering the canvas", () => {
     mockZoomRef.current = 0.5;
     const { result } = renderHook(() => useCanvasDrawing(makeOpts({ brushLevel: 3, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -411,7 +413,7 @@ describe("useCanvasDrawing", () => {
   it("tracks the custom cursor over checkerboard background without starting a stroke", () => {
     mockZoomRef.current = 0.5;
     const { result } = renderHook(() => useCanvasDrawing(makeOpts({ brushLevel: 3, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -425,7 +427,7 @@ describe("useCanvasDrawing", () => {
 
   it("clears the custom cursor when the pointer leaves the workspace", () => {
     const { result } = renderHook(() => useCanvasDrawing(makeOpts({ brushLevel: 3, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -440,7 +442,7 @@ describe("useCanvasDrawing", () => {
   it("does not arm fill from the checkerboard background", () => {
     mockZoomRef.current = 0.5;
     const { result } = renderHook(() => useCanvasDrawing(makeOpts({ tool: "fill", brushLevel: 3, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -457,7 +459,7 @@ describe("useCanvasDrawing", () => {
   it("uses the canvas entry point as the start of a background-armed line stroke", () => {
     mockZoomRef.current = 0.5;
     const { result } = renderHook(() => useCanvasDrawing(makeOpts({ tool: "line", brushLevel: 3, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {

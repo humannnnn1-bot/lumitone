@@ -13,7 +13,7 @@ export interface AnalysisPixelMaps {
   gradientAngle: Float32Array;
   gradientMagnitude: Float32Array;
   regionId: Int32Array;
-  isEdge: Uint8Array;
+  edgeMask: Uint8Array;
   levelTone: Float32Array;
   localDiversity: Float32Array;
   width: number;
@@ -22,8 +22,8 @@ export interface AnalysisPixelMaps {
 
 export interface Diff {
   indices: Uint32Array;
-  oldValues: Uint8Array;
-  newValues: Uint8Array;
+  oldLevelValues: Uint8Array;
+  newLevelValues: Uint8Array;
   /** Optional pixel candidate override diff (same indices array). Undefined for Canvas-tab-only strokes. */
   oldPixelCandidateOverrideValues?: Uint8Array;
   newPixelCandidateOverrideValues?: Uint8Array;
@@ -31,9 +31,9 @@ export interface Diff {
 
 export interface CompressedDiff {
   /** RLE-encoded index runs: [start0, len0, start1, len1, ...] */
-  runs: Uint32Array;
-  oldValues: Uint8Array;
-  newValues: Uint8Array;
+  indexRuns: Uint32Array;
+  oldLevelValues: Uint8Array;
+  newLevelValues: Uint8Array;
   oldPixelCandidateOverrideValues?: Uint8Array;
   newPixelCandidateOverrideValues?: Uint8Array;
 }
@@ -86,10 +86,10 @@ export interface StrokeState {
   params: StrokeParams;
   shapeStart: Point;
   prevShapeBBox: DirtyRect | null;
-  fillChanged: Uint32Array | null;
+  fillChangedIndices: Uint32Array | null;
 }
 
-export interface ImgCache {
+export interface ImageRenderCache {
   sourceImageData: ImageData | null;
   previewImageData: ImageData | null;
   /** Cached Uint32Array views of source/preview data buffers. Recreated when ImageData changes. */
@@ -110,8 +110,8 @@ export interface ViewState {
   zoom: number;
   setZoom: React.Dispatch<React.SetStateAction<number>>;
   setPan: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
-  displayW: number;
-  displayH: number;
+  displayWidth: number;
+  displayHeight: number;
   canvasTransform: React.CSSProperties;
   canvasCursor: string;
 }
@@ -119,7 +119,7 @@ export interface ViewState {
 export interface PanZoomHandlers {
   setZoom: React.Dispatch<React.SetStateAction<number>>;
   setPan: React.Dispatch<React.SetStateAction<{ x: number; y: number }>>;
-  schedCursorRef: React.MutableRefObject<(() => void) | null>;
+  scheduleCursorRedrawRef: React.MutableRefObject<(() => void) | null>;
   spaceRef: React.MutableRefObject<boolean>;
   panningRef: React.MutableRefObject<boolean>;
   startPan: (e: React.PointerEvent) => void;
@@ -129,12 +129,12 @@ export interface PanZoomHandlers {
 }
 
 export interface DrawingHandlers {
-  onDownPrv: (e: React.PointerEvent) => void;
-  onMovePrv: (e: React.PointerEvent) => void;
+  onPreviewPointerDown: (e: React.PointerEvent) => void;
+  onPreviewPointerMove: (e: React.PointerEvent) => void;
   onUp: () => void;
-  onPointerLeavePrv: (e: React.PointerEvent) => void;
-  trackCursorPrv: (e: React.PointerEvent) => void;
-  clearCursorPrv: () => void;
+  onPreviewPointerLeave: (e: React.PointerEvent) => void;
+  trackPreviewCursor: (e: React.PointerEvent) => void;
+  clearPreviewCursor: () => void;
 }
 
 export interface SaveActions {

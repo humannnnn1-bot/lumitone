@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { renderCanvasBuffers } from "../drawing/render-buf";
 import { openBlobUrlInNewTab } from "../utils";
-import type { CanvasData, ImgCache } from "../types";
+import type { CanvasData, ImageRenderCache } from "../types";
 
 interface ExportResult {
   saveColor: (ref: React.RefObject<HTMLCanvasElement | null>, name: string) => void;
@@ -84,7 +84,7 @@ function renderToTempCanvas(canvasData: CanvasData, colorLUT: [number, number, n
   const c = document.createElement("canvas");
   c.width = canvasData.width;
   c.height = canvasData.height;
-  const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+  const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
   renderCanvasBuffers(
     canvasData.levelData,
     canvasData.width,

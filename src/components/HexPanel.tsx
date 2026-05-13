@@ -13,10 +13,10 @@ import { formatHexPixelStatus } from "../utils/pixel-status";
 import { getFullStatusText, getVisibleStatusText, type StatusText, useCompactStatus } from "../utils/status-display";
 
 interface HexPanelProps {
-  hexPrvRef: React.RefObject<HTMLCanvasElement | null>;
+  hexPreviewCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   canvasData: CanvasData;
-  displayW: number;
-  displayH: number;
+  displayWidth: number;
+  displayHeight: number;
   candidateIndexByLevel: readonly number[];
   candidateIndexDispatch: React.Dispatch<ColorAction>;
   levelHistogram: number[];
@@ -44,10 +44,10 @@ const S_UNLOCK_ALL_BUTTON: React.CSSProperties = {
 
 export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
   const {
-    hexPrvRef,
+    hexPreviewCanvasRef,
     canvasData,
-    displayW,
-    displayH,
+    displayWidth,
+    displayHeight,
     candidateIndexByLevel,
     candidateIndexDispatch,
     levelHistogram,
@@ -113,25 +113,25 @@ export const HexPanel = React.memo(function HexPanel(props: HexPanelProps) {
   return (
     <div style={S_FLEX_COL_CENTER}>
       <div style={S_PANEL_SUBTITLE}>{t("label_diagram")}</div>
-      <div className={getPanelLayoutClassName(displayW, displayH)}>
-        <div className={getCanvasPanelClassName(displayW, displayH)} style={getCanvasPanelStyle(displayW, displayH)}>
+      <div className={getPanelLayoutClassName(displayWidth, displayHeight)}>
+        <div className={getCanvasPanelClassName(displayWidth, displayHeight)} style={getCanvasPanelStyle(displayWidth, displayHeight)}>
           <div
             style={{
               border: `1px solid ${C.border}`,
               borderRadius: R.lg,
               overflow: "hidden",
               position: "relative",
-              width: displayW,
-              height: displayH,
+              width: displayWidth,
+              height: displayHeight,
             }}
           >
             <canvas
-              ref={hexPrvRef}
+              ref={hexPreviewCanvasRef}
               role="img"
               aria-label={t("label_diagram")}
               onPointerMove={handleCanvasPointerMove}
               onPointerLeave={handleCanvasPointerLeave}
-              style={{ width: displayW, height: displayH, display: "block", imageRendering: "pixelated" }}
+              style={{ width: displayWidth, height: displayHeight, display: "block", imageRendering: "pixelated" }}
             />
           </div>
           <div

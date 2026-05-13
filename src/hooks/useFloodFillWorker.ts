@@ -17,13 +17,13 @@ const SYNC_THRESHOLD = 10_000;
 
 interface CanvasFillResult {
   levelData: Uint8Array;
-  changed: Uint32Array;
+  changedIndices: Uint32Array;
   truncated: boolean;
 }
 
 interface GlazeFillResult {
   pixelCandidateOverrideMap: Uint8Array;
-  changed: Uint32Array;
+  changedIndices: Uint32Array;
   truncated: boolean;
 }
 
@@ -41,7 +41,7 @@ interface FloodFillWorkerHandle {
     pixelCandidateOverrideMap: Uint8Array,
     seedX: number,
     seedY: number,
-    targetColorOverrideValue: number,
+    targetPixelCandidateOverrideValue: number,
     width: number,
     height: number,
   ): Promise<GlazeFillResult>;
@@ -96,12 +96,18 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
       const worker = pixels < SYNC_THRESHOLD ? null : getWorker();
       if (!worker) {
         const result = floodFill(workingData, seedX, seedY, targetLevel, width, height);
-        const changed = result ? result.changed : new Uint32Array(0);
+        const changedIndices = result ? result.changedIndices : new Uint32Array(0);
         const truncated = result ? result.truncated : false;
-        recordDebugPerf("flood-fill:canvas:sync", perfStart, { w: width, h: height, pixels, changed: changed.length, truncated });
+        recordDebugPerf("flood-fill:canvas:sync", perfStart, {
+          w: width,
+          h: height,
+          pixels,
+          changedIndices: changedIndices.length,
+          truncated,
+        });
         return Promise.resolve({
           levelData: workingData,
-          changed,
+          changedIndices,
           truncated,
         });
       }
@@ -139,12 +145,12 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
             w: width,
             h: height,
             pixels,
-            changed: e.data.changed.length,
+            changedIndices: e.data.changedIndices.length,
             truncated: e.data.truncated,
           });
           resolve({
             levelData: e.data.levelData,
-            changed: e.data.changed,
+            changedIndices: e.data.changedIndices,
             truncated: e.data.truncated,
           });
         };
@@ -163,7 +169,7 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
       pixelCandidateOverrideMap: Uint8Array,
       seedX: number,
       seedY: number,
-      targetColorOverrideValue: number,
+      targetPixelCandidateOverrideValue: number,
       width: number,
       height: number,
     ): Promise<GlazeFillResult> => {
@@ -172,13 +178,19 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
       // Use sync fallback for small canvases or when Worker unavailable
       const worker = pixels < SYNC_THRESHOLD ? null : getWorker();
       if (!worker) {
-        const result = glazeFloodFill(levelData, pixelCandidateOverrideMap, seedX, seedY, targetColorOverrideValue, width, height);
-        const changed = result ? result.changed : new Uint32Array(0);
+        const result = glazeFloodFill(levelData, pixelCandidateOverrideMap, seedX, seedY, targetPixelCandidateOverrideValue, width, height);
+        const changedIndices = result ? result.changedIndices : new Uint32Array(0);
         const truncated = result ? result.truncated : false;
-        recordDebugPerf("flood-fill:glaze:sync", perfStart, { w: width, h: height, pixels, changed: changed.length, truncated });
+        recordDebugPerf("flood-fill:glaze:sync", perfStart, {
+          w: width,
+          h: height,
+          pixels,
+          changedIndices: changedIndices.length,
+          truncated,
+        });
         return Promise.resolve({
           pixelCandidateOverrideMap,
-          changed,
+          changedIndices,
           truncated,
         });
       }
@@ -192,11 +204,10 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
         levelData: dataCopy,
         seedX,
         seedY,
-        targetLevel: 0,
         width,
         height,
         pixelCandidateOverrideMap: overrideMapCopy,
-        targetColorOverrideValue,
+        targetPixelCandidateOverrideValue,
       };
 
       return new Promise<GlazeFillResult>((resolve, reject) => {
@@ -228,12 +239,12 @@ export function useFloodFillWorker(): FloodFillWorkerHandle {
             w: width,
             h: height,
             pixels,
-            changed: e.data.changed.length,
+            changedIndices: e.data.changedIndices.length,
             truncated: e.data.truncated,
           });
           resolve({
             pixelCandidateOverrideMap: e.data.pixelCandidateOverrideMap!,
-            changed: e.data.changed,
+            changedIndices: e.data.changedIndices,
             truncated: e.data.truncated,
           });
         };

@@ -83,19 +83,22 @@ export function clampHueFromBottomGraphY(y: number): number {
   return Math.max(0, Math.min(360, ((y - BY - 8) / (BH - 16)) * 360));
 }
 
-export function buildLinkedVisualizationDots(hueAngle: number, candidateOverridesByLevel?: Map<number, number>): LinkedVisualizationDot[] {
+export function buildLinkedVisualizationDots(
+  hueAngleDeg: number,
+  candidateOverridesByLevel?: Map<number, number>,
+): LinkedVisualizationDot[] {
   const result: LinkedVisualizationDot[] = [];
   for (let levelIndex = 0; levelIndex < LEVEL_CANDIDATES.length; levelIndex++) {
     for (let candidateIndex = 0; candidateIndex < LEVEL_CANDIDATES[levelIndex].length; candidateIndex++) {
       const candidate = LEVEL_CANDIDATES[levelIndex][candidateIndex];
-      if (candidate.angle < 0) continue;
+      if (candidate.hueAngleDeg < 0) continue;
       const activeCandidateIndex = candidateOverridesByLevel?.has(levelIndex)
         ? candidateOverridesByLevel.get(levelIndex)!
-        : findClosestCandidate(levelIndex, hueAngle);
+        : findClosestCandidate(levelIndex, hueAngleDeg);
       result.push({
         levelIndex,
         candidateIndex,
-        angleDeg: candidate.angle,
+        angleDeg: candidate.hueAngleDeg,
         rgb: candidate.rgb,
         isActive: activeCandidateIndex === candidateIndex,
       });

@@ -7,7 +7,7 @@
 import { LEVEL_MASK } from "../constants";
 
 interface FloodFillResult {
-  changed: Uint32Array;
+  changedIndices: Uint32Array;
   truncated: boolean;
 }
 
@@ -35,22 +35,22 @@ function scanlineFill(
   let stack = new Int32Array(initStackSize);
   let sp = 0;
   const initChangedSize = Math.min(Math.max(256, Math.sqrt(maxPixels) | 0), maxPixels);
-  let changed = new Uint32Array(initChangedSize);
+  let changedIndices = new Uint32Array(initChangedSize);
   let ci = 0;
   let truncated = false;
 
   const pushChanged = (idx: number) => {
-    if (ci >= changed.length) {
-      const newLen = Math.min(changed.length * 2, maxPixels);
-      if (newLen <= changed.length) {
+    if (ci >= changedIndices.length) {
+      const newLen = Math.min(changedIndices.length * 2, maxPixels);
+      if (newLen <= changedIndices.length) {
         truncated = true;
         return;
       }
       const nc = new Uint32Array(newLen);
-      nc.set(changed);
-      changed = nc;
+      nc.set(changedIndices);
+      changedIndices = nc;
     }
-    changed[ci++] = idx;
+    changedIndices[ci++] = idx;
   };
 
   const push = (y: number, xl: number, xr: number, dy: number) => {
@@ -129,7 +129,7 @@ function scanlineFill(
       }
     }
   }
-  return { changed: changed.subarray(0, ci), truncated };
+  return { changedIndices: changedIndices.subarray(0, ci), truncated };
 }
 
 export function floodFill(
@@ -164,7 +164,7 @@ export function glazeFloodFill(
   pixelCandidateOverrideMap: Uint8Array,
   sx: number,
   sy: number,
-  targetColorOverrideValue: number,
+  targetPixelCandidateOverrideValue: number,
   w: number,
   h: number,
 ): FloodFillResult | null {
@@ -186,8 +186,8 @@ export function glazeFloodFill(
     (idx) => !visited[idx] && (levelData[idx] & LEVEL_MASK) === seedLevel,
     (idx) => {
       visited[idx] = 1;
-      if (pixelCandidateOverrideMap[idx] === targetColorOverrideValue) return false;
-      pixelCandidateOverrideMap[idx] = targetColorOverrideValue;
+      if (pixelCandidateOverrideMap[idx] === targetPixelCandidateOverrideValue) return false;
+      pixelCandidateOverrideMap[idx] = targetPixelCandidateOverrideValue;
       return true;
     },
   );

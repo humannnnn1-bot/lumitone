@@ -6,13 +6,13 @@ import {
   HEX_VERTICES,
   HEX_EDGES,
   HEX_EDGE_COLORS,
-  HEX_VERTEX_ALTS,
-  HEX_EDGE_ALTS,
+  HEX_VERTEX_CANDIDATE_INDICES,
+  HEX_EDGE_CANDIDATE_INDICES,
   HEX_DOTS,
   HEX_CX,
   HEX_CY,
   HEX_R,
-  HEX_VP,
+  HEX_VERTEX_POSITIONS,
 } from "../data/hex-data";
 import type { ColorAction } from "../state/color-reducer";
 import { useTranslation } from "../i18n";
@@ -58,7 +58,7 @@ export const HexDiagram = memo(
       clearTimeout(diceTimer.current);
       diceTimer.current = setTimeout(() => setDiceRolling(false), DICE_ROLL_MS);
     }, [onRandomize]);
-    const vp = HEX_VP;
+    const vp = HEX_VERTEX_POSITIONS;
     const sel = (levelIndex: number, ai: number) => dispatch({ type: "set_color", levelIndex, candidateIndex: ai });
     const isA = (levelIndex: number, ai: number) => candidateIndexByLevel[levelIndex] % LEVEL_CANDIDATES[levelIndex].length === ai;
 
@@ -80,17 +80,17 @@ export const HexDiagram = memo(
       return Math.min(mx, Math.max(mn, base * (0.5 + r * 10)));
     };
     const { cp } = useMemo(() => {
-      const points = HEX_DOTS.filter((d) => isA(d.lv, d.alt))
+      const points = HEX_DOTS.filter((d) => isA(d.level, d.candidateIndex))
         .map((d) => {
           let pos: { x: number; y: number };
-          if (d.vi >= 0) pos = vp[d.vi];
+          if (d.vertexIndex >= 0) pos = vp[d.vertexIndex];
           else {
-            const e = HEX_EDGES[d.ei],
-              p0 = vp[e.f],
-              p1 = vp[e.t % NUM_VERTICES];
-            const ts = Math.abs(HEX_VERTICES[e.f].lv - HEX_VERTICES[e.t % NUM_VERTICES].lv);
-            if (ts === 0) return null;
-            const frac = (d.si + 1) / ts;
+            const e = HEX_EDGES[d.edgeIndex],
+              p0 = vp[e.fromVertexIndex],
+              p1 = vp[e.toVertexIndex % NUM_VERTICES];
+            const levelSpan = Math.abs(HEX_VERTICES[e.fromVertexIndex].level - HEX_VERTICES[e.toVertexIndex % NUM_VERTICES].level);
+            if (levelSpan === 0) return null;
+            const frac = (d.segmentIndex + 1) / levelSpan;
             pos = { x: p0.x + (p1.x - p0.x) * frac, y: p0.y + (p1.y - p0.y) * frac };
           }
           return { ...pos, ang: Math.atan2(pos.y - HEX_CY, pos.x - HEX_CX) };
@@ -176,16 +176,16 @@ export const HexDiagram = memo(
               const allCircles: CircleItem[] = [];
               // Edge circles
               HEX_EDGES.forEach((e, ei) => {
-                const p0 = vp[e.f],
-                  p1 = vp[e.t % NUM_VERTICES];
-                const ts = Math.abs(HEX_VERTICES[e.f].lv - HEX_VERTICES[e.t % NUM_VERTICES].lv);
-                if (ts === 0) return;
-                e.lv.forEach((lv, li) => {
-                  const frac = (li + 1) / ts;
+                const p0 = vp[e.fromVertexIndex],
+                  p1 = vp[e.toVertexIndex % NUM_VERTICES];
+                const levelSpan = Math.abs(HEX_VERTICES[e.fromVertexIndex].level - HEX_VERTICES[e.toVertexIndex % NUM_VERTICES].level);
+                if (levelSpan === 0) return;
+                e.levels.forEach((lv, li) => {
+                  const frac = (li + 1) / levelSpan;
                   const x = p0.x + (p1.x - p0.x) * frac,
                     y = p0.y + (p1.y - p0.y) * frac;
                   const dc = HEX_EDGE_COLORS[ei][li].hex,
-                    ai = HEX_EDGE_ALTS[ei][li];
+                    ai = HEX_EDGE_CANDIDATE_INDICES[ei][li];
                   const act = isA(lv, ai),
                     r = dR(lv, false, act);
                   allCircles.push({ key: "m" + ei + li, levelIndex: lv, ai, x, y, r, color: dc, vertex: false });
@@ -194,10 +194,10 @@ export const HexDiagram = memo(
               // Vertex circles
               HEX_VERTICES.forEach((v, i) => {
                 const p = vp[i],
-                  ai = HEX_VERTEX_ALTS[i];
-                const act = isA(v.lv, ai),
-                  r = dR(v.lv, true, act);
-                allCircles.push({ key: "v" + i, levelIndex: v.lv, ai, x: p.x, y: p.y, r, color: v.rgb, vertex: true, vertexIdx: i });
+                  ai = HEX_VERTEX_CANDIDATE_INDICES[i];
+                const act = isA(v.level, ai),
+                  r = dR(v.level, true, act);
+                allCircles.push({ key: "v" + i, levelIndex: v.level, ai, x: p.x, y: p.y, r, color: v.rgb, vertex: true, vertexIdx: i });
               });
               // Sort: inactive first (large behind), then active on top
               allCircles.sort((a, b) => {
@@ -212,7 +212,7 @@ export const HexDiagram = memo(
                   hov = hl === lv;
                 if (vertex && vertexIdx !== undefined) {
                   const v = HEX_VERTICES[vertexIdx];
-                  const la = (v.a * Math.PI) / 180,
+                  const la = (v.angleDeg * Math.PI) / 180,
                     lx = HEX_CX + (HEX_R + 28) * Math.cos(la),
                     ly = HEX_CY + (HEX_R + 28) * Math.sin(la);
                   return (
@@ -264,7 +264,7 @@ export const HexDiagram = memo(
                       }
                       role="button"
                       aria-pressed={act}
-                      aria-label={t("hex_vertex_label", v.c, lv)}
+                      aria-label={t("hex_vertex_label", v.label, lv)}
                     >
                       {r < 24 && <circle cx={x} cy={y} r={24} fill="transparent" />}
                       {focusedLv === lv && <circle cx={x} cy={y} r={r + 8} fill="none" stroke={C.accent} strokeWidth={2} />}
@@ -313,7 +313,7 @@ export const HexDiagram = memo(
                         fill={color}
                         opacity={O.strong}
                       >
-                        {v.c}
+                        {v.label}
                       </text>
                       {lockedLevels[lv] && <circle cx={x} cy={y} r={r + 5} fill="none" stroke={C.warning} strokeWidth={2.5} />}
                     </g>

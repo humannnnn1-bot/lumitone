@@ -34,7 +34,7 @@ function emptyPixelMaps(width: number, height: number): AnalysisPixelMaps {
     gradientAngle: new Float32Array(n),
     gradientMagnitude: new Float32Array(n),
     regionId: new Int32Array(n),
-    isEdge: new Uint8Array(n),
+    edgeMask: new Uint8Array(n),
     levelTone: new Float32Array(n),
     localDiversity: new Float32Array(n),
     width,
@@ -63,13 +63,13 @@ function computePixelMapsSync(canvasData: CanvasData, mode: MapMode): AnalysisPi
       computeLocalDiversity(levelData, width, height, maps.localDiversity, canvasData.pixelCandidateOverrideMap);
       break;
     case "boundaryDistance":
-      computeBoundaryDistance(levelData, width, height, maps.isEdge, maps.boundaryDistance, canvasData.pixelCandidateOverrideMap);
+      computeBoundaryDistance(levelData, width, height, maps.edgeMask, maps.boundaryDistance, canvasData.pixelCandidateOverrideMap);
       break;
     case "gradient":
       computeGradient(levelData, width, height, maps.levelTone, maps.gradientAngle, maps.gradientMagnitude);
       break;
     case "region":
-      computeRegion(levelData, width, height, maps.regionId, maps.isEdge, canvasData.pixelCandidateOverrideMap);
+      computeRegion(levelData, width, height, maps.regionId, maps.edgeMask, canvasData.pixelCandidateOverrideMap);
       break;
     case "levelTone":
       for (let i = 0; i < n; i++) maps.levelTone[i] = (levelData[i] & LEVEL_MASK) / 7;
@@ -87,7 +87,7 @@ function toPixelMaps(result: PixelAnalysisWorkerResponse): AnalysisPixelMaps {
     gradientAngle: result.gradientAngle,
     gradientMagnitude: result.gradientMagnitude,
     regionId: result.regionId,
-    isEdge: result.isEdge,
+    edgeMask: result.edgeMask,
     levelTone: result.levelTone,
     localDiversity: result.localDiversity,
     width: result.width,

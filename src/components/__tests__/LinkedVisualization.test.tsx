@@ -13,7 +13,7 @@ vi.mock("../../i18n", () => ({
 
 describe("LinkedVisualization split", () => {
   it("renders the shared color legend by default", () => {
-    render(<LinkedVisualization hueAngle={0} brushLevel={0} />);
+    render(<LinkedVisualization hueAngleDeg={0} brushLevel={0} />);
 
     expect(screen.getByText("linkedviz_mode_l0")).toBeTruthy();
     expect(screen.getByText("linkedviz_legend_l0_origin")).toBeTruthy();
@@ -21,7 +21,7 @@ describe("LinkedVisualization split", () => {
   });
 
   it("keeps color legend label size stable on hover", () => {
-    const { container } = render(<LinkedVisualization hueAngle={0} brushLevel={0} />);
+    const { container } = render(<LinkedVisualization hueAngleDeg={0} brushLevel={0} />);
     const label = Array.from(container.querySelectorAll("text")).find((el) => el.textContent?.trim().startsWith("L2"));
 
     expect(label?.getAttribute("font-size")).toBe("10");
@@ -33,7 +33,7 @@ describe("LinkedVisualization split", () => {
   });
 
   it("renders interval ratios only through the music wrapper", () => {
-    render(<MusicLinkedVisualization hueAngle={0} brushLevel={0} scaleMode="diatonic7" />);
+    render(<MusicLinkedVisualization hueAngleDeg={0} brushLevel={0} scaleMode="diatonic7" />);
 
     expect(screen.getByText("linkedviz_mode_l0")).toBeTruthy();
     expect(screen.getByText("Diatonic (7-note)")).toBeTruthy();
@@ -46,7 +46,7 @@ describe("LinkedVisualization split", () => {
 
     render(
       <LinkedVisualization
-        hueAngle={0}
+        hueAngleDeg={0}
         brushLevel={0}
         alpha0={30}
         alpha7={90}
@@ -65,8 +65,8 @@ describe("LinkedVisualization split", () => {
   });
 
   it("updates hue from the right and bottom projection drag handles", () => {
-    const onHueAngleChange = vi.fn();
-    const { container } = render(<LinkedVisualization hueAngle={0} brushLevel={0} onHueAngleChange={onHueAngleChange} />);
+    const onHueAngleDegChange = vi.fn();
+    const { container } = render(<LinkedVisualization hueAngleDeg={0} brushLevel={0} onHueAngleDegChange={onHueAngleDegChange} />);
     const svg = container.querySelector("svg") as SVGSVGElement;
     const handles = Array.from(svg.querySelectorAll("rect")).filter((rect) => rect.getAttribute("style")?.includes("resize"));
     const rightHandle = handles.find((rect) => rect.getAttribute("style")?.includes("ew-resize"));
@@ -93,15 +93,15 @@ describe("LinkedVisualization split", () => {
     fireEvent.pointerUp(svg, { pointerId: 1 });
     fireEvent.pointerDown(bottomHandle!, { clientX: 90, clientY: bottomProjectionY(120), pointerId: 2 });
 
-    expect(onHueAngleChange).toHaveBeenNthCalledWith(1, 180);
-    expect(onHueAngleChange).toHaveBeenNthCalledWith(2, 240);
-    expect(onHueAngleChange).toHaveBeenNthCalledWith(3, 120);
+    expect(onHueAngleDegChange).toHaveBeenNthCalledWith(1, 180);
+    expect(onHueAngleDegChange).toHaveBeenNthCalledWith(2, 240);
+    expect(onHueAngleDegChange).toHaveBeenNthCalledWith(3, 120);
   });
 
   it("passes active dots and alpha into the custom bottom-right overlay", () => {
     const renderOverlay = vi.fn(({ activeDots, activeAlpha }) => <text>{`overlay ${activeDots.length} ${activeAlpha}`}</text>);
 
-    render(<LinkedVisualization hueAngle={0} brushLevel={0} alpha0={45} showLegend={false} bottomRightOverlay={renderOverlay} />);
+    render(<LinkedVisualization hueAngleDeg={0} brushLevel={0} alpha0={45} showLegend={false} bottomRightOverlay={renderOverlay} />);
 
     expect(screen.getByText("overlay 6 45")).toBeTruthy();
     expect(renderOverlay).toHaveBeenCalledWith(

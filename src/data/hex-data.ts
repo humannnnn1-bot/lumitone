@@ -8,35 +8,35 @@ import { NUM_VERTICES } from "../constants";
 export const HEX_ANGLES: readonly number[] = [0, 60, 120, 180, 240, 300];
 
 interface HexVertex {
-  readonly c: string;
-  readonly lv: number;
+  readonly label: string;
+  readonly level: number;
   readonly rgb: string;
-  readonly a: number;
+  readonly angleDeg: number;
 }
 
 export const HEX_VERTICES = [
-  { c: "R", lv: 2, rgb: "#ff0000", a: -90 },
-  { c: "Y", lv: 6, rgb: "#ffff00", a: -30 },
-  { c: "G", lv: 4, rgb: "#00ff00", a: 30 },
-  { c: "C", lv: 5, rgb: "#00ffff", a: 90 },
-  { c: "B", lv: 1, rgb: "#0000ff", a: 150 },
-  { c: "M", lv: 3, rgb: "#ff00ff", a: 210 },
+  { label: "R", level: 2, rgb: "#ff0000", angleDeg: -90 },
+  { label: "Y", level: 6, rgb: "#ffff00", angleDeg: -30 },
+  { label: "G", level: 4, rgb: "#00ff00", angleDeg: 30 },
+  { label: "C", level: 5, rgb: "#00ffff", angleDeg: 90 },
+  { label: "B", level: 1, rgb: "#0000ff", angleDeg: 150 },
+  { label: "M", level: 3, rgb: "#ff00ff", angleDeg: 210 },
 ] as const satisfies readonly HexVertex[];
 
 interface HexEdge {
-  readonly f: number;
-  readonly t: number;
-  readonly lv: readonly number[];
+  readonly fromVertexIndex: number;
+  readonly toVertexIndex: number;
+  readonly levels: readonly number[];
 }
 
 /* t:6 is equivalent to t:0 (wraps via % NUM_VERTICES) — represents the edge from vertex 5 to vertex 0 */
 export const HEX_EDGES = [
-  { f: 0, t: 1, lv: [3, 4, 5] },
-  { f: 1, t: 2, lv: [5] },
-  { f: 2, t: 3, lv: [] },
-  { f: 3, t: 4, lv: [4, 3, 2] },
-  { f: 4, t: 5, lv: [2] },
-  { f: 5, t: 6, lv: [] },
+  { fromVertexIndex: 0, toVertexIndex: 1, levels: [3, 4, 5] },
+  { fromVertexIndex: 1, toVertexIndex: 2, levels: [5] },
+  { fromVertexIndex: 2, toVertexIndex: 3, levels: [] },
+  { fromVertexIndex: 3, toVertexIndex: 4, levels: [4, 3, 2] },
+  { fromVertexIndex: 4, toVertexIndex: 5, levels: [2] },
+  { fromVertexIndex: 5, toVertexIndex: 6, levels: [] },
 ] as const satisfies readonly HexEdge[];
 
 interface EdgeColor {
@@ -45,56 +45,68 @@ interface EdgeColor {
 }
 
 export const HEX_EDGE_COLORS: readonly (readonly EdgeColor[])[] = HEX_EDGES.map((e) => {
-  const hs = HEX_ANGLES[e.f],
-    he = e.t >= NUM_VERTICES ? 360 : HEX_ANGLES[e.t];
-  const ts = Math.abs(HEX_VERTICES[e.f].lv - HEX_VERTICES[e.t % NUM_VERTICES].lv);
-  if (ts === 0)
-    return e.lv.map(() => {
-      const c = hue2rgb(hs);
-      return { hex: "#" + c.map((v) => v.toString(16).padStart(2, "0")).join(""), hue: hs };
+  const startHueDeg = HEX_ANGLES[e.fromVertexIndex],
+    endHueDeg = e.toVertexIndex >= NUM_VERTICES ? 360 : HEX_ANGLES[e.toVertexIndex];
+  const levelSpan = Math.abs(HEX_VERTICES[e.fromVertexIndex].level - HEX_VERTICES[e.toVertexIndex % NUM_VERTICES].level);
+  if (levelSpan === 0)
+    return e.levels.map(() => {
+      const c = hue2rgb(startHueDeg);
+      return { hex: "#" + c.map((v) => v.toString(16).padStart(2, "0")).join(""), hue: startHueDeg };
     });
-  return e.lv.map((_, i) => {
-    const t = (i + 1) / ts,
-      h = hs + (he - hs) * t,
+  return e.levels.map((_, i) => {
+    const t = (i + 1) / levelSpan,
+      h = startHueDeg + (endHueDeg - startHueDeg) * t,
       c = hue2rgb(h);
     return { hex: "#" + c.map((v) => v.toString(16).padStart(2, "0")).join(""), hue: h };
   });
 });
 
-function calcAlt(lv: number, hue: number): number {
-  const a = LEVEL_CANDIDATES[lv];
-  if (!a || a.length <= 1) return 0;
+function calcCandidateIndex(level: number, hue: number): number {
+  const candidates = LEVEL_CANDIDATES[level];
+  if (!candidates || candidates.length <= 1) return 0;
   let best = 0,
     bestDist = Infinity;
-  a.forEach((x, j) => {
-    if (x.angle < 0) return;
-    let d = Math.abs(x.angle - hue);
-    if (d > 180) d = 360 - d;
-    if (d < bestDist) {
-      bestDist = d;
-      best = j;
+  candidates.forEach((candidate, candidateIndex) => {
+    if (candidate.hueAngleDeg < 0) return;
+    let distanceDeg = Math.abs(candidate.hueAngleDeg - hue);
+    if (distanceDeg > 180) distanceDeg = 360 - distanceDeg;
+    if (distanceDeg < bestDist) {
+      bestDist = distanceDeg;
+      best = candidateIndex;
     }
   });
   return best;
 }
 
-export const HEX_VERTEX_ALTS: readonly number[] = HEX_VERTICES.map((v, i) => calcAlt(v.lv, HEX_ANGLES[i]));
-export const HEX_EDGE_ALTS: readonly (readonly number[])[] = HEX_EDGES.map((e, ei) =>
-  e.lv.map((lv, li) => calcAlt(lv, HEX_EDGE_COLORS[ei][li].hue)),
+export const HEX_VERTEX_CANDIDATE_INDICES: readonly number[] = HEX_VERTICES.map((v, i) => calcCandidateIndex(v.level, HEX_ANGLES[i]));
+export const HEX_EDGE_CANDIDATE_INDICES: readonly (readonly number[])[] = HEX_EDGES.map((e, ei) =>
+  e.levels.map((level, levelIndex) => calcCandidateIndex(level, HEX_EDGE_COLORS[ei][levelIndex].hue)),
 );
 
 interface HexDot {
-  readonly lv: number;
-  readonly alt: number;
-  readonly vi: number;
-  readonly ei: number;
-  readonly si: number;
+  readonly level: number;
+  readonly candidateIndex: number;
+  readonly vertexIndex: number;
+  readonly edgeIndex: number;
+  readonly segmentIndex: number;
 }
 
 function buildHexDots(): readonly HexDot[] {
   const dots: HexDot[] = [];
-  HEX_VERTICES.forEach((v, i) => dots.push({ lv: v.lv, alt: HEX_VERTEX_ALTS[i], vi: i, ei: -1, si: -1 }));
-  HEX_EDGES.forEach((e, ei) => e.lv.forEach((lv, li) => dots.push({ lv, alt: HEX_EDGE_ALTS[ei][li], vi: -1, ei, si: li })));
+  HEX_VERTICES.forEach((v, i) =>
+    dots.push({ level: v.level, candidateIndex: HEX_VERTEX_CANDIDATE_INDICES[i], vertexIndex: i, edgeIndex: -1, segmentIndex: -1 }),
+  );
+  HEX_EDGES.forEach((e, edgeIndex) =>
+    e.levels.forEach((level, segmentIndex) =>
+      dots.push({
+        level,
+        candidateIndex: HEX_EDGE_CANDIDATE_INDICES[edgeIndex][segmentIndex],
+        vertexIndex: -1,
+        edgeIndex,
+        segmentIndex,
+      }),
+    ),
+  );
   return dots;
 }
 
@@ -104,11 +116,11 @@ export const HEX_DOTS = buildHexDots();
 function buildHexCandidateAngles(): readonly (readonly (number | null)[])[] {
   const angles: (number | null)[][] = LEVEL_CANDIDATES.map((alts) => alts.map(() => null));
   HEX_VERTICES.forEach((v, i) => {
-    angles[v.lv][HEX_VERTEX_ALTS[i]] = HEX_ANGLES[i];
+    angles[v.level][HEX_VERTEX_CANDIDATE_INDICES[i]] = HEX_ANGLES[i];
   });
-  HEX_EDGES.forEach((e, ei) => {
-    e.lv.forEach((lv, li) => {
-      angles[lv][HEX_EDGE_ALTS[ei][li]] = HEX_EDGE_COLORS[ei][li].hue;
+  HEX_EDGES.forEach((e, edgeIndex) => {
+    e.levels.forEach((level, segmentIndex) => {
+      angles[level][HEX_EDGE_CANDIDATE_INDICES[edgeIndex][segmentIndex]] = HEX_EDGE_COLORS[edgeIndex][segmentIndex].hue;
     });
   });
   return angles;
@@ -120,12 +132,12 @@ export const HEX_CX = 200,
   HEX_CY = 175,
   HEX_R = 130;
 
-interface HexVP {
+interface HexVertexPosition {
   readonly x: number;
   readonly y: number;
 }
 
-export const HEX_VP: readonly HexVP[] = HEX_VERTICES.map((v) => {
-  const a = (v.a * Math.PI) / 180;
-  return { x: HEX_CX + HEX_R * Math.cos(a), y: HEX_CY + HEX_R * Math.sin(a) };
+export const HEX_VERTEX_POSITIONS: readonly HexVertexPosition[] = HEX_VERTICES.map((v) => {
+  const angleRad = (v.angleDeg * Math.PI) / 180;
+  return { x: HEX_CX + HEX_R * Math.cos(angleRad), y: HEX_CY + HEX_R * Math.sin(angleRad) };
 });

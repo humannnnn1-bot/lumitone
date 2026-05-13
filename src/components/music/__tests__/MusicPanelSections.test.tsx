@@ -231,9 +231,9 @@ function makeAlgebraProps(overrides: AlgebraPropsOverrides = {}): AlgebraProps {
 
 function makeHueAlphaProps(overrides: Partial<HueAlphaProps> = {}): HueAlphaProps {
   return {
-    hueAngle: 90,
+    hueAngleDeg: 90,
     alpha0: 45,
-    hueTicks: [{ deg: 30, color: "rgb(255,0,0)" }],
+    hueTicks: [{ hueAngleDeg: 30, color: "rgb(255,0,0)" }],
     onHueChange: vi.fn(),
     onAlphaChange: vi.fn(),
     ...overrides,
@@ -270,7 +270,7 @@ function ErrorCorrectionHarness({ engine }: { engine: MusicEngineReturn }) {
 function makeCandidateGridProps(overrides: Partial<CandidateGridProps> = {}): CandidateGridProps {
   return {
     levelPreview: [makeLevelPreview(2)],
-    hueAngle: LEVEL_CANDIDATES[2][0].angle,
+    hueAngleDeg: LEVEL_CANDIDATES[2][0].hueAngleDeg,
     candidateOverridesByLevel: new Map([[2, 0]]),
     selectedLevels: new Set(),
     burstHighlight: new Set(),

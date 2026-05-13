@@ -42,7 +42,7 @@ describe("pixel status formatters", () => {
         lv: 3,
         candidateIndexByLevel: DEFAULT_CANDIDATE_INDEX_BY_LEVEL,
         pixelCandidateOverrideValue: 1,
-        hueAngle: 15,
+        hueAngleDeg: 15,
         candidateOverridesByLevel: new Map(),
         glazeTool: "glaze_brush",
       }),

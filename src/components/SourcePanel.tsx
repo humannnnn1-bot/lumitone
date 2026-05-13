@@ -10,9 +10,9 @@ import { ConfirmModal } from "./ConfirmModal";
 import { getCanvasPanelClassName, getCanvasPanelStyle, getPanelLayoutClassName } from "../utils/panel-layout";
 
 interface SourcePanelProps {
-  srcRef: React.RefObject<HTMLCanvasElement | null>;
-  curRef: React.RefObject<HTMLCanvasElement | null>;
-  srcWrapRef: React.RefObject<HTMLDivElement | null>;
+  sourceCanvasRef: React.RefObject<HTMLCanvasElement | null>;
+  cursorCanvasRef: React.RefObject<HTMLCanvasElement | null>;
+  sourceCanvasWrapRef: React.RefObject<HTMLDivElement | null>;
   statusRef: React.RefObject<HTMLDivElement | null>;
   toolState: ToolState;
   viewState: ViewState;
@@ -29,8 +29,8 @@ interface SourcePanelProps {
   handleClear: () => void;
   loadImg: (file: File) => Promise<void>;
   announce: (msg: string) => void;
-  schedCursor: () => void;
-  prvRef: React.RefObject<HTMLCanvasElement | null>;
+  scheduleCursorRedraw: () => void;
+  previewCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   onNewCanvas: () => void;
   panZoomMode: boolean;
   setPanZoomMode: React.Dispatch<React.SetStateAction<boolean>>;
@@ -63,9 +63,9 @@ const S_SOURCE_ACTION_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_ACTIVE, ..
 const S_SOURCE_FILE_BUTTON: React.CSSProperties = { ...S_SOURCE_ACTION_BUTTON, minWidth: 52 };
 export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelProps) {
   const {
-    srcRef,
-    curRef,
-    srcWrapRef,
+    sourceCanvasRef,
+    cursorCanvasRef,
+    sourceCanvasWrapRef,
     statusRef,
     colorLUT,
     state,
@@ -79,8 +79,8 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
     handleClear,
     loadImg,
     announce,
-    schedCursor,
-    prvRef,
+    scheduleCursorRedraw,
+    previewCanvasRef,
     onNewCanvas,
     panZoomMode,
     setPanZoomMode,
@@ -90,7 +90,7 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
     onPinchUp,
   } = props;
   const { tool, setTool, brushLevel, setBrushLevel, brushSize, setBrushSize } = props.toolState;
-  const { zoom, setZoom, setPan, displayW, displayH, canvasTransform, canvasCursor } = props.viewState;
+  const { zoom, setZoom, setPan, displayWidth, displayHeight, canvasTransform, canvasCursor } = props.viewState;
   const { saveColor, saveGlaze, shareColor, shareGlaze } = props.saveActions;
   const { t } = useTranslation();
 
@@ -108,8 +108,8 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
   const handleZoomReset = useCallback(() => {
     setZoom(1);
     setPan({ x: 0, y: 0 });
-    schedCursor();
-  }, [setZoom, setPan, schedCursor]);
+    scheduleCursorRedraw();
+  }, [setZoom, setPan, scheduleCursorRedraw]);
   const handleSizeDown = useCallback(() => setBrushSize((v) => Math.max(BRUSH_MIN, v - BRUSH_STEP)), [setBrushSize]);
   const handleSizeUp = useCallback(() => setBrushSize((v) => Math.min(BRUSH_MAX, v + BRUSH_STEP)), [setBrushSize]);
   const handleSizeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setBrushSize(+e.target.value), [setBrushSize]);
@@ -189,11 +189,11 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
   const doSave = useCallback(
     (kind: "gray" | "color" | "glaze") => {
       const ts = timestamp();
-      if (kind === "gray") saveColor(srcRef, `chromalum_gray_${ts}.png`);
-      else if (kind === "color") saveColor(prvRef, `chromalum_color_${ts}.png`);
+      if (kind === "gray") saveColor(sourceCanvasRef, `chromalum_gray_${ts}.png`);
+      else if (kind === "color") saveColor(previewCanvasRef, `chromalum_color_${ts}.png`);
       else saveGlaze(`chromalum_glaze_${ts}.png`);
     },
-    [saveColor, saveGlaze, srcRef, prvRef],
+    [saveColor, saveGlaze, sourceCanvasRef, previewCanvasRef],
   );
   const requestSave = useCallback((kind: "gray" | "color" | "glaze") => {
     setConfirmSave(kind);
@@ -221,17 +221,17 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
     (e: React.MouseEvent) => {
       if (!window.matchMedia("(pointer: fine)").matches) return;
       e.preventDefault();
-      shareColor(prvRef, `chromalum_color_${timestamp()}.png`);
+      shareColor(previewCanvasRef, `chromalum_color_${timestamp()}.png`);
     },
-    [shareColor, prvRef],
+    [shareColor, previewCanvasRef],
   );
   const handleShareGray = useCallback(
     (e: React.MouseEvent) => {
       if (!window.matchMedia("(pointer: fine)").matches) return;
       e.preventDefault();
-      shareColor(srcRef, `chromalum_gray_${timestamp()}.png`);
+      shareColor(sourceCanvasRef, `chromalum_gray_${timestamp()}.png`);
     },
-    [shareColor, srcRef],
+    [shareColor, sourceCanvasRef],
   );
   const handleShareGlaze = useCallback(
     (e: React.MouseEvent) => {
@@ -247,46 +247,46 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
       if (e.key === "ArrowLeft") {
         e.preventDefault();
         setPan((p) => ({ ...p, x: p.x + 10 }));
-        schedCursor();
+        scheduleCursorRedraw();
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
         setPan((p) => ({ ...p, x: p.x - 10 }));
-        schedCursor();
+        scheduleCursorRedraw();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setPan((p) => ({ ...p, y: p.y + 10 }));
-        schedCursor();
+        scheduleCursorRedraw();
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
         setPan((p) => ({ ...p, y: p.y - 10 }));
-        schedCursor();
+        scheduleCursorRedraw();
       }
     },
-    [setPan, schedCursor],
+    [setPan, scheduleCursorRedraw],
   );
 
   const handleZoomPixelPerfect = useCallback(
     (e: React.MouseEvent) => {
       e.preventDefault();
-      const exact = state.canvasData.width / displayW;
+      const exact = state.canvasData.width / displayWidth;
       // If exact 1:1 ratio fits within limits, use it; otherwise pick the
       // largest integer multiple that stays within ZOOM_MAX.
       const z = exact <= ZOOM_MAX ? Math.max(ZOOM_MIN, exact) : Math.max(ZOOM_MIN, Math.floor(ZOOM_MAX));
       setZoom(z);
       setPan({ x: 0, y: 0 });
-      schedCursor();
+      scheduleCursorRedraw();
     },
-    [state.canvasData.width, displayW, setZoom, setPan, schedCursor],
+    [state.canvasData.width, displayWidth, setZoom, setPan, scheduleCursorRedraw],
   );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: SP.lg }}>
       <div style={S_PANEL_SUBTITLE}>{t("label_source")}</div>
-      <div className={getPanelLayoutClassName(displayW, displayH)}>
-        <div className={getCanvasPanelClassName(displayW, displayH)} style={getCanvasPanelStyle(displayW, displayH)}>
+      <div className={getPanelLayoutClassName(displayWidth, displayHeight)}>
+        <div className={getCanvasPanelClassName(displayWidth, displayHeight)} style={getCanvasPanelStyle(displayWidth, displayHeight)}>
           <div
             className="canvas-workspace"
-            ref={srcWrapRef}
+            ref={sourceCanvasWrapRef}
             tabIndex={0}
             onKeyDown={handleKeyDown}
             onPointerDown={handlePointerDown}
@@ -300,8 +300,8 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
               borderRadius: R.lg,
               overflow: "hidden",
               position: "relative",
-              width: displayW,
-              height: displayH,
+              width: displayWidth,
+              height: displayHeight,
               outline: "none",
               cursor: panZoomMode ? "grab" : canvasCursor,
               touchAction: "none",
@@ -309,13 +309,13 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             }}
           >
             <canvas
-              ref={srcRef}
+              ref={sourceCanvasRef}
               role="application"
               aria-label={t("aria_drawing_canvas")}
               aria-roledescription={t("aria_drawing_canvas_desc")}
               style={{
-                width: displayW,
-                height: displayH,
+                width: displayWidth,
+                height: displayHeight,
                 display: "block",
                 ...canvasTransform,
                 cursor: panZoomMode ? "grab" : canvasCursor,
@@ -324,15 +324,15 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
             />
             <canvas
               className="canvas-cursor-overlay"
-              ref={curRef}
-              width={displayW}
-              height={displayH}
+              ref={cursorCanvasRef}
+              width={displayWidth}
+              height={displayHeight}
               style={{
                 position: "absolute",
                 top: 0,
                 left: 0,
-                width: displayW,
-                height: displayH,
+                width: displayWidth,
+                height: displayHeight,
                 pointerEvents: "none",
                 zIndex: Z.cursorOverlay,
               }}

@@ -2,8 +2,8 @@ import React, { createContext, useContext } from "react";
 import type { GlazeToolId } from "../constants";
 
 export interface GlazeContextValue {
-  hueAngle: number;
-  setHueAngle: React.Dispatch<React.SetStateAction<number>>;
+  hueAngleDeg: number;
+  setHueAngleDeg: React.Dispatch<React.SetStateAction<number>>;
   glazeTool: GlazeToolId;
   setGlazeTool: React.Dispatch<React.SetStateAction<GlazeToolId>>;
   brushSize: number;

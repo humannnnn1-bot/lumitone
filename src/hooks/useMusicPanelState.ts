@@ -23,15 +23,15 @@ export function createDefaultMusicDirectCandidates() {
 }
 
 export function useMusicPaletteState() {
-  const [hueAngle, setHueAngle] = useState(0);
+  const [hueAngleDeg, setHueAngleDeg] = useState(0);
   const [candidateOverridesByLevel, setCandidateOverridesByLevel] = useState<Map<number, number>>(createDefaultMusicDirectCandidates);
   const [hoveredCandidate, setHoveredCandidate] = useState<MusicCandidateHover>(null);
   const [selectedLevels, setSelectedLevels] = useState<Set<number>>(new Set());
   const prevCandidatesRef = useRef<Map<number, number>>(new Map());
 
   return {
-    hueAngle,
-    setHueAngle,
+    hueAngleDeg,
+    setHueAngleDeg,
     candidateOverridesByLevel,
     setCandidateOverridesByLevel,
     hoveredCandidate,
@@ -42,7 +42,7 @@ export function useMusicPaletteState() {
   };
 }
 
-export function useMusicTransportState(hueAngle: number) {
+export function useMusicTransportState(hueAngleDeg: number) {
   const [volume, setVolume] = useState(0.7);
   const [muted, setMuted] = useState(false);
   const preMuteVolumeRef = useRef(0.7);
@@ -62,8 +62,8 @@ export function useMusicTransportState(hueAngle: number) {
   const [alphaDir, setAlphaDir] = useState<MusicRotationDir>(0);
   const [hueDir, setHueDir] = useState<MusicRotationDir>(0);
   const prevTimeRef = useRef<number>(0);
-  const hueRef = useRef(hueAngle);
-  const lastHueRoundedRef = useRef(Math.round(hueAngle));
+  const hueRef = useRef(hueAngleDeg);
+  const lastHueRoundedRef = useRef(Math.round(hueAngleDeg));
 
   return {
     volume,

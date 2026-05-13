@@ -19,8 +19,8 @@ export function MapCanvas({
   colorLUT,
   candidateIndexByLevel,
   canvasData,
-  displayW,
-  displayH,
+  displayWidth,
+  displayHeight,
   showToast,
 }: {
   mode: MapMode;
@@ -28,8 +28,8 @@ export function MapCanvas({
   colorLUT: [number, number, number][];
   candidateIndexByLevel: readonly number[];
   canvasData: CanvasData;
-  displayW: number;
-  displayH: number;
+  displayWidth: number;
+  displayHeight: number;
   showToast?: (message: string, type: "error" | "success" | "info") => void;
 }) {
   const { t } = useTranslation();
@@ -167,12 +167,19 @@ export function MapCanvas({
   return (
     <div
       className="map-canvas-frame"
-      style={{ alignItems: "center", display: "flex", flexDirection: "column", maxWidth: "100%", position: "relative", width: displayW }}
+      style={{
+        alignItems: "center",
+        display: "flex",
+        flexDirection: "column",
+        maxWidth: "100%",
+        position: "relative",
+        width: displayWidth,
+      }}
     >
       <canvas
         ref={ref}
         role="img"
-        aria-label={t("stats_title")}
+        aria-label={t("map_title")}
         width={cw || 1}
         height={ch || 1}
         onMouseMove={onMouseMove}
@@ -182,8 +189,8 @@ export function MapCanvas({
         onPointerCancel={cancelLongPress}
         onPointerMove={onPointerMoveLP}
         style={{
-          width: displayW,
-          height: displayH,
+          width: displayWidth,
+          height: displayHeight,
           display: "block",
           imageRendering: "pixelated",
           borderRadius: R.lg,

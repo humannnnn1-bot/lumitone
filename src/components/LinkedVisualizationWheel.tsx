@@ -8,7 +8,7 @@ interface LinkedVisualizationWheelProps {
   alpha: number;
   radiusFn: (levelIndex: number) => number;
   dots: LinkedVisualizationDot[];
-  hueAngle: number;
+  hueAngleDeg: number;
   hoveredDot: LinkedVisualizationHover | null;
   onHoverDot: (dot: LinkedVisualizationHover | null) => void;
   mode: 0 | 7;
@@ -22,14 +22,14 @@ export function LinkedVisualizationWheel({
   alpha,
   radiusFn,
   dots,
-  hueAngle,
+  hueAngleDeg,
   hoveredDot,
   onHoverDot,
   mode,
   onPointerDown,
 }: LinkedVisualizationWheelProps) {
   const wheelPosition = (angle: number, level: number) => wheelPoint(angle, level, alpha, radiusFn);
-  const sweepRad = ((hueAngle - alpha - 90) * Math.PI) / 180;
+  const sweepRad = ((hueAngleDeg - alpha - 90) * Math.PI) / 180;
 
   return (
     <g style={{ cursor: "grab" }} onPointerDown={onPointerDown}>
@@ -112,16 +112,16 @@ export function LinkedVisualizationWheel({
         ] as [number, number][]
       ).flatMap(([fromLevel, toLevel]) =>
         LEVEL_CANDIDATES[fromLevel].map((fromCandidate, candidateIndex) => {
-          if (fromCandidate.angle < 0) return null;
+          if (fromCandidate.hueAngleDeg < 0) return null;
 
-          const comp = (fromCandidate.angle + 180) % 360;
+          const comp = (fromCandidate.hueAngleDeg + 180) % 360;
           const toCandidateIndex = LEVEL_CANDIDATES[toLevel].findIndex(
-            (toCandidate) => Math.abs(((toCandidate.angle - comp + 540) % 360) - 180) < 1,
+            (toCandidate) => Math.abs(((toCandidate.hueAngleDeg - comp + 540) % 360) - 180) < 1,
           );
           if (toCandidateIndex < 0) return null;
 
-          const fromPoint = wheelPosition(fromCandidate.angle, fromLevel);
-          const toPoint = wheelPosition(LEVEL_CANDIDATES[toLevel][toCandidateIndex].angle, toLevel);
+          const fromPoint = wheelPosition(fromCandidate.hueAngleDeg, fromLevel);
+          const toPoint = wheelPosition(LEVEL_CANDIDATES[toLevel][toCandidateIndex].hueAngleDeg, toLevel);
           return (
             <line
               key={`s${fromLevel}${candidateIndex}`}

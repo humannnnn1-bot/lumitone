@@ -44,17 +44,17 @@ export function getCanvasDisplaySize(canvasWidth: number, canvasHeight: number, 
     const contentWidth = viewportWidth - DESKTOP_ROOT_INLINE_PADDING;
     const widthLimit = Math.floor(contentWidth - DESKTOP_PANEL_GAP - DESKTOP_PANEL_SIDEBAR_WIDTH);
     if (asp > 1) {
-      const displayW = clampDisplayMax(Math.min(widthLimit, heightLimit * asp));
-      return { displayW, displayH: Math.round(displayW / asp) };
+      const displayWidth = clampDisplayMax(Math.min(widthLimit, heightLimit * asp));
+      return { displayWidth, displayHeight: Math.round(displayWidth / asp) };
     }
-    const displayH = Math.round(clampDisplayMax(Math.min(heightLimit, widthLimit / asp)));
-    return { displayW: Math.round(displayH * asp), displayH };
+    const displayHeight = Math.round(clampDisplayMax(Math.min(heightLimit, widthLimit / asp)));
+    return { displayWidth: Math.round(displayHeight * asp), displayHeight };
   }
 
   const displayMax = clampDisplayMax(Math.min(Math.floor(viewportWidth - MOBILE_WIDTH_RESERVE), heightLimit));
   return {
-    displayW: asp >= 1 ? displayMax : Math.round(displayMax * asp),
-    displayH: asp >= 1 ? Math.round(displayMax / asp) : displayMax,
+    displayWidth: asp >= 1 ? displayMax : Math.round(displayMax * asp),
+    displayHeight: asp >= 1 ? Math.round(displayMax / asp) : displayMax,
   };
 }
 
@@ -245,7 +245,7 @@ export function useAppState(t: import("../i18n").TranslationFn) {
     resetBrushSizeForCanvas(canvasData.width, canvasData.height);
   }, [canvasData.width, canvasData.height, resetBrushSizeForCanvas]);
 
-  const { displayW, displayH } = useMemo(
+  const { displayWidth, displayHeight } = useMemo(
     () => getCanvasDisplaySize(canvasData.width, canvasData.height, viewportSize.width, viewportSize.height),
     [canvasData.width, canvasData.height, viewportSize.width, viewportSize.height],
   );
@@ -271,8 +271,8 @@ export function useAppState(t: import("../i18n").TranslationFn) {
     lockedLevels,
     setLockedLevels,
     colorLUT: colorState.colorLUT,
-    displayW,
-    displayH,
+    displayWidth,
+    displayHeight,
     toggleLevelLock: colorState.toggleLevelLock,
     handleRandomize: colorState.handleRandomize,
     handleUnlockAll: colorState.handleUnlockAll,

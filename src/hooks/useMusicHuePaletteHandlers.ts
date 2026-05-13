@@ -41,7 +41,7 @@ interface UseMusicHuePaletteHandlersOptions {
   resumeDrone: () => void;
   ensureAudio: () => void;
   sonificationLevels: MusicSonificationLevel[];
-  palette: Pick<MusicPaletteState, "setHueAngle" | "setCandidateOverridesByLevel" | "setSelectedLevels" | "prevCandidatesRef">;
+  palette: Pick<MusicPaletteState, "setHueAngleDeg" | "setCandidateOverridesByLevel" | "setSelectedLevels" | "prevCandidatesRef">;
   transport: Pick<MusicTransportState, "setAlpha0" | "setAlpha7" | "setOriginMode">;
   burst: Pick<MusicBurstHighlightState, "setBurstHighlight" | "burstTimersRef">;
 }
@@ -56,7 +56,7 @@ export function useMusicHuePaletteHandlers({
   transport,
   burst,
 }: UseMusicHuePaletteHandlersOptions) {
-  const { setHueAngle, setCandidateOverridesByLevel, setSelectedLevels, prevCandidatesRef } = palette;
+  const { setHueAngleDeg, setCandidateOverridesByLevel, setSelectedLevels, prevCandidatesRef } = palette;
   const { setAlpha0, setAlpha7, setOriginMode } = transport;
   const { setBurstHighlight, burstTimersRef } = burst;
 
@@ -71,11 +71,11 @@ export function useMusicHuePaletteHandlers({
     (e: ChangeEvent<HTMLInputElement>) => {
       engine.initAudio();
       resumeDrone();
-      setHueAngle(Number(e.target.value));
+      setHueAngleDeg(Number(e.target.value));
       setCandidateOverridesByLevel(new Map());
       setSelectedLevels(new Set());
     },
-    [engine, resumeDrone, setCandidateOverridesByLevel, setHueAngle, setSelectedLevels],
+    [engine, resumeDrone, setCandidateOverridesByLevel, setHueAngleDeg, setSelectedLevels],
   );
 
   const handleAlphaBarChange = useCallback(
@@ -130,15 +130,23 @@ export function useMusicHuePaletteHandlers({
         const prev = prevCandidatesRef.current.get(levelIndex);
         if (prev !== undefined && prev !== candidateIndex) {
           const cand = LEVEL_CANDIDATES[levelIndex][candidateIndex];
-          if (cand && cand.angle >= 0) triggerToneBurstAtActiveAlpha(levelIndex, cand.angle);
+          if (cand && cand.hueAngleDeg >= 0) triggerToneBurstAtActiveAlpha(levelIndex, cand.hueAngleDeg);
         }
         prevCandidatesRef.current.set(levelIndex, candidateIndex);
       }
-      setHueAngle(angleDeg);
+      setHueAngleDeg(angleDeg);
       setCandidateOverridesByLevel(new Map());
       setSelectedLevels(new Set());
     },
-    [engine, prevCandidatesRef, resumeDrone, setCandidateOverridesByLevel, setHueAngle, setSelectedLevels, triggerToneBurstAtActiveAlpha],
+    [
+      engine,
+      prevCandidatesRef,
+      resumeDrone,
+      setCandidateOverridesByLevel,
+      setHueAngleDeg,
+      setSelectedLevels,
+      triggerToneBurstAtActiveAlpha,
+    ],
   );
 
   const handleAlpha0Change = useCallback(

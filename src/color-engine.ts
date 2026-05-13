@@ -80,7 +80,7 @@ export function rgb2hue(r: number, g: number, b: number): number {
 const PURE_DUPL_THRESHOLD = 8;
 
 interface ColorCandidate {
-  readonly angle: number;
+  readonly hueAngleDeg: number;
   readonly rgb: readonly [number, number, number];
   readonly hueLabel: string;
 }
@@ -108,9 +108,9 @@ function findPure(target: number): ColorCandidate[] {
     )
       continue;
     const angle = rgb2hue(...c);
-    results.push({ angle, rgb: c, hueLabel: Math.round(angle) + "°" });
+    results.push({ hueAngleDeg: angle, rgb: c, hueLabel: Math.round(angle) + "°" });
   }
-  return results.sort((a, b) => a.angle - b.angle);
+  return results.sort((a, b) => a.hueAngleDeg - b.hueAngleDeg);
 }
 
 const CANONICAL_COLORS: readonly (readonly [number, number, number])[] = [
@@ -125,15 +125,15 @@ const CANONICAL_COLORS: readonly (readonly [number, number, number])[] = [
 ];
 
 export const LEVEL_CANDIDATES: readonly (readonly ColorCandidate[])[] = LEVEL_INFO.map((_, i) => {
-  if (i === 0) return [{ angle: -1, rgb: [0, 0, 0] as const, hueLabel: "—" }];
-  if (i === 7) return [{ angle: -1, rgb: [255, 255, 255] as const, hueLabel: "—" }];
+  if (i === 0) return [{ hueAngleDeg: -1, rgb: [0, 0, 0] as const, hueLabel: "—" }];
+  if (i === 7) return [{ hueAngleDeg: -1, rgb: [255, 255, 255] as const, hueLabel: "—" }];
   const a = findPure(EIGHT_LEVELS[i]);
   if (!a.length) {
     // Fallback for levels with no pure-color solution (should not occur with BT.601 coefficients)
-    return [{ angle: -1, rgb: [128, 128, 128] as const, hueLabel: "?" }];
+    return [{ hueAngleDeg: -1, rgb: [128, 128, 128] as const, hueLabel: "?" }];
   }
   // Sort by hue angle ascending (0°→360°)
-  return a.sort((x, y) => x.angle - y.angle);
+  return a.sort((x, y) => x.hueAngleDeg - y.hueAngleDeg);
 });
 
 export const DEFAULT_CANDIDATE_INDEX_BY_LEVEL: readonly number[] = LEVEL_CANDIDATES.map((alts, i) => {
@@ -182,12 +182,12 @@ export function buildColorLUT(candidateIndexByLevel: readonly number[]): [number
 
 /** Pre-computed lookup table: CANDIDATE_LUT[level][degree] → candidate index */
 const CANDIDATE_LUT: number[][] = LEVEL_CANDIDATES.map((cands) => {
-  if (cands.length <= 1 || cands[0].angle < 0) return Array(360).fill(0);
+  if (cands.length <= 1 || cands[0].hueAngleDeg < 0) return Array(360).fill(0);
   return Array.from({ length: 360 }, (_, deg) => {
     let best = 0,
       bestDist = Infinity;
     for (let i = 0; i < cands.length; i++) {
-      const diff = Math.abs(cands[i].angle - deg);
+      const diff = Math.abs(cands[i].hueAngleDeg - deg);
       const d = Math.min(diff, 360 - diff);
       if (d < bestDist) {
         bestDist = d;
@@ -199,6 +199,6 @@ const CANDIDATE_LUT: number[][] = LEVEL_CANDIDATES.map((cands) => {
 });
 
 /** Find the candidate index in LEVEL_CANDIDATES[level] closest to the given hue angle. O(1) lookup. */
-export function findClosestCandidate(level: number, hueAngle: number): number {
-  return CANDIDATE_LUT[level][Math.round(((hueAngle % 360) + 360) % 360) % 360];
+export function findClosestCandidate(level: number, hueAngleDeg: number): number {
+  return CANDIDATE_LUT[level][Math.round(((hueAngleDeg % 360) + 360) % 360) % 360];
 }

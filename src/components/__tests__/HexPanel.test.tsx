@@ -24,10 +24,10 @@ function makeCvs(): CanvasData {
 
 function makeProps(overrides?: Partial<React.ComponentProps<typeof HexPanel>>): React.ComponentProps<typeof HexPanel> {
   return {
-    hexPrvRef: React.createRef<HTMLCanvasElement>(),
+    hexPreviewCanvasRef: React.createRef<HTMLCanvasElement>(),
     canvasData: makeCvs(),
-    displayW: 128,
-    displayH: 96,
+    displayWidth: 128,
+    displayHeight: 96,
     candidateIndexByLevel: [...DEFAULT_CANDIDATE_INDEX_BY_LEVEL],
     candidateIndexDispatch: vi.fn(),
     levelHistogram: [1, 2, 3, 4, 5, 6, 7, 8],

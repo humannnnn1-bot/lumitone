@@ -6,7 +6,7 @@ import type { MusicCandidateHover, MusicLevelPreview } from "../../music/types";
 
 interface MusicLevelCandidateGridProps {
   levelPreview: MusicLevelPreview[];
-  hueAngle: number;
+  hueAngleDeg: number;
   candidateOverridesByLevel: Map<number, number>;
   selectedLevels: Set<number>;
   burstHighlight: Set<number>;
@@ -27,7 +27,7 @@ function candidateHex(rgb: readonly number[]) {
 
 const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn({
   level,
-  hueAngle,
+  hueAngleDeg,
   candidateOverridesByLevel,
   selectedLevels,
   burstHighlight,
@@ -43,7 +43,7 @@ const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn(
   const hasCands = cands.length > 1;
   const isDirect = candidateOverridesByLevel.has(level.levelIndex);
   const overrideCandidateIndex = candidateOverridesByLevel.get(level.levelIndex);
-  const autoCandidateIndex = hasCands ? findClosestCandidate(level.levelIndex, hueAngle) : 0;
+  const autoCandidateIndex = hasCands ? findClosestCandidate(level.levelIndex, hueAngleDeg) : 0;
   const currentCandidateIndex = isDirect ? overrideCandidateIndex! : autoCandidateIndex;
   const previousCandidateIndex = hasCands ? (currentCandidateIndex - 1 + cands.length) % cands.length : -1;
   const nextCandidateIndex = hasCands ? (currentCandidateIndex + 1) % cands.length : -1;
@@ -72,14 +72,14 @@ const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn(
       hoveredCandidate !== null && hoveredCandidate.levelIndex === level.levelIndex && hoveredCandidate.candidateIndex === candidateIndex;
     const swatchClick = () => {
       selectCandidate(candidateIndex, true);
-      onBlockClick(level.levelIndex, cand.angle);
+      onBlockClick(level.levelIndex, cand.hueAngleDeg);
     };
     return (
       <div
         key={candidateIndex}
         role="button"
         tabIndex={0}
-        aria-label={t("aria_color_candidate", level.levelIndex, candHex, `${Math.round(cand.angle)}°`)}
+        aria-label={t("aria_color_candidate", level.levelIndex, candHex, `${Math.round(cand.hueAngleDeg)}°`)}
         onClick={swatchClick}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
@@ -89,7 +89,7 @@ const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn(
         }}
         onPointerEnter={isTouchDevice ? undefined : () => onHoveredCandidateChange({ levelIndex: level.levelIndex, candidateIndex })}
         onPointerLeave={isTouchDevice ? undefined : () => onHoveredCandidateChange(null)}
-        title={`${candHex} ${Math.round(cand.angle)}\u00B0`}
+        title={`${candHex} ${Math.round(cand.hueAngleDeg)}\u00B0`}
         style={{
           width: size,
           height: size,
@@ -154,7 +154,7 @@ const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn(
       else next.add(level.levelIndex);
       return next;
     });
-    onBlockClick(level.levelIndex, mainCand.angle);
+    onBlockClick(level.levelIndex, mainCand.hueAngleDeg);
   };
 
   return (
@@ -175,7 +175,7 @@ const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn(
       <div
         role="button"
         tabIndex={0}
-        aria-label={mainCand ? t("aria_color_candidate", level.levelIndex, mainHex, `${Math.round(mainCand.angle)}°`) : undefined}
+        aria-label={mainCand ? t("aria_color_candidate", level.levelIndex, mainHex, `${Math.round(mainCand.hueAngleDeg)}°`) : undefined}
         aria-pressed={isSelected}
         onClick={mainClick}
         onKeyDown={
@@ -192,7 +192,7 @@ const MusicLevelCandidateColumn = React.memo(function MusicLevelCandidateColumn(
           isTouchDevice ? undefined : () => onHoveredCandidateChange({ levelIndex: level.levelIndex, candidateIndex: mainCandidateIndex })
         }
         onPointerLeave={isTouchDevice ? undefined : () => onHoveredCandidateChange(null)}
-        title={mainCand ? `${mainHex} ${Math.round(mainCand.angle)}\u00B0` : undefined}
+        title={mainCand ? `${mainHex} ${Math.round(mainCand.hueAngleDeg)}\u00B0` : undefined}
         style={{
           width: 28,
           height: 28,

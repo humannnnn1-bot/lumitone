@@ -32,7 +32,7 @@ function makePixelMaps(w = 2, h = 2): AnalysisPixelMaps {
     gradientAngle: new Float32Array(n),
     gradientMagnitude: new Float32Array(n),
     regionId: new Int32Array(n),
-    isEdge: new Uint8Array(n),
+    edgeMask: new Uint8Array(n),
     levelTone: new Float32Array(n),
     localDiversity: new Float32Array(n),
     width: w,
@@ -43,7 +43,7 @@ function makePixelMaps(w = 2, h = 2): AnalysisPixelMaps {
   maps.gradientAngle.set([0, Math.PI / 2, Math.PI, -Math.PI / 2].slice(0, n));
   maps.gradientMagnitude.set([0, 0.2, 0.5, 1].slice(0, n));
   maps.regionId.set([1, 1, 2, 2].slice(0, n));
-  maps.isEdge.set([0, 1, 0, 0].slice(0, n));
+  maps.edgeMask.set([0, 1, 0, 0].slice(0, n));
   maps.levelTone.set([0, 2 / 7, 5 / 7, 1].slice(0, n));
   maps.localDiversity.set([0, 0.25, 0.5, 1].slice(0, n));
   return maps;

@@ -25,7 +25,7 @@ describe("floodFill", () => {
     const buf = mkBuf(5, 5, 0);
     const result = floodFill(buf, 0, 0, 1, 5, 5);
     expect(result).not.toBeNull();
-    expect(result!.changed.length).toBe(25);
+    expect(result!.changedIndices.length).toBe(25);
     expect(result!.truncated).toBe(false);
     for (let i = 0; i < 25; i++) expect(buf[i]).toBe(1);
   });
@@ -51,7 +51,7 @@ describe("floodFill", () => {
     const result = floodFill(buf, 0, 0, 7, 3, 3);
     expect(result).not.toBeNull();
     // 8 cells should be changed (all except center)
-    expect(result!.changed.length).toBe(8);
+    expect(result!.changedIndices.length).toBe(8);
     expect(buf[1 * 3 + 1]).toBe(5); // center unchanged
   });
 
@@ -59,14 +59,14 @@ describe("floodFill", () => {
     const buf = mkBuf(4, 4, 0);
     const result = floodFill(buf, 0, 0, 2, 4, 4);
     expect(result).not.toBeNull();
-    expect(result!.changed.length).toBe(16);
+    expect(result!.changedIndices.length).toBe(16);
   });
 
   it("fills from corner seed (w-1, h-1)", () => {
     const buf = mkBuf(4, 4, 0);
     const result = floodFill(buf, 3, 3, 2, 4, 4);
     expect(result).not.toBeNull();
-    expect(result!.changed.length).toBe(16);
+    expect(result!.changedIndices.length).toBe(16);
   });
 
   it("fills L-shaped region", () => {
@@ -79,7 +79,7 @@ describe("floodFill", () => {
     buf[2 * 5 + 2] = 0;
     const result = floodFill(buf, 0, 0, 3, 5, 5);
     expect(result).not.toBeNull();
-    expect(result!.changed.length).toBe(5);
+    expect(result!.changedIndices.length).toBe(5);
     expect(buf[0]).toBe(3);
     expect(buf[2 * 5 + 2]).toBe(3);
   });
@@ -90,7 +90,7 @@ describe("floodFill", () => {
     buf[1 * 3 + 1] = 0; // (1,1) diagonal from (0,0)
     const result = floodFill(buf, 0, 0, 5, 3, 3);
     expect(result).not.toBeNull();
-    expect(result!.changed.length).toBe(1); // only (0,0)
+    expect(result!.changedIndices.length).toBe(1); // only (0,0)
     expect(buf[1 * 3 + 1]).toBe(0); // diagonal not filled
   });
 
@@ -120,7 +120,7 @@ describe("floodFill", () => {
     const result = floodFill(buf, 2, 4, 7, 4, 5);
 
     expect(result).not.toBeNull();
-    expect(Array.from(result!.changed)).toEqual([18]);
+    expect(Array.from(result!.changedIndices)).toEqual([18]);
     expect(buf[18]).toBe(7);
     expect(buf[15]).toBe(2);
   });

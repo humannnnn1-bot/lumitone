@@ -50,14 +50,14 @@ export function brushBBox(pts: [number, number][], r: number, w: number, h: numb
 }
 
 /** Compute dirty rect from an array of changed pixel indices. */
-export function dirtyFromChanged(changed: Uint32Array, w: number, h: number): DirtyRect | null {
-  if (changed.length === 0) return null;
+export function dirtyFromChanged(changedIndices: Uint32Array, w: number, h: number): DirtyRect | null {
+  if (changedIndices.length === 0) return null;
   let minX = w,
     minY = h,
     maxX = 0,
     maxY = 0;
-  for (let i = 0; i < changed.length; i++) {
-    const idx = changed[i];
+  for (let i = 0; i < changedIndices.length; i++) {
+    const idx = changedIndices[i];
     const x = idx % w,
       y = (idx / w) | 0;
     if (x < minX) minX = x;

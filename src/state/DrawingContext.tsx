@@ -11,8 +11,8 @@ interface DrawingContextValue {
   startPan: (e: React.PointerEvent) => void;
   movePan: (e: React.PointerEvent) => void;
   endPan: () => void;
-  displayW: number;
-  displayH: number;
+  displayWidth: number;
+  displayHeight: number;
   announce: (msg: string) => void;
   t: TranslationFn;
 }

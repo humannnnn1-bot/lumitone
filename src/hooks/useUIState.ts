@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { TOAST_DURATION } from "../constants";
-import { DEFAULT_TAB_ID, MAIN_TABS, STATS_TAB_ID, tabFromId, tabIdFromIndex, tabIndexFromId } from "../tabs";
+import { DEFAULT_TAB_ID, MAIN_TABS, MAP_TAB_ID, tabFromId, tabIdFromIndex, tabIndexFromId } from "../tabs";
 import type { MainTabId } from "../tabs";
 import type { MapMode } from "../types";
 import type { TranslationFn } from "../i18n";
@@ -9,7 +9,7 @@ const LS_TAB = "chromalum-active-tab-v2";
 const LS_SCROLL = "chromalum-scroll-y";
 const HISTORY_TAB_STATE_KEY = "chromalumActiveTab";
 const TAB_HASH_LOOKUP = new Map<string, MainTabId>(MAIN_TABS.map(({ hash, id }) => [hash, id]));
-TAB_HASH_LOOKUP.set("stats", STATS_TAB_ID);
+TAB_HASH_LOOKUP.set("stats", MAP_TAB_ID);
 
 function isValidTabIndex(tab: unknown): tab is number {
   return typeof tab === "number" && Number.isInteger(tab) && tab >= 0 && tab < MAIN_TABS.length;
@@ -84,10 +84,10 @@ function readTabFromHistoryState(state: unknown): MainTabId | null {
 export function useUIState(_t: TranslationFn) {
   const [activeTabId, setActiveTabIdRaw] = useState(readInitialActiveTab);
   const activeTab = tabIndexFromId(activeTabId);
-  const [hasOpenedStats, setHasOpenedStats] = useState(() => activeTabId === STATS_TAB_ID);
+  const [hasOpenedMap, setHasOpenedMap] = useState(() => activeTabId === MAP_TAB_ID);
   const setActiveTabId = useCallback((tabId: MainTabId) => {
     setActiveTabIdRaw(tabId);
-    if (tabId === STATS_TAB_ID) setHasOpenedStats(true);
+    if (tabId === MAP_TAB_ID) setHasOpenedMap(true);
     writeStoredTab(tabId);
     pushTabHash(tabId);
   }, []);
@@ -103,7 +103,7 @@ export function useUIState(_t: TranslationFn) {
   const [toast, setToast] = useState<{ message: string; type: "error" | "success" | "info" } | null>(null);
   const [showNewCanvas, setShowNewCanvas] = useState(false);
   const [mapMode, setMapMode] = useState<MapMode>("levelTone");
-  const [hueAngle, setHueAngle] = useState(0);
+  const [hueAngleDeg, setHueAngleDeg] = useState(0);
   const [candidateOverridesByLevel, setCandidateOverridesByLevel] = useState<Map<number, number>>(new Map());
 
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -114,7 +114,7 @@ export function useUIState(_t: TranslationFn) {
 
     const applyTab = (tabId: MainTabId) => {
       setActiveTabIdRaw(tabId);
-      if (tabId === STATS_TAB_ID) setHasOpenedStats(true);
+      if (tabId === MAP_TAB_ID) setHasOpenedMap(true);
       writeStoredTab(tabId);
       replaceCurrentHistoryState(tabId);
     };
@@ -171,7 +171,7 @@ export function useUIState(_t: TranslationFn) {
     activeTabId,
     setActiveTab,
     setActiveTabId,
-    hasOpenedStats,
+    hasOpenedMap,
     showHelp,
     setShowHelp,
     toast,
@@ -180,8 +180,8 @@ export function useUIState(_t: TranslationFn) {
     setShowNewCanvas,
     mapMode,
     setMapMode,
-    hueAngle,
-    setHueAngle,
+    hueAngleDeg,
+    setHueAngleDeg,
     candidateOverridesByLevel,
     setCandidateOverridesByLevel,
     toastTimerRef,

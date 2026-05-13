@@ -16,7 +16,7 @@ interface CandidateResolution {
   ci: number;
   count: number;
   rgb: readonly [number, number, number];
-  angle: number;
+  hueAngleDeg: number;
 }
 
 function normalizeCandidateIndex(lv: number, idx: number): number {
@@ -32,7 +32,7 @@ function resolveCandidate(lv: number, idx: number): CandidateResolution {
     ci,
     count: alts.length,
     rgb: candidate.rgb,
-    angle: candidate.angle,
+    hueAngleDeg: candidate.hueAngleDeg,
   };
 }
 
@@ -84,18 +84,18 @@ function glazeActionLabel(glazeTool: GlazeToolId): string {
 
 function glazeTargetLabel({
   lv,
-  hueAngle,
+  hueAngleDeg,
   candidateOverridesByLevel,
   glazeTool,
 }: {
   lv: number;
-  hueAngle: number;
+  hueAngleDeg: number;
   candidateOverridesByLevel: Map<number, number>;
   glazeTool: GlazeToolId;
 }): string {
   if (glazeTool === "glaze_eraser") return "default";
   if (candidateOverridesByLevel.size > 0 && !candidateOverridesByLevel.has(lv)) return "skip";
-  const targetIdx = candidateOverridesByLevel.size > 0 ? candidateOverridesByLevel.get(lv)! : findClosestCandidate(lv, hueAngle);
+  const targetIdx = candidateOverridesByLevel.size > 0 ? candidateOverridesByLevel.get(lv)! : findClosestCandidate(lv, hueAngleDeg);
   const target = resolveCandidate(lv, targetIdx);
   return `${candidateLabel(target)} ${hexStr(target.rgb)}`;
 }
@@ -118,9 +118,9 @@ export function formatColorPixelStatus({
   const rgb = candidate.rgb;
   return {
     full: `(${x},${y}) Color L${lv} ${candidateLabel(candidate)} ${hexStr(rgb)} rgb(${rgb[0]},${rgb[1]},${rgb[2]}) hue=${angleLabel(
-      candidate.angle,
-    )} \u0394${signedHueDelta(lv, candidate.angle)}`,
-    compact: `(${x},${y}) Color L${lv} ${candidateLabel(candidate)} ${hexStr(rgb)} h=${angleLabel(candidate.angle)}`,
+      candidate.hueAngleDeg,
+    )} \u0394${signedHueDelta(lv, candidate.hueAngleDeg)}`,
+    compact: `(${x},${y}) Color L${lv} ${candidateLabel(candidate)} ${hexStr(rgb)} h=${angleLabel(candidate.hueAngleDeg)}`,
   };
 }
 
@@ -139,7 +139,7 @@ export function formatHexPixelStatus({
   isLocked: boolean;
 }): StatusText {
   const candidate = resolveGlobalCandidate(candidateIndexByLevel, lv);
-  const hexAngle = HEX_CANDIDATE_ANGLES[lv]?.[candidate.ci] ?? candidate.angle;
+  const hexAngle = HEX_CANDIDATE_ANGLES[lv]?.[candidate.ci] ?? candidate.hueAngleDeg;
   return {
     full: `(${x},${y}) Hex L${lv} ${candidateLabel(candidate)} @${angleLabel(hexAngle)} used=${formatCount(
       levelHistogram[lv] ?? 0,
@@ -156,13 +156,13 @@ export function formatGlazePixelStatus({
   lv,
   candidateIndexByLevel,
   pixelCandidateOverrideValue,
-  hueAngle,
+  hueAngleDeg,
   candidateOverridesByLevel,
   glazeTool,
 }: PixelStatusBase & {
   candidateIndexByLevel: readonly number[];
   pixelCandidateOverrideValue: number;
-  hueAngle: number;
+  hueAngleDeg: number;
   candidateOverridesByLevel: Map<number, number>;
   glazeTool: GlazeToolId;
 }): StatusText {
@@ -171,7 +171,7 @@ export function formatGlazePixelStatus({
   const override = pixelCandidateOverrideValue > 0 ? "override" : "no override";
   const compactOverride = pixelCandidateOverrideValue > 0 ? "ovr" : "no-ovr";
   const action = glazeActionLabel(glazeTool);
-  const target = glazeTargetLabel({ lv, hueAngle, candidateOverridesByLevel, glazeTool });
+  const target = glazeTargetLabel({ lv, hueAngleDeg, candidateOverridesByLevel, glazeTool });
   return {
     full: `(${x},${y}) Glaze L${lv} base ${candidateLabel(base)} ${hexStr(base.rgb)} \u2192 actual ${candidateLabel(actual)} ${hexStr(
       actual.rgb,

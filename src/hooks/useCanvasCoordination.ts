@@ -11,13 +11,13 @@ interface CanvasCoordinationOptions {
   activeTabId: MainTabId;
   drawing: CanvasDrawingResult;
   glazeDrawing: GlazeDrawingResult;
-  srcWrapRef: React.MutableRefObject<HTMLDivElement | null>;
-  prvWrapRef: React.MutableRefObject<HTMLDivElement | null>;
+  sourceCanvasWrapRef: React.MutableRefObject<HTMLDivElement | null>;
+  previewCanvasWrapRef: React.MutableRefObject<HTMLDivElement | null>;
   glazeWrapRef: React.MutableRefObject<HTMLDivElement | null>;
-  prvRef: React.MutableRefObject<HTMLCanvasElement | null>;
-  hexPrvRef: React.MutableRefObject<HTMLCanvasElement | null>;
-  glazePrvRef: React.MutableRefObject<HTMLCanvasElement | null>;
-  sharedSchedCursorRef: React.MutableRefObject<(() => void) | null>;
+  previewCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  hexPreviewCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  glazePreviewCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  sharedScheduleCursorRedrawRef: React.MutableRefObject<(() => void) | null>;
   onWheel: (e: WheelEvent) => void;
 }
 
@@ -28,25 +28,25 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): void {
     activeTabId,
     drawing,
     glazeDrawing,
-    srcWrapRef,
-    prvWrapRef,
+    sourceCanvasWrapRef,
+    previewCanvasWrapRef,
     glazeWrapRef,
-    prvRef,
-    hexPrvRef,
-    glazePrvRef,
-    sharedSchedCursorRef,
+    previewCanvasRef,
+    hexPreviewCanvasRef,
+    glazePreviewCanvasRef,
+    sharedScheduleCursorRedrawRef,
     onWheel,
   } = opts;
-  const { clearCursor, clearCursorPrv } = drawing;
+  const { clearCursor, clearPreviewCursor } = drawing;
   const { clearCursor: clearGlazeCursor } = glazeDrawing;
 
-  // Bridge cursor schedulers into the shared ref used by pan/zoom.
+  // Bridge cursor redraw schedulers into the shared ref used by pan/zoom.
   useLayoutEffect(() => {
-    sharedSchedCursorRef.current = () => {
-      drawing.schedCursorRef.current?.();
-      glazeDrawing.schedCursorRef.current?.();
+    sharedScheduleCursorRedrawRef.current = () => {
+      drawing.scheduleCursorRedrawRef.current?.();
+      glazeDrawing.scheduleCursorRedrawRef.current?.();
     };
-  }, [drawing.schedCursorRef, glazeDrawing.schedCursorRef, sharedSchedCursorRef]);
+  }, [drawing.scheduleCursorRedrawRef, glazeDrawing.scheduleCursorRedrawRef, sharedScheduleCursorRedrawRef]);
 
   // Cleanup RAF on unmount
   useEffect(
@@ -59,8 +59,8 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): void {
 
   // Wheel listener (non-passive)
   useEffect(() => {
-    const s = srcWrapRef.current,
-      p = prvWrapRef.current,
+    const s = sourceCanvasWrapRef.current,
+      p = previewCanvasWrapRef.current,
       g = glazeWrapRef.current;
     const wheelOpts: AddEventListenerOptions = { passive: false };
     if (s) s.addEventListener("wheel", onWheel, wheelOpts);
@@ -71,7 +71,7 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): void {
       if (p) p.removeEventListener("wheel", onWheel, wheelOpts);
       if (g) g.removeEventListener("wheel", onWheel, wheelOpts);
     };
-  }, [onWheel, srcWrapRef, prvWrapRef, glazeWrapRef, activeTabId]);
+  }, [onWheel, sourceCanvasWrapRef, previewCanvasWrapRef, glazeWrapRef, activeTabId]);
 
   useEffect(() => {
     function isPointInElement(e: MouseEvent | PointerEvent, el: HTMLElement | null) {
@@ -82,8 +82,8 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): void {
     }
 
     function clearCursorsOutsideWorkspace(e: MouseEvent | PointerEvent) {
-      if (srcWrapRef.current && !isPointInElement(e, srcWrapRef.current)) clearCursor();
-      if (prvWrapRef.current && !isPointInElement(e, prvWrapRef.current)) clearCursorPrv();
+      if (sourceCanvasWrapRef.current && !isPointInElement(e, sourceCanvasWrapRef.current)) clearCursor();
+      if (previewCanvasWrapRef.current && !isPointInElement(e, previewCanvasWrapRef.current)) clearPreviewCursor();
       if (glazeWrapRef.current && !isPointInElement(e, glazeWrapRef.current)) clearGlazeCursor();
     }
 
@@ -93,10 +93,10 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): void {
       document.removeEventListener("pointermove", clearCursorsOutsideWorkspace);
       document.removeEventListener("mousemove", clearCursorsOutsideWorkspace);
     };
-  }, [clearCursor, clearCursorPrv, clearGlazeCursor, srcWrapRef, prvWrapRef, glazeWrapRef]);
+  }, [clearCursor, clearPreviewCursor, clearGlazeCursor, sourceCanvasWrapRef, previewCanvasWrapRef, glazeWrapRef]);
 
   const renderGlazeCanvas = useCallback(() => {
-    const gp = glazePrvRef.current;
+    const gp = glazePreviewCanvasRef.current;
     if (!gp) return;
     if (gp.width !== canvasData.width || gp.height !== canvasData.height) {
       gp.width = canvasData.width;
@@ -114,14 +114,14 @@ export function useCanvasCoordination(opts: CanvasCoordinationOptions): void {
       undefined,
       canvasData.pixelCandidateOverrideMap,
     );
-  }, [canvasData, colorLUT, glazePrvRef, glazeDrawing.imgCacheRef]);
+  }, [canvasData, colorLUT, glazePreviewCanvasRef, glazeDrawing.imgCacheRef]);
 
   // Render buffer on state change
   useLayoutEffect(() => {
     if (drawing.drawingRef.current || glazeDrawing.drawingRef.current) return;
-    const s = drawing.srcRef.current,
-      p = prvRef.current,
-      hp = hexPrvRef.current;
+    const s = drawing.sourceCanvasRef.current,
+      p = previewCanvasRef.current,
+      hp = hexPreviewCanvasRef.current;
     if (!s && !p && !hp) return;
     let needReset = false;
     if (s && (s.width !== canvasData.width || s.height !== canvasData.height)) {

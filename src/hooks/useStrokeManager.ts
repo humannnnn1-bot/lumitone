@@ -50,7 +50,7 @@ export function createStrokeState(
     params: { tool, brushLevel, brushSize },
     shapeStart: startPos,
     prevShapeBBox: null,
-    fillChanged: null,
+    fillChangedIndices: null,
   };
 }
 
@@ -142,9 +142,9 @@ export function resolveLevel(tool: ToolId, brushLevel: number): number {
 export { isShapeTool };
 
 /** Compute the diff from a completed stroke. Returns null if no changes. */
-export function computeStrokeResult(beforeData: Uint8Array, workingData: Uint8Array, fillChanged: Uint32Array | null): Diff | null {
-  if (fillChanged) {
-    return buildDiffFromFill(beforeData, workingData, fillChanged);
+export function computeStrokeResult(beforeData: Uint8Array, workingData: Uint8Array, fillChangedIndices: Uint32Array | null): Diff | null {
+  if (fillChangedIndices) {
+    return buildDiffFromFill(beforeData, workingData, fillChangedIndices);
   }
   return computeDiff(beforeData, workingData);
 }

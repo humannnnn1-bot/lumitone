@@ -18,13 +18,13 @@ import { renderCanvasBuffers } from "../drawing/render-buf";
 import { formatGlazePixelStatus } from "../utils/pixel-status";
 import { useSyncRef, useSyncRefs } from "./useSyncRef";
 import { useCursorOverlay } from "./useCursorOverlay";
-import { trySetPointerCapture, cPosFromRefs, canvasPosUnclamped, isCanvasPointInBounds, updateStatusBase } from "./useDrawingBase";
+import { trySetPointerCapture, canvasPosFromRefs, canvasPosUnclamped, isCanvasPointInBounds, updateStatusBase } from "./useDrawingBase";
 import type { DrawingRefs } from "./useDrawingBase";
 import { createStrokeSmoother, smoothStrokePoint } from "../drawing/stroke-smoothing";
 import type { StrokeSmoother } from "../drawing/stroke-smoothing";
 import { pressureAdjustedBrushSize } from "../drawing/stroke-pressure";
 import type { PointerPressureSample } from "../drawing/stroke-pressure";
-import type { CanvasData, ImgCache, CanvasAction, DirtyRect, Point } from "../types";
+import type { CanvasData, ImageRenderCache, CanvasAction, DirtyRect, Point } from "../types";
 import { useDrawingContext } from "../state/DrawingContext";
 
 interface GlazeDrawingOptions {
@@ -32,22 +32,22 @@ interface GlazeDrawingOptions {
   dispatch: React.Dispatch<CanvasAction>;
   colorLUT: [number, number, number][];
   candidateIndexByLevel: readonly number[];
-  hueAngle: number;
-  setHueAngle: React.Dispatch<React.SetStateAction<number>>;
+  hueAngleDeg: number;
+  setHueAngleDeg: React.Dispatch<React.SetStateAction<number>>;
   glazeTool: GlazeToolId;
   brushSize: number;
-  prvRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  previewCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
   candidateOverridesByLevel: Map<number, number>;
 }
 
 export interface GlazeDrawingResult {
-  srcRef: React.MutableRefObject<HTMLCanvasElement | null>;
-  curRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  sourceCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
+  cursorCanvasRef: React.MutableRefObject<HTMLCanvasElement | null>;
   statusRef: React.MutableRefObject<HTMLDivElement | null>;
-  imgCacheRef: React.MutableRefObject<ImgCache>;
+  imgCacheRef: React.MutableRefObject<ImageRenderCache>;
   drawingRef: React.MutableRefObject<boolean>;
   cursorRafRef: React.MutableRefObject<number | null>;
-  schedCursorRef: React.MutableRefObject<(() => void) | null>;
+  scheduleCursorRedrawRef: React.MutableRefObject<(() => void) | null>;
   cursorPosRef: React.MutableRefObject<{ dx: number; dy: number } | null>;
   onDown: (e: React.PointerEvent) => void;
   onMove: (e: React.PointerEvent) => void;
@@ -63,7 +63,7 @@ export interface GlazeDrawingResult {
 interface GlazeStroke {
   workingOverrideMap: Uint8Array;
   beforeOverrideMap: Uint8Array;
-  fillChanged: Uint32Array | null;
+  fillChangedIndices: Uint32Array | null;
   glazeLUT: Uint8Array;
 }
 
@@ -73,19 +73,24 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     dispatch,
     colorLUT,
     candidateIndexByLevel,
-    hueAngle,
-    setHueAngle,
+    hueAngleDeg,
+    setHueAngleDeg,
     glazeTool,
     brushSize,
-    prvRef,
+    previewCanvasRef,
     candidateOverridesByLevel,
   } = opts;
   const ctx = useDrawingContext();
-  const { displayW, displayH, panningRef, spaceRef, zoomRef, panRef, startPan, movePan, endPan, announce, t } = ctx;
+  const { displayWidth, displayHeight, panningRef, spaceRef, zoomRef, panRef, startPan, movePan, endPan, announce, t } = ctx;
 
-  const srcRef = useRef<HTMLCanvasElement | null>(null);
+  const sourceCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const statusRef = useRef<HTMLDivElement | null>(null);
-  const imgCacheRef = useRef<ImgCache>({ sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null });
+  const imgCacheRef = useRef<ImageRenderCache>({
+    sourceImageData: null,
+    previewImageData: null,
+    sourcePixels32: null,
+    previewPixels32: null,
+  });
   const drawingRef = useRef(false);
   const lastRef = useRef<{ x: number; y: number } | null>(null);
   const strokeSmootherRef = useRef<StrokeSmoother | null>(null);
@@ -107,7 +112,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     lut: [number, number, number][];
     sourceCanvas: HTMLCanvasElement | null;
     previewCanvas: HTMLCanvasElement | null;
-    imgCache: ImgCache;
+    imgCache: ImageRenderCache;
   } | null>(null);
   const fillPendingRef = useRef(false);
   const pendingUpRef = useRef(false);
@@ -116,9 +121,9 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
 
   // Refs needed by useCursorOverlay (individual for interface compatibility)
   const brushSizeRef = useSyncRef(brushSize);
-  const cvsRef = useSyncRef(canvasData);
-  const displayWRef = useSyncRef(displayW);
-  const displayHRef = useSyncRef(displayH);
+  const canvasDataRef = useSyncRef(canvasData);
+  const displayWidthRef = useSyncRef(displayWidth);
+  const displayHeightRef = useSyncRef(displayHeight);
   const toolRef = useSyncRef(
     glazeTool === "glaze_brush" ? ("brush" as const) : glazeTool === "glaze_eraser" ? ("eraser" as const) : ("fill" as const),
   );
@@ -127,8 +132,8 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   const s = useSyncRefs({
     colorLUT,
     candidateIndexByLevel,
-    hueAngle,
-    setHueAngle,
+    hueAngleDeg,
+    setHueAngleDeg,
     glazeTool,
     startPan,
     movePan,
@@ -138,21 +143,24 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     candidateOverridesByLevel,
   });
 
-  const cursor = useCursorOverlay({ zoomRef, panRef, cvsRef, displayWRef, displayHRef, panningRef, brushSizeRef, toolRef }, statusRef);
+  const cursor = useCursorOverlay(
+    { zoomRef, panRef, canvasDataRef, displayWidthRef, displayHeightRef, panningRef, brushSizeRef, toolRef },
+    statusRef,
+  );
 
-  const drawRefs: DrawingRefs = { zoomRef, panRef, cvsRef };
+  const drawRefs: DrawingRefs = { zoomRef, panRef, canvasDataRef };
 
   function cPos(e: React.PointerEvent) {
-    return cPosFromRefs(e, cursor.curRef.current, drawRefs);
+    return canvasPosFromRefs(e, cursor.cursorCanvasRef.current, drawRefs);
   }
 
   function isInCanvasBounds(e: React.PointerEvent) {
-    const pos = canvasPosUnclamped(e, cursor.curRef.current, zoomRef.current, panRef.current, cvsRef.current);
-    return isCanvasPointInBounds(pos, cvsRef.current);
+    const pos = canvasPosUnclamped(e, cursor.cursorCanvasRef.current, zoomRef.current, panRef.current, canvasDataRef.current);
+    return isCanvasPointInBounds(pos, canvasDataRef.current);
   }
 
   function isInWorkspaceBounds(e: React.PointerEvent) {
-    const refEl = cursor.curRef.current;
+    const refEl = cursor.cursorCanvasRef.current;
     if (!refEl) return false;
     const r = refEl.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) return false;
@@ -160,20 +168,29 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   }
 
   function updateStatus(e: React.PointerEvent) {
-    updateStatusBase(e, statusRef.current, cursor.curRef.current, drawRefs, cvsRef.current.levelData, (pos, lv, _info, idx) => {
-      const pixelCandidateOverrideValue =
-        drawingRef.current && strokeRef.current ? strokeRef.current.workingOverrideMap[idx] : cvsRef.current.pixelCandidateOverrideMap[idx];
-      return formatGlazePixelStatus({
-        x: pos.x,
-        y: pos.y,
-        lv,
-        candidateIndexByLevel: s.current.candidateIndexByLevel,
-        pixelCandidateOverrideValue,
-        hueAngle: s.current.hueAngle,
-        candidateOverridesByLevel: s.current.candidateOverridesByLevel,
-        glazeTool: s.current.glazeTool,
-      });
-    });
+    updateStatusBase(
+      e,
+      statusRef.current,
+      cursor.cursorCanvasRef.current,
+      drawRefs,
+      canvasDataRef.current.levelData,
+      (pos, lv, _info, idx) => {
+        const pixelCandidateOverrideValue =
+          drawingRef.current && strokeRef.current
+            ? strokeRef.current.workingOverrideMap[idx]
+            : canvasDataRef.current.pixelCandidateOverrideMap[idx];
+        return formatGlazePixelStatus({
+          x: pos.x,
+          y: pos.y,
+          lv,
+          candidateIndexByLevel: s.current.candidateIndexByLevel,
+          pixelCandidateOverrideValue,
+          hueAngleDeg: s.current.hueAngleDeg,
+          candidateOverridesByLevel: s.current.candidateOverridesByLevel,
+          glazeTool: s.current.glazeTool,
+        });
+      },
+    );
   }
 
   function queueGlazeRender(levelData: Uint8Array, pixelCandidateOverrideMap: Uint8Array, W: number, H: number, dirtyBB: DirtyRect) {
@@ -184,8 +201,8 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
       w: W,
       h: H,
       lut: s.current.colorLUT,
-      sourceCanvas: srcRef.current,
-      previewCanvas: prvRef.current,
+      sourceCanvas: sourceCanvasRef.current,
+      previewCanvas: previewCanvasRef.current,
       imgCache: imgCacheRef.current,
     };
 
@@ -226,9 +243,9 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     drawingRef.current = true;
     const pos = startPos ?? cPos(e);
     lastRef.current = pos;
-    const cv = cvsRef.current;
+    const cv = canvasDataRef.current;
     // Ensure preview canvas dimensions match
-    const previewCanvas = prvRef.current;
+    const previewCanvas = previewCanvasRef.current;
     if (previewCanvas && (previewCanvas.width !== cv.width || previewCanvas.height !== cv.height)) {
       previewCanvas.width = cv.width;
       previewCanvas.height = cv.height;
@@ -247,12 +264,12 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     const workingOverrideMap: Uint8Array = pool.workingOverrideMap;
     const nextCandidateOverrides = new Map(s.current.candidateOverridesByLevel);
     const isDirect = nextCandidateOverrides.size > 0;
-    const curHue = s.current.hueAngle;
+    const curHue = s.current.hueAngleDeg;
     const glazeLUT = isDirect ? buildMultiDirectLUT(nextCandidateOverrides) : buildGlazeLUT(curHue);
-    strokeRef.current = { workingOverrideMap, beforeOverrideMap, fillChanged: null, glazeLUT };
+    strokeRef.current = { workingOverrideMap, beforeOverrideMap, fillChangedIndices: null, glazeLUT };
     const curTool = s.current.glazeTool;
     strokeSmootherRef.current = curTool === "glaze_fill" ? null : createStrokeSmoother(pos);
-    forceRawNextMoveRef.current = startPos !== undefined && !isCanvasPointInBounds(startPos, cvsRef.current);
+    forceRawNextMoveRef.current = startPos !== undefined && !isCanvasPointInBounds(startPos, canvasDataRef.current);
     const mask = getBrushMask(pressureAdjustedBrushSize(brushSizeRef.current, e.nativeEvent));
     const W = cv.width,
       H = cv.height;
@@ -266,10 +283,12 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
         strokeRef.current = null;
         return;
       }
-      const targetColorOverrideValue = isDirect ? nextCandidateOverrides.get(seedLv)! + 1 : findClosestCandidate(seedLv, curHue) + 1;
+      const targetPixelCandidateOverrideValue = isDirect
+        ? nextCandidateOverrides.get(seedLv)! + 1
+        : findClosestCandidate(seedLv, curHue) + 1;
       fillPendingRef.current = true;
       floodFillWorker
-        .requestGlazeFill(cv.levelData, workingOverrideMap, pos.x, pos.y, targetColorOverrideValue, W, H)
+        .requestGlazeFill(cv.levelData, workingOverrideMap, pos.x, pos.y, targetPixelCandidateOverrideValue, W, H)
         .then((res) => {
           const st = strokeRef.current;
           if (!st) {
@@ -277,18 +296,18 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
             return;
           }
           st.workingOverrideMap.set(res.pixelCandidateOverrideMap);
-          if (res.changed.length > 0) {
-            st.fillChanged = res.changed;
+          if (res.changedIndices.length > 0) {
+            st.fillChangedIndices = res.changedIndices;
             if (res.truncated) s.current.announce(s.current.t("toast_fill_truncated"));
           }
-          const dirtyBB = st.fillChanged ? dirtyFromChanged(st.fillChanged, W, H) : undefined;
+          const dirtyBB = st.fillChangedIndices ? dirtyFromChanged(st.fillChangedIndices, W, H) : undefined;
           renderCanvasBuffers(
             cv.levelData,
             W,
             H,
             s.current.colorLUT,
-            srcRef.current,
-            prvRef.current,
+            sourceCanvasRef.current,
+            previewCanvasRef.current,
             imgCacheRef.current,
             dirtyBB,
             st.workingOverrideMap,
@@ -320,8 +339,8 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
         W,
         H,
         s.current.colorLUT,
-        srcRef.current,
-        prvRef.current,
+        sourceCanvasRef.current,
+        previewCanvasRef.current,
         imgCacheRef.current,
         dirtyBB,
         workingOverrideMap,
@@ -348,7 +367,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     if (!canArmWorkspaceStart(e)) return;
     trySetPointerCapture(e);
     pendingWorkspaceStartRef.current = {
-      startPos: canvasPosUnclamped(e, cursor.curRef.current, zoomRef.current, panRef.current, cvsRef.current),
+      startPos: canvasPosUnclamped(e, cursor.cursorCanvasRef.current, zoomRef.current, panRef.current, canvasDataRef.current),
     };
   }
 
@@ -401,7 +420,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     if (!st || s.current.glazeTool === "glaze_fill") return;
     e.preventDefault();
     const workingOverrideMap = st.workingOverrideMap;
-    const cv = cvsRef.current;
+    const cv = canvasDataRef.current;
     const W = cv.width,
       H = cv.height;
     const curTool = s.current.glazeTool;
@@ -410,7 +429,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     // outside the canvas. Glaze paint functions clip writes to the color map,
     // so re-entry remains continuous without smearing along the nearest edge.
     const nativeEvent = e.nativeEvent;
-    const canvasEl = cursor.curRef.current;
+    const canvasEl = cursor.cursorCanvasRef.current;
     const zoom = zoomRef.current,
       pan = panRef.current;
     const coalesced = typeof nativeEvent.getCoalescedEvents === "function" ? nativeEvent.getCoalescedEvents() : [];
@@ -476,7 +495,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
       paintRafRef.current = null;
       pendingPaintDirtyRef.current = null;
       paintFrameRef.current = null;
-      const cv = cvsRef.current;
+      const cv = canvasDataRef.current;
       const st2 = strokeRef.current;
       if (st2)
         renderCanvasBuffers(
@@ -484,8 +503,8 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
           cv.width,
           cv.height,
           s.current.colorLUT,
-          srcRef.current,
-          prvRef.current,
+          sourceCanvasRef.current,
+          previewCanvasRef.current,
           imgCacheRef.current,
           undefined,
           st2.workingOverrideMap,
@@ -493,9 +512,9 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
     }
     const st = strokeRef.current;
     if (drawingRef.current && st) {
-      const cv = cvsRef.current;
-      const diff = st.fillChanged
-        ? buildDiffFromGlazeFill(st.beforeOverrideMap, st.workingOverrideMap, cv.levelData, st.fillChanged)
+      const cv = canvasDataRef.current;
+      const diff = st.fillChangedIndices
+        ? buildDiffFromGlazeFill(st.beforeOverrideMap, st.workingOverrideMap, cv.levelData, st.fillChangedIndices)
         : computeGlazeDiff(st.beforeOverrideMap, st.workingOverrideMap, cv.levelData);
       dispatch({
         type: "stroke_end",
@@ -526,7 +545,7 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
   }, [dispatch]);
 
   function hasPointerCapture(e: React.PointerEvent) {
-    const candidates = [e.currentTarget as HTMLElement | null, e.target as HTMLElement | null, prvRef.current];
+    const candidates = [e.currentTarget as HTMLElement | null, e.target as HTMLElement | null, previewCanvasRef.current];
     for (const el of candidates) {
       if (!el || typeof el.hasPointerCapture !== "function") continue;
       try {
@@ -568,8 +587,8 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
 
   /** Eyedropper: pick hue from any pixel (glazed or default). */
   const pickHue = useCallback((e: React.PointerEvent) => {
-    const cv = cvsRef.current;
-    const pos = canvasPosUnclamped(e, cursor.curRef.current, zoomRef.current, panRef.current, cv);
+    const cv = canvasDataRef.current;
+    const pos = canvasPosUnclamped(e, cursor.cursorCanvasRef.current, zoomRef.current, panRef.current, cv);
     if (!isCanvasPointInBounds(pos, cv)) return;
     const idx = pos.y * cv.width + pos.x;
     const lv = cv.levelData[idx] & LEVEL_MASK;
@@ -584,25 +603,25 @@ export function useGlazeDrawing(opts: GlazeDrawingOptions): GlazeDrawingResult {
       // Glazed pixel: pick from candidate's stored angle
       const candidates = LEVEL_CANDIDATES[lv];
       const ci = (cm - 1) % candidates.length;
-      angle = candidates[ci]?.angle ?? 0;
+      angle = candidates[ci]?.hueAngleDeg ?? 0;
     } else {
       // Default pixel: derive hue from colorLUT
       const rgb = s.current.colorLUT[lv];
       angle = rgb2hue(rgb[0], rgb[1], rgb[2]);
     }
-    s.current.setHueAngle(angle);
+    s.current.setHueAngleDeg(angle);
     s.current.announce(s.current.t("announce_hue_picked", Math.round(angle)));
     // eslint-disable-next-line react-hooks/exhaustive-deps -- all values read from sync refs
   }, []);
 
   return {
-    srcRef,
-    curRef: cursor.curRef,
+    sourceCanvasRef,
+    cursorCanvasRef: cursor.cursorCanvasRef,
     statusRef,
     imgCacheRef,
     drawingRef,
     cursorRafRef: cursor.cursorRafRef,
-    schedCursorRef: cursor.schedCursorRef,
+    scheduleCursorRedrawRef: cursor.scheduleCursorRedrawRef,
     cursorPosRef: cursor.cursorPosRef,
     onDown,
     onMove,

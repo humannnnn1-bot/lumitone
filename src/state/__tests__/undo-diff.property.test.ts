@@ -40,8 +40,8 @@ describe("undo diff properties", () => {
         const roundTrip = decompressDiff(compressDiff(diff));
 
         expectBytes(roundTrip.indices, diff.indices);
-        expectBytes(roundTrip.oldValues, diff.oldValues);
-        expectBytes(roundTrip.newValues, diff.newValues);
+        expectBytes(roundTrip.oldLevelValues, diff.oldLevelValues);
+        expectBytes(roundTrip.newLevelValues, diff.newLevelValues);
         expectBytes(applyDiff(before, roundTrip, false), after);
         expectBytes(applyDiff(after, roundTrip, true), before);
       }),
@@ -56,8 +56,8 @@ describe("undo diff properties", () => {
         const fillDiff = buildDiffFromFill(before, after, fullDiff.indices);
 
         expectBytes(fillDiff.indices, fullDiff.indices);
-        expectBytes(fillDiff.oldValues, fullDiff.oldValues);
-        expectBytes(fillDiff.newValues, fullDiff.newValues);
+        expectBytes(fillDiff.oldLevelValues, fullDiff.oldLevelValues);
+        expectBytes(fillDiff.newLevelValues, fullDiff.newLevelValues);
         expectBytes(applyDiff(before, fillDiff, false), after);
       }),
       PROPERTY_OPTIONS,

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { GRAY_VALUES, renderCanvasBuffers } from "../render-buf";
 import { LEVEL_INFO, buildColorLUT, DEFAULT_CANDIDATE_INDEX_BY_LEVEL } from "../../color-engine";
-import type { ImgCache } from "../../types";
+import type { ImageRenderCache } from "../../types";
 
 describe("GRAY_VALUES", () => {
   it("has 8 entries", () => {
@@ -67,7 +67,7 @@ describe("renderCanvasBuffers", () => {
 
   it("returns early when both canvases are null", () => {
     const data = new Uint8Array(4);
-    const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+    const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
     expect(() => renderCanvasBuffers(data, 2, 2, lut, null, null, cache)).not.toThrow();
     // Cache should remain null — nothing was created
     expect(cache.sourceImageData).toBeNull();
@@ -79,7 +79,7 @@ describe("renderCanvasBuffers", () => {
       h = 4;
     const data = new Uint8Array(w * h); // all zeros (level 0)
     const { canvas: srcCanvas } = createStubCanvas(w, h);
-    const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+    const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 
     renderCanvasBuffers(data, w, h, lut, srcCanvas, null, cache);
 
@@ -90,7 +90,7 @@ describe("renderCanvasBuffers", () => {
 
   it("recreates ImageData when canvas size changes", () => {
     const { canvas: srcCanvas } = createStubCanvas(4, 4);
-    const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+    const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
     const data4 = new Uint8Array(16);
 
     renderCanvasBuffers(data4, 4, 4, lut, srcCanvas, null, cache);
@@ -109,7 +109,7 @@ describe("renderCanvasBuffers", () => {
       h = 2;
     const data = new Uint8Array(w * h); // all level 0
     const { canvas: srcCanvas } = createStubCanvas(w, h);
-    const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+    const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 
     renderCanvasBuffers(data, w, h, lut, srcCanvas, null, cache);
 
@@ -125,7 +125,7 @@ describe("renderCanvasBuffers", () => {
       h = 2;
     const data = new Uint8Array(w * h).fill(7);
     const { canvas: srcCanvas } = createStubCanvas(w, h);
-    const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+    const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 
     renderCanvasBuffers(data, w, h, lut, srcCanvas, null, cache);
 
@@ -141,7 +141,7 @@ describe("renderCanvasBuffers", () => {
       h = 2;
     const data = new Uint8Array(w * h).fill(2); // level 2 = Red
     const { canvas: prvCanvas } = createStubCanvas(w, h);
-    const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+    const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 
     renderCanvasBuffers(data, w, h, lut, null, prvCanvas, cache);
 
@@ -159,7 +159,7 @@ describe("renderCanvasBuffers", () => {
     // Value 15 = 0b1111, should be masked to 7 = 0b0111
     const data = new Uint8Array(w * h).fill(15);
     const { canvas: srcCanvas } = createStubCanvas(w, h);
-    const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+    const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 
     renderCanvasBuffers(data, w, h, lut, srcCanvas, null, cache);
 
@@ -175,7 +175,7 @@ describe("renderCanvasBuffers", () => {
       h = 1;
     const data = new Uint8Array([0, 3, 5, 7]);
     const { canvas: srcCanvas } = createStubCanvas(w, h);
-    const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+    const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 
     renderCanvasBuffers(data, w, h, lut, srcCanvas, null, cache);
 
@@ -192,7 +192,7 @@ describe("renderCanvasBuffers", () => {
       const data = new Uint8Array(w * h).fill(7); // all white
 
       const { canvas: srcCanvas } = createStubCanvas(w, h);
-      const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+      const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 
       // First render: full canvas at level 0
       const data0 = new Uint8Array(w * h).fill(0);
@@ -222,7 +222,7 @@ describe("renderCanvasBuffers", () => {
         h = 4;
       const data = new Uint8Array(w * h).fill(3);
       const { canvas: srcCanvas } = createStubCanvas(w, h);
-      const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+      const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 
       // Dirty rect extends beyond canvas
       expect(() => {
@@ -235,7 +235,7 @@ describe("renderCanvasBuffers", () => {
         h = 4;
       const data = new Uint8Array(w * h).fill(5);
       const { canvas: srcCanvas } = createStubCanvas(w, h);
-      const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+      const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 
       // First render full
       renderCanvasBuffers(data.fill(0), w, h, lut, srcCanvas, null, cache);
@@ -256,7 +256,7 @@ describe("renderCanvasBuffers", () => {
     const data = new Uint8Array(w * h).fill(4); // level 4 = Green
     const { canvas: srcCanvas } = createStubCanvas(w, h);
     const { canvas: prvCanvas } = createStubCanvas(w, h);
-    const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+    const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 
     renderCanvasBuffers(data, w, h, lut, srcCanvas, prvCanvas, cache);
 
@@ -278,7 +278,7 @@ describe("renderCanvasBuffers", () => {
       h = 4;
     const data = new Uint8Array(8); // only 8 pixels for 16-pixel canvas
     const { canvas: srcCanvas } = createStubCanvas(w, h);
-    const cache: ImgCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
+    const cache: ImageRenderCache = { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 
     // Should not throw — renders min(w*h, data.length) pixels
     expect(() => renderCanvasBuffers(data, w, h, lut, srcCanvas, null, cache)).not.toThrow();

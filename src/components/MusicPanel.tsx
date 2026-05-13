@@ -16,7 +16,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
   const { t } = useTranslation();
   const {
     engine,
-    hueAngle,
+    hueAngleDeg,
     candidateOverridesByLevel,
     hoveredCandidate,
     setHoveredCandidate,
@@ -138,7 +138,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
       <div className="panel-layout music-layout">
         <div className="panel-canvas" style={{ "--display-max": "420px" } as React.CSSProperties}>
           <MusicHueAlphaControls
-            hueAngle={hueAngle}
+            hueAngleDeg={hueAngleDeg}
             alpha0={alpha0}
             hueTicks={hueTicks}
             onHueChange={handleHueChange}
@@ -147,7 +147,7 @@ export const MusicPanel = React.memo(function MusicPanel() {
 
           <MusicLevelCandidateGrid
             levelPreview={levelPreview}
-            hueAngle={hueAngle}
+            hueAngleDeg={hueAngleDeg}
             candidateOverridesByLevel={candidateOverridesByLevel}
             selectedLevels={selectedLevels}
             burstHighlight={burstHighlight}
@@ -159,9 +159,9 @@ export const MusicPanel = React.memo(function MusicPanel() {
           />
 
           <MusicLinkedVisualization
-            hueAngle={hueAngle}
+            hueAngleDeg={hueAngleDeg}
             brushLevel={0}
-            onHueAngleChange={handleLinkedHueAngleChange}
+            onHueAngleDegChange={handleLinkedHueAngleChange}
             hoveredCandidate={hoveredCandidate}
             onHoverCandidate={setHoveredCandidate}
             candidateOverridesByLevel={candidateOverridesByLevel}

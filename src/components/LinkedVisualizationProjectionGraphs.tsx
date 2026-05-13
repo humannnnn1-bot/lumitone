@@ -42,7 +42,7 @@ type DotHandlers = (d: LinkedVisualizationDot) => {
 
 interface ProjectionGraphProps {
   mode: 0 | 7;
-  hueAngle: number;
+  hueAngleDeg: number;
   alpha0: number;
   alpha7: number;
   activeAlpha: number;
@@ -77,7 +77,7 @@ const C2_PAIRS = [
 
 export function RightProjectionGraph({
   mode,
-  hueAngle,
+  hueAngleDeg,
   alpha0,
   alpha7,
   activeAlpha,
@@ -267,9 +267,9 @@ export function RightProjectionGraph({
           />
         );
       })}
-      <line x1={rPx(hueAngle)} y1={RYtop} x2={rPx(hueAngle)} y2={RYbot} stroke={C.accent} strokeWidth={1} opacity={0.5} />
+      <line x1={rPx(hueAngleDeg)} y1={RYtop} x2={rPx(hueAngleDeg)} y2={RYbot} stroke={C.accent} strokeWidth={1} opacity={0.5} />
       <rect
-        x={rPx(hueAngle) - 6}
+        x={rPx(hueAngleDeg) - 6}
         y={RYtop - 5}
         width={12}
         height={RH + 10}
@@ -305,7 +305,7 @@ export function RightProjectionGraph({
 
 export function BottomProjectionGraph({
   mode,
-  hueAngle,
+  hueAngleDeg,
   alpha0,
   alpha7,
   activeAlpha,
@@ -462,10 +462,10 @@ export function BottomProjectionGraph({
           {angleDeg}°
         </text>
       ))}
-      <line x1={BXleft} y1={bPy(hueAngle)} x2={BXright} y2={bPy(hueAngle)} stroke={C.accent} strokeWidth={1} opacity={0.5} />
+      <line x1={BXleft} y1={bPy(hueAngleDeg)} x2={BXright} y2={bPy(hueAngleDeg)} stroke={C.accent} strokeWidth={1} opacity={0.5} />
       <rect
         x={BXleft - 5}
-        y={bPy(hueAngle) - 6}
+        y={bPy(hueAngleDeg) - 6}
         width={BW + 10}
         height={12}
         fill="transparent"

@@ -16,7 +16,7 @@ function makeRefs(overrides?: Partial<CursorRefs>): CursorRefs {
   return {
     zoomRef: { current: 1 },
     panRef: { current: { x: 0, y: 0 } },
-    cvsRef: {
+    canvasDataRef: {
       current: {
         width: 8,
         height: 8,
@@ -24,8 +24,8 @@ function makeRefs(overrides?: Partial<CursorRefs>): CursorRefs {
         pixelCandidateOverrideMap: new Uint8Array(64),
       },
     },
-    displayWRef: { current: 80 },
-    displayHRef: { current: 80 },
+    displayWidthRef: { current: 80 },
+    displayHeightRef: { current: 80 },
     panningRef: { current: false },
     brushSizeRef: { current: 1 },
     toolRef: { current: "brush" as ToolId },
@@ -117,16 +117,16 @@ describe("useCursorOverlay", () => {
     mockRect(prv, 100, 120);
 
     const { result } = renderHook(() => useCursorOverlay(refs, statusRef));
-    result.current.curRef.current = cur;
-    result.current.prvCurRef.current = prv;
+    result.current.cursorCanvasRef.current = cur;
+    result.current.previewCursorRef.current = prv;
 
     act(() => {
       result.current.trackCursor(pointerEvent(22, 45));
-      result.current.trackCursorPrv(pointerEvent(125, 150));
+      result.current.trackPreviewCursor(pointerEvent(125, 150));
     });
 
     expect(result.current.cursorPosRef.current).toEqual({ dx: 12, dy: 25 });
-    expect(result.current.prvCursorPosRef.current).toEqual({ dx: 25, dy: 30 });
+    expect(result.current.previewCursorPosRef.current).toEqual({ dx: 25, dy: 30 });
     expect(raf.rafCallbacks).toHaveLength(1);
 
     raf.flushNextFrame();
@@ -136,11 +136,11 @@ describe("useCursorOverlay", () => {
 
     act(() => {
       result.current.clearCursor();
-      result.current.clearCursorPrv();
+      result.current.clearPreviewCursor();
     });
 
     expect(result.current.cursorPosRef.current).toBeNull();
-    expect(result.current.prvCursorPosRef.current).toBeNull();
+    expect(result.current.previewCursorPosRef.current).toBeNull();
     expect(status.textContent).toBe("\u2014");
     expect(status.title).toBe("");
 
@@ -167,12 +167,12 @@ describe("useCursorOverlay", () => {
     const raf = installRafQueue();
 
     const { result } = renderHook(() => useCursorOverlay(refs, { current: null }));
-    result.current.curRef.current = cur;
-    result.current.prvCurRef.current = prv;
+    result.current.cursorCanvasRef.current = cur;
+    result.current.previewCursorRef.current = prv;
 
     act(() => {
-      result.current.schedCursor();
-      result.current.schedCursor();
+      result.current.scheduleCursorRedraw();
+      result.current.scheduleCursorRedraw();
     });
 
     expect(raf.rafCallbacks).toHaveLength(1);
@@ -193,10 +193,10 @@ describe("useCursorOverlay", () => {
     const raf = installRafQueue();
 
     const { result } = renderHook(() => useCursorOverlay(refs, { current: null }));
-    result.current.curRef.current = cur;
+    result.current.cursorCanvasRef.current = cur;
 
     act(() => {
-      result.current.schedCursor();
+      result.current.scheduleCursorRedraw();
     });
 
     raf.flushNextFrame();
@@ -215,7 +215,7 @@ describe("useCursorOverlay", () => {
     mockRect(cur, 0, 0);
 
     const { result } = renderHook(() => useCursorOverlay(refs, { current: null }));
-    result.current.curRef.current = cur;
+    result.current.cursorCanvasRef.current = cur;
 
     act(() => {
       result.current.trackCursor(pointerEvent(40, 40));
@@ -228,7 +228,7 @@ describe("useCursorOverlay", () => {
     refs.toolRef.current = "eraser";
     refs.brushSizeRef.current = 5;
     act(() => {
-      result.current.schedCursor();
+      result.current.scheduleCursorRedraw();
     });
     raf.flushNextFrame();
     expect(ctx.rect).not.toHaveBeenCalled();
@@ -238,7 +238,7 @@ describe("useCursorOverlay", () => {
     vi.mocked(ctx.moveTo).mockClear();
     refs.toolRef.current = "fill";
     act(() => {
-      result.current.schedCursor();
+      result.current.scheduleCursorRedraw();
     });
     raf.flushNextFrame();
     expect(ctx.moveTo).toHaveBeenCalledTimes(2);
@@ -246,7 +246,7 @@ describe("useCursorOverlay", () => {
     vi.mocked(ctx.moveTo).mockClear();
     refs.toolRef.current = "line";
     act(() => {
-      result.current.schedCursor();
+      result.current.scheduleCursorRedraw();
     });
     raf.flushNextFrame();
     expect(ctx.moveTo).toHaveBeenCalled();
@@ -264,12 +264,12 @@ describe("useCursorOverlay", () => {
 
     act(() => {
       result.current.trackCursor(pointerEvent(10, 10));
-      result.current.trackCursorPrv(pointerEvent(10, 10));
+      result.current.trackPreviewCursor(pointerEvent(10, 10));
     });
     expect(result.current.cursorPosRef.current).toBeNull();
-    expect(result.current.prvCursorPosRef.current).toBeNull();
+    expect(result.current.previewCursorPosRef.current).toBeNull();
 
-    result.current.curRef.current = cur;
+    result.current.cursorCanvasRef.current = cur;
     refs.panningRef.current = true;
     act(() => {
       result.current.trackCursor(pointerEvent(40, 40));
@@ -280,7 +280,7 @@ describe("useCursorOverlay", () => {
 
     getContextSpy.mockImplementation(() => null);
     act(() => {
-      result.current.schedCursor();
+      result.current.scheduleCursorRedraw();
     });
     raf.flushNextFrame();
     expect(ctx.clearRect).toHaveBeenCalledTimes(1);

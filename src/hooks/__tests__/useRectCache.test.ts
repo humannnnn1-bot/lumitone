@@ -19,7 +19,7 @@ describe("useRectCache", () => {
     vi.restoreAllMocks();
   });
 
-  it("returns a getCurRect function", () => {
+  it("returns a getCursorRect function", () => {
     const ref = { current: null } as React.RefObject<HTMLElement | null>;
     const { result } = renderHook(() => useRectCache(ref));
     expect(typeof result.current).toBe("function");
@@ -46,7 +46,7 @@ describe("useRectCache", () => {
     expect(el.getBoundingClientRect).toHaveBeenCalledTimes(1);
   });
 
-  it("getCurRect uses cached value within TTL", () => {
+  it("getCursorRect uses cached value within TTL", () => {
     const mockRect = new DOMRect(10, 20, 300, 400);
     const el = document.createElement("div");
     vi.spyOn(el, "getBoundingClientRect").mockReturnValue(mockRect);

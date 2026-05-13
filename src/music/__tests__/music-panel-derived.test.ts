@@ -24,14 +24,14 @@ describe("music panel derived data", () => {
     expect(levels.map((level) => level.levelIndex)).toEqual([1, 2, 3, 4, 5, 6]);
     expect(levels[1]).toEqual({
       levelIndex: 2,
-      hueAngleDeg: LEVEL_CANDIDATES[2][directCandidate].angle,
+      hueAngleDeg: LEVEL_CANDIDATES[2][directCandidate].hueAngleDeg,
       luma255: LEVEL_INFO[2].gray,
     });
 
     const fallbackCandidate = findClosestCandidate(3, 123);
     expect(levels[2]).toEqual({
       levelIndex: 3,
-      hueAngleDeg: LEVEL_CANDIDATES[3][fallbackCandidate].angle,
+      hueAngleDeg: LEVEL_CANDIDATES[3][fallbackCandidate].hueAngleDeg,
       luma255: LEVEL_INFO[3].gray,
     });
   });
@@ -63,7 +63,7 @@ describe("music panel derived data", () => {
     const expectedCount = [2, 3, 4, 5].reduce((sum, levelIndex) => sum + LEVEL_CANDIDATES[levelIndex].length, 0);
 
     expect(ticks).toHaveLength(expectedCount);
-    expect(ticks.every((tick) => tick.deg >= 0 && tick.deg < 360)).toBe(true);
+    expect(ticks.every((tick) => tick.hueAngleDeg >= 0 && tick.hueAngleDeg < 360)).toBe(true);
     expect(ticks[0].color).toBe(`rgb(${LEVEL_CANDIDATES[2][0].rgb.join(",")})`);
   });
 });

@@ -43,7 +43,7 @@ interface MusicTransportAnimationOptions {
   prevTimeRef: MutableRefObject<number>;
   setAlpha0: Dispatch<SetStateAction<number>>;
   setAlpha7: Dispatch<SetStateAction<number>>;
-  setHueAngle: Dispatch<SetStateAction<number>>;
+  setHueAngleDeg: Dispatch<SetStateAction<number>>;
 }
 
 function useMusicTransportAnimation({
@@ -58,7 +58,7 @@ function useMusicTransportAnimation({
   prevTimeRef,
   setAlpha0,
   setAlpha7,
-  setHueAngle,
+  setHueAngleDeg,
 }: MusicTransportAnimationOptions): void {
   useEffect(() => {
     if (alphaDir === 0 && hueDir === 0 && phaseSpeed === 0) return;
@@ -79,7 +79,7 @@ function useMusicTransportAnimation({
           const rounded = Math.round(next) % 360;
           if (rounded !== lastHueRoundedRef.current) {
             lastHueRoundedRef.current = rounded;
-            setHueAngle(next);
+            setHueAngleDeg(next);
           }
         }
       }
@@ -101,7 +101,7 @@ function useMusicTransportAnimation({
     prevTimeRef,
     setAlpha0,
     setAlpha7,
-    setHueAngle,
+    setHueAngleDeg,
   ]);
 }
 
@@ -131,8 +131,8 @@ function useMusicLifecycleStop(onBackgroundStop: () => void, backgroundStoppedRe
 
 export function useMusicPanelController() {
   const {
-    hueAngle,
-    setHueAngle,
+    hueAngleDeg,
+    setHueAngleDeg,
     candidateOverridesByLevel,
     setCandidateOverridesByLevel,
     hoveredCandidate,
@@ -184,12 +184,12 @@ export function useMusicPanelController() {
     prevTimeRef,
     hueRef,
     lastHueRoundedRef,
-  } = useMusicTransportState(hueAngle);
+  } = useMusicTransportState(hueAngleDeg);
 
   useEffect(() => {
-    hueRef.current = hueAngle;
-    lastHueRoundedRef.current = Math.round(hueAngle);
-  }, [hueAngle, hueRef, lastHueRoundedRef]);
+    hueRef.current = hueAngleDeg;
+    lastHueRoundedRef.current = Math.round(hueAngleDeg);
+  }, [hueAngleDeg, hueRef, lastHueRoundedRef]);
 
   useMusicTransportAnimation({
     alphaDir,
@@ -203,7 +203,7 @@ export function useMusicPanelController() {
     prevTimeRef,
     setAlpha0,
     setAlpha7,
-    setHueAngle,
+    setHueAngleDeg,
   });
 
   const {
@@ -280,8 +280,8 @@ export function useMusicPanelController() {
   const { burstHighlight, setBurstHighlight, burstTimersRef } = useMusicBurstHighlightState();
 
   const sonificationLevels = useMemo(
-    () => buildMusicSonificationLevels(candidateOverridesByLevel, hueAngle),
-    [hueAngle, candidateOverridesByLevel],
+    () => buildMusicSonificationLevels(candidateOverridesByLevel, hueAngleDeg),
+    [hueAngleDeg, candidateOverridesByLevel],
   );
 
   const engine = useMusicEngine({
@@ -350,7 +350,7 @@ export function useMusicPanelController() {
   const handleResetDefaults = useMusicResetDefaultsHandler({
     engine,
     stopAll: handleStopAll,
-    palette: { setHueAngle, setCandidateOverridesByLevel, setSelectedLevels },
+    palette: { setHueAngleDeg, setCandidateOverridesByLevel, setSelectedLevels },
     transport: {
       setDroneMuted,
       setMuted,
@@ -384,7 +384,7 @@ export function useMusicPanelController() {
     resumeDrone,
     ensureAudio,
     sonificationLevels,
-    palette: { setHueAngle, setCandidateOverridesByLevel, setSelectedLevels, prevCandidatesRef },
+    palette: { setHueAngleDeg, setCandidateOverridesByLevel, setSelectedLevels, prevCandidatesRef },
     transport: { setAlpha0, setAlpha7, setOriginMode },
     burst: { setBurstHighlight, burstTimersRef },
   });
@@ -422,7 +422,10 @@ export function useMusicPanelController() {
     },
   });
 
-  const levelPreview = useMemo(() => buildMusicLevelPreview(candidateOverridesByLevel, hueAngle), [hueAngle, candidateOverridesByLevel]);
+  const levelPreview = useMemo(
+    () => buildMusicLevelPreview(candidateOverridesByLevel, hueAngleDeg),
+    [hueAngleDeg, candidateOverridesByLevel],
+  );
   const activeLevels = useMemo(() => buildActiveMusicLevels(levelPreview), [levelPreview]);
   const hueTicks = useMemo(() => buildMusicHueTicks(), []);
 
@@ -438,7 +441,7 @@ export function useMusicPanelController() {
 
   return {
     engine,
-    hueAngle,
+    hueAngleDeg,
     candidateOverridesByLevel,
     hoveredCandidate,
     setHoveredCandidate,

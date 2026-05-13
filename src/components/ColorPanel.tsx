@@ -10,12 +10,12 @@ import { C, Z, SP, R } from "../styles/tokens";
 import { getCanvasPanelClassName, getCanvasPanelStyle, getPanelLayoutClassName } from "../utils/panel-layout";
 
 interface ColorPanelProps {
-  prvRef: React.RefObject<HTMLCanvasElement | null>;
-  prvCurRef: React.RefObject<HTMLCanvasElement | null>;
-  prvWrapRef: React.RefObject<HTMLDivElement | null>;
+  previewCanvasRef: React.RefObject<HTMLCanvasElement | null>;
+  previewCursorRef: React.RefObject<HTMLCanvasElement | null>;
+  previewCanvasWrapRef: React.RefObject<HTMLDivElement | null>;
   statusRef: React.RefObject<HTMLDivElement | null>;
-  displayW: number;
-  displayH: number;
+  displayWidth: number;
+  displayHeight: number;
   canvasTransform: React.CSSProperties;
   canvasCursor: string;
   candidateIndexByLevel: readonly number[];
@@ -29,12 +29,12 @@ interface ColorPanelProps {
 
 export const ColorPanel = React.memo(function ColorPanel(props: ColorPanelProps) {
   const {
-    prvRef,
-    prvCurRef,
-    prvWrapRef,
+    previewCanvasRef,
+    previewCursorRef,
+    previewCanvasWrapRef,
     statusRef,
-    displayW,
-    displayH,
+    displayWidth,
+    displayHeight,
     canvasTransform,
     canvasCursor,
     candidateIndexByLevel,
@@ -52,32 +52,32 @@ export const ColorPanel = React.memo(function ColorPanel(props: ColorPanelProps)
       if (e.key === "+" || e.key === "=") {
         e.preventDefault();
         panZoom.setZoom((z) => Math.min(ZOOM_MAX, z * ZOOM_STEP));
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       } else if (e.key === "-") {
         e.preventDefault();
         panZoom.setZoom((z) => Math.max(ZOOM_MIN, z / ZOOM_STEP));
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       } else if (e.key === "ArrowLeft") {
         e.preventDefault();
         panZoom.setPan((p) => ({ ...p, x: p.x + 10 }));
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       } else if (e.key === "ArrowRight") {
         e.preventDefault();
         panZoom.setPan((p) => ({ ...p, x: p.x - 10 }));
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         panZoom.setPan((p) => ({ ...p, y: p.y + 10 }));
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
         panZoom.setPan((p) => ({ ...p, y: p.y - 10 }));
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       } else if (e.key === "0") {
         e.preventDefault();
         panZoom.setZoom(1);
         panZoom.setPan({ x: 0, y: 0 });
-        panZoom.schedCursorRef.current?.();
+        panZoom.scheduleCursorRedrawRef.current?.();
       }
     },
     [panZoom],
@@ -94,7 +94,7 @@ export const ColorPanel = React.memo(function ColorPanel(props: ColorPanelProps)
         panZoom.startPan(e);
         return;
       }
-      drawing.onDownPrv(e);
+      drawing.onPreviewPointerDown(e);
     },
     [panZoom, drawing],
   );
@@ -105,7 +105,7 @@ export const ColorPanel = React.memo(function ColorPanel(props: ColorPanelProps)
         panZoom.movePan(e);
         return;
       }
-      drawing.onMovePrv(e);
+      drawing.onPreviewPointerMove(e);
     },
     [panZoom, drawing],
   );
@@ -132,49 +132,56 @@ export const ColorPanel = React.memo(function ColorPanel(props: ColorPanelProps)
           </span>
         </span>
       </div>
-      <div className={getPanelLayoutClassName(displayW, displayH)}>
-        <div className={getCanvasPanelClassName(displayW, displayH)} style={getCanvasPanelStyle(displayW, displayH)}>
+      <div className={getPanelLayoutClassName(displayWidth, displayHeight)}>
+        <div className={getCanvasPanelClassName(displayWidth, displayHeight)} style={getCanvasPanelStyle(displayWidth, displayHeight)}>
           <div
             className="canvas-workspace"
-            ref={prvWrapRef}
+            ref={previewCanvasWrapRef}
             tabIndex={0}
             aria-label={t("aria_color_preview")}
             onKeyDown={handleKeyDown}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
-            onPointerLeave={drawing.onPointerLeavePrv}
-            onMouseLeave={drawing.clearCursorPrv}
+            onPointerLeave={drawing.onPreviewPointerLeave}
+            onMouseLeave={drawing.clearPreviewCursor}
             onContextMenu={handleContextMenu}
             style={{
               border: `1px solid ${C.border}`,
               borderRadius: R.lg,
               overflow: "hidden",
               position: "relative",
-              width: displayW,
-              height: displayH,
+              width: displayWidth,
+              height: displayHeight,
               cursor: canvasCursor,
               touchAction: "none",
               ...S_CHECKERBOARD,
             }}
           >
             <canvas
-              ref={prvRef}
+              ref={previewCanvasRef}
               role="img"
               aria-label={t("aria_color_preview_canvas")}
-              style={{ width: displayW, height: displayH, display: "block", ...canvasTransform, cursor: canvasCursor, touchAction: "none" }}
+              style={{
+                width: displayWidth,
+                height: displayHeight,
+                display: "block",
+                ...canvasTransform,
+                cursor: canvasCursor,
+                touchAction: "none",
+              }}
             />
             <canvas
               className="canvas-cursor-overlay"
-              ref={prvCurRef}
-              width={displayW}
-              height={displayH}
+              ref={previewCursorRef}
+              width={displayWidth}
+              height={displayHeight}
               style={{
                 position: "absolute",
                 top: 0,
                 left: 0,
-                width: displayW,
-                height: displayH,
+                width: displayWidth,
+                height: displayHeight,
                 pointerEvents: "none",
                 zIndex: Z.cursorOverlay,
               }}

@@ -109,15 +109,15 @@ export function tryStartPan(
 export interface DrawingRefs {
   zoomRef: React.MutableRefObject<number>;
   panRef: React.MutableRefObject<{ x: number; y: number }>;
-  cvsRef: React.MutableRefObject<CanvasData>;
+  canvasDataRef: React.MutableRefObject<CanvasData>;
 }
 
 /**
  * Compute canvas-pixel position from a pointer event using shared refs.
  * `refEl` is the canvas element used for bounding-rect lookup.
  */
-export function cPosFromRefs(e: React.PointerEvent, refEl: HTMLCanvasElement | null, refs: DrawingRefs): Point {
-  return canvasPos(e, refEl, refs.zoomRef.current, refs.panRef.current, refs.cvsRef.current);
+export function canvasPosFromRefs(e: React.PointerEvent, refEl: HTMLCanvasElement | null, refs: DrawingRefs): Point {
+  return canvasPos(e, refEl, refs.zoomRef.current, refs.panRef.current, refs.canvasDataRef.current);
 }
 
 /**
@@ -137,7 +137,7 @@ export function updateStatusBase(
   formatText: (pos: Point, lv: number, info: { name: string }, idx: number) => StatusTextLike,
 ): void {
   if (!statusEl) return;
-  const cv = refs.cvsRef.current;
+  const cv = refs.canvasDataRef.current;
   const pos = canvasPosUnclamped(e, refEl, refs.zoomRef.current, refs.panRef.current, cv);
   if (pos.x < 0 || pos.x >= cv.width || pos.y < 0 || pos.y >= cv.height) {
     statusEl.textContent = "\u2014";

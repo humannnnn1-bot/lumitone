@@ -5,13 +5,13 @@ import { describe, expect, it, vi } from "vitest";
 import { useCanvasCoordination } from "../useCanvasCoordination";
 import type { CanvasDrawingResult } from "../useCanvasDrawing";
 import type { GlazeDrawingResult } from "../useGlazeDrawing";
-import type { CanvasData, ImgCache } from "../../types";
+import type { CanvasData, ImageRenderCache } from "../../types";
 
 function ref<T>(current: T): React.MutableRefObject<T> {
   return { current };
 }
 
-function makeImgCache(): ImgCache {
+function makeImgCache(): ImageRenderCache {
   return { sourceImageData: null, previewImageData: null, sourcePixels32: null, previewPixels32: null };
 }
 
@@ -38,18 +38,18 @@ function mockWrapRect(el: HTMLElement) {
   });
 }
 
-function makeDrawingResult(schedCursor: (() => void) | null): CanvasDrawingResult {
+function makeDrawingResult(scheduleCursorRedraw: (() => void) | null): CanvasDrawingResult {
   return {
-    srcRef: ref<HTMLCanvasElement | null>(null),
-    curRef: ref<HTMLCanvasElement | null>(null),
-    prvCurRef: ref<HTMLCanvasElement | null>(null),
+    sourceCanvasRef: ref<HTMLCanvasElement | null>(null),
+    cursorCanvasRef: ref<HTMLCanvasElement | null>(null),
+    previewCursorRef: ref<HTMLCanvasElement | null>(null),
     statusRef: ref<HTMLDivElement | null>(null),
     imgCacheRef: ref(makeImgCache()),
     strokeRef: ref(null),
     drawingRef: ref(false),
     lastRef: ref(null),
     cursorRafRef: ref(null),
-    schedCursorRef: ref(schedCursor),
+    scheduleCursorRedrawRef: ref(scheduleCursorRedraw),
     cursorPosRef: ref(null),
     onDown: vi.fn(),
     onMove: vi.fn(),
@@ -59,25 +59,25 @@ function makeDrawingResult(schedCursor: (() => void) | null): CanvasDrawingResul
     onWorkspaceLeave: vi.fn(),
     trackCursor: vi.fn(),
     clearCursor: vi.fn(),
-    onDownPrv: vi.fn(),
-    onMovePrv: vi.fn(),
-    onWorkspaceDownPrv: vi.fn(),
-    onWorkspaceMovePrv: vi.fn(),
+    onPreviewPointerDown: vi.fn(),
+    onPreviewPointerMove: vi.fn(),
+    onPreviewWorkspacePointerDown: vi.fn(),
+    onPreviewWorkspacePointerMove: vi.fn(),
     onWorkspaceLeavePrv: vi.fn(),
-    trackCursorPrv: vi.fn(),
-    clearCursorPrv: vi.fn(),
+    trackPreviewCursor: vi.fn(),
+    clearPreviewCursor: vi.fn(),
   };
 }
 
-function makeGlazeDrawingResult(schedCursor: (() => void) | null = null): GlazeDrawingResult {
+function makeGlazeDrawingResult(scheduleCursorRedraw: (() => void) | null = null): GlazeDrawingResult {
   return {
-    srcRef: ref<HTMLCanvasElement | null>(null),
-    curRef: ref<HTMLCanvasElement | null>(null),
+    sourceCanvasRef: ref<HTMLCanvasElement | null>(null),
+    cursorCanvasRef: ref<HTMLCanvasElement | null>(null),
     statusRef: ref<HTMLDivElement | null>(null),
     imgCacheRef: ref(makeImgCache()),
     drawingRef: ref(false),
     cursorRafRef: ref(null),
-    schedCursorRef: ref(schedCursor),
+    scheduleCursorRedrawRef: ref(scheduleCursorRedraw),
     cursorPosRef: ref(null),
     onDown: vi.fn(),
     onMove: vi.fn(),
@@ -99,34 +99,34 @@ describe("useCanvasCoordination", () => {
     const secondGlazeScheduler = vi.fn();
     const drawing = makeDrawingResult(firstScheduler);
     const glazeDrawing = makeGlazeDrawingResult(firstGlazeScheduler);
-    const sharedSchedCursorRef = ref<(() => void) | null>(null);
+    const sharedScheduleCursorRedrawRef = ref<(() => void) | null>(null);
     const baseOptions = {
       canvasData: makeCanvasData(),
       colorLUT: Array.from({ length: 8 }, () => [0, 0, 0] as [number, number, number]),
       activeTabId: "source" as const,
       drawing,
       glazeDrawing,
-      srcWrapRef: ref<HTMLDivElement | null>(null),
-      prvWrapRef: ref<HTMLDivElement | null>(null),
+      sourceCanvasWrapRef: ref<HTMLDivElement | null>(null),
+      previewCanvasWrapRef: ref<HTMLDivElement | null>(null),
       glazeWrapRef: ref<HTMLDivElement | null>(null),
-      prvRef: ref<HTMLCanvasElement | null>(null),
-      hexPrvRef: ref<HTMLCanvasElement | null>(null),
-      glazePrvRef: ref<HTMLCanvasElement | null>(null),
-      sharedSchedCursorRef,
+      previewCanvasRef: ref<HTMLCanvasElement | null>(null),
+      hexPreviewCanvasRef: ref<HTMLCanvasElement | null>(null),
+      glazePreviewCanvasRef: ref<HTMLCanvasElement | null>(null),
+      sharedScheduleCursorRedrawRef,
       onWheel: vi.fn(),
     };
 
     const { rerender } = renderHook(() => useCanvasCoordination(baseOptions));
 
-    sharedSchedCursorRef.current?.();
+    sharedScheduleCursorRedrawRef.current?.();
     expect(firstScheduler).toHaveBeenCalledTimes(1);
     expect(firstGlazeScheduler).toHaveBeenCalledTimes(1);
 
-    drawing.schedCursorRef.current = secondScheduler;
-    glazeDrawing.schedCursorRef.current = secondGlazeScheduler;
+    drawing.scheduleCursorRedrawRef.current = secondScheduler;
+    glazeDrawing.scheduleCursorRedrawRef.current = secondGlazeScheduler;
     rerender();
 
-    sharedSchedCursorRef.current?.();
+    sharedScheduleCursorRedrawRef.current?.();
     expect(secondScheduler).toHaveBeenCalledTimes(1);
     expect(secondGlazeScheduler).toHaveBeenCalledTimes(1);
   });
@@ -144,13 +144,13 @@ describe("useCanvasCoordination", () => {
         activeTabId: "source",
         drawing,
         glazeDrawing,
-        srcWrapRef: ref(srcWrap),
-        prvWrapRef: ref<HTMLDivElement | null>(null),
+        sourceCanvasWrapRef: ref(srcWrap),
+        previewCanvasWrapRef: ref<HTMLDivElement | null>(null),
         glazeWrapRef: ref<HTMLDivElement | null>(null),
-        prvRef: ref<HTMLCanvasElement | null>(null),
-        hexPrvRef: ref<HTMLCanvasElement | null>(null),
-        glazePrvRef: ref<HTMLCanvasElement | null>(null),
-        sharedSchedCursorRef: ref<(() => void) | null>(null),
+        previewCanvasRef: ref<HTMLCanvasElement | null>(null),
+        hexPreviewCanvasRef: ref<HTMLCanvasElement | null>(null),
+        glazePreviewCanvasRef: ref<HTMLCanvasElement | null>(null),
+        sharedScheduleCursorRedrawRef: ref<(() => void) | null>(null),
         onWheel: vi.fn(),
       }),
     );
@@ -164,7 +164,7 @@ describe("useCanvasCoordination", () => {
       document.dispatchEvent(new MouseEvent("mousemove", { clientX: 5, clientY: 50 }));
     });
     expect(drawing.clearCursor).toHaveBeenCalled();
-    expect(drawing.clearCursorPrv).not.toHaveBeenCalled();
+    expect(drawing.clearPreviewCursor).not.toHaveBeenCalled();
     expect(glazeDrawing.clearCursor).not.toHaveBeenCalled();
   });
 });

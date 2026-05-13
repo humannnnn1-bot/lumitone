@@ -63,7 +63,7 @@ export function computeBoundaryDistance(
   levelData: Uint8Array,
   w: number,
   h: number,
-  isEdge: Uint8Array,
+  edgeMask: Uint8Array,
   boundaryDistance: Float32Array,
   pixelCandidateOverrideMap?: Uint8Array,
 ) {
@@ -78,14 +78,14 @@ export function computeBoundaryDistance(
         (x > 0 && vizKey(levelData, pixelCandidateOverrideMap, i - 1) !== pix) ||
         (y > 0 && vizKey(levelData, pixelCandidateOverrideMap, i - w) !== pix)
       )
-        isEdge[i] = 1;
+        edgeMask[i] = 1;
     }
   }
   const queue = new Int32Array(n);
   let head = 0,
     tail = 0;
   for (let i = 0; i < n; i++) {
-    if (isEdge[i]) {
+    if (edgeMask[i]) {
       boundaryDistance[i] = 0;
       queue[tail++] = i;
     } else boundaryDistance[i] = -1;
@@ -145,7 +145,7 @@ export function computeRegion(
   w: number,
   h: number,
   regionId: Int32Array,
-  isEdge: Uint8Array,
+  edgeMask: Uint8Array,
   pixelCandidateOverrideMap?: Uint8Array,
 ) {
   const n = w * h;
@@ -160,7 +160,7 @@ export function computeRegion(
         (x > 0 && vizKey(levelData, pixelCandidateOverrideMap, i - 1) !== pix) ||
         (y > 0 && vizKey(levelData, pixelCandidateOverrideMap, i - w) !== pix)
       )
-        isEdge[i] = 1;
+        edgeMask[i] = 1;
     }
   }
   const parent = new Int32Array(n);

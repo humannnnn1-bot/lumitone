@@ -21,8 +21,8 @@ const cursorOverlayMocks = vi.hoisted(() => ({
 
 vi.mock("../../state/DrawingContext", () => ({
   useDrawingContext: () => ({
-    displayW: 320,
-    displayH: 320,
+    displayWidth: 320,
+    displayHeight: 320,
     panningRef: mockPanningRef,
     spaceRef: { current: false },
     zoomRef: mockZoomRef,
@@ -37,18 +37,20 @@ vi.mock("../../state/DrawingContext", () => ({
 
 vi.mock("../useFloodFillWorker", () => ({
   useFloodFillWorker: () => ({
-    requestCanvasFill: vi.fn(() => Promise.resolve({ levelData: new Uint8Array(100), changed: new Uint32Array(0), truncated: false })),
+    requestCanvasFill: vi.fn(() =>
+      Promise.resolve({ levelData: new Uint8Array(100), changedIndices: new Uint32Array(0), truncated: false }),
+    ),
     requestGlazeFill: vi.fn(() =>
-      Promise.resolve({ pixelCandidateOverrideMap: new Uint8Array(100), changed: new Uint32Array(0), truncated: false }),
+      Promise.resolve({ pixelCandidateOverrideMap: new Uint8Array(100), changedIndices: new Uint32Array(0), truncated: false }),
     ),
   }),
 }));
 
 vi.mock("../useCursorOverlay", () => ({
   useCursorOverlay: () => ({
-    curRef: { current: document.createElement("canvas") },
+    cursorCanvasRef: { current: document.createElement("canvas") },
     cursorRafRef: { current: null },
-    schedCursorRef: { current: null },
+    scheduleCursorRedrawRef: { current: null },
     cursorPosRef: { current: null },
     trackCursor: cursorOverlayMocks.trackCursor,
     clearCursor: cursorOverlayMocks.clearCursor,
@@ -74,11 +76,11 @@ function makeOpts(overrides?: Partial<Parameters<typeof useGlazeDrawing>[0]>) {
     dispatch: vi.fn(),
     colorLUT: Array.from({ length: 8 }, () => [128, 128, 128] as [number, number, number]),
     candidateIndexByLevel: [0, 0, 0, 0, 0, 0, 0, 0],
-    hueAngle: 180,
-    setHueAngle: mockSetHueAngle,
+    hueAngleDeg: 180,
+    setHueAngleDeg: mockSetHueAngle,
     glazeTool: "glaze_brush" as const,
     brushSize: 1,
-    prvRef: { current: null as HTMLCanvasElement | null },
+    previewCanvasRef: { current: null as HTMLCanvasElement | null },
     candidateOverridesByLevel: new Map<number, number>(),
     ...overrides,
   };
@@ -142,7 +144,7 @@ describe("useGlazeDrawing", () => {
     canvasData.levelData[centerIndex] = 2;
     const dispatch = vi.fn();
     const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, dispatch, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -176,7 +178,7 @@ describe("useGlazeDrawing", () => {
     canvasData.levelData.fill(2);
     const dispatch = vi.fn();
     const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, dispatch, brushSize: 10 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -211,7 +213,7 @@ describe("useGlazeDrawing", () => {
       canvasData.pixelCandidateOverrideMap.fill(initialPixelCandidateOverrideValue);
       const dispatch = vi.fn();
       const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, dispatch, glazeTool, brushSize: 1 })));
-      const canvas = result.current.curRef.current!;
+      const canvas = result.current.cursorCanvasRef.current!;
       mockCanvasRect(canvas);
 
       act(() => {
@@ -235,7 +237,7 @@ describe("useGlazeDrawing", () => {
     canvasData.levelData.fill(2);
     const dispatch = vi.fn();
     const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, dispatch, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -272,7 +274,7 @@ describe("useGlazeDrawing", () => {
       const canvasData = makeCvs(10, 10);
       canvasData.levelData.fill(2);
       const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, brushSize: 1 })));
-      const canvas = result.current.curRef.current!;
+      const canvas = result.current.cursorCanvasRef.current!;
       mockCanvasRect(canvas);
 
       act(() => {
@@ -306,7 +308,7 @@ describe("useGlazeDrawing", () => {
     const canvasData = makeCvs(10, 10);
     canvasData.levelData[0] = level;
     const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -322,7 +324,7 @@ describe("useGlazeDrawing", () => {
     canvasData.levelData.fill(2);
     const dispatch = vi.fn();
     const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, dispatch, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -348,7 +350,7 @@ describe("useGlazeDrawing", () => {
     const canvasData = makeCvs(10, 10);
     canvasData.levelData.fill(2);
     const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -364,7 +366,7 @@ describe("useGlazeDrawing", () => {
     const canvasData = makeCvs(10, 10);
     canvasData.levelData.fill(2);
     const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData, brushSize: 1 })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {
@@ -381,7 +383,7 @@ describe("useGlazeDrawing", () => {
     const canvasData = makeCvs(10, 10);
     canvasData.levelData[5 * 10 + 0] = 2;
     const { result } = renderHook(() => useGlazeDrawing(makeOpts({ canvasData })));
-    const canvas = result.current.curRef.current!;
+    const canvas = result.current.cursorCanvasRef.current!;
     mockCanvasRect(canvas);
 
     act(() => {

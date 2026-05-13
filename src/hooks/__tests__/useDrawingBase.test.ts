@@ -5,7 +5,7 @@ import {
   isCanvasPointInBounds,
   trySetPointerCapture,
   tryStartPan,
-  cPosFromRefs,
+  canvasPosFromRefs,
   updateStatusBase,
 } from "../useDrawingBase";
 import type { CanvasData } from "../../types";
@@ -203,19 +203,19 @@ describe("tryStartPan", () => {
   });
 });
 
-/* ── cPosFromRefs ───────────────────────────────────────────── */
-describe("cPosFromRefs", () => {
+/* ── canvasPosFromRefs ───────────────────────────────────────────── */
+describe("canvasPosFromRefs", () => {
   it("delegates to canvasPos with values from refs", () => {
     const canvasData = makeCvs(16, 16);
     const refs = {
       zoomRef: { current: 2 },
       panRef: { current: { x: 3, y: 5 } },
-      cvsRef: { current: canvasData },
+      canvasDataRef: { current: canvasData },
     };
     const el = makeFakeCanvas(makeRect(0, 0, 160, 160));
     const event = { clientX: 80, clientY: 80 } as React.PointerEvent;
 
-    const pos = cPosFromRefs(event, el, refs);
+    const pos = canvasPosFromRefs(event, el, refs);
 
     // Should match calling canvasPos directly with same args
     const expected = canvasPos(event, el, 2, { x: 3, y: 5 }, canvasData);
@@ -226,11 +226,11 @@ describe("cPosFromRefs", () => {
     const refs = {
       zoomRef: { current: 1 },
       panRef: { current: { x: 0, y: 0 } },
-      cvsRef: { current: makeCvs() },
+      canvasDataRef: { current: makeCvs() },
     };
     const event = { clientX: 50, clientY: 50 } as React.PointerEvent;
 
-    const pos = cPosFromRefs(event, null, refs);
+    const pos = canvasPosFromRefs(event, null, refs);
     expect(pos).toEqual({ x: 0, y: 0 });
   });
 });
@@ -242,7 +242,7 @@ describe("updateStatusBase", () => {
     const refs = {
       zoomRef: { current: 1 },
       panRef: { current: { x: 0, y: 0 } },
-      cvsRef: { current: canvasData },
+      canvasDataRef: { current: canvasData },
     };
     const el = makeFakeCanvas(makeRect(0, 0, 100, 100));
     const statusEl = { textContent: "", title: "inside" } as HTMLDivElement;
@@ -261,7 +261,7 @@ describe("updateStatusBase", () => {
     const refs = {
       zoomRef: { current: 1 },
       panRef: { current: { x: 0, y: 0 } },
-      cvsRef: { current: canvasData },
+      canvasDataRef: { current: canvasData },
     };
     const el = makeFakeCanvas(makeRect(0, 0, 100, 100));
     const statusEl = { textContent: "", title: "" } as HTMLDivElement;
