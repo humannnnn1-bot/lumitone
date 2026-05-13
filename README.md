@@ -8,7 +8,7 @@
 
 CHROMALUM is a browser-based React/Vite app for pixel art and algebraic color theory,
 built around an eight-level luma model based on BT.601. It combines canvas drawing,
-color remapping, glaze variants, gallery and map/statistics views, plus Theory and
+color remapping, glaze variants, gallery and Map analysis views, plus Theory and
 Music tabs that explore the same eight-level structure through `GF(2)^3`, RGB cube
 geometry, the Fano plane, Hamming codes, and related polyhedral structures.
 
@@ -33,7 +33,7 @@ geometry, the Fano plane, Hamming codes, and related polyhedral structures.
   source luma structure.
 - Gallery generation for color-pattern variants, bookmarks, previews, and
   PNG exports.
-- Map/statistics views for composition, tone, color tone, connected regions,
+- Map analysis views for composition, tone, color tone, connected regions,
   gradients, boundary distance, isolation, and local diversity.
 - Theory tab explaining the color system through binary levels, XOR, cube
   geometry, the Fano plane, Hamming codes, tetrahedra, octahedra, and compound

@@ -14,7 +14,7 @@ const analyzeMocks = vi.hoisted(() => ({
 vi.mock("../../i18n", () => ({
   useTranslation: () => ({
     t: (key: string, ...args: unknown[]) => {
-      if (key === "map_title") return "Statistics";
+      if (key === "map_title") return "Pixel Map Analysis";
       if (key === "map_composition") return "Composition";
       return args.length ? `${key}(${args.join(",")})` : key;
     },
@@ -69,9 +69,9 @@ describe("AnalyzePanel", () => {
     analyzeMocks.usePixelMaps.mockReturnValue(analyzeMocks.pixelMaps);
   });
 
-  it("renders stats title", () => {
+  it("renders map title", () => {
     render(<AnalyzePanel {...makeProps()} />);
-    expect(screen.getByText("Statistics")).toBeTruthy();
+    expect(screen.getByText("Pixel Map Analysis")).toBeTruthy();
   });
 
   it("shows map mode buttons", () => {

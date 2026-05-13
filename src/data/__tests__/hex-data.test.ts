@@ -31,7 +31,7 @@ describe("HEX_VERTICES", () => {
     expect(names).toEqual(["B", "C", "G", "M", "R", "Y"]);
   });
 
-  it("each vertex has a valid luminance level 0-7", () => {
+  it("each vertex has a valid luma level 0-7", () => {
     for (const v of HEX_VERTICES) {
       expect(v.level).toBeGreaterThanOrEqual(0);
       expect(v.level).toBeLessThanOrEqual(7);

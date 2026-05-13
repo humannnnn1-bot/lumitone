@@ -96,6 +96,10 @@ drawing hooks, attaches non-passive wheel listeners to the source, color, and
 glaze workspaces, and redraws the source/color/hex/glaze buffers when canvas
 state or color lookup tables change.
 
+Tab state uses stable ids from `src/tabs.ts`. The Map tab's current id and
+canonical URL hash are both `map`; the old `#stats` hash remains a legacy alias
+that opens the Map tab.
+
 ## Rendering
 
 `renderCanvasBuffers` converts luma levels plus the active color lookup table

@@ -110,7 +110,7 @@ export const en = {
   help_line: "Line",
   help_rect: "Rect",
   help_ellipse: "Ellipse",
-  help_level: "Select luminance level",
+  help_level: "Select luma level",
   help_brush_size: "Brush size +/-",
   help_pan: "Pan",
   help_zoom: "Zoom",
@@ -185,7 +185,7 @@ export const en = {
   about_body_1:
     "CHROMALUM is an art tool that starts from eight colors: the three primary colors of light, the three primary colors of pigment, plus white and black. It rearranges brightness into relationships of color, supported by an algebraic structure behind the eight-color system.",
   about_body_2:
-    "Start by drawing in the Source tab or loading an image. In the Hex and Color tabs, assign colors to the eight luminance levels and shape the palette. The Gallery tab lets you browse all resulting pattern combinations. In the Glaze tab, you can overlay alternative candidate colors, while the Map tab analyzes information in the canvas.",
+    "Start by drawing in the Source tab or loading an image. In the Hex and Color tabs, assign colors to the eight luma levels and shape the palette. The Gallery tab lets you browse all resulting pattern combinations. In the Glaze tab, you can overlay alternative candidate colors, while the Map tab analyzes information in the canvas.",
   about_body_3: "The Theory tab explains the underlying color system, and the Music tab explores the same color structure through sound.",
 
   // Tablist
@@ -373,7 +373,7 @@ export const en = {
   theory_fano_cmy_eq: "M\u2295C\u2295Y = K \u2192 collinear!",
   theory_fano_cmy_why: "011\u2295101\u2295110=000; K=000 is the zero vector (not a Fano point)",
 
-  // Stats panel
+  // Map panel
   map_title: "PIXEL MAP ANALYSIS",
   map_level: "L{0} {1}",
   map_unused: "Unused",

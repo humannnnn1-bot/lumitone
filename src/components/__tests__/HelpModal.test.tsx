@@ -17,7 +17,7 @@ vi.mock("../../i18n", () => ({
         help_line: "Line",
         help_rect: "Rect",
         help_ellipse: "Ellipse",
-        help_level: "Select luminance level",
+        help_level: "Select luma level",
         help_brush_size: "Brush size +/-",
         help_pan: "Pan",
         help_zoom: "Zoom",

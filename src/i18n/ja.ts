@@ -185,7 +185,7 @@ export const ja = {
   about_body_1:
     "CHROMALUMは、光の三原色と色の三原色、そして白と黒からなる八色を出発点に、明るさを色の関係へと組み替えていくアートツールです。この色彩表現の奥には、八つの色をめぐる代数的な構造があります。",
   about_body_2:
-    "まずはSourceタブで絵を描くか、画像を読み込むところから始めます。HexタブやColorタブで八段階の輝度に色を割り当て、配色を決めます。その組み合わせの全パターンはGalleryタブで参照できます。Glazeタブでは別の候補色をオーバーレイすることができます。キャンバスの情報の分析にはMapタブを使います。",
+    "まずはSourceタブで絵を描くか、画像を読み込むところから始めます。HexタブやColorタブで八段階のルマに色を割り当て、配色を決めます。その組み合わせの全パターンはGalleryタブで参照できます。Glazeタブでは別の候補色をオーバーレイすることができます。キャンバスの情報の分析にはMapタブを使います。",
   about_body_3: "Theoryタブでは色彩体系の理論を読み解き、Musicタブでは同じ色彩構造の音響化を扱います。",
 
   // Tablist
@@ -374,7 +374,7 @@ export const ja = {
   theory_fano_cmy_eq: "M\u2295C\u2295Y = K \u2192 共線！",
   theory_fano_cmy_why: "011\u2295101\u2295110=000；K=000 は零ベクトル（ファノ点ではない）",
 
-  // Stats panel
+  // Map panel
   map_title: "PIXEL MAP ANALYSIS",
   map_level: "L{0} {1}",
   map_unused: "未使用",
