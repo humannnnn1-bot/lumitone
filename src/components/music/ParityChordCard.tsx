@@ -1,10 +1,10 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "../../i18n";
-import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
 import { C, FS, FONT } from "../../styles/tokens";
 import { ParityGrid } from "./ParityGrid";
 import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
 import type { DecoderPhase } from "../../music/types";
+import { S_CARD_CONTROL_BTN, S_CARD_CONTROL_BTN_ACTIVE } from "./music-panel-styles";
 
 interface ParityChordCardProps {
   engine: MusicEngineReturn;
@@ -74,7 +74,7 @@ export const ParityChordCard = React.memo(function ParityChordCard({
             <button
               key={group}
               type="button"
-              style={activeGroups.includes(group) ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              style={activeGroups.includes(group) ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
               onClick={() => handlePlay(group)}
             >
               {t(group === 0 ? "music_parity_p1" : group === 1 ? "music_parity_p2" : "music_parity_p4")}

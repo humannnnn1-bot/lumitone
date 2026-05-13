@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "../../i18n";
-import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
-import { C, FS, R, FONT } from "../../styles/tokens";
+import { C, FS, FONT } from "../../styles/tokens";
 import { SyndromeTimeline } from "./SyndromeTimeline";
 import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
 import type { DecoderPhase } from "../../music/types";
+import { S_CARD_CONTROL_BTN, S_CARD_CONTROL_BTN_ACTIVE, S_SELECT } from "./music-panel-styles";
 
 interface ErrorCorrectionCardProps {
   engine: MusicEngineReturn;
@@ -20,15 +20,6 @@ const S_LABEL: React.CSSProperties = {
   fontSize: "var(--music-card-label-fs, 11px)",
   color: C.textDim,
   whiteSpace: "nowrap",
-};
-
-const S_SELECT: React.CSSProperties = {
-  fontSize: "var(--music-card-select-fs, 11px)",
-  padding: "var(--music-card-select-padding, 2px 4px)",
-  background: C.bgPanel,
-  color: C.textPrimary,
-  border: `1px solid ${C.border}`,
-  borderRadius: R.md,
 };
 
 export const ErrorCorrectionCard = React.memo(function ErrorCorrectionCard({
@@ -88,7 +79,7 @@ export const ErrorCorrectionCard = React.memo(function ErrorCorrectionCard({
           <span style={{ fontSize: "var(--music-card-body-fs, 9px)", fontFamily: FONT.mono, color: C.textDim, whiteSpace: "nowrap" }}>
             {`= ${bin}\u2082`}
           </span>
-          <button type="button" style={errorPhase ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handlePlayDecode}>
+          <button type="button" style={errorPhase ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN} onClick={handlePlayDecode}>
             {t("music_error_play")}
           </button>
         </div>

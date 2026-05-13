@@ -2,10 +2,9 @@ import React from "react";
 import { useTranslation } from "../../i18n";
 import { FANO_LINES } from "../../data/theory-data";
 import { C, FS, SP } from "../../styles/tokens";
-import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
 import { MiniFanoChord } from "./MiniFanoChord";
 import type { ActiveMusicLevel } from "../../music/types";
-import { S_LABEL, S_SELECT, S_SECTION } from "./music-panel-styles";
+import { S_LABEL, S_MUSIC_MODE_BTN, S_MUSIC_MODE_BTN_ACTIVE, S_SELECT, S_SECTION } from "./music-panel-styles";
 
 interface MusicFanoControlsProps {
   hoveredFanoLine: number | null;
@@ -38,6 +37,12 @@ interface MusicFanoControlsProps {
 }
 
 const FANO_LEVELS = [1, 2, 3, 4, 5, 6, 7];
+
+const S_FANO_SELECT: React.CSSProperties = {
+  ...S_SELECT,
+  boxSizing: "border-box",
+  height: 22,
+};
 
 export const MusicFanoControls = React.memo(function MusicFanoControls({
   hoveredFanoLine,
@@ -103,7 +108,7 @@ export const MusicFanoControls = React.memo(function MusicFanoControls({
           value={xorA ?? ""}
           onChange={(e) => onXorAChange(e.target.value ? Number(e.target.value) : null)}
           aria-label={t("music_xor_left_select")}
-          style={S_SELECT}
+          style={S_FANO_SELECT}
         >
           <option value="">--</option>
           {FANO_LEVELS.map((levelIndex) => (
@@ -116,7 +121,7 @@ export const MusicFanoControls = React.memo(function MusicFanoControls({
           value={xorB ?? ""}
           onChange={(e) => onXorBChange(e.target.value ? Number(e.target.value) : null)}
           aria-label={t("music_xor_right_select")}
-          style={S_SELECT}
+          style={S_FANO_SELECT}
         >
           <option value="">--</option>
           {FANO_LEVELS.map((levelIndex) => (
@@ -128,7 +133,7 @@ export const MusicFanoControls = React.memo(function MusicFanoControls({
         {xorA != null && xorB != null && <span style={S_LABEL}>= {xorA ^ xorB}</span>}
         <button
           type="button"
-          style={xorStep !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
+          style={xorStep !== null ? S_MUSIC_MODE_BTN_ACTIVE : S_MUSIC_MODE_BTN}
           onClick={onPlayXor}
           disabled={xorA == null || xorB == null}
         >
@@ -152,7 +157,7 @@ export const MusicFanoControls = React.memo(function MusicFanoControls({
           value={fanoContextPoint}
           onChange={(e) => onFanoContextPointChange(Number(e.target.value))}
           aria-label={t("music_fano_point_select")}
-          style={S_SELECT}
+          style={S_FANO_SELECT}
         >
           {FANO_LEVELS.map((levelIndex) => (
             <option key={levelIndex} value={levelIndex}>
@@ -160,7 +165,7 @@ export const MusicFanoControls = React.memo(function MusicFanoControls({
             </option>
           ))}
         </select>
-        <button type="button" style={fanoContextLine >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={onPlayPointContext}>
+        <button type="button" style={fanoContextLine >= 0 ? S_MUSIC_MODE_BTN_ACTIVE : S_MUSIC_MODE_BTN} onClick={onPlayPointContext}>
           {t("music_pointfano_play")}
         </button>
       </div>
@@ -181,7 +186,7 @@ export const MusicFanoControls = React.memo(function MusicFanoControls({
           value={selectedFanoLine}
           onChange={(e) => onSelectedFanoLineChange(Number(e.target.value))}
           aria-label={t("music_fano_line_select")}
-          style={S_SELECT}
+          style={S_FANO_SELECT}
         >
           {FANO_LINES.map((line, i) => (
             <option key={i} value={i}>
@@ -189,7 +194,7 @@ export const MusicFanoControls = React.memo(function MusicFanoControls({
             </option>
           ))}
         </select>
-        <button type="button" style={partitionPhase !== null ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={onPlayPartition}>
+        <button type="button" style={partitionPhase !== null ? S_MUSIC_MODE_BTN_ACTIVE : S_MUSIC_MODE_BTN} onClick={onPlayPartition}>
           {t("music_dual_play")}
         </button>
       </div>
@@ -206,10 +211,10 @@ export const MusicFanoControls = React.memo(function MusicFanoControls({
         }}
       >
         <span style={S_LABEL}>{t("music_traversal_title")}</span>
-        <button type="button" style={grayStep !== null ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={onGrayMelody}>
+        <button type="button" style={grayStep !== null ? S_MUSIC_MODE_BTN_ACTIVE : S_MUSIC_MODE_BTN} onClick={onGrayMelody}>
           {grayStep !== null ? t("music_gray_stop") : t("music_gray_melody")}
         </button>
-        <button type="button" style={rhythmPlaying ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={onFanoRhythm}>
+        <button type="button" style={rhythmPlaying ? S_MUSIC_MODE_BTN_ACTIVE : S_MUSIC_MODE_BTN} onClick={onFanoRhythm}>
           {rhythmPlaying ? t("music_rhythm_stop") : t("music_rhythm_start")}
         </button>
         <span style={{ fontSize: FS.lg, color: C.textDim }}>{t("music_rhythm_tempo")}</span>

@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "../../i18n";
-import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
 import { C, SP } from "../../styles/tokens";
 import { ZigzagGraph } from "./ZigzagGraph";
 import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
+import { S_CARD_CONTROL_BTN, S_CARD_CONTROL_BTN_ACTIVE } from "./music-panel-styles";
 
 interface Props {
   engine: MusicEngineReturn;
@@ -19,18 +19,12 @@ const S_HEADER: React.CSSProperties = {
   justifyContent: "flex-start",
 };
 const S_TOGGLE_BTN: React.CSSProperties = {
-  ...S_BTN_SM,
+  ...S_CARD_CONTROL_BTN,
   width: "var(--music-card-toggle-width, 70px)",
-  height: "var(--music-card-toggle-height, 20px)",
-  lineHeight: 1,
-  boxSizing: "border-box",
 };
 const S_TOGGLE_BTN_ACTIVE: React.CSSProperties = {
-  ...S_BTN_SM_ACTIVE,
+  ...S_CARD_CONTROL_BTN_ACTIVE,
   width: "var(--music-card-toggle-width, 70px)",
-  height: "var(--music-card-toggle-height, 20px)",
-  lineHeight: 1,
-  boxSizing: "border-box",
 };
 
 export const ZigzagCard = React.memo(function ZigzagCard({ engine, stopSignal }: Props) {

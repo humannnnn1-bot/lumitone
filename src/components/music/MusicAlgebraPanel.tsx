@@ -1,7 +1,6 @@
 import React from "react";
 import { useTranslation } from "../../i18n";
 import { C, FS, FONT, SP } from "../../styles/tokens";
-import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
 import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
 import { AndTriads } from "./AndTriads";
 import { CayleyGrid } from "./CayleyGrid";
@@ -20,6 +19,8 @@ import type { ActiveMusicLevel, DecoderPhase } from "../../music/types";
 import {
   S_CARD_ALGEBRA,
   S_CARD_CODE,
+  S_CARD_CONTROL_BTN,
+  S_CARD_CONTROL_BTN_ACTIVE,
   S_CARD_CUBE,
   S_CARD_LUMA,
   S_CARD_POLY,
@@ -242,7 +243,7 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
             </select>
             <button
               type="button"
-              style={cayleyCol >= 0 ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              style={cayleyCol >= 0 ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
               onClick={() => {
                 if (cayleyCol >= 0) {
                   engine.stopAlgebra?.();
@@ -300,7 +301,7 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
             </select>
             <button
               type="button"
-              style={distPhase !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              style={distPhase !== null ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
               onClick={() => {
                 engine.initAudio();
                 engine.playDistributiveLaw?.(distA, distB, distC, (phase) => {
@@ -336,7 +337,7 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
             <span style={S_LABEL}>{t("music_and_title")}</span>
             <button
               type="button"
-              style={andStep !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
+              style={andStep !== null ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
               onClick={() => {
                 if (andStep !== null) {
                   engine.stopAlgebra?.();
@@ -382,21 +383,21 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
             <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
               <button
                 type="button"
-                style={hammingMode === "743" ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                style={hammingMode === "743" ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
                 onClick={() => handleHammingModeChange("743")}
               >
                 [7,4,3]
               </button>
               <button
                 type="button"
-                style={hammingMode === "844" ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                style={hammingMode === "844" ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
                 onClick={() => handleHammingModeChange("844")}
               >
                 [8,4,4]
               </button>
             </div>
             <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
-              <button type="button" style={weightPlaying ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handleWeightToggle}>
+              <button type="button" style={weightPlaying ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN} onClick={handleWeightToggle}>
                 {weightPlaying ? t("music_weight_stop") : t("music_weight_play")}
               </button>
               {weightStep && weightStep.weight >= 0 && (
@@ -444,7 +445,7 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
               </select>
               <button
                 type="button"
-                style={octaPhase !== null ? S_BTN_SM_ACTIVE : S_BTN_SM}
+                style={octaPhase !== null ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
                 onClick={() => {
                   if (octaPhase !== null) {
                     engine.stopAlgebra?.();
@@ -469,7 +470,7 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
             <span style={S_LABEL}>{t("music_gray3v_title")}</span>
             <button
               type="button"
-              style={{ ...(gray3Playing ? S_BTN_SM_ACTIVE : S_BTN_SM) }}
+              style={gray3Playing ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
               onClick={() => {
                 if (gray3Playing) {
                   engine.stopAlgebra?.();
@@ -523,13 +524,13 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
           <div style={{ display: "flex", flexDirection: "column", gap: SP.sm, alignItems: "center" }}>
             <span style={S_LABEL}>{t("music_gl32_title")}</span>
             <div style={{ display: "flex", gap: SP.sm, alignItems: "center" }}>
-              <button type="button" style={{ ...S_BTN_SM }} onClick={() => handleGL32Transform("A")}>
+              <button type="button" style={S_CARD_CONTROL_BTN} onClick={() => handleGL32Transform("A")}>
                 {t("music_gl32_a")}
               </button>
-              <button type="button" style={{ ...S_BTN_SM }} onClick={() => handleGL32Transform("B")}>
+              <button type="button" style={S_CARD_CONTROL_BTN} onClick={() => handleGL32Transform("B")}>
                 {t("music_gl32_b")}
               </button>
-              <button type="button" style={{ ...S_BTN_SM }} onClick={() => handleGL32Transform("C")}>
+              <button type="button" style={S_CARD_CONTROL_BTN} onClick={() => handleGL32Transform("C")}>
                 {t("music_gl32_c")}
               </button>
             </div>

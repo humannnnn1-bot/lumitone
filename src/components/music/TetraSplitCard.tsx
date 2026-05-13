@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "../../i18n";
-import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
 import { C } from "../../styles/tokens";
 import { TetraSplitView } from "./TetraSplitView";
 import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
+import { S_CARD_CONTROL_BTN, S_CARD_CONTROL_BTN_ACTIVE } from "./music-panel-styles";
 
 interface TetraSplitCardProps {
   engine: MusicEngineReturn;
@@ -77,10 +77,10 @@ export const TetraSplitCard = React.memo(function TetraSplitCard({
       <div style={S_COL}>
         <span style={S_TITLE}>{t("music_tetra_title")}</span>
         <div style={{ display: "flex", gap: "var(--music-card-control-gap, 3px)" }}>
-          <button type="button" style={tetraPhase === "t0" ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handlePlayT0}>
+          <button type="button" style={tetraPhase === "t0" ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN} onClick={handlePlayT0}>
             {"\u25b6 T0"}
           </button>
-          <button type="button" style={tetraPhase === "t1" ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={handlePlayT1}>
+          <button type="button" style={tetraPhase === "t1" ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN} onClick={handlePlayT1}>
             {"\u25b6 T1"}
           </button>
         </div>

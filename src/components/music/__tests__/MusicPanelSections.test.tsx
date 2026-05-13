@@ -409,6 +409,23 @@ describe("MusicPanel section components", () => {
     expect(props.onFanoRhythm).toHaveBeenCalled();
   });
 
+  it("uses fixed 22px controls in Fano sequences", () => {
+    const props = makeFanoProps();
+    renderWithLanguage(<MusicFanoControls {...props} />);
+
+    for (const name of ["XOR first color", "XOR second color", "Fano point", "Fano line"]) {
+      const select = screen.getByRole("combobox", { name });
+      expect(select.style.height).toBe("22px");
+      expect(select.style.boxSizing).toBe("border-box");
+    }
+
+    for (const name of ["\u25b6 XOR", "\u25b6 Lines", "\u25b6 Complement", "\u25b6 Gray", "\u25b6 Rhythm"]) {
+      const button = screen.getByRole("button", { name });
+      expect(button.style.height).toBe("22px");
+      expect(button.style.boxSizing).toBe("border-box");
+    }
+  });
+
   it("enables Fano XOR playback when both operands are present", () => {
     const props = makeFanoProps({ xorA: 1, xorB: 2 });
     renderWithLanguage(<MusicFanoControls {...props} />);
@@ -433,6 +450,19 @@ describe("MusicPanel section components", () => {
     expect(engine.initAudio).toHaveBeenCalled();
     expect(engine.playCayleyRow).toHaveBeenCalledWith(1, expect.any(Function));
     expect(props.cayley.onColChange).toHaveBeenCalledWith(3);
+  });
+
+  it("uses responsive fixed-height controls in structural sonification cards", () => {
+    const props = makeAlgebraProps();
+    const { container } = renderWithLanguage(<MusicAlgebraPanel {...props} />);
+
+    const controls = Array.from(container.querySelectorAll<HTMLElement>("#music-algebra-panel button, #music-algebra-panel select"));
+    expect(controls.length).toBeGreaterThan(0);
+
+    for (const control of controls) {
+      expect(control.style.height).toBe("var(--music-card-toggle-height, 20px)");
+      expect(control.style.boxSizing).toBe("border-box");
+    }
   });
 
   it("starts syndrome playback for the selected error position", () => {

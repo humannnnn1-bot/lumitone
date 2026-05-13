@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "../../i18n";
-import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
 import { C, SP } from "../../styles/tokens";
 import { ComplementPairs } from "./ComplementPairs";
 import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
+import { S_CARD_CONTROL_BTN, S_CARD_CONTROL_BTN_ACTIVE } from "./music-panel-styles";
 
 interface Props {
   engine: MusicEngineReturn;
@@ -78,10 +78,18 @@ export const ComplementPairsCard = React.memo(function ComplementPairsCard({ eng
     <div style={{ display: "flex", flexDirection: "column", gap: "var(--music-card-gap, 4px)", width: "100%", flex: 1 }}>
       <div style={{ ...S_COL, gap: "var(--music-card-control-gap, 3px)" }}>
         <span style={S_LABEL}>{t("music_complement_title")}</span>
-        <button type="button" style={playing === "forward" ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleClick(false)}>
+        <button
+          type="button"
+          style={playing === "forward" ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
+          onClick={() => handleClick(false)}
+        >
           {fwdLabel}
         </button>
-        <button type="button" style={playing === "reverse" ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleClick(true)}>
+        <button
+          type="button"
+          style={playing === "reverse" ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
+          onClick={() => handleClick(true)}
+        >
           {revLabel}
         </button>
       </div>

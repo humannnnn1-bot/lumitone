@@ -1,9 +1,9 @@
 import React, { useState, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "../../i18n";
-import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
 import { C } from "../../styles/tokens";
 import { K8LayerGraph } from "./K8LayerGraph";
 import type { MusicEngineReturn } from "../../hooks/useMusicEngine";
+import { S_CARD_CONTROL_BTN, S_CARD_CONTROL_BTN_ACTIVE } from "./music-panel-styles";
 
 interface K8ExplorerProps {
   engine: MusicEngineReturn;
@@ -91,13 +91,25 @@ export const K8Explorer = React.memo(function K8Explorer({
             justifyContent: "center",
           }}
         >
-          <button type="button" style={activeLayer === 1 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleLayerToggle(1)}>
+          <button
+            type="button"
+            style={activeLayer === 1 ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
+            onClick={() => handleLayerToggle(1)}
+          >
             {`${activeLayer === 1 ? "\u23f9" : "\u25b6"} ${t("music_k8_d1")}`}
           </button>
-          <button type="button" style={activeLayer === 2 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleLayerToggle(2)}>
+          <button
+            type="button"
+            style={activeLayer === 2 ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
+            onClick={() => handleLayerToggle(2)}
+          >
             {`${activeLayer === 2 ? "\u23f9" : "\u25b6"} ${t("music_k8_d2")}`}
           </button>
-          <button type="button" style={activeLayer === 3 ? S_BTN_SM_ACTIVE : S_BTN_SM} onClick={() => handleLayerToggle(3)}>
+          <button
+            type="button"
+            style={activeLayer === 3 ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
+            onClick={() => handleLayerToggle(3)}
+          >
             {`${activeLayer === 3 ? "\u23f9" : "\u25b6"} ${t("music_k8_d3")}`}
           </button>
         </div>

@@ -5,6 +5,7 @@ import { S_BTN_SM, S_BTN_SM_ACTIVE } from "../../styles/shared";
 const MUSIC_CARD_LABEL_FONT_SIZE = `var(--music-card-label-fs, ${FS.lg}px)`;
 const MUSIC_CARD_SELECT_FONT_SIZE = `var(--music-card-select-fs, ${FS.lg}px)`;
 const MUSIC_CARD_SELECT_PADDING = "var(--music-card-select-padding, 2px 4px)";
+const MUSIC_CARD_CONTROL_HEIGHT = "var(--music-card-toggle-height, 20px)";
 const MUSIC_CARD_PADDING = "var(--music-card-padding, 6px)";
 const MUSIC_CARD_GAP = "var(--music-card-gap, 4px)";
 const MUSIC_CARD_CONTROL_GAP = `var(--music-card-control-gap, ${SP.sm}px)`;
@@ -30,6 +31,26 @@ export const S_SELECT: CSSProperties = {
   color: C.textPrimary,
   border: `1px solid ${C.border}`,
   borderRadius: R.md,
+  boxSizing: "border-box",
+  height: MUSIC_CARD_CONTROL_HEIGHT,
+};
+
+export const S_CARD_CONTROL_BTN: CSSProperties = {
+  ...S_BTN_SM,
+  boxSizing: "border-box",
+  height: MUSIC_CARD_CONTROL_HEIGHT,
+  lineHeight: 1,
+  padding: MUSIC_CARD_SELECT_PADDING,
+  whiteSpace: "nowrap",
+};
+
+export const S_CARD_CONTROL_BTN_ACTIVE: CSSProperties = {
+  ...S_BTN_SM_ACTIVE,
+  boxSizing: "border-box",
+  height: MUSIC_CARD_CONTROL_HEIGHT,
+  lineHeight: 1,
+  padding: MUSIC_CARD_SELECT_PADDING,
+  whiteSpace: "nowrap",
 };
 
 export const S_MUSIC_MODE_BTN: CSSProperties = {
