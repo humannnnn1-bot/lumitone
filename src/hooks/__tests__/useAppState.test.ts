@@ -46,6 +46,12 @@ describe("useAppState", () => {
 
   it("keeps mobile landscape canvases on the existing width-constrained sizing path", () => {
     expect(getCanvasDisplaySize(1600, 900, 390, 844)).toEqual({ displayWidth: 358, displayHeight: 201 });
+    expect(getCanvasDisplaySize(320, 320, 390, 844)).toEqual({ displayWidth: 358, displayHeight: 358 });
+  });
+
+  it("gives mobile portrait canvases a modest height boost without exceeding the width budget", () => {
+    expect(getCanvasDisplaySize(64, 512, 390, 844)).toEqual({ displayWidth: 54, displayHeight: 430 });
+    expect(getCanvasDisplaySize(300, 320, 390, 844)).toEqual({ displayWidth: 358, displayHeight: 382 });
   });
 
   it("composes the initial app state needed by the canvas UI", async () => {

@@ -16,6 +16,7 @@ const DESKTOP_PANEL_GAP = 32;
 const DESKTOP_PANEL_SIDEBAR_WIDTH = 420;
 const DESKTOP_ROOT_INLINE_PADDING = 32;
 const MOBILE_WIDTH_RESERVE = 32;
+const MOBILE_PORTRAIT_HEIGHT_BOOST = 1.2;
 
 function clampDisplayMax(value: number): number {
   return Math.max(DISPLAY_MIN, Math.min(DISPLAY_MAX_LIMIT, value));
@@ -52,9 +53,15 @@ export function getCanvasDisplaySize(canvasWidth: number, canvasHeight: number, 
   }
 
   const displayMax = clampDisplayMax(Math.min(Math.floor(viewportWidth - MOBILE_WIDTH_RESERVE), heightLimit));
+  if (asp < 1) {
+    const portraitHeight = Math.round(Math.min(heightLimit, displayMax / asp, displayMax * MOBILE_PORTRAIT_HEIGHT_BOOST));
+    const displayHeight = clampDisplayMax(portraitHeight);
+    return { displayWidth: Math.round(displayHeight * asp), displayHeight };
+  }
+
   return {
-    displayWidth: asp >= 1 ? displayMax : Math.round(displayMax * asp),
-    displayHeight: asp >= 1 ? Math.round(displayMax / asp) : displayMax,
+    displayWidth: displayMax,
+    displayHeight: Math.round(displayMax / asp),
   };
 }
 

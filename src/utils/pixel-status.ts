@@ -100,11 +100,15 @@ function glazeTargetLabel({
   return `${candidateLabel(target)} ${hexStr(target.rgb)}`;
 }
 
+function compactParts(...parts: Array<string | false>): string {
+  return parts.filter(Boolean).join(" ");
+}
+
 export function formatSourcePixelStatus({ x, y, lv }: PixelStatusBase): StatusText {
   const info = LEVEL_INFO[lv];
   return {
     full: `(${x},${y}) Source L${lv} ${info.name} gray=${info.gray} bits=${levelBits(lv)}`,
-    compact: `(${x},${y}) Src L${lv} gray=${info.gray} bits=${levelBits(lv)}`,
+    compact: `(${x},${y}) Src L${lv} gray=${info.gray}`,
   };
 }
 
@@ -117,9 +121,10 @@ export function formatColorPixelStatus({
   const candidate = resolveGlobalCandidate(candidateIndexByLevel, lv);
   const rgb = candidate.rgb;
   return {
-    full: `(${x},${y}) Color L${lv} ${candidateLabel(candidate)} ${hexStr(rgb)} rgb(${rgb[0]},${rgb[1]},${rgb[2]}) hue=${angleLabel(
+    full: `(${x},${y}) Color L${lv} ${candidateLabel(candidate)} ${hexStr(rgb)} hue=${angleLabel(candidate.hueAngleDeg)} \u0394${signedHueDelta(
+      lv,
       candidate.hueAngleDeg,
-    )} \u0394${signedHueDelta(lv, candidate.hueAngleDeg)}`,
+    )}`,
     compact: `(${x},${y}) Color L${lv} ${candidateLabel(candidate)} ${hexStr(rgb)} h=${angleLabel(candidate.hueAngleDeg)}`,
   };
 }
@@ -144,9 +149,13 @@ export function formatHexPixelStatus({
     full: `(${x},${y}) Hex L${lv} ${candidateLabel(candidate)} @${angleLabel(hexAngle)} used=${formatCount(
       levelHistogram[lv] ?? 0,
     )}px factor\u00D7${patternFactor} ${isLocked ? "locked" : "unlocked"}`,
-    compact: `(${x},${y}) Hex L${lv} ${candidateLabel(candidate)} used=${formatShortCount(levelHistogram[lv] ?? 0)}px f\u00D7${patternFactor} ${
-      isLocked ? "lock" : "open"
-    }`,
+    compact: compactParts(
+      `(${x},${y}) Hex L${lv}`,
+      candidateLabel(candidate),
+      `used=${formatShortCount(levelHistogram[lv] ?? 0)}px`,
+      `f\u00D7${patternFactor}`,
+      isLocked && "lock",
+    ),
   };
 }
 
@@ -168,14 +177,19 @@ export function formatGlazePixelStatus({
 }): StatusText {
   const base = resolveGlobalCandidate(candidateIndexByLevel, lv);
   const actual = pixelCandidateOverrideValue > 0 ? resolveCandidate(lv, pixelCandidateOverrideValue - 1) : base;
-  const override = pixelCandidateOverrideValue > 0 ? "override" : "no override";
-  const compactOverride = pixelCandidateOverrideValue > 0 ? "ovr" : "no-ovr";
   const action = glazeActionLabel(glazeTool);
   const target = glazeTargetLabel({ lv, hueAngleDeg, candidateOverridesByLevel, glazeTool });
+  const targetCandidate = target.split(" ")[0];
+  const actualCandidate = candidateLabel(actual);
+  const shouldShowAction = action !== "brush" || targetCandidate === "skip" || targetCandidate !== actualCandidate;
+  const fullState =
+    pixelCandidateOverrideValue > 0
+      ? `base ${candidateLabel(base)} ${hexStr(base.rgb)} \u2192 actual ${actualCandidate} ${hexStr(actual.rgb)} override`
+      : `base ${candidateLabel(base)} ${hexStr(base.rgb)}`;
+  const compactState =
+    pixelCandidateOverrideValue > 0 ? `${candidateLabel(base)}\u2192${actualCandidate} ovr` : `base ${candidateLabel(base)}`;
   return {
-    full: `(${x},${y}) Glaze L${lv} base ${candidateLabel(base)} ${hexStr(base.rgb)} \u2192 actual ${candidateLabel(actual)} ${hexStr(
-      actual.rgb,
-    )} ${override} / ${action}\u2192${target}`,
-    compact: `(${x},${y}) Glaze L${lv} ${candidateLabel(base)}\u2192${candidateLabel(actual)} ${compactOverride} ${action}\u2192${target.split(" ")[0]}`,
+    full: compactParts(`(${x},${y}) Glaze L${lv}`, fullState, shouldShowAction && `/ ${action}\u2192${target}`),
+    compact: compactParts(`(${x},${y}) Glaze L${lv}`, compactState, shouldShowAction && `${action}\u2192${targetCandidate}`),
   };
 }

@@ -124,10 +124,14 @@ function visualLabel(canvasData: CanvasData, candidateIndexByLevel: readonly num
   return `${cm > 0 ? "override" : "base"} ${candidateLabel(candidate)} ${hexStr(candidate.rgb)}`;
 }
 
-function compactVisualLabel(canvasData: CanvasData, candidateIndexByLevel: readonly number[], idx: number, lv: number): string {
+function compactOverrideLabel(canvasData: CanvasData, idx: number, lv: number): string {
   const cm = canvasData.pixelCandidateOverrideMap[idx] ?? 0;
-  const candidate = cm > 0 ? resolveCandidate(lv, cm - 1) : resolveCandidate(lv, candidateIndexByLevel[lv] ?? 0);
-  return `${cm > 0 ? "ovr" : "base"} ${candidateLabel(candidate)}`;
+  if (cm <= 0) return "";
+  return `ovr ${candidateLabel(resolveCandidate(lv, cm - 1))}`;
+}
+
+function compactParts(...parts: string[]): string {
+  return parts.filter(Boolean).join(" ");
 }
 
 function luma255(rgb: readonly [number, number, number]): number {
@@ -402,7 +406,7 @@ export function getAnalysisMapHoverInfo({
     const score = valueAt(pixelMaps.localDiversity, idx);
     return {
       full: `${prefix} ${visualLabel(canvasData, candidateIndexByLevel, idx, lv)} win=${winW}x${winH} keys=${keys} score=${pct(score)}`,
-      compact: `${compactPrefix} ${compactVisualLabel(canvasData, candidateIndexByLevel, idx, lv)} keys=${keys} score=${pct(score)}`,
+      compact: compactParts(compactPrefix, compactOverrideLabel(canvasData, idx, lv), `keys=${keys}`, `score=${pct(score)}`),
     };
   } else if (mode === "gradient") {
     const mag = valueAt(pixelMaps.gradientMagnitude, idx);
@@ -410,7 +414,7 @@ export function getAnalysisMapHoverInfo({
     const { gx, gy } = gradientVector(canvasData, x, y);
     return {
       full: `${prefix} g=(${signedInt(gx)},${signedInt(gy)}) dir=${deg}\u00B0 mag=${pct(mag)} ${mag < 0.01 ? "flat" : "slope"}`,
-      compact: `${compactPrefix} g=(${signedInt(gx)},${signedInt(gy)}) ${deg}\u00B0 ${pct(mag)}`,
+      compact: `${compactPrefix} dir=${deg}\u00B0 mag=${pct(mag)}`,
     };
   } else if (mode === "boundaryDistance") {
     const raw = valueAt(pixelMaps.boundaryDistance, idx);
@@ -418,29 +422,27 @@ export function getAnalysisMapHoverInfo({
     const zone = edgeMask ? "edge" : raw < 0.5 ? "near" : "core";
     return {
       full: `${prefix} ${visualLabel(canvasData, candidateIndexByLevel, idx, lv)} distance=${pct(raw)} ${zone}`,
-      compact: `${compactPrefix} ${compactVisualLabel(canvasData, candidateIndexByLevel, idx, lv)} d=${pct(raw)} ${zone}`,
+      compact: compactParts(compactPrefix, compactOverrideLabel(canvasData, idx, lv), `d=${pct(raw)}`, zone),
     };
   } else if (mode === "isolation") {
     const score = valueAt(pixelMaps.neighborIsolation, idx);
     const unlike = Math.round(clamp01(score) * 4);
     return {
-      full: `${prefix} ${visualLabel(canvasData, candidateIndexByLevel, idx, lv)} unlike=${unlike}/4 same=${4 - unlike}/4 score=${pct(score)}`,
-      compact: `${compactPrefix} ${compactVisualLabel(canvasData, candidateIndexByLevel, idx, lv)} unlike=${unlike}/4 score=${pct(score)}`,
+      full: `${prefix} ${visualLabel(canvasData, candidateIndexByLevel, idx, lv)} unlike=${unlike}/4 score=${pct(score)}`,
+      compact: compactParts(compactPrefix, compactOverrideLabel(canvasData, idx, lv), `unlike=${unlike}/4`),
     };
   } else if (mode === "levelTone") {
     const g = LEVEL_INFO[lv].gray;
     return {
-      full: `${prefix} ${LEVEL_INFO[lv].name} gray=${g} level=${lv}/7 t=${pct(lv / 7)}`,
-      compact: `${compactPrefix} gray=${g} t=${pct(lv / 7)}`,
+      full: `${prefix} ${LEVEL_INFO[lv].name} gray=${g}`,
+      compact: `${compactPrefix} gray=${g}`,
     };
   } else if (mode === "colorLuma") {
     const rgb = colorLUT[lv];
     const candidate = resolveCandidate(lv, candidateIndexByLevel[lv] ?? 0);
     const y255 = luma255(rgb);
     return {
-      full: `${prefix} ${candidateLabel(candidate)} ${hexStr(rgb)} Y=${y255}/255 ${pct(y255 / 255)} dGray=${signedInt(
-        y255 - LEVEL_INFO[lv].gray,
-      )}`,
+      full: `${prefix} ${candidateLabel(candidate)} ${hexStr(rgb)} Y=${y255}/255 dGray=${signedInt(y255 - LEVEL_INFO[lv].gray)}`,
       compact: `${compactPrefix} ${candidateLabel(candidate)} Y=${y255} dG=${signedInt(y255 - LEVEL_INFO[lv].gray)}`,
     };
   } else if (mode === "region") {
@@ -450,9 +452,14 @@ export function getAnalysisMapHoverInfo({
     const scale = size < REGION_SMALL_THRESHOLD ? "small" : "normal";
     return {
       full: `${prefix} ${visualLabel(canvasData, candidateIndexByLevel, idx, lv)} region#${id} size=${size}px ${edge} ${scale}`,
-      compact: `${compactPrefix} ${compactVisualLabel(canvasData, candidateIndexByLevel, idx, lv)} r#${shortCount(id)} ${shortCount(size)}px ${
-        edge === "interior" ? "int" : "edge"
-      } ${scale === "normal" ? "norm" : "small"}`,
+      compact: compactParts(
+        compactPrefix,
+        compactOverrideLabel(canvasData, idx, lv),
+        `r#${shortCount(id)}`,
+        `${shortCount(size)}px`,
+        edge === "interior" ? "int" : "edge",
+        scale === "normal" ? "norm" : "small",
+      ),
     };
   }
 

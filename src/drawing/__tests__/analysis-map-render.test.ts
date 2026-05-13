@@ -153,17 +153,17 @@ describe("analysis-map-render", () => {
     const regionSizeById = buildRegionSizeMap(pixelMaps);
 
     expect(regionSizeById.get(1)).toBe(2);
-    const cases: Array<[MapMode, string]> = [
-      ["levelTone", "(0,0) MapTone L0 Black gray=0 level=0/7 t=0%"],
-      ["colorLuma", "(0,0) MapColorLuma L0 c1/1 #000000 Y=0/255 0% dGray=0"],
-      ["region", "(0,0) MapRegion L0 base c1/1 #000000 region#1 size=2px interior small"],
-      ["gradient", "(0,0) MapToneGrad L0 g=(+2,+5) dir=180° mag=0% flat"],
-      ["boundaryDistance", "(0,0) MapBoundaryDist L0 base c1/1 #000000 distance=0% near"],
-      ["isolation", "(0,0) MapIsolation L0 base c1/1 #000000 unlike=0/4 same=4/4 score=0%"],
-      ["diversity", "(0,0) MapDiversity L0 base c1/1 #000000 win=2x2 keys=4 score=0%"],
+    const cases: Array<[MapMode, string, string]> = [
+      ["levelTone", "(0,0) MapTone L0 Black gray=0", "(0,0) Tone L0 gray=0"],
+      ["colorLuma", "(0,0) MapColorLuma L0 c1/1 #000000 Y=0/255 dGray=0", "(0,0) ColorLuma L0 c1/1 Y=0 dG=0"],
+      ["region", "(0,0) MapRegion L0 base c1/1 #000000 region#1 size=2px interior small", "(0,0) Region L0 r#1 2px int small"],
+      ["gradient", "(0,0) MapToneGrad L0 g=(+2,+5) dir=180° mag=0% flat", "(0,0) ToneGrad L0 dir=180° mag=0%"],
+      ["boundaryDistance", "(0,0) MapBoundaryDist L0 base c1/1 #000000 distance=0% near", "(0,0) BoundaryDist L0 d=0% near"],
+      ["isolation", "(0,0) MapIsolation L0 base c1/1 #000000 unlike=0/4 score=0%", "(0,0) Isolation L0 unlike=0/4"],
+      ["diversity", "(0,0) MapDiversity L0 base c1/1 #000000 win=2x2 keys=4 score=0%", "(0,0) Diversity L0 keys=4 score=0%"],
     ];
 
-    for (const [mode, expected] of cases) {
+    for (const [mode, expectedFull, expectedCompact] of cases) {
       const status = getAnalysisMapHoverInfo({
         x: 0,
         y: 0,
@@ -174,10 +174,42 @@ describe("analysis-map-render", () => {
         canvasData,
         regionSizeById,
       });
-      expect(status?.full).toBe(expected);
-      expect(status?.compact).not.toBe(expected);
+      expect(status?.full).toBe(expectedFull);
+      expect(status?.compact).toBe(expectedCompact);
       expect(status?.full).not.toMatch(/[\u3040-\u30ff\u3400-\u9fff]/);
       expect(status?.compact).not.toMatch(/[\u3040-\u30ff\u3400-\u9fff]/);
     }
+  });
+
+  it("keeps compact structural statuses focused on map values while preserving explicit overrides", () => {
+    const canvasData = makeCanvasData();
+    const pixelMaps = makePixelMaps();
+    const regionSizeById = buildRegionSizeMap(pixelMaps);
+
+    const base = getAnalysisMapHoverInfo({
+      x: 0,
+      y: 0,
+      mode: "boundaryDistance",
+      pixelMaps,
+      colorLUT,
+      candidateIndexByLevel: DEFAULT_CANDIDATE_INDEX_BY_LEVEL,
+      canvasData,
+      regionSizeById,
+    });
+    expect(base?.compact).toBe("(0,0) BoundaryDist L0 d=0% near");
+
+    canvasData.pixelCandidateOverrideMap[1] = 1;
+    const override = getAnalysisMapHoverInfo({
+      x: 1,
+      y: 0,
+      mode: "boundaryDistance",
+      pixelMaps,
+      colorLUT,
+      candidateIndexByLevel: DEFAULT_CANDIDATE_INDEX_BY_LEVEL,
+      canvasData,
+      regionSizeById,
+    });
+    expect(override?.compact).toMatch(/^\(1,0\) BoundaryDist L2 ovr c\d+\/\d+ d=25% edge$/);
+    expect(override?.compact).not.toContain("base");
   });
 });

@@ -230,8 +230,8 @@ export function MapCanvas({
         style={{
           ...S_CANVAS_STATUS_STABLE,
           alignSelf: "center",
-          maxWidth: "var(--map-status-line-max-width, 100%)",
-          width: "var(--map-status-line-width, 100%)",
+          maxWidth: "var(--map-status-line-max-width, var(--canvas-status-line-max-width, 100%))",
+          width: "var(--map-status-line-width, var(--canvas-status-line-width, 100%))",
         }}
       >
         {hoverInfo ? getVisibleStatusText(hoverInfo, compactStatus) : "\u2014"}

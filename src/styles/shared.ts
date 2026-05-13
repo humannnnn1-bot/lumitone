@@ -110,12 +110,12 @@ const S_CANVAS_STATUS: React.CSSProperties = {
 };
 export const S_CANVAS_STATUS_STABLE: React.CSSProperties = {
   ...S_CANVAS_STATUS,
-  alignSelf: "stretch",
+  alignSelf: "center",
   boxSizing: "border-box",
-  maxWidth: "100%",
+  maxWidth: "var(--canvas-status-line-max-width, 100%)",
   minWidth: 0,
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
-  width: "100%",
+  width: "var(--canvas-status-line-width, 100%)",
 };

@@ -35,6 +35,7 @@
   --fs-tab: 11px;
   --sp-tab-v: 4px;
   --sp-tab-h: 4px;
+  --app-inline-content-width: calc(100vw - max(16px, env(safe-area-inset-left)) - max(16px, env(safe-area-inset-right)));
 }
 
 @media (max-width: 767px) {
@@ -43,6 +44,10 @@
   }
   .app-title {
     transform: translateY(2px);
+  }
+  .panel-canvas {
+    --canvas-status-line-max-width: var(--app-inline-content-width);
+    --canvas-status-line-width: var(--app-inline-content-width);
   }
 }
 
@@ -377,6 +382,8 @@ button.theory-diagram-button {
     gap: 32px;
   }
   .panel-layout--tall-portrait > .panel-canvas {
+    --canvas-status-line-max-width: calc(100vw - 32px);
+    --canvas-status-line-width: max(var(--display-max, 0px), 324px);
     flex-shrink: 0;
     width: var(--display-max, auto);
     display: flex;
@@ -415,6 +422,8 @@ button.theory-diagram-button {
     gap: 32px;
   }
   .panel-layout--portrait > .panel-canvas {
+    --canvas-status-line-max-width: calc(100vw - 32px);
+    --canvas-status-line-width: max(var(--display-max, 0px), 324px);
     flex-shrink: 0;
     width: var(--display-max, auto);
     display: flex;
@@ -586,6 +595,8 @@ button.theory-diagram-button {
     gap: 32px;
   }
   .panel-canvas {
+    --canvas-status-line-max-width: calc(100vw - 32px);
+    --canvas-status-line-width: max(var(--display-max, 0px), 500px);
     flex-shrink: 0;
     width: var(--display-max, auto);
     display: flex;
