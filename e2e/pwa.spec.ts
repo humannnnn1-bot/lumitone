@@ -32,9 +32,11 @@ test("pre-caches the production app shell and works offline", async ({ page, con
 
   const manifest = (await manifestResponse.json()) as {
     id: string;
+    orientation: string;
     icons: Array<{ src: string; sizes: string; type: string; purpose?: string }>;
   };
   expect(manifest.id).toBe("chromalum/");
+  expect(manifest.orientation).toBe("portrait-primary");
 
   for (const icon of manifest.icons) {
     const iconResponse = await page.request.get(new URL(icon.src, manifestUrl).toString());

@@ -59,6 +59,14 @@ const S_HUE_FILTER_TRACK: React.CSSProperties = {
   background: HUE_GRADIENT,
   position: "relative",
 };
+const HUE_FILTER_MAX = 359;
+const S_HUE_RANGE_DIM: React.CSSProperties = {
+  position: "absolute",
+  top: 0,
+  bottom: 0,
+  background: "rgba(0, 0, 0, 0.34)",
+  pointerEvents: "none",
+};
 const S_HUE_FILTER_INPUT: React.CSSProperties = {
   position: "absolute",
   boxSizing: "border-box",
@@ -93,6 +101,66 @@ const S_GALLERY_SIZE_BUTTON_BASE: React.CSSProperties = {
 };
 const S_GALLERY_SIZE_BUTTON: React.CSSProperties = { ...S_BTN_SM, ...S_GALLERY_SIZE_BUTTON_BASE };
 const S_GALLERY_SIZE_BUTTON_ACTIVE: React.CSSProperties = { ...S_BTN_SM_ACTIVE, ...S_GALLERY_SIZE_BUTTON_BASE };
+type ThumbSize = "S" | "M" | "L";
+const THUMB_SIZES: Record<ThumbSize, number> = { S: 120, M: 180, L: 260 };
+const GALLERY_MOBILE_INLINE_RESERVE = 32;
+const GALLERY_GRID_GAP = 6;
+const GALLERY_THUMB_TRACK_EXTRA = 14;
+const GALLERY_MOBILE_GRID_MIN_WIDTH = 320;
+const GALLERY_MOBILE_GRID_MAX_WIDTH = 767;
+const GALLERY_SMALL_THUMB_MIN = 80;
+
+function huePercent(hue: number): number {
+  return Math.max(0, Math.min(100, (hue / HUE_FILTER_MAX) * 100));
+}
+
+function getHueRangeDimSegments(filterHue: number, filterRange: number): Array<{ left: number; width: number }> {
+  if (filterRange >= 180) return [];
+  const lo = (((filterHue - filterRange) % 360) + 360) % 360;
+  const hi = (((filterHue + filterRange) % 360) + 360) % 360;
+  const loPercent = huePercent(lo);
+  const hiPercent = huePercent(hi);
+  const segments =
+    lo <= hi
+      ? [
+          { left: 0, width: loPercent },
+          { left: hiPercent, width: 100 - hiPercent },
+        ]
+      : [{ left: hiPercent, width: loPercent - hiPercent }];
+  return segments.filter((segment) => segment.width > 0.2);
+}
+
+function getHueRangeDimStyle(segment: { left: number; width: number }): React.CSSProperties {
+  const touchesLeftEdge = segment.left <= 0.2;
+  const touchesRightEdge = segment.left + segment.width >= 99.8;
+  return {
+    ...S_HUE_RANGE_DIM,
+    left: `${segment.left}%`,
+    width: `${segment.width}%`,
+    borderTopLeftRadius: touchesLeftEdge ? R.md : 0,
+    borderBottomLeftRadius: touchesLeftEdge ? R.md : 0,
+    borderTopRightRadius: touchesRightEdge ? R.md : 0,
+    borderBottomRightRadius: touchesRightEdge ? R.md : 0,
+  };
+}
+
+function getViewportWidth(): number {
+  return typeof window !== "undefined" ? window.innerWidth : 1024;
+}
+
+function getThumbDisplaySize(thumbSize: ThumbSize, viewportWidth: number): number {
+  const baseSize = THUMB_SIZES[thumbSize];
+  if (thumbSize === "S") {
+    const threeColumnThumbSize = Math.floor(
+      (viewportWidth - GALLERY_MOBILE_INLINE_RESERVE - GALLERY_GRID_GAP * 2) / 3 - GALLERY_THUMB_TRACK_EXTRA,
+    );
+    return Math.max(GALLERY_SMALL_THUMB_MIN, Math.min(baseSize, threeColumnThumbSize));
+  }
+  if (thumbSize !== "M") return baseSize;
+
+  const twoColumnThumbSize = Math.floor((viewportWidth - GALLERY_MOBILE_INLINE_RESERVE - GALLERY_GRID_GAP) / 2 - GALLERY_THUMB_TRACK_EXTRA);
+  return Math.max(THUMB_SIZES.S, Math.min(baseSize, twoColumnThumbSize));
+}
 
 export const GalleryPanel = React.memo(function GalleryPanel({
   canvasData,
@@ -176,10 +244,16 @@ export const GalleryPanel = React.memo(function GalleryPanel({
     });
   }, [filter, items, bookmarkItems, sortMode, filterHue, filterRange, candidateIndexByLevel]);
 
-  type ThumbSize = "S" | "M" | "L";
-  const THUMB_SIZES: Record<ThumbSize, number> = { S: 120, M: 180, L: 260 };
   const [thumbSize, setThumbSize] = useState<ThumbSize>("M");
-  const thumbDisplaySize = THUMB_SIZES[thumbSize];
+  const [viewportWidth, setViewportWidth] = useState(getViewportWidth);
+  useEffect(() => {
+    const handleResize = () => setViewportWidth(getViewportWidth());
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  const thumbDisplaySize = getThumbDisplaySize(thumbSize, viewportWidth);
+  const useMobileGalleryGrid = viewportWidth >= GALLERY_MOBILE_GRID_MIN_WIDTH && viewportWidth <= GALLERY_MOBILE_GRID_MAX_WIDTH;
+  const mobileGalleryColumns = useMobileGalleryGrid ? (thumbSize === "S" ? 3 : thumbSize === "M" ? 2 : null) : null;
   // Fit expanded preview within viewport while preserving aspect ratio
   // Reserve space for border (4px) + gap + buttons (~50px)
   const expandedMaxW = typeof window !== "undefined" ? Math.floor(window.innerWidth * 0.9) : 300;
@@ -289,31 +363,20 @@ export const GalleryPanel = React.memo(function GalleryPanel({
           }}
         >
           <div style={S_HUE_FILTER_TRACK}>
-            {/* Range boundary lines + arrow colored by hue angle */}
-            {(() => {
-              const lo = (((filterHue - filterRange) % 360) + 360) % 360;
-              const hi = (((filterHue + filterRange) % 360) + 360) % 360;
-              const hueColor = `rgb(${hue2rgb(filterHue).join(",")})`;
-              const line: React.CSSProperties = {
-                position: "absolute",
-                top: 0,
-                width: 2,
-                height: "100%",
-                background: hueColor,
-                pointerEvents: "none",
-              };
-              return (
-                <>
-                  <div style={{ ...line, left: `${(lo / 359) * 100}%` }} />
-                  <div style={{ ...line, left: `${(hi / 359) * 100}%` }} />
-                </>
-              );
-            })()}
+            {/* Range mask + arrow colored by hue angle */}
+            {getHueRangeDimSegments(filterHue, filterRange).map((segment) => (
+              <div
+                key={`${segment.left}-${segment.width}`}
+                className="gallery-hue-range-mask"
+                aria-hidden="true"
+                style={getHueRangeDimStyle(segment)}
+              />
+            ))}
             {/* Current position indicator — colored by hue angle */}
             <div
               style={{
                 position: "absolute",
-                left: `${(filterHue / 359) * 100}%`,
+                left: `${huePercent(filterHue)}%`,
                 bottom: -6,
                 transform: "translateX(-4px)",
                 width: 0,
@@ -335,7 +398,18 @@ export const GalleryPanel = React.memo(function GalleryPanel({
               style={S_HUE_FILTER_INPUT}
             />
           </div>
-          <span style={{ fontFamily: FONT.mono, whiteSpace: "nowrap", width: "9ch", flexShrink: 0, textAlign: "right" }}>
+          <span
+            style={{
+              display: "inline-block",
+              fontFamily: FONT.mono,
+              lineHeight: "14px",
+              whiteSpace: "nowrap",
+              width: "9ch",
+              flexShrink: 0,
+              textAlign: "right",
+              transform: "translateY(1px)",
+            }}
+          >
             {filterHue}°±{filterRange}°
           </span>
           <div style={{ position: "relative", flex: "0 1 140px", minWidth: 60, height: 20 }}>
@@ -350,7 +424,7 @@ export const GalleryPanel = React.memo(function GalleryPanel({
               style={{
                 position: "absolute",
                 boxSizing: "border-box",
-                top: 0,
+                top: 2,
                 left: 0,
                 width: "100%",
                 height: 14,
@@ -358,17 +432,19 @@ export const GalleryPanel = React.memo(function GalleryPanel({
                 accentColor: C.accent,
               }}
             />
-            {/* Tick marks at 45° intervals — below the slider */}
+            {/* Tick marks at 45° intervals inside the slider track */}
             {[45, 90, 135].map((deg) => (
               <div
                 key={deg}
+                className="gallery-range-tick"
                 style={{
                   position: "absolute",
                   left: `${((deg - 10) / 170) * 100}%`,
-                  top: 14,
+                  top: 6,
                   width: 1,
                   height: 6,
-                  background: "rgba(255,255,255,0.25)",
+                  borderRadius: 1,
+                  background: "rgba(255,255,255,0.28)",
                   pointerEvents: "none",
                 }}
               />
@@ -473,7 +549,15 @@ export const GalleryPanel = React.memo(function GalleryPanel({
       )}
 
       {/* Thumbnail grid */}
-      <div className="gallery-grid" style={{ "--gallery-thumb-track": `${thumbDisplaySize + 14}px` } as React.CSSProperties}>
+      <div
+        className="gallery-grid"
+        style={
+          {
+            "--gallery-thumb-track": `${thumbDisplaySize + GALLERY_THUMB_TRACK_EXTRA}px`,
+            ...(mobileGalleryColumns ? { gridTemplateColumns: `repeat(${mobileGalleryColumns}, minmax(0, 1fr))` } : {}),
+          } as React.CSSProperties
+        }
+      >
         {displayItems.map((item, i) => {
           const isCurrent = candidateIndexByLevelEqual(item.candidateIndexByLevel, candidateIndexByLevel);
           const starred = isBookmarked(item.candidateIndexByLevel);

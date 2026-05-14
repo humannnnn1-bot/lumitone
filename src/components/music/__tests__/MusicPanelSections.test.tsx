@@ -441,6 +441,26 @@ describe("MusicPanel section components", () => {
     expect(props.cayley.onColChange).toHaveBeenCalledWith(3);
   });
 
+  it("positions the distributive law graph slightly lower inside its card", () => {
+    const props = makeAlgebraProps();
+    const { container } = renderWithLanguage(<MusicAlgebraPanel {...props} />);
+
+    expect(container.querySelector(".music-distributive-flow-graph")?.getAttribute("transform")).toBe("translate(0 6)");
+  });
+
+  it("stacks the distributive law controls into title, selectors, and play rows", () => {
+    const props = makeAlgebraProps();
+    const { container } = renderWithLanguage(<MusicAlgebraPanel {...props} />);
+
+    const header = container.querySelector(".music-distributive-card-header");
+    expect(header?.children).toHaveLength(3);
+    expect(header?.children[0].textContent).toBe("Distributive Law");
+    expect(header?.children[1].className).toBe("music-distributive-select-row");
+    expect(header?.children[1].querySelectorAll("select")).toHaveLength(3);
+    expect(header?.children[2].className).toBe("music-distributive-play-row");
+    expect(header?.children[2].querySelectorAll("button")).toHaveLength(1);
+  });
+
   it("uses responsive fixed-height controls in structural sonification cards", () => {
     const props = makeAlgebraProps();
     const { container } = renderWithLanguage(<MusicAlgebraPanel {...props} />);

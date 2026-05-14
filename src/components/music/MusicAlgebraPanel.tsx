@@ -116,6 +116,19 @@ interface MusicAlgebraPanelProps {
 
 const GF8_LEVELS = [0, 1, 2, 3, 4, 5, 6, 7];
 const CHROMA_LEVELS = [1, 2, 3, 4, 5, 6];
+const S_DISTRIB_HEADER: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "var(--music-card-control-gap, 3px)",
+  alignItems: "center",
+  width: "100%",
+};
+const S_DISTRIB_CONTROL_ROW: React.CSSProperties = {
+  display: "flex",
+  gap: "var(--music-card-control-gap, 3px)",
+  alignItems: "center",
+  justifyContent: "center",
+};
 
 export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
   engine,
@@ -250,56 +263,60 @@ export const MusicAlgebraPanel = React.memo(function MusicAlgebraPanel({
         </div>
 
         <div style={S_CARD_ALGEBRA}>
-          <div style={S_ROW}>
+          <div className="music-distributive-card-header" style={S_DISTRIB_HEADER}>
             <span style={S_LABEL}>{t("music_distrib_title")}</span>
-            <select
-              value={distA}
-              onChange={(e) => onDistAChange(Number(e.target.value))}
-              aria-label={t("music_distrib_a_select")}
-              style={S_SELECT}
-            >
-              {GF8_LEVELS.map((i) => (
-                <option key={i} value={i}>
-                  {i}
-                </option>
-              ))}
-            </select>
-            <select
-              value={distB}
-              onChange={(e) => onDistBChange(Number(e.target.value))}
-              aria-label={t("music_distrib_b_select")}
-              style={S_SELECT}
-            >
-              {GF8_LEVELS.map((i) => (
-                <option key={i} value={i}>
-                  {i}
-                </option>
-              ))}
-            </select>
-            <select
-              value={distC}
-              onChange={(e) => onDistCChange(Number(e.target.value))}
-              aria-label={t("music_distrib_c_select")}
-              style={S_SELECT}
-            >
-              {GF8_LEVELS.map((i) => (
-                <option key={i} value={i}>
-                  {i}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              style={distPhase !== null ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
-              onClick={() => {
-                engine.initAudio();
-                engine.playDistributiveLaw?.(distA, distB, distC, (phase) => {
-                  onDistPhaseChange(phase);
-                });
-              }}
-            >
-              {t("music_distrib_play")}
-            </button>
+            <div className="music-distributive-select-row" style={S_DISTRIB_CONTROL_ROW}>
+              <select
+                value={distA}
+                onChange={(e) => onDistAChange(Number(e.target.value))}
+                aria-label={t("music_distrib_a_select")}
+                style={S_SELECT}
+              >
+                {GF8_LEVELS.map((i) => (
+                  <option key={i} value={i}>
+                    {i}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={distB}
+                onChange={(e) => onDistBChange(Number(e.target.value))}
+                aria-label={t("music_distrib_b_select")}
+                style={S_SELECT}
+              >
+                {GF8_LEVELS.map((i) => (
+                  <option key={i} value={i}>
+                    {i}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={distC}
+                onChange={(e) => onDistCChange(Number(e.target.value))}
+                aria-label={t("music_distrib_c_select")}
+                style={S_SELECT}
+              >
+                {GF8_LEVELS.map((i) => (
+                  <option key={i} value={i}>
+                    {i}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="music-distributive-play-row" style={S_DISTRIB_CONTROL_ROW}>
+              <button
+                type="button"
+                style={distPhase !== null ? S_CARD_CONTROL_BTN_ACTIVE : S_CARD_CONTROL_BTN}
+                onClick={() => {
+                  engine.initAudio();
+                  engine.playDistributiveLaw?.(distA, distB, distC, (phase) => {
+                    onDistPhaseChange(phase);
+                  });
+                }}
+              >
+                {t("music_distrib_play")}
+              </button>
+            </div>
           </div>
           <DistributiveFlow a={distA} b={distB} c={distC} phase={distPhase} activeLevels={activeLevels} />
           {(() => {

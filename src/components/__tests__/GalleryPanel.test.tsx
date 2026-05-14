@@ -140,6 +140,73 @@ describe("GalleryPanel", () => {
     expect(screen.getByText("gallery_no_match")).toBeTruthy();
   });
 
+  it("dims hue angles outside the selected filter range", () => {
+    const { container } = renderGallery();
+
+    expect(container.querySelectorAll(".gallery-hue-range-mask")).toHaveLength(0);
+
+    fireEvent.change(screen.getByLabelText("aria_gallery_filter_range"), { target: { value: "90" } });
+
+    const masks = Array.from(container.querySelectorAll<HTMLElement>(".gallery-hue-range-mask"));
+    expect(masks).toHaveLength(2);
+    expect(masks[0].style.left).toBe("0%");
+    expect(Number.parseFloat(masks[0].style.width)).toBeGreaterThan(20);
+    expect(Number.parseFloat(masks[1].style.left)).toBeGreaterThan(70);
+  });
+
+  it("places hue-range slider ticks inside the slider track", () => {
+    const { container } = renderGallery();
+
+    const ticks = Array.from(container.querySelectorAll<HTMLElement>(".gallery-range-tick"));
+    expect(ticks).toHaveLength(3);
+    expect(ticks.map((tick) => tick.style.top)).toEqual(["6px", "6px", "6px"]);
+    expect(ticks.map((tick) => tick.style.height)).toEqual(["6px", "6px", "6px"]);
+    expect(ticks.map((tick) => tick.style.background)).toEqual([
+      "rgba(255, 255, 255, 0.28)",
+      "rgba(255, 255, 255, 0.28)",
+      "rgba(255, 255, 255, 0.28)",
+    ]);
+  });
+
+  it("nudges the hue filter label into alignment with the range slider", () => {
+    renderGallery();
+
+    const label = screen.getByText("180°±180°");
+    expect(label.style.display).toBe("inline-block");
+    expect(label.style.lineHeight).toBe("14px");
+    expect(label.style.transform).toBe("translateY(1px)");
+  });
+
+  it("sizes the medium thumbnail track for two mobile columns", () => {
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+    try {
+      const { container } = renderGallery();
+      const grid = container.querySelector<HTMLElement>(".gallery-grid");
+
+      expect(grid?.style.getPropertyValue("--gallery-thumb-track")).toBe("176px");
+      expect(grid?.style.gridTemplateColumns).toBe("repeat(2, minmax(0, 1fr))");
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: originalInnerWidth });
+    }
+  });
+
+  it("sizes the small thumbnail track for three mobile columns", () => {
+    const originalInnerWidth = window.innerWidth;
+    Object.defineProperty(window, "innerWidth", { configurable: true, value: 390 });
+    try {
+      const { container } = renderGallery();
+
+      fireEvent.click(screen.getByRole("button", { name: "aria_gallery_thumb_size(S)" }));
+
+      const grid = container.querySelector<HTMLElement>(".gallery-grid");
+      expect(grid?.style.getPropertyValue("--gallery-thumb-track")).toBe("115px");
+      expect(grid?.style.gridTemplateColumns).toBe("repeat(3, minmax(0, 1fr))");
+    } finally {
+      Object.defineProperty(window, "innerWidth", { configurable: true, value: originalInnerWidth });
+    }
+  });
+
   it("loads bookmarks, filters them, and toggles bookmark actions from cards", () => {
     const bookmarked = withLevel(2, 1);
     galleryMock.items = [makeItem(DEFAULT_CANDIDATE_INDEX_BY_LEVEL), makeItem(bookmarked)];

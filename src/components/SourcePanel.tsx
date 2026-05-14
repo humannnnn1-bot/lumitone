@@ -451,7 +451,16 @@ export const SourcePanel = React.memo(function SourcePanel(props: SourcePanelPro
           </div>
 
           {/* Level palette + selected mapping */}
-          <div style={{ display: "flex", gap: SP.sm, justifyContent: "center", maxWidth: "100%", marginTop: SP["2xl"] }}>
+          <div
+            style={{
+              display: "flex",
+              gap: SP.sm,
+              justifyContent: "center",
+              maxWidth: "100%",
+              marginTop: SP["2xl"],
+              transform: "translateY(-1px)",
+            }}
+          >
             {LEVEL_INFO.map((info, i) => (
               <button
                 key={i}

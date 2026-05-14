@@ -57,93 +57,104 @@ export const DistributiveFlow = React.memo(function DistributiveFlow({ a, b, c, 
           </feMerge>
         </filter>
       </defs>
-      {/* Input labels near usage */}
-      <text x={90} y={10} textAnchor="middle" fontSize={8} fontFamily="var(--font-mono)" fill={C.textDimmer}>
-        a={a}
-      </text>
-      <text x={25} y={20} textAnchor="middle" fontSize={8} fontFamily="var(--font-mono)" fill={C.textDimmer}>
-        b={b}
-      </text>
-      <text x={65} y={20} textAnchor="middle" fontSize={8} fontFamily="var(--font-mono)" fill={C.textDimmer}>
-        c={c}
-      </text>
-
-      {/* Path labels */}
-      <text x={45} y={50} textAnchor="middle" fontSize={7} fontFamily="var(--font-mono)" fill={C.textDimmer}>
-        a{"\u2227"}(b{"\u2295"}c)
-      </text>
-      <text x={135} y={50} textAnchor="middle" fontSize={7} fontFamily="var(--font-mono)" fill={C.textDimmer}>
-        (a{"\u2227"}b){"\u2295"}(a{"\u2227"}c)
-      </text>
-
-      {/* Arrows */}
-      {arrows.map(([from, to]) => {
-        const f = nodes.find((n) => n.key === from)!;
-        const t = nodes.find((n) => n.key === to)!;
-        return (
-          <line key={from + to} x1={f.x} y1={f.y + DOT_R} x2={t.x} y2={t.y - DOT_R} stroke={C.textDimmer} strokeWidth={0.8} opacity={0.4} />
-        );
-      })}
-
-      {/* Convergence lines to bottom */}
-      <line x1={45} y1={68 + DOT_R} x2={90} y2={100} stroke={C.textDimmer} strokeWidth={0.8} opacity={0.4} />
-      <line x1={135} y1={68 + DOT_R} x2={90} y2={100} stroke={C.textDimmer} strokeWidth={0.8} opacity={0.4} />
-
-      {/* Nodes */}
-      {nodes.map((n) => {
-        const active = isPhaseActive(n.phase);
-        return (
-          <g key={n.key} filter={active ? "url(#df-glow)" : undefined}>
-            <circle
-              cx={n.x}
-              cy={n.y}
-              r={DOT_R}
-              fill={pointColor(n.lv, activeLevels)}
-              fillOpacity={active ? 0.9 : 0.4}
-              stroke={active ? "#fff" : pointColor(n.lv, activeLevels)}
-              strokeWidth={active ? 2 : 0.8}
-            />
-            <text
-              x={n.x}
-              y={n.y}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize={FS.xxs}
-              fontWeight={FW.bold}
-              fontFamily="var(--font-mono)"
-              fill={n.lv >= 4 ? "#000" : "#fff"}
-              opacity={active ? 1 : 0.6}
-            >
-              {n.lv}
-            </text>
-          </g>
-        );
-      })}
-
-      {/* Convergence node */}
-      <g filter={phase === "equal" ? "url(#df-glow)" : undefined}>
-        <circle
-          cx={90}
-          cy={100}
-          r={DOT_R + 2}
-          fill={pointColor(left, activeLevels)}
-          fillOpacity={phase === "equal" ? 0.9 : 0.2}
-          stroke={phase === "equal" ? "#fff" : C.textDimmer}
-          strokeWidth={phase === "equal" ? 2.5 : 1}
-        />
-        <text
-          x={90}
-          y={100}
-          textAnchor="middle"
-          dominantBaseline="central"
-          fontSize={FS.xs}
-          fontWeight={FW.bold}
-          fontFamily="var(--font-mono)"
-          fill={left >= 4 ? "#000" : "#fff"}
-          opacity={phase === "equal" ? 1 : 0.4}
-        >
-          {left}
+      <g className="music-distributive-flow-graph" transform="translate(0 6)">
+        {/* Input labels near usage */}
+        <text x={90} y={10} textAnchor="middle" fontSize={8} fontFamily="var(--font-mono)" fill={C.textDimmer}>
+          a={a}
         </text>
+        <text x={25} y={20} textAnchor="middle" fontSize={8} fontFamily="var(--font-mono)" fill={C.textDimmer}>
+          b={b}
+        </text>
+        <text x={65} y={20} textAnchor="middle" fontSize={8} fontFamily="var(--font-mono)" fill={C.textDimmer}>
+          c={c}
+        </text>
+
+        {/* Path labels */}
+        <text x={45} y={50} textAnchor="middle" fontSize={7} fontFamily="var(--font-mono)" fill={C.textDimmer}>
+          a{"\u2227"}(b{"\u2295"}c)
+        </text>
+        <text x={135} y={50} textAnchor="middle" fontSize={7} fontFamily="var(--font-mono)" fill={C.textDimmer}>
+          (a{"\u2227"}b){"\u2295"}(a{"\u2227"}c)
+        </text>
+
+        {/* Arrows */}
+        {arrows.map(([from, to]) => {
+          const f = nodes.find((n) => n.key === from)!;
+          const t = nodes.find((n) => n.key === to)!;
+          return (
+            <line
+              key={from + to}
+              x1={f.x}
+              y1={f.y + DOT_R}
+              x2={t.x}
+              y2={t.y - DOT_R}
+              stroke={C.textDimmer}
+              strokeWidth={0.8}
+              opacity={0.4}
+            />
+          );
+        })}
+
+        {/* Convergence lines to bottom */}
+        <line x1={45} y1={68 + DOT_R} x2={90} y2={100} stroke={C.textDimmer} strokeWidth={0.8} opacity={0.4} />
+        <line x1={135} y1={68 + DOT_R} x2={90} y2={100} stroke={C.textDimmer} strokeWidth={0.8} opacity={0.4} />
+
+        {/* Nodes */}
+        {nodes.map((n) => {
+          const active = isPhaseActive(n.phase);
+          return (
+            <g key={n.key} filter={active ? "url(#df-glow)" : undefined}>
+              <circle
+                cx={n.x}
+                cy={n.y}
+                r={DOT_R}
+                fill={pointColor(n.lv, activeLevels)}
+                fillOpacity={active ? 0.9 : 0.4}
+                stroke={active ? "#fff" : pointColor(n.lv, activeLevels)}
+                strokeWidth={active ? 2 : 0.8}
+              />
+              <text
+                x={n.x}
+                y={n.y}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={FS.xxs}
+                fontWeight={FW.bold}
+                fontFamily="var(--font-mono)"
+                fill={n.lv >= 4 ? "#000" : "#fff"}
+                opacity={active ? 1 : 0.6}
+              >
+                {n.lv}
+              </text>
+            </g>
+          );
+        })}
+
+        {/* Convergence node */}
+        <g filter={phase === "equal" ? "url(#df-glow)" : undefined}>
+          <circle
+            cx={90}
+            cy={100}
+            r={DOT_R + 2}
+            fill={pointColor(left, activeLevels)}
+            fillOpacity={phase === "equal" ? 0.9 : 0.2}
+            stroke={phase === "equal" ? "#fff" : C.textDimmer}
+            strokeWidth={phase === "equal" ? 2.5 : 1}
+          />
+          <text
+            x={90}
+            y={100}
+            textAnchor="middle"
+            dominantBaseline="central"
+            fontSize={FS.xs}
+            fontWeight={FW.bold}
+            fontFamily="var(--font-mono)"
+            fill={left >= 4 ? "#000" : "#fff"}
+            opacity={phase === "equal" ? 1 : 0.4}
+          >
+            {left}
+          </text>
+        </g>
       </g>
       {phase === "equal" && (
         <text x={90} y={H - 2} textAnchor="middle" fontSize={8} fontFamily="var(--font-mono)" fill={C.accent}>

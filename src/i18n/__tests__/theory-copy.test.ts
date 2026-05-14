@@ -66,9 +66,12 @@ describe("theory copy high-risk claims", () => {
   });
 
   it("states luma ordering and hue-order uniqueness with the intended proof boundaries", () => {
-    expect(en.theory_binary_desc).toContain("numeric order and BT.601 luma order agree");
+    expect(en.theory_binary_desc).toContain("numeric order and ITU-R BT.601 luma order agree");
     expect(en.theory_binary_desc).toContain("bit2=Green, bit1=Red, bit0=Blue, namely GRB");
     expect(en.theory_binary_desc).toContain("0.587 > 0.299 + 0.114");
+    expect(en.theory_binary_luma_formula).toContain("Y′ = 0.299R + 0.587G + 0.114B");
+    expect(en.theory_binary_luma_complement).toContain("Y′ₖ + Y′₇₋ₖ = 255");
+    expect(en.theory_zigzag_desc).toContain("Y′(h) + Y′(h+180°) = 255");
     expect(en.theory_binary_desc).not.toContain("consequence of human color vision");
     expect(en.theory_dice_desc).toContain("c ↦ c ⊕ 7 reverses luma order");
     expect(en.theory_dice_desc3).toContain("11 free cube nets");
@@ -76,8 +79,11 @@ describe("theory copy high-risk claims", () => {
     expect(en.theory_dice_desc3).toContain("R→Y→G→C→B→M");
     expect(en.theory_dice_desc3).toContain("equivalently its reverse");
 
-    expect(ja.theory_binary_desc).toContain("番号順と BT.601 luma 順が一致する割当");
+    expect(ja.theory_binary_desc).toContain("番号順と ITU-R BT.601 luma 順が一致する割当");
     expect(ja.theory_binary_desc).toContain("bit2=Green, bit1=Red, bit0=Blue、つまり GRB だけ");
+    expect(ja.theory_binary_luma_formula).toContain("Y′ = 0.299R + 0.587G + 0.114B");
+    expect(ja.theory_binary_luma_complement).toContain("Y′ₖ + Y′₇₋ₖ = 255");
+    expect(ja.theory_zigzag_desc).toContain("Y′(h) + Y′(h+180°) = 255");
     expect(ja.theory_binary_desc).not.toContain("人間の色覚の帰結です");
     expect(ja.theory_dice_desc).toContain("補色写像 c ↦ c ⊕ 7 はルマ順を反転");
     expect(ja.theory_dice_desc3).toContain("11種類の立方体展開図（回転・反転は同一視）");

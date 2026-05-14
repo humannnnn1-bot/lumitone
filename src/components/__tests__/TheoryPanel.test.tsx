@@ -56,6 +56,22 @@ describe("TheoryPanel", () => {
     expect(polyhedraDiagram.querySelector('line[stroke-dasharray="4,3"]')).toBeTruthy();
   });
 
+  it("uses the horizontal space inside the binary table SVG", () => {
+    renderWithLanguage();
+
+    const binaryTable = screen.getByRole("img", { name: "Binary Levels" });
+    expect(binaryTable.getAttribute("viewBox")).toBe("8 0 368 224");
+
+    const textNodes = Array.from(binaryTable.querySelectorAll("text"));
+    const channelHeaderXs = textNodes
+      .filter((node) => ["G", "R", "B"].includes(node.textContent ?? "") && node.getAttribute("y") === "18")
+      .map((node) => node.getAttribute("x"));
+    expect(channelHeaderXs).toEqual(["170", "192", "214"]);
+    expect(textNodes.find((node) => node.textContent === "Wt")?.getAttribute("x")).toBe("242");
+    expect(textNodes.find((node) => node.textContent === "Hamming")?.getAttribute("x")).toBe("274");
+    expect(textNodes.find((node) => node.textContent === "Luma")?.getAttribute("x")).toBe("332");
+  });
+
   it("keeps Color Tetra SVG definition ids unique across T0 and T1", () => {
     renderWithLanguage();
 
