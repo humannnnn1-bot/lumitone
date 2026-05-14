@@ -149,6 +149,11 @@ input[type="checkbox"]:focus-visible {
 .map-mode-buttons {
   flex-wrap: wrap;
 }
+.panel-canvas--map .map-mode-buttons {
+  box-sizing: border-box;
+  max-width: var(--app-inline-content-width);
+  width: var(--app-inline-content-width);
+}
 .map-mode-break {
   flex-basis: 100%;
   height: 0;
@@ -710,6 +715,10 @@ button.theory-diagram-button {
   }
   .map-mode-buttons {
     flex-wrap: nowrap;
+    max-width: calc(100vw - 32px);
+    width: max-content;
+  }
+  .panel-canvas--map .map-mode-buttons {
     max-width: calc(100vw - 32px);
     width: max-content;
   }
